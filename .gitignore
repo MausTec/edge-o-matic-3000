@@ -1,0 +1,5 @@
+*.hex
+*.bin
+
+tmp/*
+!tmp/.keep
