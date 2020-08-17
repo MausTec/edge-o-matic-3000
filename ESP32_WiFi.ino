@@ -269,10 +269,8 @@ void setup() {
   Serial.print("My IP address: ");
   Serial.println(WiFi.localIP());
 
-  display.setCursor(0,0);
-  display.print(WiFi.localIP().toString());
-  display.print("    ");
-  display.display();
+  UI.drawStatus("Connected!");
+  UI.render();
 
   // Start WebSocket server and assign callback
   webSocket.begin();
@@ -362,10 +360,11 @@ void loop() {
     uint8_t motor = (motor_int / 255) * 100;
     uint8_t stat_a = ((float)arousal / peak_limit) * 100;
     sprintf(status, "M:%03d%% P:%04d A:%03d%%", motor, RA_Averaged, stat_a);
-    display.setCursor(4, SCREEN_HEIGHT - 7);
+    display.setCursor(8, SCREEN_HEIGHT - 7);
     display.print(status);
 
     // Update Chart
+    UI.setMotorSpeed(motor);
     UI.addChartReading(0, RA_Averaged);
     UI.addChartReading(1, arousal);
     UI.drawChart(peak_limit);
