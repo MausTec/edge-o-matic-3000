@@ -4,6 +4,8 @@
 #define ARDUINOJSON_USE_LONG_LONG 1
 #include <ArduinoJson.h>
 
+#include "config.h"
+
 #include "FS.h"
 #include "SD.h"
 #include "SPI.h"
@@ -12,6 +14,8 @@
 #include <analogWrite.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
+
+#include "include/UserInterface.h"
 
 // For the Butt Device:
 // MotorControl
@@ -25,14 +29,12 @@
 
 // GPIO
 #define BUTT_PIN 34
-#define LED_PIN 15
-#define LED_COUNT 13
 
 #define ENCODER_R_PIN 2
 #define ENCODER_G_PIN 0
 #define ENCODER_B_PIN 4
 
-#define WINDOW_SIZE 10
+#define WINDOW_SIZE 5
 int RA_Index = 0;
 int RA_Value = 0;
 int RA_Sum = 0;
@@ -43,14 +45,10 @@ uint8_t LED_Brightness = 13;
 
 uint8_t mode = MODE_AUTO;
 
-// LCD
-#define SCREEN_WIDTH 128
-#define SCREEN_HEIGHT 64
-#define OLED_DC 13
-#define OLED_RESET 14
-#define OLED_CS 12
+
 
 Adafruit_SSD1306 display(128, 64, &SPI, OLED_DC, OLED_RESET, OLED_CS);
+UserInterface UI(&display);
 
 float arousal = 0.0;
 
@@ -223,24 +221,6 @@ void resetSD() {
   sendSdStatus();
 }
 
-void drawChartAxes() {
-  // Y-axis
-  display.drawLine(2, 10, 2, display.height() - 3, SSD1306_WHITE);
-  for (int i = 0; i < display.height() - 10; i += 5) {
-    display.drawLine(0, i, 2, i, SSD1306_WHITE);
-  }
-  
-  // X-axis
-  display.drawLine(2, display.height() - 2, display.width(), display.height() - 2, SSD1306_WHITE);
-  for (int i = 0; i < display.width() - 2; i += 5) {
-    display.drawLine(i, display.height() - 2, i, display.height(), SSD1306_WHITE);
-  }
-}
-
-void drawChart() {
-  display.fillRect(4, 10, display.width() - 3, display.height() - 3 - 10, SSD1306_WHITE);
-}
-
 void setup() {
 
   // Start Serial port
@@ -264,8 +244,8 @@ void setup() {
     display.cp437(true);
     display.write("Starting...");
 
-    drawChartAxes();
-    display.display();
+    UI.drawChartAxes();
+    UI.render();
   }
 
   resetSD();
@@ -334,18 +314,18 @@ void loop() {
     RA_Averaged = RA_Sum / WINDOW_SIZE;
 
     // Calculate Arousal
-    if (RA_Value < last_value) {
-      if (RA_Value > peak_start) {
-        if (RA_Value - peak_start >= peak_limit / 10) {
-          arousal += RA_Value - peak_start;
+    if (RA_Averaged < last_value) {
+      if (RA_Averaged > peak_start) {
+        if (RA_Averaged - peak_start >= peak_limit / 10) {
+          arousal += RA_Averaged - peak_start;
         }
       }
-      peak_start = RA_Value;
+      peak_start = RA_Averaged;
     }
 
     // Natural Arousal Decay
     arousal *= 0.99;
-    last_value = RA_Value;
+    last_value = RA_Averaged;
 
     // Ramp Motor:
     // make this a signed value and use negative values to control off delay.
@@ -376,15 +356,26 @@ void loop() {
     analogWrite(ENCODER_G_PIN, encoderColor.g);
     analogWrite(ENCODER_B_PIN, encoderColor.b);
 
+    // Update Counts
+    char status[20] = "";
+    float motor_int = floor(max(motor_speed, (float)0.0));
+    uint8_t motor = (motor_int / 255) * 100;
+    uint8_t stat_a = ((float)arousal / peak_limit) * 100;
+    sprintf(status, "M:%03d%% P:%04d A:%03d%%", motor, RA_Averaged, stat_a);
+    display.setCursor(4, SCREEN_HEIGHT - 7);
+    display.print(status);
+
     // Update Chart
-    drawChart();
-    display.display();
+    UI.addChartReading(0, RA_Averaged);
+    UI.addChartReading(1, arousal);
+    UI.drawChart(peak_limit);
+    UI.render();
 
     // Serialize Data
     StaticJsonDocument<200> doc;
     doc["pressure"] = RA_Value;
     doc["pavg"] = RA_Averaged;
-    doc["motor"] = floor(max(motor_speed, (float)0.0));
+    doc["motor"] = (int)motor_int;
     doc["arousal"] = arousal;
     doc["millis"] = millis();
 
