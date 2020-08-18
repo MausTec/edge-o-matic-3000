@@ -16,6 +16,7 @@
 #include <Adafruit_SSD1306.h>
 
 #include "include/UserInterface.h"
+#include "include/BluetoothServer.h"
 
 // For the Butt Device:
 // MotorControl
@@ -47,6 +48,8 @@ uint8_t mode = MODE_AUTO;
 
 Adafruit_SSD1306 display(128, 64, &SPI, OLED_DC, OLED_RESET, OLED_CS);
 UserInterface UI(&display);
+
+BluetoothServer BT;
 
 float arousal = 0.0;
 
@@ -234,6 +237,11 @@ void setup() {
   pinMode(ENCODER_R_PIN, OUTPUT);
   pinMode(ENCODER_G_PIN, OUTPUT);
   pinMode(ENCODER_B_PIN, OUTPUT);
+
+  Serial.println("Starting up Bluetooth...");
+  BT.begin();
+  Serial.println("Now Discoverable!");
+  BT.advertise();
 
   if(!UI.begin()) {
     Serial.println("SSD1306 allocation failed");
