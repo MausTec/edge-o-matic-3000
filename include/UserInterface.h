@@ -15,6 +15,7 @@
 class UserInterface {
 public:
   UserInterface(Adafruit_SSD1306* display);
+  bool begin();
 
   // Common Element Drawing Functions
   void drawChartAxes();

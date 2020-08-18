@@ -4,6 +4,17 @@ UserInterface::UserInterface(Adafruit_SSD1306 *display) {
   this->display = display;
 }
 
+bool UserInterface::begin() {
+  if (!this->display->begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
+    return false;
+  } else {
+    display->cp437(true);
+    display->clearDisplay();
+    display->setTextSize(1);
+    display->setTextColor(SSD1306_WHITE, SSD1306_BLACK);
+  }
+}
+
 void UserInterface::drawStatus(const char *status) {
   this->display->fillRect(0, 0, SCREEN_WIDTH - 12, 10, SSD1306_BLACK);
   this->display->setCursor(0,0);

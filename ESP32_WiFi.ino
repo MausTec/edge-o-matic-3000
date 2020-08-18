@@ -45,8 +45,6 @@ uint8_t LED_Brightness = 13;
 
 uint8_t mode = MODE_AUTO;
 
-
-
 Adafruit_SSD1306 display(128, 64, &SPI, OLED_DC, OLED_RESET, OLED_CS);
 UserInterface UI(&display);
 
@@ -233,17 +231,10 @@ void setup() {
   pinMode(ENCODER_G_PIN, OUTPUT);
   pinMode(ENCODER_B_PIN, OUTPUT);
 
-  if(!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
+  if(!UI.begin()) {
     Serial.println("SSD1306 allocation failed");
   } else {
-    display.clearDisplay();
-
-    display.setTextSize(1);
-    display.setTextColor(SSD1306_WHITE, SSD1306_BLACK);
-    display.setCursor(0,0);
-    display.cp437(true);
-    display.write("Starting...");
-
+    UI.drawStatus("Starting...");
     UI.drawChartAxes();
     UI.render();
   }
@@ -331,8 +322,14 @@ void loop() {
     
     if (arousal > peak_limit) {
       motor_speed = -0.5 * (float)ramp_time_s * 30.0 * motor_increment;
+      UI.drawStatus("STOPPED!");
     } else if (motor_speed < 255) {
+      if (motor_speed > 0) {
+        UI.drawStatus("Ramping up...");
+      }
       motor_speed += motor_increment;
+    } else {
+      UI.drawStatus("Sensing Orgasm...");
     }
 
     // Update LEDs
