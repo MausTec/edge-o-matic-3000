@@ -196,6 +196,7 @@ void onWebSocketEvent(uint8_t num,
 void resetSD() {
   // SD
   if(!SD.begin()) {
+    UI.drawSdIcon(0);
     Serial.println("Card Mount Failed");
     return;
   }
@@ -205,10 +206,13 @@ void resetSD() {
   Serial.print("SD Card Type: ");
   if(cardType == CARD_MMC){
       Serial.println("MMC");
+      UI.drawSdIcon(1);
   } else if(cardType == CARD_SD){
       Serial.println("SDSC");
+      UI.drawSdIcon(1);
   } else if(cardType == CARD_SDHC){
       Serial.println("SDHC");
+      UI.drawSdIcon(1);
   } else {
       Serial.println("UNKNOWN");
   }
@@ -236,6 +240,7 @@ void setup() {
   } else {
     UI.drawStatus("Starting...");
     UI.drawChartAxes();
+    UI.drawWifiIcon(0);
     UI.render();
   }
 
@@ -359,6 +364,23 @@ void loop() {
     sprintf(status, "M:%03d%% P:%04d A:%03d%%", motor, RA_Averaged, stat_a);
     display.setCursor(8, SCREEN_HEIGHT - 7);
     display.print(status);
+
+    // Update Icons
+    uint8_t wifiStrength;
+    int rssi = WiFi.RSSI();
+    if (rssi < -90) {
+      wifiStrength = 0;
+    } else if (rssi < -80) {
+      wifiStrength = 1;
+    } else if (rssi < -60) {
+      wifiStrength = 2;
+    } else if (rssi < 0) {
+      wifiStrength = 3;
+    } else {
+      wifiStrength = 0;
+    }
+
+    UI.drawWifiIcon(wifiStrength);
 
     // Update Chart
     UI.setMotorSpeed(motor);

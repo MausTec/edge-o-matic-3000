@@ -1,4 +1,5 @@
 #include "../include/UserInterface.h"
+#include "../include/Icons.h"
 
 UserInterface::UserInterface(Adafruit_SSD1306 *display) {
   this->display = display;
@@ -8,6 +9,7 @@ bool UserInterface::begin() {
   if (!this->display->begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
     return false;
   } else {
+    display->setRotation(2);
     display->cp437(true);
     display->clearDisplay();
     display->setTextSize(1);
@@ -16,7 +18,7 @@ bool UserInterface::begin() {
 }
 
 void UserInterface::drawStatus(const char *status) {
-  this->display->fillRect(0, 0, SCREEN_WIDTH - 12, 10, SSD1306_BLACK);
+  this->display->fillRect(0, 0, SCREEN_WIDTH - 18, 10, SSD1306_BLACK);
   this->display->setCursor(0,0);
   this->display->print(status);
 }
@@ -115,4 +117,15 @@ void UserInterface::addChartReading(int index, int value) {
 
 void UserInterface::render() {
   this->display->display();
+}
+
+void UserInterface::drawWifiIcon(byte strength) {
+  this->display->fillRect(SCREEN_WIDTH - 8, 0, 8, 8, SSD1306_BLACK);
+  this->display->drawBitmap(SCREEN_WIDTH - 8, 0, WIFI_ICON[strength], 8, 8, SSD1306_WHITE);
+}
+
+void UserInterface::drawSdIcon(byte status) {
+  this->display->fillRect(SCREEN_WIDTH - 18, 0, 8, 8, SSD1306_BLACK);
+  if (status > 0)
+    this->display->drawBitmap(SCREEN_WIDTH - 18, 0, SD_ICON[status-1], 8, 8, SSD1306_WHITE);
 }

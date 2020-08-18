@@ -29,6 +29,10 @@ public:
   // Render Controls
   void render();
 
+  // Icons
+  void drawWifiIcon(byte strength);
+  void drawSdIcon(byte status);
+
 private:
   Adafruit_SSD1306* display;
 
