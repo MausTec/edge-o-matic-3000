@@ -12,4 +12,12 @@
 #define OLED_RESET 14
 #define OLED_CS 12
 
+// Encoder Connection
+#define ENCODER_A_PIN 33
+#define ENCODER_B_PIN 32
+#define ENCODER_SW_PIN 35
+#define ENCODER_RD_PIN 2
+#define ENCODER_GR_PIN 0
+#define ENCODER_BL_PIN 4
+
 #endif

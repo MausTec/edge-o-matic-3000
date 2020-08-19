@@ -14,6 +14,8 @@
 #include <analogWrite.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
+#include <OneButton.h>
+#include <ESP32Encoder.h>
 
 #include "include/UserInterface.h"
 #include "include/BluetoothServer.h"
@@ -31,10 +33,6 @@
 // GPIO
 #define BUTT_PIN 34
 
-#define ENCODER_R_PIN 2
-#define ENCODER_G_PIN 0
-#define ENCODER_B_PIN 4
-
 #define WINDOW_SIZE 5
 int RA_Index = 0;
 int RA_Value = 0;
@@ -45,6 +43,9 @@ int RA_Averaged = 0;
 uint8_t LED_Brightness = 13;
 
 uint8_t mode = MODE_AUTO;
+
+OneButton EncoderSw(ENCODER_SW_PIN, true, false);
+ESP32Encoder Encoder;
 
 Adafruit_SSD1306 display(128, 64, &SPI, OLED_DC, OLED_RESET, OLED_CS);
 UserInterface UI(&display);
@@ -234,14 +235,23 @@ void setup() {
   pinMode(LED_PIN, OUTPUT);
   pinMode(BUTT_PIN, INPUT);
 
-  pinMode(ENCODER_R_PIN, OUTPUT);
-  pinMode(ENCODER_G_PIN, OUTPUT);
-  pinMode(ENCODER_B_PIN, OUTPUT);
+  pinMode(ENCODER_RD_PIN, OUTPUT);
+  pinMode(ENCODER_GR_PIN, OUTPUT);
+  pinMode(ENCODER_BL_PIN, OUTPUT);
 
   Serial.println("Starting up Bluetooth...");
   BT.begin();
   Serial.println("Now Discoverable!");
   BT.advertise();
+
+  // Encoder
+  ESP32Encoder::useInternalWeakPullResistors = UP;
+  Encoder.attachSingleEdge(ENCODER_A_PIN, ENCODER_B_PIN);
+  Encoder.setCount(128);
+
+  EncoderSw.attachClick([]() {
+    Serial.println("Encoder Press");
+  });
 
   if(!UI.begin()) {
     Serial.println("SSD1306 allocation failed");
@@ -281,12 +291,23 @@ void setup() {
   webSocket.onEvent(onWebSocketEvent);
 }
 
+int32_t encoderCount = 0;
+
 void loop() {
+  EncoderSw.tick();
+
   switch(mode) {
     case MODE_AUTO:
       encoderColor = CRGB::Green;
     case MODE_MANUAL:
       encoderColor = CRGB::Blue;
+  }
+
+  // Debug Encoder:
+  int32_t count = Encoder.getCount();
+  if (count != encoderCount) {
+    Serial.println("Encoder count = " + String(count));
+    encoderCount = count;
   }
 
   // Look for and handle WebSocket data
@@ -360,9 +381,9 @@ void loop() {
     
     FastLED.show();
 
-    analogWrite(ENCODER_R_PIN, encoderColor.r);
-    analogWrite(ENCODER_G_PIN, encoderColor.g);
-    analogWrite(ENCODER_B_PIN, encoderColor.b);
+    analogWrite(ENCODER_RD_PIN, encoderColor.r);
+    analogWrite(ENCODER_GR_PIN, encoderColor.g);
+    analogWrite(ENCODER_BL_PIN, encoderColor.b);
 
     // Update Counts
     char status[20] = "";
