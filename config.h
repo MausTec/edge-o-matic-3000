@@ -20,4 +20,9 @@
 #define ENCODER_GR_PIN 0
 #define ENCODER_BL_PIN 4
 
+// Buttons
+#define KEY_1_PIN 25
+#define KEY_2_PIN 26
+#define KEY_3_PIN 27
+
 #endif

@@ -44,8 +44,12 @@ uint8_t LED_Brightness = 13;
 
 uint8_t mode = MODE_AUTO;
 
-OneButton EncoderSw(ENCODER_SW_PIN, true, false);
+OneButton EncoderSw(ENCODER_SW_PIN, false, false);
 ESP32Encoder Encoder;
+
+OneButton Key1(KEY_1_PIN, true, false);
+OneButton Key2(KEY_2_PIN, true, false);
+OneButton Key3(KEY_3_PIN, true, false);
 
 Adafruit_SSD1306 display(128, 64, &SPI, OLED_DC, OLED_RESET, OLED_CS);
 UserInterface UI(&display);
@@ -253,6 +257,22 @@ void setup() {
     Serial.println("Encoder Press");
   });
 
+  pinMode(KEY_1_PIN, INPUT);
+  pinMode(KEY_2_PIN, INPUT);
+  pinMode(KEY_3_PIN, INPUT);
+
+  Key1.attachClick([]() {
+    Serial.println("Key 1 Press!");
+  });
+
+  Key2.attachClick([]() {
+    Serial.println("Key 2 Press!");
+  });
+
+  Key3.attachClick([]() {
+    Serial.println("Key 3 Press!");
+  });
+
   if(!UI.begin()) {
     Serial.println("SSD1306 allocation failed");
   } else {
@@ -295,6 +315,9 @@ int32_t encoderCount = 0;
 
 void loop() {
   EncoderSw.tick();
+  Key1.tick();
+  Key2.tick();
+  Key3.tick();
 
   switch(mode) {
     case MODE_AUTO:
