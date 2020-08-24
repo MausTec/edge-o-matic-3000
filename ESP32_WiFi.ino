@@ -11,12 +11,12 @@
 #include "SPI.h"
 
 #include <FastLED.h>
-#include <analogWrite.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 #include <OneButton.h>
 #include <ESP32Encoder.h>
 
+#include "include/Hardware.h"
 #include "include/UserInterface.h"
 #include "include/BluetoothServer.h"
 
@@ -44,12 +44,6 @@ uint8_t LED_Brightness = 13;
 
 uint8_t mode = MODE_AUTO;
 
-OneButton EncoderSw(ENCODER_SW_PIN, false, false);
-ESP32Encoder Encoder;
-
-OneButton Key1(KEY_1_PIN, true, false);
-OneButton Key2(KEY_2_PIN, true, false);
-OneButton Key3(KEY_3_PIN, true, false);
 
 Adafruit_SSD1306 display(128, 64, &SPI, OLED_DC, OLED_RESET, OLED_CS);
 UserInterface UI(&display);
@@ -58,15 +52,10 @@ BluetoothServer BT;
 
 float arousal = 0.0;
 
-CRGB leds[LED_COUNT];
-CRGB encoderColor = CRGB::Black;
-
-// Constants
-const char* ssid = "Here Be Dragons";
-const char* password = "RAWR!barkbark";
-
 // Globals
-WebSocketsServer webSocket = WebSocketsServer(80);
+ConfigStruct Config;
+WebSocketsServer* webSocket; // This is now a pointer, because apparently there is no default constructor and
+                             // it *must* be initialized with a port, which we don't know until config load.
 uint8_t last_connection;
 int ramp_time_s = 30;
 int motor_max = 255;
@@ -74,6 +63,8 @@ float motor_speed = 0;
 uint16_t peak_limit = 600;
 
 void sendSettings(uint8_t num) {
+  if (webSocket == nullptr) return;
+
   StaticJsonDocument<200> doc;
   doc["cmd"] = "SETTINGS";
   doc["brightness"] = LED_Brightness;
@@ -84,23 +75,27 @@ void sendSettings(uint8_t num) {
   // Blow the Network Load
   String payload;
   serializeJson(doc, payload);
-  webSocket.sendTXT(num, payload);
+  webSocket->sendTXT(num, payload);
 }
 
 void sendWxStatus() {
+  if (webSocket == nullptr) return;
+
   StaticJsonDocument<200> doc;
   doc["cmd"] = "WIFI_STATUS";
-  doc["ssid"] = ssid;
+  doc["ssid"] = Config.wifi_ssid;
   doc["ip"] = WiFi.localIP().toString();
   doc["signal_strength"] = WiFi.RSSI();
 
   // Blow the Network Load
   String payload;
   serializeJson(doc, payload);
-  webSocket.sendTXT(last_connection, payload);
+  webSocket->sendTXT(last_connection, payload);
 }
 
 void sendSdStatus() {
+  if (webSocket == nullptr) return;
+
   uint8_t cardType = SD.cardType();
   uint64_t cardSize = SD.cardSize() / (1024 * 1024);
   
@@ -126,7 +121,7 @@ void sendSdStatus() {
   // Blow the Network Load
   String payload;
   serializeJson(doc, payload);
-  webSocket.sendTXT(last_connection, payload);
+  webSocket->sendTXT(last_connection, payload);
 }
 
 void onMessage(uint8_t num, uint8_t * payload) {
@@ -177,7 +172,7 @@ void onWebSocketEvent(uint8_t num,
     // New client has connected
     case WStype_CONNECTED:
       {
-        IPAddress ip = webSocket.remoteIP(num);
+        IPAddress ip = webSocket->remoteIP(num);
         last_connection = num;
         Serial.printf("[%u] Connection from ", num);
         Serial.println(ip.toString());
@@ -199,6 +194,66 @@ void onWebSocketEvent(uint8_t num,
     default:
       break;
   }
+}
+
+void printDirectory(File dir, int numTabs) {
+  while (true) {
+
+    File entry =  dir.openNextFile();
+    if (! entry) {
+      // no more files
+      break;
+    }
+    for (uint8_t i = 0; i < numTabs; i++) {
+      Serial.print('\t');
+    }
+    Serial.print(entry.name());
+    if (entry.isDirectory()) {
+      Serial.println("/");
+      printDirectory(entry, numTabs + 1);
+    } else {
+      // files have sizes, directories do not
+      Serial.print("\t\t");
+      Serial.println(entry.size(), DEC);
+    }
+    entry.close();
+  }
+}
+
+void loadConfigFromSd() {
+  StaticJsonDocument<512> doc;
+
+  if (!SD.exists(CONFIG_FILENAME)) {
+    Serial.println("Couldn't find config.json on your SD card!");
+    File root = SD.open("/");
+    printDirectory(root, 0);
+  } else {
+    File configFile = SD.open(CONFIG_FILENAME);
+    DeserializationError e = deserializeJson(doc, configFile);
+
+    if (e) {
+      Serial.println(F("Failed to deserialize JSON, using default config!"));
+      Serial.println(F("^-- This means no WiFi. Please ensure your SD card has config.json present."));
+    }
+  }
+
+  // Copy WiFi Settings
+  strlcpy(Config.wifi_ssid, doc["wifi_ssid"] | "", sizeof(Config.wifi_ssid));
+  strlcpy(Config.wifi_key, doc["wifi_key"] | "", sizeof(Config.wifi_key));
+  Config.wifi_on = doc["wifi_on"] | false;
+
+  // Copy Bluetooth Settings
+  strlcpy(Config.bt_display_name, doc["bt_display_name"] | "", sizeof(Config.bt_display_name));
+  Config.bt_on = doc["bt_on"] | false;
+
+  // Copy Network Settings
+  Config.websocket_port = doc["websocket_port"] | 80;
+
+  // Copy UI Settings
+  Config.led_brightness = doc["led_brightness"] | 128;
+
+  // Copy Orgasm Settings
+  Config.motor_max_speed = doc["motor_max_speed"] | 128;
 }
 
 void resetSD() {
@@ -228,113 +283,79 @@ void resetSD() {
   uint64_t cardSize = SD.cardSize() / (1024 * 1024);
   Serial.printf("SD Card Size: %lluMB\n", cardSize);
 
-  sendSdStatus();
+  loadConfigFromSd();
 }
 
-void setup() {
-
-  // Start Serial port
-  Serial.begin(115200);
-
-  pinMode(LED_PIN, OUTPUT);
+void setupHardware() {
   pinMode(BUTT_PIN, INPUT);
 
-  pinMode(ENCODER_RD_PIN, OUTPUT);
-  pinMode(ENCODER_GR_PIN, OUTPUT);
-  pinMode(ENCODER_BL_PIN, OUTPUT);
-
-  Serial.println("Starting up Bluetooth...");
-  BT.begin();
-  Serial.println("Now Discoverable!");
-  BT.advertise();
-
-  // Encoder
-  ESP32Encoder::useInternalWeakPullResistors = UP;
-  Encoder.attachSingleEdge(ENCODER_A_PIN, ENCODER_B_PIN);
-  Encoder.setCount(128);
-
-  EncoderSw.attachClick([]() {
-    Serial.println("Encoder Press");
-  });
-
-  pinMode(KEY_1_PIN, INPUT);
-  pinMode(KEY_2_PIN, INPUT);
-  pinMode(KEY_3_PIN, INPUT);
-
-  Key1.attachClick([]() {
-    Serial.println("Key 1 Press!");
-  });
-
-  Key2.attachClick([]() {
-    Serial.println("Key 2 Press!");
-  });
-
-  Key3.attachClick([]() {
-    Serial.println("Key 3 Press!");
-  });
+  if(!Hardware::initialize()) {
+    Serial.println("Hardware initialization failed!");
+    for(;;){}
+  }
 
   if(!UI.begin()) {
     Serial.println("SSD1306 allocation failed");
+    for(;;){}
   } else {
     UI.drawStatus("Starting...");
     UI.drawChartAxes();
     UI.drawWifiIcon(0);
     UI.render();
   }
+}
 
+void setup() {
+  // Start Serial port
+  Serial.begin(115200);
+
+  // Setup Hardware
+  setupHardware();
+
+  // Setup SD, which loads our config
   resetSD();
 
-  FastLED.addLeds<WS2812B, LED_PIN, GRB>(leds, LED_COUNT);
-  for(int i = 0; i < LED_COUNT; i++) {
-    leds[i] = CRGB::Black;
+  // Initialize WiFi
+  if (Config.wifi_on) {
+    // Connect to access point
+    Serial.println("Connecting");
+    WiFi.begin(Config.wifi_ssid, Config.wifi_key);
+    while ( WiFi.status() != WL_CONNECTED ) {
+      delay(500);
+      Serial.print(".");
+    }
+
+    // Print our IP address
+    Serial.println("Connected!");
+    Serial.print("My IP address: ");
+    Serial.println(WiFi.localIP());
+
+    UI.drawStatus("Connected!");
+    UI.render();
+
+    // Start WebSocket server and assign callback
+    webSocket = new WebSocketsServer(Config.websocket_port);
+    webSocket->begin();
+    webSocket->onEvent(onWebSocketEvent);
   }
-  FastLED.show();
 
-  // Connect to access point
-  Serial.println("Connecting");
-  WiFi.begin(ssid, password);
-  while ( WiFi.status() != WL_CONNECTED ) {
-    delay(500);
-    Serial.print(".");
+  // Initialize Bluetooth
+  if (Config.bt_on) {
+    Serial.println("Starting up Bluetooth...");
+    BT.begin();
+    Serial.println("Now Discoverable!");
+    BT.advertise();
   }
-
-  // Print our IP address
-  Serial.println("Connected!");
-  Serial.print("My IP address: ");
-  Serial.println(WiFi.localIP());
-
-  UI.drawStatus("Connected!");
-  UI.render();
-
-  // Start WebSocket server and assign callback
-  webSocket.begin();
-  webSocket.onEvent(onWebSocketEvent);
 }
 
 int32_t encoderCount = 0;
 
 void loop() {
-  EncoderSw.tick();
-  Key1.tick();
-  Key2.tick();
-  Key3.tick();
-
-  switch(mode) {
-    case MODE_AUTO:
-      encoderColor = CRGB::Green;
-    case MODE_MANUAL:
-      encoderColor = CRGB::Blue;
-  }
-
-  // Debug Encoder:
-  int32_t count = Encoder.getCount();
-  if (count != encoderCount) {
-    Serial.println("Encoder count = " + String(count));
-    encoderCount = count;
-  }
+  Hardware::tick();
 
   // Look for and handle WebSocket data
-  webSocket.loop();
+  if (webSocket != nullptr)
+    webSocket->loop();
 
   static long lastTick = 0;
   static long lastStatusTick = 0;
@@ -394,19 +415,14 @@ void loop() {
     uint8_t dot = map(RA_Averaged, 0, 4096, 0, LED_COUNT - 1);
     for (uint8_t i = 0; i < LED_COUNT; i++) {
       if (i < bar) {
-        leds[i] = CRGB(map(i, 0, LED_COUNT-1, 0, LED_Brightness), map(i, 0, LED_COUNT-1, LED_Brightness, 0), 0);
+        Hardware::setLedColor(i, CRGB(map(i, 0, LED_COUNT-1, 0, LED_Brightness), map(i, 0, LED_COUNT-1, LED_Brightness, 0), 0));
       } else {
-        leds[i] = CRGB::Black;
+        Hardware::setLedColor(i);
       }
     }
 
-    leds[dot] = CRGB(LED_Brightness, 0, LED_Brightness);
-    
-    FastLED.show();
-
-    analogWrite(ENCODER_RD_PIN, encoderColor.r);
-    analogWrite(ENCODER_GR_PIN, encoderColor.g);
-    analogWrite(ENCODER_BL_PIN, encoderColor.b);
+    Hardware::setLedColor(dot, CRGB(LED_Brightness, 0, LED_Brightness));
+    Hardware::ledShow();
 
     // Update Counts
     char status[20] = "";
@@ -441,17 +457,19 @@ void loop() {
     UI.drawChart(peak_limit);
     UI.render();
 
-    // Serialize Data
-    StaticJsonDocument<200> doc;
-    doc["pressure"] = RA_Value;
-    doc["pavg"] = RA_Averaged;
-    doc["motor"] = (int)motor_int;
-    doc["arousal"] = arousal;
-    doc["millis"] = millis();
+    if (webSocket != nullptr) {
+      // Serialize Data
+      StaticJsonDocument<200> doc;
+      doc["pressure"] = RA_Value;
+      doc["pavg"] = RA_Averaged;
+      doc["motor"] = (int)motor_int;
+      doc["arousal"] = arousal;
+      doc["millis"] = millis();
 
-    // Blow the Network Load
-    String payload;
-    serializeJson(doc, payload);
-    webSocket.sendTXT(last_connection, payload);
+      // Blow the Network Load
+      String payload;
+      serializeJson(doc, payload);
+      webSocket->sendTXT(last_connection, payload);
+    }
   }
 }

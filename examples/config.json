@@ -1,0 +1,10 @@
+{
+  "wifi_ssid": "Netgear6969",
+  "wifi_key": "RobotsAreBetterThanPeople",
+  "wifi_on": true,
+  "bt_display_name": "NoGasm WiFi",
+  "bt_on": true,
+  "led_brightness": 128,
+  "websocket_port": 80,
+  "motor_max_speed": 128
+}

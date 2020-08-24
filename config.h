@@ -1,6 +1,10 @@
 #ifndef __config_h
 #define __config_h
 
+#include "arduino.h"
+
+#define CONFIG_FILENAME "/config.json"
+
 // LED Ring Definitions
 #define LED_PIN 15
 #define LED_COUNT 13
@@ -25,4 +29,22 @@
 #define KEY_2_PIN 26
 #define KEY_3_PIN 27
 
+struct ConfigStruct {
+  // Networking
+  char wifi_ssid[256];
+  char wifi_key[256];
+  bool wifi_on;
+
+  char bt_display_name[256];
+  bool bt_on;
+
+  // UI And Stuff
+  byte led_brightness;
+
+  // Server
+  int websocket_port;
+
+  // Orgasms and Stuff
+  byte motor_max_speed;
+} extern Config;
 #endif
