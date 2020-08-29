@@ -1,10 +1,22 @@
 #include "../include/Hardware.h"
 
+#include <Wire.h>
+
 namespace Hardware {
   bool initialize() {
     initializeButtons();
     initializeEncoder();
     initializeLEDs();
+
+    pinMode(RJ_LED_1_PIN, OUTPUT);
+    pinMode(RJ_LED_2_PIN, OUTPUT);
+    digitalWrite(RJ_LED_1_PIN, HIGH);
+    digitalWrite(RJ_LED_2_PIN, HIGH);
+
+    if (!Wire.begin()) {
+      Serial.println("Couldn't initialize I2C");
+      while (1);
+    }
 
     return true;
   }
@@ -21,6 +33,11 @@ namespace Hardware {
     if (count != encoderCount) {
       Serial.println("Encoder count = " + String(count));
       encoderCount = count;
+
+      // TODO move to its own thing
+      Wire.beginTransmission(0x2F);
+      Wire.write((byte)count / 2);
+      Wire.endTransmission();
     }
 
     analogWrite(ENCODER_RD_PIN, encoderColor.r);
@@ -32,8 +49,16 @@ namespace Hardware {
     leds[i] = color;
   }
 
+  void setEncoderColor(CRGB color) {
+    analogWrite(ENCODER_RD_PIN, color.r);
+    analogWrite(ENCODER_GR_PIN, color.g);
+    analogWrite(ENCODER_BL_PIN, color.b);
+  }
+
   void ledShow() {
+#ifdef LED_PIN
     FastLED.show();
+#endif
   }
 
   namespace {
@@ -68,6 +93,7 @@ namespace Hardware {
     }
 
     void initializeLEDs() {
+#ifdef LED_PIN
       pinMode(LED_PIN, OUTPUT);
 
       FastLED.addLeds<WS2812B, LED_PIN, GRB>(leds, LED_COUNT);
@@ -75,6 +101,7 @@ namespace Hardware {
         leds[i] = CRGB::Black;
       }
       FastLED.show();
+#endif
     }
   }
 }

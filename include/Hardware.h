@@ -24,7 +24,9 @@ namespace Hardware {
 
     void initializeLEDs();
 
+#ifdef LED_COUNT
     CRGB leds[LED_COUNT];
+#endif
     CRGB encoderColor;
 
     OneButton Key1(KEY_1_PIN, true, false);

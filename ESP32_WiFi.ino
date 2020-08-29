@@ -30,9 +30,6 @@
 #define MODE_AUTO 0
 #define MODE_MANUAL 1
 
-// GPIO
-#define BUTT_PIN 34
-
 #define WINDOW_SIZE 5
 int RA_Index = 0;
 int RA_Value = 0;
@@ -346,6 +343,8 @@ void setup() {
     Serial.println("Now Discoverable!");
     BT.advertise();
   }
+
+  Hardware::setEncoderColor(CRGB::White);
 }
 
 int32_t encoderCount = 0;
