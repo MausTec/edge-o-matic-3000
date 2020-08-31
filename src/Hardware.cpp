@@ -65,15 +65,15 @@ namespace Hardware {
     void initializeButtons() {
 
       Key1.attachClick([]() {
-        Serial.println("Key 1 Press!");
+        UI.onKeyPress(0);
       });
 
       Key2.attachClick([]() {
-        Serial.println("Key 2 Press!");
+        UI.onKeyPress(1);
       });
 
       Key3.attachClick([]() {
-        Serial.println("Key 3 Press!");
+        UI.onKeyPress(2);
       });
     }
 

@@ -4,6 +4,8 @@
 #include "arduino.h"
 #include "../config.h"
 
+#include "UserInterface.h"
+
 #include <FastLED.h>
 #include <OneButton.h>
 #include <ESP32Encoder.h>

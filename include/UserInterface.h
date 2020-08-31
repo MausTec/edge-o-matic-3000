@@ -10,7 +10,20 @@
 #define CHART_END_X (SCREEN_WIDTH)
 #define CHART_WIDTH (CHART_END_X - CHART_START_X)
 
+#define BUTTON_HEIGHT 8
+#define BUTTON_WIDTH ((SCREEN_WIDTH / 3) + 1)
+#define BUTTON_START_Y (SCREEN_HEIGHT - BUTTON_HEIGHT)
+
 #include <Adafruit_SSD1306.h>
+
+typedef void (*ButtonCallback)(void);
+typedef void (*RotaryCallback)(byte count);
+
+typedef struct {
+  bool show = false;
+  char text[7] = "";
+  ButtonCallback fn = nullptr;
+} UIButton;
 
 class UserInterface {
 public:
@@ -33,12 +46,23 @@ public:
   void drawWifiIcon(byte strength);
   void drawSdIcon(byte status);
 
+  // Buttons
+  void clearButtons();
+  void setButton(byte i, char* text, ButtonCallback fn);
+  void drawButtons();
+  void onKeyPress(byte i);
+
 private:
   Adafruit_SSD1306* display;
 
   // Chart Data:
   int chartReadings[2][CHART_WIDTH] = {{0}, {0}};
   uint8_t chartCursor[2] = {0,0};
+
+  // Buttons
+  UIButton buttons[3];
 };
+
+extern UserInterface UI;
 
 #endif

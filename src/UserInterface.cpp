@@ -47,6 +47,39 @@ void UserInterface::drawChartAxes() {
   }
 }
 
+void UserInterface::clearButtons() {
+  for (int i = 0; i < 3; i++) {
+    buttons[i].show = false;
+    buttons[i].text[0] = 0;
+    buttons[i].fn = nullptr;
+  }
+}
+
+void UserInterface::setButton(byte i, char *text, ButtonCallback fn) {
+  strcpy(buttons[i].text, text);
+  buttons[i].fn = fn;
+  buttons[i].show = true;
+}
+
+void UserInterface::drawButtons() {
+  for (int i = 0; i < 3; i++) {
+    UIButton b = buttons[i];
+    if (b.show) {
+      this->display->fillRect((i * BUTTON_WIDTH) + i, BUTTON_START_Y, BUTTON_WIDTH, BUTTON_HEIGHT, SSD1306_WHITE);
+      this->display->setCursor((i * BUTTON_WIDTH) + i + 1, BUTTON_START_Y + 1);
+      this->display->setTextColor(SSD1306_BLACK, SSD1306_WHITE);
+      this->display->print(b.text);
+    }
+  }
+}
+
+void UserInterface::onKeyPress(byte i) {
+  ButtonCallback cb = buttons[i].fn;
+  if (cb != nullptr) {
+    cb();
+  }
+}
+
 void UserInterface::drawChart(int peakLimit = 600) {
   // Clear Chart
   this->display->fillRect(

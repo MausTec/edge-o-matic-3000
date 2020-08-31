@@ -309,6 +309,8 @@ void setup() {
   // Setup Hardware
   setupHardware();
 
+  pinMode(MOT_PWM_PIN, OUTPUT);
+
   // Setup SD, which loads our config
   resetSD();
 
@@ -424,13 +426,24 @@ void loop() {
     Hardware::ledShow();
 
     // Update Counts
-    char status[20] = "";
+    char status[7] = "";
     float motor_int = floor(max(motor_speed, (float)0.0));
     uint8_t motor = (motor_int / 255) * 100;
     uint8_t stat_a = ((float)arousal / peak_limit) * 100;
-    sprintf(status, "M:%03d%% P:%04d A:%03d%%", motor, RA_Averaged, stat_a);
-    display.setCursor(8, SCREEN_HEIGHT - 7);
-    display.print(status);
+
+    sprintf(status, "M:%03d%%", motor);
+    UI.setButton(0, status, []() {
+      Serial.println("BTN1");
+    });
+
+    sprintf(status, "P:%04d", RA_Averaged);
+    UI.setButton(1, status, nullptr);
+
+    sprintf(status, "A:%03d%%", stat_a);
+    UI.setButton(2, status, nullptr);
+//    display.setCursor(8, SCREEN_HEIGHT - 16);
+//    display.print(status);
+    UI.drawButtons();
 
     // Update Icons
     uint8_t wifiStrength;
@@ -450,11 +463,14 @@ void loop() {
     UI.drawWifiIcon(wifiStrength);
 
     // Update Chart
-    UI.setMotorSpeed(motor);
+//    UI.setMotorSpeed(motor);
     UI.addChartReading(0, RA_Averaged);
     UI.addChartReading(1, arousal);
     UI.drawChart(peak_limit);
     UI.render();
+
+    // Output Motor Speed
+    analogWrite(MOT_PWM_PIN, motor);
 
     if (webSocket != nullptr) {
       // Serialize Data
