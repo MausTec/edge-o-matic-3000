@@ -398,17 +398,21 @@ void loop() {
     // Ramp Motor:
     // make this a signed value and use negative values to control off delay.
     float motor_increment = ((float)motor_max / (30.0 * (float)ramp_time_s));
-    
-    if (arousal > peak_limit) {
-      motor_speed = -0.5 * (float)ramp_time_s * 30.0 * motor_increment;
-      UI.drawStatus("STOPPED!");
-    } else if (motor_speed < 255) {
-      if (motor_speed > 0) {
-        UI.drawStatus("Ramping up...");
+
+    if (mode == MODE_AUTO) {
+      if (arousal > peak_limit) {
+        motor_speed = min(-255.0, -0.5f * (float) ramp_time_s * 30.0 * motor_increment);
+        UI.drawStatus("STOPPED!");
+      } else if (motor_speed < 255) {
+        if (motor_speed > 0) {
+          UI.drawStatus("Auto Edge");
+        }
+        motor_speed += motor_increment;
+      } else {
+        UI.drawStatus("Auto Edge");
       }
-      motor_speed += motor_increment;
-    } else {
-      UI.drawStatus("Sensing Orgasm...");
+    } else if (mode == MODE_MANUAL) {
+      UI.drawStatus("MANUAL");
     }
 
     // Update LEDs
@@ -433,14 +437,29 @@ void loop() {
 
     sprintf(status, "M:%03d%%", motor);
     UI.setButton(0, status, []() {
-      Serial.println("BTN1");
+      Serial.println("Mode: Manual");
+      mode = MODE_MANUAL;
+      motor_speed = 0;
+      Hardware::clearEncoderCallbacks();
+      Hardware::setEncoderChange([](int c) {
+        motor_speed += c;
+      });
     });
 
     sprintf(status, "P:%04d", RA_Averaged);
-    UI.setButton(1, status, nullptr);
+    UI.setButton(1, status, []() {
+      Serial.println("Mode: Sensitivity");
+    });
 
     sprintf(status, "A:%03d%%", stat_a);
-    UI.setButton(2, status, nullptr);
+    UI.setButton(2, status, []() {
+      Serial.println("Mode: Automatic");
+      mode = MODE_AUTO;
+      Hardware::clearEncoderCallbacks();
+      Hardware::setEncoderChange([](int c) {
+        peak_limit += c;
+      });
+    });
 //    display.setCursor(8, SCREEN_HEIGHT - 16);
 //    display.print(status);
     UI.drawButtons();
@@ -464,13 +483,19 @@ void loop() {
 
     // Update Chart
 //    UI.setMotorSpeed(motor);
-    UI.addChartReading(0, RA_Averaged);
-    UI.addChartReading(1, arousal);
-    UI.drawChart(peak_limit);
+//    UI.addChartReading(0, RA_Averaged);
+//    UI.addChartReading(1, arousal);
+//    UI.drawChart(peak_limit);
     UI.render();
 
     // Output Motor Speed
-    analogWrite(MOT_PWM_PIN, motor);
+    if (motor_speed <= 0) {
+      digitalWrite(MOT_PWM_PIN, LOW);
+    } else if (motor_speed >= 255) {
+      digitalWrite(MOT_PWM_PIN, HIGH);
+    } else {
+      analogWrite(MOT_PWM_PIN, motor_speed);
+    }
 
     if (webSocket != nullptr) {
       // Serialize Data

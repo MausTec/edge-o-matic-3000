@@ -21,6 +21,24 @@ namespace Hardware {
     return true;
   }
 
+  void clearEncoderCallbacks() {
+    onEncoderChange = nullptr;
+    onEncoderDown = nullptr;
+    onEncoderUp = nullptr;
+  }
+
+  void setEncoderChange(RotaryCallback fn) {
+    onEncoderChange = fn;
+  }
+
+  void setEncoderDown(RotaryCallback fn) {
+    onEncoderDown = fn;
+  }
+
+  void setEncoderUp(RotaryCallback fn) {
+    onEncoderUp = fn;
+  }
+
   void tick() {
     Key1.tick();
     Key2.tick();
@@ -32,12 +50,24 @@ namespace Hardware {
     int32_t count = Encoder.getCount();
     if (count != encoderCount) {
       Serial.println("Encoder count = " + String(count));
-      encoderCount = count;
 
       // TODO move to its own thing
-      Wire.beginTransmission(0x2F);
-      Wire.write((byte)count / 2);
-      Wire.endTransmission();
+//      Wire.beginTransmission(0x2F);
+//      Wire.write((byte)count / 2);
+//      Wire.endTransmission();
+      if (onEncoderChange != nullptr) {
+        onEncoderChange(count - encoderCount);
+      }
+
+      if (onEncoderUp != nullptr && count > encoderCount) {
+        onEncoderUp(count - encoderCount);
+      }
+
+      if (onEncoderDown != nullptr && count < encoderCount) {
+        onEncoderDown(encoderCount - count);
+      }
+
+      encoderCount = count;
     }
 
     analogWrite(ENCODER_RD_PIN, encoderColor.r);

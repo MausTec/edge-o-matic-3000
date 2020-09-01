@@ -20,6 +20,7 @@ bool UserInterface::begin() {
 void UserInterface::drawStatus(const char *status) {
   this->display->fillRect(0, 0, SCREEN_WIDTH - 18, 10, SSD1306_BLACK);
   this->display->setCursor(0,0);
+  this->display->setTextColor(SSD1306_WHITE, SSD1306_BLACK);
   this->display->print(status);
 }
 
@@ -32,7 +33,7 @@ void UserInterface::drawChartAxes() {
   int yInterval = chartHeight / LED_COUNT + 1;
 
   // Speed Meter
-  this->display->drawRect(0, 10, 4, SCREEN_HEIGHT - 10, SSD1306_WHITE);
+//  this->display->drawRect(0, 10, 4, SCREEN_HEIGHT - 10, SSD1306_WHITE);
 
   // Y-axis
   this->display->drawLine(CHART_START_X - 1, CHART_START_Y, CHART_START_X - 1, CHART_END_Y, SSD1306_WHITE);

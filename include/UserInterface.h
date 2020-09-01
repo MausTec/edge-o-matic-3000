@@ -17,7 +17,7 @@
 #include <Adafruit_SSD1306.h>
 
 typedef void (*ButtonCallback)(void);
-typedef void (*RotaryCallback)(byte count);
+typedef void (*RotaryCallback)(int count);
 
 typedef struct {
   bool show = false;
