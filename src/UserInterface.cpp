@@ -149,6 +149,62 @@ void UserInterface::addChartReading(int index, int value) {
   this->chartReadings[index][this->chartCursor[index]] = value;
 }
 
+void UserInterface::fadeTo(byte color) {
+  for (byte i = 0; i < SCREEN_WIDTH; i+=4) {
+    for (byte j = 0; j < SCREEN_HEIGHT; j+=4) {
+      this->display->drawPixel(i, j, color);
+    }
+  }
+  this->display->display();
+  delay(50);
+  for (byte i = 2; i < SCREEN_WIDTH; i+=4) {
+    for (byte j = 2; j < SCREEN_HEIGHT; j+=4) {
+      this->display->drawPixel(i, j, color);
+    }
+  }
+  this->display->display();
+  delay(50);
+  for (byte i = 0; i < SCREEN_WIDTH; i+=4) {
+    for (byte j = 2; j < SCREEN_HEIGHT; j+=4) {
+      this->display->drawPixel(i, j, color);
+    }
+  }
+  this->display->display();
+  delay(100);
+  for (byte i = 2; i < SCREEN_WIDTH; i+=4) {
+    for (byte j = 0; j < SCREEN_HEIGHT; j+=4) {
+      this->display->drawPixel(i, j, color);
+    }
+  }
+  this->display->display();
+  delay(100);
+  for (byte i = 1; i < SCREEN_WIDTH; i+=2) {
+    for (byte j = 1; j < SCREEN_HEIGHT; j+=2) {
+      this->display->drawPixel(i, j, color);
+    }
+  }
+  this->display->display();
+  delay(125);
+  for (byte i = 0; i < SCREEN_WIDTH; i+=2) {
+    for (byte j = 1; j < SCREEN_HEIGHT; j+=2) {
+      this->display->drawPixel(i, j, color);
+    }
+  }
+  this->display->display();
+  delay(125);
+  for (byte i = 1; i < SCREEN_WIDTH; i+=2) {
+    for (byte j = 0; j < SCREEN_HEIGHT; j+=2) {
+      this->display->drawPixel(i, j, color);
+    }
+  }
+  this->display->display();
+}
+
+void UserInterface::clear() {
+  this->display->fillScreen(SSD1306_BLACK);
+  this->display->display();
+}
+
 void UserInterface::render() {
   this->display->display();
 }

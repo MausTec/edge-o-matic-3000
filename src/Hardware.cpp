@@ -51,10 +51,6 @@ namespace Hardware {
     if (count != encoderCount) {
       Serial.println("Encoder count = " + String(count));
 
-      // TODO move to its own thing
-//      Wire.beginTransmission(0x2F);
-//      Wire.write((byte)count / 2);
-//      Wire.endTransmission();
       if (onEncoderChange != nullptr) {
         onEncoderChange(count - encoderCount);
       }
@@ -89,6 +85,12 @@ namespace Hardware {
 #ifdef LED_PIN
     FastLED.show();
 #endif
+  }
+
+  void setPressureSensitivity(byte value) {
+    Wire.beginTransmission(0x2F);
+    Wire.write((byte)value / 2);
+    Wire.endTransmission();
   }
 
   namespace {

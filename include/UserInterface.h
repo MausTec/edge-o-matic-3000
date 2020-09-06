@@ -40,6 +40,8 @@ public:
   void setMotorSpeed(uint8_t perc);
 
   // Render Controls
+  void fadeTo(byte color = SSD1306_BLACK);
+  void clear();
   void render();
 
   // Icons
@@ -52,9 +54,9 @@ public:
   void drawButtons();
   void onKeyPress(byte i);
 
-private:
   Adafruit_SSD1306* display;
 
+private:
   // Chart Data:
   int chartReadings[2][CHART_WIDTH] = {{0}, {0}};
   uint8_t chartCursor[2] = {0,0};

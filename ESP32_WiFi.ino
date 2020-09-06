@@ -19,6 +19,7 @@
 #include "include/Hardware.h"
 #include "include/UserInterface.h"
 #include "include/BluetoothServer.h"
+#include "include/Page.h"
 
 // For the Butt Device:
 // MotorControl
@@ -294,11 +295,6 @@ void setupHardware() {
   if(!UI.begin()) {
     Serial.println("SSD1306 allocation failed");
     for(;;){}
-  } else {
-    UI.drawStatus("Starting...");
-    UI.drawChartAxes();
-    UI.drawWifiIcon(0);
-    UI.render();
   }
 }
 
@@ -309,10 +305,16 @@ void setup() {
   // Setup Hardware
   setupHardware();
 
+  // Go to the splash page:
+  Page::Go(&DebugPage);
+
   pinMode(MOT_PWM_PIN, OUTPUT);
 
   // Setup SD, which loads our config
   resetSD();
+
+  UI.drawWifiIcon(0);
+  UI.render();
 
   // Initialize WiFi
   if (Config.wifi_on) {
@@ -329,9 +331,6 @@ void setup() {
     Serial.print("My IP address: ");
     Serial.println(WiFi.localIP());
 
-    UI.drawStatus("Connected!");
-    UI.render();
-
     // Start WebSocket server and assign callback
     webSocket = new WebSocketsServer(Config.websocket_port);
     webSocket->begin();
@@ -347,6 +346,10 @@ void setup() {
   }
 
   Hardware::setEncoderColor(CRGB::White);
+
+  // I'm always one for the dramatics:
+  delay(3000);
+  UI.fadeTo();
 }
 
 int32_t encoderCount = 0;
@@ -357,6 +360,8 @@ void loop() {
   // Look for and handle WebSocket data
   if (webSocket != nullptr)
     webSocket->loop();
+
+  return;
 
   static long lastTick = 0;
   static long lastStatusTick = 0;

@@ -26,6 +26,8 @@ namespace Hardware {
   void setEncoderUp(RotaryCallback fn);
   void setEncoderDown(RotaryCallback fn);
 
+  void setPressureSensitivity(byte value);
+
   namespace {
     void initializeEncoder();
 
