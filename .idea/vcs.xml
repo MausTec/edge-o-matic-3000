@@ -2,5 +2,27 @@
 <project version="4">
   <component name="VcsDirectoryMappings">
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/esp-idf" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/esp-idf/components/asio/asio" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/esp-idf/components/aws_iot/aws-iot-device-sdk-embedded-C" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/esp-idf/components/bt/lib" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/esp-idf/components/coap/libcoap" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/esp-idf/components/esp32/lib" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/esp-idf/components/esptool_py/esptool" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/esp-idf/components/expat/expat" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/esp-idf/components/json/cJSON" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/esp-idf/components/libsodium/libsodium" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/esp-idf/components/lwip/lwip" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/esp-idf/components/mbedtls/mbedtls" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/esp-idf/components/micro-ecc/micro-ecc" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/esp-idf/components/mqtt/esp-mqtt" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/esp-idf/components/nghttp/nghttp2" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/esp-idf/components/nghttp/nghttp2/third-party/mruby" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/esp-idf/components/nghttp/nghttp2/third-party/neverbleed" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/esp-idf/components/nimble/nimble" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/esp-idf/components/protobuf-c/protobuf-c" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/esp-idf/components/spiffs/spiffs" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/esp-idf/components/unity/unity" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/esp-idf/examples/build_system/cmake/import_lib/main/lib/tinyxml2" vcs="Git" />
   </component>
 </project>

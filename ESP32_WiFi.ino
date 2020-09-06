@@ -513,3 +513,17 @@ void loop() {
     }
   }
 }
+
+// Entrypoints:
+
+void app_main() {
+  // esp32 entry
+  setup();
+  while(1) loop();
+}
+
+int main(void) {
+  // cpp entry
+  setup();
+  while(1) loop();
+}
