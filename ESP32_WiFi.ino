@@ -20,6 +20,7 @@
 #include "include/UserInterface.h"
 #include "include/BluetoothServer.h"
 #include "include/Page.h"
+#include "include/RunningAverage.h"
 
 // For the Butt Device:
 // MotorControl
@@ -32,11 +33,6 @@
 #define MODE_MANUAL 1
 
 #define WINDOW_SIZE 5
-int RA_Index = 0;
-int RA_Value = 0;
-int RA_Sum = 0;
-int RA_Readings[WINDOW_SIZE] = {0};
-int RA_Averaged = 0;
 
 uint8_t LED_Brightness = 13;
 
@@ -47,11 +43,10 @@ Adafruit_SSD1306 display(128, 64, &SPI, OLED_DC, OLED_RESET, OLED_CS);
 UserInterface UI(&display);
 
 BluetoothServer BT;
-
+RunningAverage PressureAverage;
 float arousal = 0.0;
 
 // Globals
-ConfigStruct Config;
 WebSocketsServer* webSocket; // This is now a pointer, because apparently there is no default constructor and
                              // it *must* be initialized with a port, which we don't know until config load.
 uint8_t last_connection;
@@ -218,43 +213,6 @@ void printDirectory(File dir, int numTabs) {
   }
 }
 
-void loadConfigFromSd() {
-  StaticJsonDocument<512> doc;
-
-  if (!SD.exists(CONFIG_FILENAME)) {
-    Serial.println("Couldn't find config.json on your SD card!");
-    File root = SD.open("/");
-    printDirectory(root, 0);
-  } else {
-    File configFile = SD.open(CONFIG_FILENAME);
-    DeserializationError e = deserializeJson(doc, configFile);
-
-    if (e) {
-      Serial.println(F("Failed to deserialize JSON, using default config!"));
-      Serial.println(F("^-- This means no WiFi. Please ensure your SD card has config.json present."));
-    }
-  }
-
-  // Copy WiFi Settings
-  strlcpy(Config.wifi_ssid, doc["wifi_ssid"] | "", sizeof(Config.wifi_ssid));
-  strlcpy(Config.wifi_key, doc["wifi_key"] | "", sizeof(Config.wifi_key));
-  Config.wifi_on = doc["wifi_on"] | false;
-
-  // Copy Bluetooth Settings
-  strlcpy(Config.bt_display_name, doc["bt_display_name"] | "", sizeof(Config.bt_display_name));
-  Config.bt_on = doc["bt_on"] | false;
-
-  // Copy Network Settings
-  Config.websocket_port = doc["websocket_port"] | 80;
-
-  // Copy UI Settings
-  Config.led_brightness = doc["led_brightness"] | 128;
-  Config.screen_dim_seconds = doc["screen_dim_seconds"] | 10;
-
-  // Copy Orgasm Settings
-  Config.motor_max_speed = doc["motor_max_speed"] | 128;
-}
-
 void resetSD() {
   // SD
   if(!SD.begin()) {
@@ -354,8 +312,6 @@ void setup() {
   Page::Go(&RunGraphPage);
 }
 
-int32_t encoderCount = 0;
-
 void loop() {
   Hardware::tick();
 
@@ -369,6 +325,8 @@ void loop() {
   static uint16_t last_value = 0;
   static uint16_t peak_start = 0;
 
+  long pressure_value;
+
   // Periodically send out WiFi status:
   if (millis() - lastStatusTick > 1000 * 10) {
     lastStatusTick = millis();
@@ -379,12 +337,9 @@ void loop() {
     lastTick = millis();
 
     // Calculate Value
-    RA_Sum = RA_Sum - RA_Readings[RA_Index];
-    RA_Value = analogRead(BUTT_PIN);
-    RA_Readings[RA_Index] = RA_Value;
-    RA_Sum = RA_Sum + RA_Value;
-    RA_Index = (RA_Index + 1) % WINDOW_SIZE;
-    RA_Averaged = RA_Sum / WINDOW_SIZE;
+    pressure_value = analogRead(BUTT_PIN);
+    PressureAverage.addValue(pressure_value);
+    long RA_Averaged = PressureAverage.getAverage();
 
     // Calculate Arousal
     if (RA_Averaged < last_value) {
@@ -491,7 +446,7 @@ void loop() {
     if (webSocket != nullptr) {
       // Serialize Data
       StaticJsonDocument<200> doc;
-      doc["pressure"] = RA_Value;
+      doc["pressure"] = pressure_value;
       doc["pavg"] = RA_Averaged;
       doc["motor"] = (int)motor_int;
       doc["arousal"] = arousal;

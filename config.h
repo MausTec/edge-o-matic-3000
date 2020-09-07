@@ -59,5 +59,8 @@ struct ConfigStruct {
 
   // Orgasms and Stuff
   byte motor_max_speed;
+  byte pressure_smoothing;
 } extern Config;
+
+extern void loadConfigFromSd();
 #endif
