@@ -3,3 +3,5 @@
 
 tmp/*
 !tmp/.keep
+
+cmake-build-debug/
