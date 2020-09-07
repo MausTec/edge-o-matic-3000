@@ -71,14 +71,7 @@ namespace Hardware {
     motor_speed = min(max(speed, 0), 255);
 
     Serial.println("Setting motor speed: " + String(speed) + " norm: " + String(motor_speed));
-
-    if (speed <= 0) {
-      digitalWrite(MOT_PWM_PIN, LOW);
-    } else if (speed >= 255) {
-      digitalWrite(MOT_PWM_PIN, HIGH);
-    } else {
-      analogWrite(MOT_PWM_PIN, speed);
-    }
+    analogWrite(MOT_PWM_PIN, motor_speed);
   }
 
   void changeMotorSpeed(int diff) {
