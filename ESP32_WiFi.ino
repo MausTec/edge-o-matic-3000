@@ -21,6 +21,7 @@
 #include "include/BluetoothServer.h"
 #include "include/Page.h"
 #include "include/RunningAverage.h"
+#include "include/Console.h"
 
 // For the Butt Device:
 // MotorControl
@@ -313,6 +314,8 @@ void setup() {
 }
 
 void loop() {
+  Console::loop();
+
   Hardware::tick();
 
   // Look for and handle WebSocket data
