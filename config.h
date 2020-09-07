@@ -52,6 +52,7 @@ struct ConfigStruct {
 
   // UI And Stuff
   byte led_brightness;
+  unsigned long screen_dim_seconds;
 
   // Server
   int websocket_port;

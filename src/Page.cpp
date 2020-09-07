@@ -28,7 +28,7 @@ void Page::GoBack() {
 }
 
 void Page::Rerender() {
-  UI.clear();
+  UI.clear(false);
   if (currentPage != nullptr) {
     currentPage->Render();
   }

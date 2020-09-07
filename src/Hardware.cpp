@@ -31,7 +31,7 @@ namespace Hardware {
     // Debug Encoder:
     int32_t count = Encoder.getCount();
     if (count != encoderCount) {
-      Serial.println("Encoder count = " + String(count));
+      idle_since_ms = millis();
       UI.onEncoderChange(count - encoderCount);
       encoderCount = count;
     }
@@ -39,6 +39,20 @@ namespace Hardware {
     analogWrite(ENCODER_RD_PIN, encoderColor.r);
     analogWrite(ENCODER_GR_PIN, encoderColor.g);
     analogWrite(ENCODER_BL_PIN, encoderColor.b);
+
+    if (Config.screen_dim_seconds > 0) {
+      if ((millis() - idle_since_ms) > Config.screen_dim_seconds * 1000) {
+        if (!idle) {
+          UI.display->dim(true);
+          idle = true;
+        }
+      } else {
+        if (idle) {
+          UI.display->dim(false);
+          idle = false;
+        }
+      }
+    }
   }
 
   void setLedColor(byte i, CRGB color) {
@@ -67,14 +81,17 @@ namespace Hardware {
     void initializeButtons() {
 
       Key1.attachClick([]() {
+        idle_since_ms = millis();
         UI.onKeyPress(0);
       });
 
       Key2.attachClick([]() {
+        idle_since_ms = millis();
         UI.onKeyPress(1);
       });
 
       Key3.attachClick([]() {
+        idle_since_ms = millis();
         UI.onKeyPress(2);
       });
     }
@@ -90,6 +107,7 @@ namespace Hardware {
       encoderCount = 128;
 
       EncoderSw.attachClick([]() {
+        idle_since_ms = millis();
         UI.onKeyPress(3);
       });
     }

@@ -6,5 +6,6 @@
   "bt_on": true,
   "led_brightness": 128,
   "websocket_port": 80,
-  "motor_max_speed": 128
+  "motor_max_speed": 128,
+  "screen_dim_seconds": 10
 }

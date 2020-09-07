@@ -41,7 +41,7 @@ public:
 
   // Render Controls
   void fadeTo(byte color = SSD1306_BLACK);
-  void clear();
+  void clear(bool render = true);
   void render();
 
   // Icons

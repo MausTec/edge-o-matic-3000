@@ -28,6 +28,9 @@ namespace Hardware {
 
     void initializeLEDs();
 
+    bool idle = false;
+    long idle_since_ms = 0;
+
 #ifdef LED_COUNT
     CRGB leds[LED_COUNT];
 #endif

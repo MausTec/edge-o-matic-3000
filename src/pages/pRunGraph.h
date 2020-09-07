@@ -3,21 +3,37 @@
 
 #include "../../include/Page.h"
 
+enum RGView {
+    GraphView,
+    StatsView
+};
+
 class pRunGraph : public Page {
+  RGView view = GraphView;
+
   void Enter() override {
-    UI.setButton(0, "STATS");
-    UI.setButton(1, "MENU");
-    UI.setButton(2, "MANUAL");
+
   }
 
   void Render() override {
+    if (view == StatsView) {
+      UI.setButton(0, "CHART");
+    } else {
+      UI.setButton(0, "STATS");
+      UI.drawChartAxes();
+    }
+
+    UI.setButton(1, "MENU");
+    UI.setButton(2, "MANUAL");
+
     UI.drawButtons();
-    UI.drawChartAxes();
     UI.render();
   }
 
   void Loop() override {
-    UI.drawChart(Config.motor_max_speed);
+    if (view == GraphView) {
+      UI.drawChart(Config.motor_max_speed);
+    }
   }
 
   void onKeyPress(byte i) {
@@ -25,10 +41,15 @@ class pRunGraph : public Page {
 
     switch(i) {
       case 0:
-        // stats <-> graph
+        if (view == GraphView) {
+          view = StatsView;
+        } else {
+          view = GraphView;
+        }
+        Rerender();
         break;
       case 1:
-        // menu
+        UI.display->dim(true);
         break;
       case 2:
         // manual <-> automatic

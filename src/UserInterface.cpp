@@ -217,9 +217,11 @@ void UserInterface::fadeTo(byte color) {
   this->display->display();
 }
 
-void UserInterface::clear() {
-  this->display->fillScreen(SSD1306_BLACK);
-  this->display->display();
+void UserInterface::clear(bool render) {
+  if (render)
+    this->display->fillScreen(SSD1306_BLACK);
+  else
+    this->display->fillRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, SSD1306_BLACK);
 }
 
 void UserInterface::render() {

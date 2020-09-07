@@ -249,6 +249,7 @@ void loadConfigFromSd() {
 
   // Copy UI Settings
   Config.led_brightness = doc["led_brightness"] | 128;
+  Config.screen_dim_seconds = doc["screen_dim_seconds"] | 10;
 
   // Copy Orgasm Settings
   Config.motor_max_speed = doc["motor_max_speed"] | 128;
