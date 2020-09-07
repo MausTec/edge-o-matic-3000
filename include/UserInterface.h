@@ -3,16 +3,16 @@
 
 #include "../config.h"
 
-#define CHART_START_Y 10
-#define CHART_END_Y (SCREEN_HEIGHT - 11)
-#define CHART_HEIGHT (CHART_END_Y - CHART_START_Y)
-#define CHART_START_X 9
-#define CHART_END_X (SCREEN_WIDTH)
-#define CHART_WIDTH (CHART_END_X - CHART_START_X)
-
 #define BUTTON_HEIGHT 8
 #define BUTTON_WIDTH ((SCREEN_WIDTH / 3) + 1)
 #define BUTTON_START_Y (SCREEN_HEIGHT - BUTTON_HEIGHT)
+
+#define CHART_START_Y 20
+#define CHART_END_Y (SCREEN_HEIGHT - BUTTON_HEIGHT - 2)
+#define CHART_HEIGHT (CHART_END_Y - CHART_START_Y)
+#define CHART_START_X 2
+#define CHART_END_X (SCREEN_WIDTH)
+#define CHART_WIDTH (CHART_END_X - CHART_START_X)
 
 #include <Adafruit_SSD1306.h>
 
@@ -50,9 +50,11 @@ public:
 
   // Buttons
   void clearButtons();
-  void setButton(byte i, char* text, ButtonCallback fn);
+  void clearButton(byte i);
+  void setButton(byte i, char* text, ButtonCallback fn = nullptr);
   void drawButtons();
   void onKeyPress(byte i);
+  void onEncoderChange(int value);
 
   Adafruit_SSD1306* display;
 

@@ -1,6 +1,8 @@
 #include "../include/UserInterface.h"
 #include "../include/Icons.h"
 
+#include "../include/Page.h"
+
 UserInterface::UserInterface(Adafruit_SSD1306 *display) {
   this->display = display;
 }
@@ -48,17 +50,22 @@ void UserInterface::drawChartAxes() {
   }
 }
 
+void UserInterface::clearButton(byte i) {
+  buttons[i].show = false;
+  buttons[i].text[0] = 0;
+  buttons[i].fn = nullptr;
+}
+
 void UserInterface::clearButtons() {
   for (int i = 0; i < 3; i++) {
-    buttons[i].show = false;
-    buttons[i].text[0] = 0;
-    buttons[i].fn = nullptr;
+    clearButton(i);
   }
 }
 
 void UserInterface::setButton(byte i, char *text, ButtonCallback fn) {
   strcpy(buttons[i].text, text);
-  buttons[i].fn = fn;
+  if (fn != nullptr)
+    buttons[i].fn = fn;
   buttons[i].show = true;
 }
 
@@ -78,6 +85,16 @@ void UserInterface::onKeyPress(byte i) {
   ButtonCallback cb = buttons[i].fn;
   if (cb != nullptr) {
     cb();
+  }
+
+  if (Page::currentPage != nullptr) {
+    Page::currentPage->onKeyPress(i);
+  }
+}
+
+void UserInterface::onEncoderChange(int value) {
+  if (Page::currentPage != nullptr) {
+    Page::currentPage->onEncoderChange(value);
   }
 }
 

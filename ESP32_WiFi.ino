@@ -306,7 +306,7 @@ void setup() {
   setupHardware();
 
   // Go to the splash page:
-  Page::Go(&DebugPage);
+  Page::Go(&DebugPage, false);
 
   pinMode(MOT_PWM_PIN, OUTPUT);
 
@@ -350,6 +350,7 @@ void setup() {
   // I'm always one for the dramatics:
   delay(3000);
   UI.fadeTo();
+  Page::Go(&RunGraphPage);
 }
 
 int32_t encoderCount = 0;
@@ -360,8 +361,6 @@ void loop() {
   // Look for and handle WebSocket data
   if (webSocket != nullptr)
     webSocket->loop();
-
-  return;
 
   static long lastTick = 0;
   static long lastStatusTick = 0;
@@ -410,29 +409,32 @@ void loop() {
         UI.drawStatus("STOPPED!");
       } else if (motor_speed < 255) {
         if (motor_speed > 0) {
-          UI.drawStatus("Auto Edge");
+          UI.drawStatus("Automatic");
         }
         motor_speed += motor_increment;
       } else {
-        UI.drawStatus("Auto Edge");
+        UI.drawStatus("Automatic");
       }
     } else if (mode == MODE_MANUAL) {
-      UI.drawStatus("MANUAL");
+      UI.drawStatus("Manual");
     }
 
     // Update LEDs
-    uint8_t bar = map(arousal, 0, peak_limit, 0, LED_COUNT - 1);
-    uint8_t dot = map(RA_Averaged, 0, 4096, 0, LED_COUNT - 1);
-    for (uint8_t i = 0; i < LED_COUNT; i++) {
-      if (i < bar) {
-        Hardware::setLedColor(i, CRGB(map(i, 0, LED_COUNT-1, 0, LED_Brightness), map(i, 0, LED_COUNT-1, LED_Brightness, 0), 0));
-      } else {
-        Hardware::setLedColor(i);
+    if (false) {
+      uint8_t bar = map(arousal, 0, peak_limit, 0, LED_COUNT - 1);
+      uint8_t dot = map(RA_Averaged, 0, 4096, 0, LED_COUNT - 1);
+      for (uint8_t i = 0; i < LED_COUNT; i++) {
+        if (i < bar) {
+          Hardware::setLedColor(i, CRGB(map(i, 0, LED_COUNT - 1, 0, LED_Brightness),
+                                        map(i, 0, LED_COUNT - 1, LED_Brightness, 0), 0));
+        } else {
+          Hardware::setLedColor(i);
+        }
       }
-    }
 
-    Hardware::setLedColor(dot, CRGB(LED_Brightness, 0, LED_Brightness));
-    Hardware::ledShow();
+      Hardware::setLedColor(dot, CRGB(LED_Brightness, 0, LED_Brightness));
+      Hardware::ledShow();
+    }
 
     // Update Counts
     char status[7] = "";
@@ -440,34 +442,17 @@ void loop() {
     uint8_t motor = (motor_int / 255) * 100;
     uint8_t stat_a = ((float)arousal / peak_limit) * 100;
 
+    UI.display->setCursor(0, 10);
     sprintf(status, "M:%03d%%", motor);
-    UI.setButton(0, status, []() {
-      Serial.println("Mode: Manual");
-      mode = MODE_MANUAL;
-      motor_speed = 0;
-      Hardware::clearEncoderCallbacks();
-      Hardware::setEncoderChange([](int c) {
-        motor_speed += c;
-      });
-    });
+    UI.display->print(status);
 
+    UI.display->setCursor(SCREEN_WIDTH / 3, 10);
     sprintf(status, "P:%04d", RA_Averaged);
-    UI.setButton(1, status, []() {
-      Serial.println("Mode: Sensitivity");
-    });
+    UI.display->print(status);
 
+    UI.display->setCursor(SCREEN_WIDTH / 3 * 2, 10);
     sprintf(status, "A:%03d%%", stat_a);
-    UI.setButton(2, status, []() {
-      Serial.println("Mode: Automatic");
-      mode = MODE_AUTO;
-      Hardware::clearEncoderCallbacks();
-      Hardware::setEncoderChange([](int c) {
-        peak_limit += c;
-      });
-    });
-//    display.setCursor(8, SCREEN_HEIGHT - 16);
-//    display.print(status);
-    UI.drawButtons();
+    UI.display->print(status);
 
     // Update Icons
     uint8_t wifiStrength;
@@ -488,8 +473,8 @@ void loop() {
 
     // Update Chart
 //    UI.setMotorSpeed(motor);
-//    UI.addChartReading(0, RA_Averaged);
-//    UI.addChartReading(1, arousal);
+    UI.addChartReading(0, RA_Averaged);
+    UI.addChartReading(1, arousal);
 //    UI.drawChart(peak_limit);
     UI.render();
 
@@ -517,6 +502,8 @@ void loop() {
       webSocket->sendTXT(last_connection, payload);
     }
   }
+
+  Page::DoLoop();
 }
 
 // Entrypoints:

@@ -23,11 +23,12 @@ public:
   virtual void Exit();
 
   // Event Hooks
-  virtual void onBtnPress(byte i);
-  virtual void onEncoderChange(byte value);
+  virtual void onKeyPress(byte i);
+  virtual void onEncoderChange(int diff);
+
+  static Page* currentPage;
 
 private:
-  static Page* currentPage;
   static Page* previousPage;
   static Page* previousPages[HISTORY_LENGTH];
   static size_t historyIndex;
@@ -38,5 +39,8 @@ private:
 
 #include "../src/pages/pDebug.h"
 extern pDebug DebugPage;
+
+#include "../src/pages/pRunGraph.h"
+extern pRunGraph RunGraphPage;
 
 #endif

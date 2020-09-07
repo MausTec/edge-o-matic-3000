@@ -57,11 +57,11 @@ void Page::Render() {
   // noop
 }
 
-void Page::onBtnPress(byte i) {
+void Page::onKeyPress(byte i) {
   // noop
 }
 
-void Page::onEncoderChange(byte value) {
+void Page::onEncoderChange(int diff) {
   // noop
 }
 
@@ -83,3 +83,4 @@ Page* Page::CurrentPage() {
 
 // Instantiate UI Pages
 pDebug DebugPage = pDebug();
+pRunGraph RunGraphPage = pRunGraph();

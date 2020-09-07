@@ -13,10 +13,6 @@ class pDebug : public Page {
     UI.display->drawBitmap(0, 0, SPLASH_IMG, 128, 64, SSD1306_WHITE);
     UI.render();
   }
-
-  void onEncoderChange(byte value) override {
-    Serial.println("Debug Encoder: " + String(value));
-  }
 };
 
 #endif
