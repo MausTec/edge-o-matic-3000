@@ -18,6 +18,8 @@ namespace Hardware {
       while (1);
     }
 
+    setPressureSensitivity(Config.sensor_sensitivity);
+
     return true;
   }
 
@@ -66,7 +68,9 @@ namespace Hardware {
   }
 
   void setMotorSpeed(int speed) {
-    motor_speed = speed;
+    motor_speed = min(max(speed, 0), 255);
+
+    Serial.println("Setting motor speed: " + String(speed) + " norm: " + String(motor_speed));
 
     if (speed <= 0) {
       digitalWrite(MOT_PWM_PIN, LOW);
@@ -78,8 +82,16 @@ namespace Hardware {
   }
 
   void changeMotorSpeed(int diff) {
-    motor_speed += diff;
-    setMotorSpeed(motor_speed);
+    int new_speed = motor_speed + diff;
+    setMotorSpeed(new_speed);
+  }
+
+  int getMotorSpeed() {
+    return motor_speed;
+  }
+
+  float getMotorSpeedPercent() {
+    return (float)motor_speed / 255.0;
   }
 
   void ledShow() {
@@ -94,7 +106,7 @@ namespace Hardware {
 
   void setPressureSensitivity(byte value) {
     Wire.beginTransmission(0x2F);
-    Wire.write((byte)value / 2);
+    Wire.write((byte)(255 - value) / 2);
     Wire.endTransmission();
   }
 

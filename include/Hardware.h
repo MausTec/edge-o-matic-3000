@@ -21,6 +21,8 @@ namespace Hardware {
 
   void setMotorSpeed(int speed);
   void changeMotorSpeed(int diff);
+  int getMotorSpeed();
+  float getMotorSpeedPercent();
 
   long getPressure();
   void setPressureSensitivity(byte value);

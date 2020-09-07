@@ -14,6 +14,12 @@
 #define CHART_END_X (SCREEN_WIDTH)
 #define CHART_WIDTH (CHART_END_X - CHART_START_X)
 
+#define STATUS_SIZE 14
+
+#define WIFI_ICON_IDX 0
+#define SD_ICON_IDX 1
+#define BT_ICON_IDX 2
+
 #include <Adafruit_SSD1306.h>
 
 typedef void (*ButtonCallback)(void);
@@ -33,7 +39,7 @@ public:
   // Common Element Drawing Functions
   void drawChartAxes();
   void drawChart(int peakLimit);
-  void drawStatus(const char* status);
+  void drawStatus(const char* status = nullptr);
 
   // Chart Data
   void addChartReading(int index, int value);
@@ -47,6 +53,7 @@ public:
   // Icons
   void drawWifiIcon(byte strength);
   void drawSdIcon(byte status);
+  void drawIcons();
 
   // Buttons
   void clearButtons();
@@ -65,6 +72,10 @@ private:
 
   // Buttons
   UIButton buttons[3];
+
+  // Header Data
+  char status[STATUS_SIZE] = {0};
+  char icons[4] = {0};
 };
 
 extern UserInterface UI;

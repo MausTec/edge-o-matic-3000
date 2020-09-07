@@ -63,6 +63,8 @@ struct ConfigStruct {
   byte pressure_smoothing;
   int sensitivity_threshold;
   int motor_ramp_time_s;
+  int update_frequency_hz;
+  byte sensor_sensitivity;
 } extern Config;
 
 extern void loadConfigFromSd();

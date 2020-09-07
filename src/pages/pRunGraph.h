@@ -20,34 +20,36 @@ class pRunGraph : public Page {
   RGMode mode = Automatic;
 
   void Enter() override {
+    view = GraphView;
+    mode = Automatic;
 
+    UI.drawStatus("Automatic");
+    UI.setButton(0, "STATS");
+    UI.setButton(1, "MENU");
+    UI.setButton(2, "MANUAL");
   }
 
-  void Render() override {
+  void updateButtons() {
     if (view == StatsView) {
       UI.setButton(0, "CHART");
     } else {
       UI.setButton(0, "STATS");
-      UI.drawChartAxes();
     }
-
-    UI.setButton(1, "MENU");
 
     if (mode == Automatic) {
+      UI.drawStatus("Automatic");
       UI.setButton(2, "MANUAL");
     } else {
+      UI.drawStatus("Manual");
       UI.setButton(2, "AUTO");
     }
-
-    UI.drawButtons();
-    UI.render();
   }
 
-  void Loop() override {
+  void renderChart() {
     if (view == GraphView) {
       // Update Counts
       char status[7] = "";
-      byte motor  = OrgasmControl::getMotorSpeedPercent() * 100;
+      byte motor  = Hardware::getMotorSpeedPercent() * 100;
       byte stat_a = OrgasmControl::getArousalPercent() * 100;
 
       UI.display->setTextColor(SSD1306_WHITE, SSD1306_BLACK);
@@ -64,12 +66,34 @@ class pRunGraph : public Page {
       UI.display->print(status);
 
       // Update Chart
-      UI.addChartReading(0, OrgasmControl::getAveragePressure());
-      UI.addChartReading(1, OrgasmControl::getArousal());
       UI.drawChart(Config.sensitivity_threshold);
     }
+  }
 
+  void Render() override {
+    if (view == StatsView) {
+      UI.setButton(0, "CHART");
+    } else {
+      UI.drawChartAxes();
+      renderChart();
+    }
+
+    UI.drawIcons();
+    UI.drawStatus();
+    UI.drawButtons();
     UI.render();
+  }
+
+  void Loop() override {
+    if (view == GraphView) {
+      if (OrgasmControl::updated()) {
+        // Update Chart
+        UI.addChartReading(0, OrgasmControl::getAveragePressure());
+        UI.addChartReading(1, OrgasmControl::getArousal());
+        renderChart();
+        UI.render();
+      }
+    }
   }
 
   void onKeyPress(byte i) {
@@ -82,7 +106,6 @@ class pRunGraph : public Page {
         } else {
           view = GraphView;
         }
-        Rerender();
         break;
       case 1:
         UI.display->dim(true);
@@ -90,12 +113,16 @@ class pRunGraph : public Page {
       case 2:
         if (mode == Automatic) {
           mode = Manual;
+          OrgasmControl::controlMotor(false);
         } else {
           mode = Automatic;
+          OrgasmControl::controlMotor(true);
         }
-        Rerender();
         break;
     }
+
+    updateButtons();
+    Rerender();
   }
 
   void onEncoderChange(int diff) override {

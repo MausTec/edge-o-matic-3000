@@ -5,8 +5,6 @@
 #include "../config.h"
 #include "RunningAverage.h"
 
-#define UPDATE_FREQUENCY_MS 20 // 50 Hz, 0.020 seconds
-
 namespace OrgasmControl {
   void tick();
 
@@ -17,6 +15,7 @@ namespace OrgasmControl {
   float getMotorSpeedPercent();
   long getLastPressure();
   long getAveragePressure();
+  bool updated();
 
   // Set Controls
   void controlMotor(bool control = true);
@@ -33,7 +32,7 @@ namespace OrgasmControl {
     long peak_start = 0;
     long arousal = 0;
     float motor_speed = 0;
-
+    bool update_flag = false;
     bool control_motor = true;
 
     void updateArousal();

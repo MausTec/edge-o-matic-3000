@@ -30,16 +30,22 @@ namespace OrgasmControl {
     }
 
     void updateMotorSpeed() {
+      // Motor increment goes 0 - 100 in ramp_time_s, in steps of 1/update_fequency
       float motor_increment = (
           (float)Config.motor_max_speed /
-          (50.0 * (float)Config.motor_ramp_time_s)
+          ((float)Config.update_frequency_hz * (float)Config.motor_ramp_time_s)
       );
 
       // Ope, orgasm incoming! Stop it!
       if (arousal > Config.sensitivity_threshold) {
         // Set the motor speed to 0, but actually set it to a negative number because cooldown delay
-        motor_speed = max(-255.0f, -0.5f * (float)Config.motor_ramp_time_s * 50.0f * motor_increment);
-      } else if (motor_speed < 255) {
+        motor_speed = max(-255.0f, -0.5f *
+          (float)Config.motor_ramp_time_s *
+          (float)Config.update_frequency_hz *
+              motor_increment
+        );
+
+      } else if (motor_speed < Config.motor_max_speed) {
         motor_speed += motor_increment;
       }
 
@@ -51,10 +57,20 @@ namespace OrgasmControl {
   }
 
   void tick() {
-    if (millis() - last_update_ms > UPDATE_FREQUENCY_MS) {
+    long update_frequency_ms = (1.0f / Config.update_frequency_hz) * 1000.0f;
+
+    if (millis() - last_update_ms > update_frequency_ms) {
       updateArousal();
       updateMotorSpeed();
+      update_flag = true;
+      last_update_ms = millis();
+    } else {
+      update_flag = false;
     }
+  }
+
+  bool updated() {
+    return update_flag;
   }
 
   /**

@@ -20,10 +20,14 @@ bool UserInterface::begin() {
 }
 
 void UserInterface::drawStatus(const char *status) {
+  if (status != nullptr)
+    strlcpy(this->status, status, STATUS_SIZE);
+
+  // actually calculate ---------------\/
   this->display->fillRect(0, 0, SCREEN_WIDTH - 18, 10, SSD1306_BLACK);
   this->display->setCursor(0,0);
   this->display->setTextColor(SSD1306_WHITE, SSD1306_BLACK);
-  this->display->print(status);
+  this->display->print(this->status);
 }
 
 void UserInterface::drawChartAxes() {
@@ -229,12 +233,22 @@ void UserInterface::render() {
 }
 
 void UserInterface::drawWifiIcon(byte strength) {
+  this->icons[WIFI_ICON_IDX] = strength;
   this->display->fillRect(SCREEN_WIDTH - 8, 0, 8, 8, SSD1306_BLACK);
   this->display->drawBitmap(SCREEN_WIDTH - 8, 0, WIFI_ICON[strength], 8, 8, SSD1306_WHITE);
 }
 
 void UserInterface::drawSdIcon(byte status) {
+  this->icons[SD_ICON_IDX] = status;
   this->display->fillRect(SCREEN_WIDTH - 18, 0, 8, 8, SSD1306_BLACK);
   if (status > 0)
     this->display->drawBitmap(SCREEN_WIDTH - 18, 0, SD_ICON[status-1], 8, 8, SSD1306_WHITE);
+}
+
+/**
+ * Redraw icons from memory.
+ */
+void UserInterface::drawIcons() {
+  drawWifiIcon(icons[WIFI_ICON_IDX]);
+  drawSdIcon(icons[SD_ICON_IDX]);
 }

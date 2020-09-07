@@ -11,5 +11,7 @@
   "pressure_smoothing": 5,
   "classic_serial": true,
   "sensitivity_threshold": 600,
-  "motor_ramp_time_s": 30
+  "motor_ramp_time_s": 30,
+  "update_frequency_hz": 50,
+  "sensor_sensitivity": 64
 }
