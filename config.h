@@ -52,14 +52,17 @@ struct ConfigStruct {
 
   // UI And Stuff
   byte led_brightness;
-  unsigned long screen_dim_seconds;
+  int screen_dim_seconds;
 
   // Server
   int websocket_port;
+  bool classic_serial;
 
   // Orgasms and Stuff
   byte motor_max_speed;
   byte pressure_smoothing;
+  int sensitivity_threshold;
+  int motor_ramp_time_s;
 } extern Config;
 
 extern void loadConfigFromSd();

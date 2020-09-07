@@ -40,6 +40,7 @@ void loadConfigFromSd() {
 
   // Copy Network Settings
   Config.websocket_port = doc["websocket_port"] | 80;
+  Config.classic_serial = doc["classic_serial"] | true;
 
   // Copy UI Settings
   Config.led_brightness = doc["led_brightness"] | 128;
@@ -48,4 +49,6 @@ void loadConfigFromSd() {
   // Copy Orgasm Settings
   Config.motor_max_speed = doc["motor_max_speed"] | 128;
   Config.pressure_smoothing = doc["pressure_smoothing"] | 5;
+  Config.sensitivity_threshold = doc["sensitivity_threshold"] | 600;
+  Config.motor_ramp_time_s = doc["motor_ramp_time_s"] | 30;
 }

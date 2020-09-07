@@ -8,5 +8,8 @@
   "websocket_port": 80,
   "motor_max_speed": 128,
   "screen_dim_seconds": 10,
-  "pressure_smoothing": 5
+  "pressure_smoothing": 5,
+  "classic_serial": true,
+  "sensitivity_threshold": 600,
+  "motor_ramp_time_s": 30
 }

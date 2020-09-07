@@ -19,6 +19,10 @@ namespace Hardware {
   void setLedColor(byte i, CRGB color = CRGB::Black);
   void ledShow();
 
+  void setMotorSpeed(int speed);
+  void changeMotorSpeed(int diff);
+
+  long getPressure();
   void setPressureSensitivity(byte value);
 
   namespace {
@@ -30,6 +34,8 @@ namespace Hardware {
 
     bool idle = false;
     long idle_since_ms = 0;
+
+    int motor_speed = 0;
 
 #ifdef LED_COUNT
     CRGB leds[LED_COUNT];

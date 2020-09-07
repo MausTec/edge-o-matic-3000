@@ -65,10 +65,31 @@ namespace Hardware {
     analogWrite(ENCODER_BL_PIN, color.b);
   }
 
+  void setMotorSpeed(int speed) {
+    motor_speed = speed;
+
+    if (speed <= 0) {
+      digitalWrite(MOT_PWM_PIN, LOW);
+    } else if (speed >= 255) {
+      digitalWrite(MOT_PWM_PIN, HIGH);
+    } else {
+      analogWrite(MOT_PWM_PIN, speed);
+    }
+  }
+
+  void changeMotorSpeed(int diff) {
+    motor_speed += diff;
+    setMotorSpeed(motor_speed);
+  }
+
   void ledShow() {
 #ifdef LED_PIN
     FastLED.show();
 #endif
+  }
+
+  long getPressure() {
+    return analogRead(BUTT_PIN);
   }
 
   void setPressureSensitivity(byte value) {

@@ -22,6 +22,7 @@
 #include "include/Page.h"
 #include "include/RunningAverage.h"
 #include "include/Console.h"
+#include "include/OrgasmControl.h"
 
 // For the Butt Device:
 // MotorControl
@@ -314,21 +315,17 @@ void setup() {
 }
 
 void loop() {
-  Console::loop();
-
+  Console::loop(); // <- TODO rename to tick
   Hardware::tick();
+  OrgasmControl::tick();
 
   // Look for and handle WebSocket data
   if (webSocket != nullptr)
     webSocket->loop();
 
-  static long lastTick = 0;
   static long lastStatusTick = 0;
+  static long lastTick = 0;
   static int led_i = 0;
-  static uint16_t last_value = 0;
-  static uint16_t peak_start = 0;
-
-  long pressure_value;
 
   // Periodically send out WiFi status:
   if (millis() - lastStatusTick > 1000 * 10) {
@@ -339,79 +336,24 @@ void loop() {
   if (millis() - lastTick > 1000 / 30) {
     lastTick = millis();
 
-    // Calculate Value
-    pressure_value = analogRead(BUTT_PIN);
-    PressureAverage.addValue(pressure_value);
-    long RA_Averaged = PressureAverage.getAverage();
-
-    // Calculate Arousal
-    if (RA_Averaged < last_value) {
-      if (RA_Averaged > peak_start) {
-        if (RA_Averaged - peak_start >= peak_limit / 10) {
-          arousal += RA_Averaged - peak_start;
-        }
-      }
-      peak_start = RA_Averaged;
-    }
-
-    // Natural Arousal Decay
-    arousal *= 0.99;
-    last_value = RA_Averaged;
-
-    // Ramp Motor:
-    // make this a signed value and use negative values to control off delay.
-    float motor_increment = ((float)motor_max / (30.0 * (float)ramp_time_s));
-
-    if (mode == MODE_AUTO) {
-      if (arousal > peak_limit) {
-        motor_speed = min(-255.0, -0.5f * (float) ramp_time_s * 30.0 * motor_increment);
-        UI.drawStatus("STOPPED!");
-      } else if (motor_speed < 255) {
-        if (motor_speed > 0) {
-          UI.drawStatus("Automatic");
-        }
-        motor_speed += motor_increment;
-      } else {
-        UI.drawStatus("Automatic");
-      }
-    } else if (mode == MODE_MANUAL) {
-      UI.drawStatus("Manual");
-    }
-
     // Update LEDs
-    if (false) {
-      uint8_t bar = map(arousal, 0, peak_limit, 0, LED_COUNT - 1);
-      uint8_t dot = map(RA_Averaged, 0, 4096, 0, LED_COUNT - 1);
-      for (uint8_t i = 0; i < LED_COUNT; i++) {
-        if (i < bar) {
-          Hardware::setLedColor(i, CRGB(map(i, 0, LED_COUNT - 1, 0, LED_Brightness),
-                                        map(i, 0, LED_COUNT - 1, LED_Brightness, 0), 0));
-        } else {
-          Hardware::setLedColor(i);
-        }
-      }
+//    if (false) {
+//      uint8_t bar = map(arousal, 0, peak_limit, 0, LED_COUNT - 1);
+//      uint8_t dot = map(RA_Averaged, 0, 4096, 0, LED_COUNT - 1);
+//      for (uint8_t i = 0; i < LED_COUNT; i++) {
+//        if (i < bar) {
+//          Hardware::setLedColor(i, CRGB(map(i, 0, LED_COUNT - 1, 0, LED_Brightness),
+//                                        map(i, 0, LED_COUNT - 1, LED_Brightness, 0), 0));
+//        } else {
+//          Hardware::setLedColor(i);
+//        }
+//      }
+//
+//      Hardware::setLedColor(dot, CRGB(LED_Brightness, 0, LED_Brightness));
+//      Hardware::ledShow();
+//    }
 
-      Hardware::setLedColor(dot, CRGB(LED_Brightness, 0, LED_Brightness));
-      Hardware::ledShow();
-    }
 
-    // Update Counts
-    char status[7] = "";
-    float motor_int = floor(max(motor_speed, (float)0.0));
-    uint8_t motor = (motor_int / 255) * 100;
-    uint8_t stat_a = ((float)arousal / peak_limit) * 100;
-
-    UI.display->setCursor(0, 10);
-    sprintf(status, "M:%03d%%", motor);
-    UI.display->print(status);
-
-    UI.display->setCursor(SCREEN_WIDTH / 3, 10);
-    sprintf(status, "P:%04d", RA_Averaged);
-    UI.display->print(status);
-
-    UI.display->setCursor(SCREEN_WIDTH / 3 * 2, 10);
-    sprintf(status, "A:%03d%%", stat_a);
-    UI.display->print(status);
 
     // Update Icons
     uint8_t wifiStrength;
@@ -429,37 +371,22 @@ void loop() {
     }
 
     UI.drawWifiIcon(wifiStrength);
+//    UI.render();
 
-    // Update Chart
-//    UI.setMotorSpeed(motor);
-    UI.addChartReading(0, RA_Averaged);
-    UI.addChartReading(1, arousal);
-//    UI.drawChart(peak_limit);
-    UI.render();
-
-    // Output Motor Speed
-    if (motor_speed <= 0) {
-      digitalWrite(MOT_PWM_PIN, LOW);
-    } else if (motor_speed >= 255) {
-      digitalWrite(MOT_PWM_PIN, HIGH);
-    } else {
-      analogWrite(MOT_PWM_PIN, motor_speed);
-    }
-
-    if (webSocket != nullptr) {
-      // Serialize Data
-      StaticJsonDocument<200> doc;
-      doc["pressure"] = pressure_value;
-      doc["pavg"] = RA_Averaged;
-      doc["motor"] = (int)motor_int;
-      doc["arousal"] = arousal;
-      doc["millis"] = millis();
-
-      // Blow the Network Load
-      String payload;
-      serializeJson(doc, payload);
-      webSocket->sendTXT(last_connection, payload);
-    }
+//    if (webSocket != nullptr) {
+//      // Serialize Data
+//      StaticJsonDocument<200> doc;
+//      doc["pressure"] = pressure_value;
+//      doc["pavg"] = RA_Averaged;
+//      doc["motor"] = (int)motor_int;
+//      doc["arousal"] = arousal;
+//      doc["millis"] = millis();
+//
+//      // Blow the Network Load
+//      String payload;
+//      serializeJson(doc, payload);
+//      webSocket->sendTXT(last_connection, payload);
+//    }
   }
 
   Page::DoLoop();
