@@ -52,5 +52,5 @@ void loadConfigFromSd() {
   Config.sensitivity_threshold = doc["sensitivity_threshold"] | 600;
   Config.motor_ramp_time_s = doc["motor_ramp_time_s"] | 30;
   Config.update_frequency_hz = doc["update_frequency_hz"] | 50;
-  Config.sensor_sensitivity = doc["sensor_sensitivity"] | 64;
+  Config.sensor_sensitivity = doc["sensor_sensitivity"] | 128;
 }
