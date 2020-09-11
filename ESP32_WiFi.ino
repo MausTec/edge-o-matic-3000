@@ -23,6 +23,7 @@
 #include "include/RunningAverage.h"
 #include "include/Console.h"
 #include "include/OrgasmControl.h"
+#include "include/WiFiHelper.h"
 
 // For the Butt Device:
 // MotorControl
@@ -284,6 +285,9 @@ void setup() {
     WiFi.begin(Config.wifi_ssid, Config.wifi_key);
     while ( WiFi.status() != WL_CONNECTED ) {
       delay(500);
+      UI.display->setCursor(0,0);
+      UI.display->print(".");
+      UI.render();
       Serial.print(".");
     }
 
@@ -356,22 +360,7 @@ void loop() {
 
 
     // Update Icons
-    uint8_t wifiStrength;
-    int rssi = WiFi.RSSI();
-    if (rssi < -90) {
-      wifiStrength = 0;
-    } else if (rssi < -80) {
-      wifiStrength = 1;
-    } else if (rssi < -60) {
-      wifiStrength = 2;
-    } else if (rssi < 0) {
-      wifiStrength = 3;
-    } else {
-      wifiStrength = 0;
-    }
-
-    UI.drawWifiIcon(wifiStrength);
-//    UI.render();
+    WiFiHelper::drawSignalIcon();
 
 //    if (webSocket != nullptr) {
 //      // Serialize Data

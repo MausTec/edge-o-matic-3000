@@ -29,8 +29,8 @@
 #define RJ_LED_2_PIN    16
 
 // Encoder Connection
-#define ENCODER_A_PIN   33
-#define ENCODER_B_PIN   32
+#define ENCODER_B_PIN   33
+#define ENCODER_A_PIN   32
 #define ENCODER_SW_PIN  35
 #define ENCODER_RD_PIN  2
 #define ENCODER_GR_PIN  0

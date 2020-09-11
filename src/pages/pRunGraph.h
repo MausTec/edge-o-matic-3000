@@ -21,12 +21,11 @@ class pRunGraph : public Page {
 
   void Enter() override {
     view = GraphView;
-    mode = Automatic;
+    mode = Manual;
 
-    UI.drawStatus("Automatic");
-    UI.setButton(0, "STATS");
-    UI.setButton(1, "MENU");
-    UI.setButton(2, "MANUAL");
+    updateButtons();
+    OrgasmControl::controlMotor(false);
+    UI.setButton(1, "STOP");
   }
 
   void updateButtons() {
@@ -108,7 +107,9 @@ class pRunGraph : public Page {
         }
         break;
       case 1:
-        UI.display->dim(true);
+        mode = Manual;
+        Hardware::setMotorSpeed(0);
+        OrgasmControl::controlMotor(false);
         break;
       case 2:
         if (mode == Automatic) {
@@ -126,7 +127,7 @@ class pRunGraph : public Page {
   }
 
   void onEncoderChange(int diff) override {
-    int step = 16;
+    const int step = 255/20;
     Serial.println("Encoder change: " + String(diff));
 
     if (mode == Automatic) {
