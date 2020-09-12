@@ -45,35 +45,70 @@ class pRunGraph : public Page {
   }
 
   void renderChart() {
-    if (view == GraphView) {
-      // Update Counts
-      char status[7] = "";
-      byte motor  = Hardware::getMotorSpeedPercent() * 100;
-      byte stat_a = OrgasmControl::getArousalPercent() * 100;
+    // Update Counts
+    char status[7] = "";
+    byte motor  = Hardware::getMotorSpeedPercent() * 100;
+    byte stat_a = OrgasmControl::getArousalPercent() * 100;
 
-      UI.display->setTextColor(SSD1306_WHITE, SSD1306_BLACK);
-      UI.display->setCursor(0, 10);
-      sprintf(status, "M:%03d%%", motor);
-      UI.display->print(status);
+    UI.display->setTextColor(SSD1306_WHITE, SSD1306_BLACK);
+    UI.display->setCursor(0, 10);
+    sprintf(status, "M:%03d%%", motor);
+    UI.display->print(status);
 
-      UI.display->setCursor(SCREEN_WIDTH / 3, 10);
-      sprintf(status, "P:%04d", OrgasmControl::getAveragePressure());
-      UI.display->print(status);
+    UI.display->setCursor(SCREEN_WIDTH / 3 + 3, 10);
+    sprintf(status, "P:%04d", OrgasmControl::getAveragePressure());
+    UI.display->print(status);
 
-      UI.display->setCursor(SCREEN_WIDTH / 3 * 2, 10);
-      sprintf(status, "A:%03d%%", stat_a);
-      UI.display->print(status);
+    UI.display->setCursor(SCREEN_WIDTH / 3 * 2 + 7, 10);
+    sprintf(status, "A:%03d%%", stat_a);
+    UI.display->print(status);
 
-      // Update Chart
-      UI.drawChart(Config.sensitivity_threshold);
+    // Update Chart
+    UI.drawChartAxes();
+    UI.drawChart(Config.sensitivity_threshold);
+  }
+
+  void drawBar(int y, char label, int value, int max) {
+    int box_left = 6;
+    int box_right = SCREEN_WIDTH - (6*3) - 1;
+    int box_width = box_right - box_left;
+    float pct = (float)value / (float)max;
+    int pct_width = floor((float)(box_width - 2) * pct);
+
+    UI.display->setTextColor(SSD1306_WHITE, SSD1306_BLACK);
+    UI.display->drawRect(box_left, y, box_width, 7, SSD1306_WHITE);
+    UI.display->fillRect(box_left + 1, y + 1, pct_width, 5, SSD1306_WHITE);
+    UI.display->setCursor(0, y);
+    UI.display->print(label);
+    UI.display->setCursor(box_right + 1, y);
+
+    if (value < max) {
+      UI.display->printf("%02d%%", (int)floor(pct * 100.0f));
+    } else {
+      UI.display->print("MAX");
     }
+  }
+
+  void renderStats() {
+    // Important Stats:
+    // 1. Arousal
+    // 2. Motor Speed
+    // 3. Pressure
+    // 4. Arousal Sensitivity
+    // 5. Pressure Sensitivity
+    // 6. Max Motor Speed
+    // 7. Vibrate pattern???
+    drawBar(10, 'M', Hardware::getMotorSpeed(), 255);
+    drawBar(20-1, 'P', OrgasmControl::getLastPressure(), 4096);
+    drawBar(30-2, 'A', OrgasmControl::getArousal(), Config.sensitivity_threshold);
+//    drawBar(40-3, 'P', 0, 100);
+//    drawBar(50-4, 'U', 100, 100);
   }
 
   void Render() override {
     if (view == StatsView) {
-      UI.setButton(0, "CHART");
+      renderStats();
     } else {
-      UI.drawChartAxes();
       renderChart();
     }
 

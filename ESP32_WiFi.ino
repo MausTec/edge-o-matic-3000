@@ -371,8 +371,6 @@ void loop() {
       String screenshot;
       UI.screenshot(screenshot);
 
-      Serial.println(screenshot);
-
       // Serialize Data
       DynamicJsonDocument doc(3072);
       doc["pressure"] = OrgasmControl::getLastPressure();
