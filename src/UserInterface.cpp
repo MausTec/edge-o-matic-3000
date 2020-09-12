@@ -76,9 +76,19 @@ void UserInterface::setButton(byte i, char *text, ButtonCallback fn) {
 void UserInterface::drawButtons() {
   for (int i = 0; i < 3; i++) {
     UIButton b = buttons[i];
+    int offset_left = 1;
+    int text_width = (strlen(b.text) * 6) - 1;
+    int button_start_l = (i * BUTTON_WIDTH) + i;
+
+    if (i == 1) {
+      offset_left = (BUTTON_WIDTH - text_width) / 2;
+    } else if (i == 2) {
+      offset_left = BUTTON_WIDTH - text_width - 1;
+    }
+
     if (b.show) {
-      this->display->fillRect((i * BUTTON_WIDTH) + i, BUTTON_START_Y, BUTTON_WIDTH, BUTTON_HEIGHT, SSD1306_WHITE);
-      this->display->setCursor((i * BUTTON_WIDTH) + i + 1, BUTTON_START_Y + 1);
+      this->display->fillRect(button_start_l, BUTTON_START_Y, BUTTON_WIDTH, BUTTON_HEIGHT, SSD1306_WHITE);
+      this->display->setCursor(button_start_l + offset_left, BUTTON_START_Y + 1);
       this->display->setTextColor(SSD1306_BLACK, SSD1306_WHITE);
       this->display->print(b.text);
     }
@@ -171,54 +181,20 @@ void UserInterface::addChartReading(int index, int value) {
 }
 
 void UserInterface::fadeTo(byte color) {
-  for (byte i = 0; i < SCREEN_WIDTH; i+=4) {
-    for (byte j = 0; j < SCREEN_HEIGHT; j+=4) {
-      this->display->drawPixel(i, j, color);
+  // TODO: This should fade a,b,i=[2,2,4],[0,2,4],[2,0,4],[1,1,2],[0,1,2],[1,0,2]
+  for (byte a = 0; a < 2; a++) {
+    for (byte b = 0; b < 2; b++) {
+      byte increment = (a == 1 || b == 1) ? 2 : 4;
+      for (byte i = a; i < SCREEN_WIDTH; i += increment) {
+        for (byte j = b; j < SCREEN_HEIGHT; j += increment) {
+          this->display->drawPixel(i, j, color);
+        }
+      }
+
+      this->display->display();
+      delay(200 / increment);
     }
   }
-  this->display->display();
-  delay(50);
-  for (byte i = 2; i < SCREEN_WIDTH; i+=4) {
-    for (byte j = 2; j < SCREEN_HEIGHT; j+=4) {
-      this->display->drawPixel(i, j, color);
-    }
-  }
-  this->display->display();
-  delay(50);
-  for (byte i = 0; i < SCREEN_WIDTH; i+=4) {
-    for (byte j = 2; j < SCREEN_HEIGHT; j+=4) {
-      this->display->drawPixel(i, j, color);
-    }
-  }
-  this->display->display();
-  delay(100);
-  for (byte i = 2; i < SCREEN_WIDTH; i+=4) {
-    for (byte j = 0; j < SCREEN_HEIGHT; j+=4) {
-      this->display->drawPixel(i, j, color);
-    }
-  }
-  this->display->display();
-  delay(100);
-  for (byte i = 1; i < SCREEN_WIDTH; i+=2) {
-    for (byte j = 1; j < SCREEN_HEIGHT; j+=2) {
-      this->display->drawPixel(i, j, color);
-    }
-  }
-  this->display->display();
-  delay(125);
-  for (byte i = 0; i < SCREEN_WIDTH; i+=2) {
-    for (byte j = 1; j < SCREEN_HEIGHT; j+=2) {
-      this->display->drawPixel(i, j, color);
-    }
-  }
-  this->display->display();
-  delay(125);
-  for (byte i = 1; i < SCREEN_WIDTH; i+=2) {
-    for (byte j = 0; j < SCREEN_HEIGHT; j+=2) {
-      this->display->drawPixel(i, j, color);
-    }
-  }
-  this->display->display();
 }
 
 void UserInterface::clear(bool render) {
@@ -251,4 +227,23 @@ void UserInterface::drawSdIcon(byte status) {
 void UserInterface::drawIcons() {
   drawWifiIcon(icons[WIFI_ICON_IDX]);
   drawSdIcon(icons[SD_ICON_IDX]);
+}
+
+void UserInterface::screenshot(String &out_data) {
+  int buffer_size = SCREEN_WIDTH * ((SCREEN_HEIGHT + 7) / 8);
+  uint8_t *buffer = display->getBuffer();
+  String data = "";
+
+  for (int i = 0; i < buffer_size; i++) {
+    data += String((buffer[i] & 0xF0) >> 4, HEX);
+    data += String(buffer[i] & 0x0F, HEX);
+  }
+
+  out_data = data;
+}
+
+void UserInterface::screenshot() {
+  String buffer;
+  screenshot(buffer);
+  Serial.println(buffer);
 }

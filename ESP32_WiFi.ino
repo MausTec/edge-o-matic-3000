@@ -283,11 +283,16 @@ void setup() {
     // Connect to access point
     Serial.println("Connecting");
     WiFi.begin(Config.wifi_ssid, Config.wifi_key);
+    UI.display->setCursor(0,0);
+    int count = 0;
     while ( WiFi.status() != WL_CONNECTED ) {
       delay(500);
-      UI.display->setCursor(0,0);
       UI.display->print(".");
       UI.render();
+      if (count++ > 3) {
+        UI.drawStatus("");
+        UI.display->setCursor(0,0);
+      }
       Serial.print(".");
     }
 
@@ -337,7 +342,7 @@ void loop() {
     sendWxStatus();
   }
   
-  if (millis() - lastTick > 1000 / 30) {
+  if (millis() - lastTick > 1000/2) {
     lastTick = millis();
 
     // Update LEDs
@@ -362,20 +367,26 @@ void loop() {
     // Update Icons
     WiFiHelper::drawSignalIcon();
 
-//    if (webSocket != nullptr) {
-//      // Serialize Data
-//      StaticJsonDocument<200> doc;
-//      doc["pressure"] = pressure_value;
-//      doc["pavg"] = RA_Averaged;
-//      doc["motor"] = (int)motor_int;
-//      doc["arousal"] = arousal;
-//      doc["millis"] = millis();
-//
-//      // Blow the Network Load
-//      String payload;
-//      serializeJson(doc, payload);
-//      webSocket->sendTXT(last_connection, payload);
-//    }
+    if (webSocket != nullptr) {
+      String screenshot;
+      UI.screenshot(screenshot);
+
+      Serial.println(screenshot);
+
+      // Serialize Data
+      DynamicJsonDocument doc(3072);
+      doc["pressure"] = OrgasmControl::getLastPressure();
+      doc["pavg"] = OrgasmControl::getAveragePressure();
+      doc["motor"] = Hardware::getMotorSpeed();
+      doc["arousal"] = OrgasmControl::getArousal();
+      doc["millis"] = millis();
+      doc["screenshot"] = screenshot;
+
+      // Blow the Network Load
+      String payload;
+      serializeJson(doc, payload);
+      webSocket->sendTXT(last_connection, payload);
+    }
   }
 
   Page::DoLoop();

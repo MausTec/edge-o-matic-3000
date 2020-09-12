@@ -3,8 +3,8 @@
 
 #include "../config.h"
 
-#define BUTTON_HEIGHT 8
-#define BUTTON_WIDTH ((SCREEN_WIDTH / 3) + 1)
+#define BUTTON_HEIGHT 9
+#define BUTTON_WIDTH  42 // (SCREEN_WIDTH / 3)
 #define BUTTON_START_Y (SCREEN_HEIGHT - BUTTON_HEIGHT)
 
 #define CHART_START_Y 20
@@ -62,6 +62,10 @@ public:
   void drawButtons();
   void onKeyPress(byte i);
   void onEncoderChange(int value);
+
+  // Debug
+  void screenshot(String &buffer);
+  void screenshot(void);
 
   Adafruit_SSD1306* display;
 

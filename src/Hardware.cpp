@@ -136,6 +136,11 @@ namespace Hardware {
         idle_since_ms = millis();
         UI.onKeyPress(3);
       });
+
+      // TODO: This should be EncoderSw
+      Key3.attachDoubleClick([]() {
+        UI.screenshot();
+      });
     }
 
     void initializeLEDs() {
