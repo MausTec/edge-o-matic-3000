@@ -68,21 +68,45 @@ class pRunGraph : public Page {
     UI.drawChart(Config.sensitivity_threshold);
   }
 
-  void drawBar(int y, char label, int value, int max) {
-    int box_left = 6;
-    int box_right = SCREEN_WIDTH - (6*3) - 1;
+  void drawBar(int y, char label, int value, int maximum, int limit = 0) {
+    int box_left = 8;
+    int box_right = SCREEN_WIDTH - (6*3) - 3;
     int box_width = box_right - box_left;
-    float pct = (float)value / (float)max;
+    float pct = max(0.0f, min((float)value / (float)maximum, 1.0f));
     int pct_width = floor((float)(box_width - 2) * pct);
 
+    // Calculate a Limit bar
+    int limit_left, limit_width;
+
+    if (limit > 0) {
+      float limit_pct = max(0.0f, min((float) limit / (float) maximum, 1.0f));
+      int limit_pct_width = floor((float) (box_width - 2) * (1.0f - limit_pct));
+      limit_left = box_right - limit_pct_width - 1;
+      limit_width = box_right - limit_left - 2;
+    }
+
+    // Render Stuff
     UI.display->setTextColor(SSD1306_WHITE, SSD1306_BLACK);
     UI.display->drawRect(box_left, y, box_width, 7, SSD1306_WHITE);
     UI.display->fillRect(box_left + 1, y + 1, pct_width, 5, SSD1306_WHITE);
+
+    // Draw Limit
+    if (limit > 0) {
+      for (int i = limit_left; i < limit_left + limit_width; i++) {
+        for (int j = 0; j < 3; j++) {
+          if ((i + j) % 2 != 0)
+            continue;
+          UI.display->drawPixel(i, y + 2 + j, SSD1306_WHITE);
+        }
+      }
+    }
+
+    // Print Labels
     UI.display->setCursor(0, y);
     UI.display->print(label);
-    UI.display->setCursor(box_right + 1, y);
+    UI.display->setCursor(box_right + 3, y);
 
-    if (value < max) {
+    if (value < maximum) {
       UI.display->printf("%02d%%", (int)floor(pct * 100.0f));
     } else {
       UI.display->print("MAX");
@@ -98,7 +122,7 @@ class pRunGraph : public Page {
     // 5. Pressure Sensitivity
     // 6. Max Motor Speed
     // 7. Vibrate pattern???
-    drawBar(10, 'M', Hardware::getMotorSpeed(), 255);
+    drawBar(10, 'M', Hardware::getMotorSpeed(), 255, mode == Automatic ? Config.motor_max_speed : 0);
     drawBar(20-1, 'P', OrgasmControl::getLastPressure(), 4096);
     drawBar(30-2, 'A', OrgasmControl::getArousal(), Config.sensitivity_threshold);
 //    drawBar(40-3, 'P', 0, 100);
@@ -119,14 +143,14 @@ class pRunGraph : public Page {
   }
 
   void Loop() override {
-    if (view == GraphView) {
-      if (OrgasmControl::updated()) {
+    if (OrgasmControl::updated()) {
+      if (view == GraphView) {
         // Update Chart
         UI.addChartReading(0, OrgasmControl::getAveragePressure());
         UI.addChartReading(1, OrgasmControl::getArousal());
-        renderChart();
-        UI.render();
       }
+
+      Rerender();
     }
   }
 
