@@ -68,7 +68,7 @@ class pRunGraph : public Page {
     UI.drawChart(Config.sensitivity_threshold);
   }
 
-  void drawBar(int y, char label, int value, int maximum, int limit = 0) {
+  void drawBar(int y, char label, int value, int maximum, int limit = 0, int peak = 0) {
     int box_left = 8;
     int box_right = SCREEN_WIDTH - (6*3) - 3;
     int box_width = box_right - box_left;
@@ -79,10 +79,18 @@ class pRunGraph : public Page {
     int limit_left, limit_width;
 
     if (limit > 0) {
-      float limit_pct = max(0.0f, min((float) limit / (float) maximum, 1.0f));
-      int limit_pct_width = floor((float) (box_width - 2) * (1.0f - limit_pct));
+      float limit_pct = max(0.0f, min((float)limit / (float)maximum, 1.0f));
+      int limit_pct_width = floor((float)(box_width - 2) * (1.0f - limit_pct));
       limit_left = box_right - limit_pct_width - 1;
       limit_width = box_right - limit_left - 2;
+    }
+
+    // Calculate a Peak
+    int peak_left;
+
+    if (peak > 0) {
+      float peak_pct = max(0.0f, min((float)peak / (float)maximum, 1.0f));
+      peak_left = box_left + floor((float)(box_width - 2) * peak_pct);
     }
 
     // Render Stuff
@@ -101,6 +109,11 @@ class pRunGraph : public Page {
       }
     }
 
+    // Draw Peak
+    if (peak > 0) {
+      UI.display->drawLine(peak_left, y, peak_left, y+5, SSD1306_WHITE);
+    }
+
     // Print Labels
     UI.display->setCursor(0, y);
     UI.display->print(label);
@@ -114,6 +127,20 @@ class pRunGraph : public Page {
   }
 
   void renderStats() {
+    static long arousal_peak = 0;
+    static long last_peak_ms = millis();
+    long arousal = OrgasmControl::getArousal();
+
+    if (arousal > arousal_peak) {
+      last_peak_ms = millis();
+      arousal_peak = arousal;
+    }
+
+    if (millis() - last_peak_ms > 3000) {
+      // decay peak after 3 seconds stale data
+      arousal_peak *= 0.995f; // Decay Peak Value
+    }
+
     // Important Stats:
     // 1. Arousal
     // 2. Motor Speed
@@ -123,8 +150,8 @@ class pRunGraph : public Page {
     // 6. Max Motor Speed
     // 7. Vibrate pattern???
     drawBar(10, 'M', Hardware::getMotorSpeed(), 255, mode == Automatic ? Config.motor_max_speed : 0);
-    drawBar(20-1, 'P', OrgasmControl::getLastPressure(), 4096);
-    drawBar(30-2, 'A', OrgasmControl::getArousal(), Config.sensitivity_threshold);
+    drawBar(20-1, 'P', OrgasmControl::getLastPressure(), 4095);
+    drawBar(30-2, 'A', OrgasmControl::getArousal(), 1023, Config.sensitivity_threshold, arousal_peak);
 //    drawBar(40-3, 'P', 0, 100);
 //    drawBar(50-4, 'U', 100, 100);
   }
