@@ -180,7 +180,7 @@ void UserInterface::addChartReading(int index, int value) {
   this->chartReadings[index][this->chartCursor[index]] = value;
 }
 
-void UserInterface::fadeTo(byte color) {
+void UserInterface::fadeTo(byte color, bool half) {
   // TODO: This should fade a,b,i=[2,2,4],[0,2,4],[2,0,4],[1,1,2],[0,1,2],[1,0,2]
   for (byte a = 0; a < 2; a++) {
     for (byte b = 0; b < 2; b++) {
@@ -192,7 +192,8 @@ void UserInterface::fadeTo(byte color) {
       }
 
       this->display->display();
-      delay(200 / increment);
+      if (!half)
+        delay(200 / increment);
     }
   }
 }
@@ -246,4 +247,55 @@ void UserInterface::screenshot() {
   String buffer;
   screenshot(buffer);
   Serial.println(buffer);
+}
+
+void UserInterface::drawToast() {
+  if (toast_message == nullptr || millis() > toast_expiration)
+    return;
+
+  // Line width = 18 char
+  const int padding = 2;
+  const int margin = 4;
+  int start_x = 4;
+
+  int text_lines = 1;
+  for (int i = 0; i < strlen(toast_message); i++) {
+    if (toast_message[i] == '\n') {
+      text_lines++;
+    }
+  }
+
+  // TODO: This is a clusterfuck of math, and on odd lined text is off-by-one
+  int start_y = (SCREEN_HEIGHT/2) - (((7+padding)*text_lines)/2) - (padding/2) - margin - 1;
+  if (text_lines & 1) start_y -= 1; // <-- hack for that off-by-one
+
+  int end_y = SCREEN_HEIGHT - start_y;
+  int text_start_y = start_y + margin + padding + 1;
+
+  // Clear Border
+  for (int y = 0; y < SCREEN_HEIGHT; y++) {
+    for (int x = 0; x < SCREEN_WIDTH; x++) {
+      if((x+y) % 2 == 0) {
+        display->drawPixel(x, y, SSD1306_BLACK);
+      }
+    }
+  }
+
+  display->fillRect(start_x, start_y, SCREEN_WIDTH - (start_x * 2), SCREEN_HEIGHT - (start_y * 2), SSD1306_BLACK);
+  display->drawRect(start_x + margin, start_y + margin, SCREEN_WIDTH - (start_x * 2) - (margin * 2), SCREEN_HEIGHT - (start_y * 2) - (margin * 2), SSD1306_WHITE);
+  display->setTextColor(SSD1306_WHITE, SSD1306_BLACK);
+
+  // TODO - this is destructive, which sucks.
+  char *tok = strtok(toast_message, "\n");
+  while (tok != NULL) {
+    display->setCursor(start_x + margin + padding + 1, text_start_y);
+    display->print(tok);
+    text_start_y += 7 + padding;
+    tok = strtok(NULL, "\n");
+  }
+}
+
+void UserInterface::toast(char *message, long duration) {
+  strncpy(toast_message, message, 19*4);
+  toast_expiration = millis() + duration;
 }

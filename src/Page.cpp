@@ -33,6 +33,9 @@ void Page::Rerender() {
   if (currentPage != nullptr) {
     currentPage->Render();
   }
+
+  UI.drawToast();
+  UI.render();
 }
 
 void Page::DoLoop() {

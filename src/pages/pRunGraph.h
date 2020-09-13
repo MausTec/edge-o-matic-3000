@@ -165,7 +165,6 @@ class pRunGraph : public Page {
     UI.drawIcons();
     UI.drawStatus();
     UI.drawButtons();
-    UI.render();
   }
 
   void Loop() override {
@@ -195,6 +194,7 @@ class pRunGraph : public Page {
         mode = Manual;
         Hardware::setMotorSpeed(0);
         OrgasmControl::controlMotor(false);
+        UI.toast("I stopped!");
         break;
       case 2:
         if (mode == Automatic) {

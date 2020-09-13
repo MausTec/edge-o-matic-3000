@@ -46,7 +46,7 @@ public:
   void setMotorSpeed(uint8_t perc);
 
   // Render Controls
-  void fadeTo(byte color = SSD1306_BLACK);
+  void fadeTo(byte color = SSD1306_BLACK, bool half = false);
   void clear(bool render = true);
   void render();
 
@@ -62,6 +62,10 @@ public:
   void drawButtons();
   void onKeyPress(byte i);
   void onEncoderChange(int value);
+
+  // Toast
+  void toast(char *message, long duration = 3000);
+  void drawToast();
 
   // Debug
   void screenshot(String &buffer);
@@ -80,6 +84,10 @@ private:
   // Header Data
   char status[STATUS_SIZE] = {0};
   char icons[4] = {0};
+
+  // Toast Data
+  char toast_message[19*4] = "";
+  long toast_expiration = 0;
 };
 
 extern UserInterface UI;
