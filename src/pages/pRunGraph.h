@@ -149,9 +149,8 @@ class pRunGraph : public Page {
     // 5. Pressure Sensitivity
     // 6. Max Motor Speed
     // 7. Vibrate pattern???
-    drawBar(10, 'M', Hardware::getMotorSpeed(), 255, mode == Automatic ? Config.motor_max_speed : 0);
-    drawBar(20-1, 'P', OrgasmControl::getLastPressure(), 4095);
-    drawBar(30-2, 'A', OrgasmControl::getArousal(), 1023, Config.sensitivity_threshold, arousal_peak);
+    drawBar(11, 'M', Hardware::getMotorSpeed(), 255, mode == Automatic ? Config.motor_max_speed : 0);
+    drawBar(SCREEN_HEIGHT - 18, 'A', OrgasmControl::getArousal(), 1023, Config.sensitivity_threshold, arousal_peak);
 //    drawBar(40-3, 'P', 0, 100);
 //    drawBar(50-4, 'U', 100, 100);
   }
