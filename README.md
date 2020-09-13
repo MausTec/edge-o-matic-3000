@@ -30,6 +30,9 @@ and is automatically generated. Here is a quick summary of config variables:
 |`update_frequency_hz`|Int|50|Update frequency for pressure readings and arousal steps. Higher = crash your serial monitor.|
 |`sensor_sensitivity`|Byte|64|Analog pressure prescaling. Adjust this until the pressure is ~60-70%|
 
+\* AzureFang refers to a common wireless technology that is blue and involves chewing face-rocks. However, the
+   trademark holders of this technology require the name to be licensed, so we're totally just using AzureFang.
+
 ## Hardware
 
 Hardware builds for this project can be purchased from Maus-Tec Electronics, at maustec.io/nogasm.
@@ -49,7 +52,25 @@ their breadboard-friendly MOSFET boards, which can directly drive your power rai
 |---|---|---|
 |-|-|-|
 
-* pinout forthcoming.
+\* Pinout Forthcoming, see `config.h` for a general idea.
+
+### That RJ45 Jack
+
+**The RJ45 Jack IS NOT ETHERNET!** That is a balanced twisted pair extension of the I2C bus on the controller, and is available
+as a convenience for future development, dongles, and accessories. It carries +5V and SDA+/-, SCL+/- signals. You must use an
+I2C redriver IC or compatible module to interface with this. Additionaly, this is terminated at 100ohm assuming standard CAT5.
+[We recommend SparkFun's BOB-14589](https://www.digikey.com/product-detail/en/sparkfun-electronics/BOB-14589/1568-1873-ND/9351349).
+
+|Pin|Signal|
+|---|---|
+|1|`SCL-`|
+|2|`SCL+`|
+|3|NC|
+|4|`+5V`|
+|5|`GND`|
+|6|NC|
+|7|`SDA-`|
+|8|`SDA+`|
 
 # Thanks!
 
@@ -69,6 +90,3 @@ For being the first to order the NoGasm WiFi during the 5 unit pre-order run:
 For supporting my initial endeavour in hardware assembly and helping me scale:
 
 - @homphs
-
-\* AzureFang refers to a common wireless technology that is blue and involves chewing face-rocks. However, the
-   trademark holders of this technology require the name to be licensed, so we're totally just using AzureFang.
