@@ -1,10 +1,15 @@
 # NoGasm WiFi - An Automated Orgasm Denial Device
 
-This code is an ESP32 rewrite of the core NoGasm project by Rhoboto: github.com/nogasm/nogasm
+This code is an ESP32 rewrite of the core NoGasm project by Rhoboto: [github.com/nogasm/nogasm](https://github.com/nogasm/nogasm)
 
 Using an inflatable butt plug to detect pressure changes indicative of pelvic floor contractions, this
 software, and associated hardware, is used to detect when the user is approaching orgasm and control
 stimulation accordingly. The net result: automated edging and orgasm denial.
+
+## Web UI
+
+NoGasm WiFi and NG+ devices both support a Websocket connection and a Web UI. The current Web UI can be accessed
+at [nogasm-ui.maustec.io](http://nogasm-ui.maustec.io). The source code is at [github.com/maustec/nogasm-ui](https://github.com/maustec/nogasm-ui).
 
 ## Configuration
 
@@ -35,7 +40,7 @@ and is automatically generated. Here is a quick summary of config variables:
 
 ## Hardware
 
-Hardware builds for this project can be purchased from Maus-Tec Electronics, at maustec.io/nogasm.
+Hardware builds for this project can be purchased from Maus-Tec Electronics, at [maustec.io/nogasm](https://maustec.io/nogasm).
 OSHD pending final review.
 
 Hardware development and assembly helps keep pizza in the freezer and a roof over the head of the maintainer.
