@@ -8,16 +8,14 @@ namespace Hardware {
     initializeEncoder();
     initializeLEDs();
 
+#ifndef LED_PIN
     pinMode(RJ_LED_1_PIN, OUTPUT);
     pinMode(RJ_LED_2_PIN, OUTPUT);
     digitalWrite(RJ_LED_1_PIN, HIGH);
     digitalWrite(RJ_LED_2_PIN, HIGH);
+#endif
 
-    if (!Wire.begin()) {
-      Serial.println("Couldn't initialize I2C");
-      while (1);
-    }
-
+    Wire.begin();
     setPressureSensitivity(Config.sensor_sensitivity);
 
     return true;
@@ -58,7 +56,9 @@ namespace Hardware {
   }
 
   void setLedColor(byte i, CRGB color) {
+#ifdef LED_PIN
     leds[i] = color;
+#endif
   }
 
   void setEncoderColor(CRGB color) {
@@ -140,7 +140,7 @@ namespace Hardware {
       });
 
       // TODO: This should be EncoderSw
-      Key3.attachDoubleClick([]() {
+      EncoderSw.attachDoubleClick([]() {
         UI.screenshot();
       });
     }

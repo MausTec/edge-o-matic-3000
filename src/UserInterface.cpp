@@ -36,7 +36,7 @@ void UserInterface::drawChartAxes() {
   //       to have meaningful axis markers? Maybe???
 
   int chartHeight = CHART_END_Y - CHART_START_Y;
-  int yInterval = chartHeight / LED_COUNT + 1;
+  int yInterval = chartHeight / 13 + 1;
 
   // Speed Meter
 //  this->display->drawRect(0, 10, 4, SCREEN_HEIGHT - 10, SSD1306_WHITE);
@@ -96,6 +96,9 @@ void UserInterface::drawButtons() {
 }
 
 void UserInterface::onKeyPress(byte i) {
+#ifdef DEBUG
+  Serial.println("UI::onKeyPress(" + String(i) + ")");
+#endif
   ButtonCallback cb = buttons[i].fn;
   if (cb != nullptr) {
     cb();

@@ -39,7 +39,7 @@ namespace Hardware {
 
     int motor_speed = 0;
 
-#ifdef LED_COUNT
+#ifdef LED_PIN
     CRGB leds[LED_COUNT];
 #endif
     CRGB encoderColor;

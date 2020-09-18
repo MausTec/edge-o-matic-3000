@@ -5,13 +5,15 @@
 
 #define CONFIG_FILENAME "/config.json"
 
+// Uncomment to enable debug logging and functions.
+#define DEBUG
+
+// Uncomment if compiling for NoGasm+
+#define NG_PLUS
+
 // Butt Pin
 #define BUTT_PIN        34
 #define MOT_PWM_PIN     15
-
-// LED Ring Definitions
-//#define LED_PIN         39
-#define LED_COUNT       13
 
 // LCD Definitions
 #define SCREEN_WIDTH    128
@@ -23,23 +25,29 @@
 // SD Connections
 #define SD_CS_PIN       5
 
-// External Bus
-#define BUS_EN_PIN      20
-#define RJ_LED_1_PIN    17
-#define RJ_LED_2_PIN    16
+#ifndef NG_PLUS
+  // External Bus (NoGasm WiFi)
+  #define BUS_EN_PIN      20
+  #define RJ_LED_1_PIN    17
+  #define RJ_LED_2_PIN    16
+#else
+  // LED Ring (NoGasm+)
+  #define LED_PIN 17
+  #define LED_COUNT 13
+#endif
 
 // Encoder Connection
-#define ENCODER_B_PIN   33
-#define ENCODER_A_PIN   32
+#define ENCODER_B_PIN   32
+#define ENCODER_A_PIN   33
 #define ENCODER_SW_PIN  35
 #define ENCODER_RD_PIN  2
-#define ENCODER_GR_PIN  0
+#define ENCODER_GR_PIN  27
 #define ENCODER_BL_PIN  4
 
 // Buttons
-#define KEY_1_PIN       25
-#define KEY_2_PIN       26
-#define KEY_3_PIN       27
+#define KEY_1_PIN       39
+#define KEY_2_PIN       25
+#define KEY_3_PIN       26
 
 struct ConfigStruct {
   // Networking

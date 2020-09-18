@@ -41,8 +41,12 @@ uint8_t LED_Brightness = 13;
 
 uint8_t mode = MODE_AUTO;
 
+#ifdef NG_PLUS
+  Adafruit_SSD1306 display(128, 64);
+#else
+  Adafruit_SSD1306 display(128, 64, &SPI, OLED_DC, OLED_RESET, OLED_CS);
+#endif
 
-Adafruit_SSD1306 display(128, 64, &SPI, OLED_DC, OLED_RESET, OLED_CS);
 UserInterface UI(&display);
 
 BluetoothServer BT;
@@ -346,23 +350,21 @@ void loop() {
     lastTick = millis();
 
     // Update LEDs
-//    if (false) {
-//      uint8_t bar = map(arousal, 0, peak_limit, 0, LED_COUNT - 1);
-//      uint8_t dot = map(RA_Averaged, 0, 4096, 0, LED_COUNT - 1);
-//      for (uint8_t i = 0; i < LED_COUNT; i++) {
-//        if (i < bar) {
-//          Hardware::setLedColor(i, CRGB(map(i, 0, LED_COUNT - 1, 0, LED_Brightness),
-//                                        map(i, 0, LED_COUNT - 1, LED_Brightness, 0), 0));
-//        } else {
-//          Hardware::setLedColor(i);
-//        }
-//      }
-//
-//      Hardware::setLedColor(dot, CRGB(LED_Brightness, 0, LED_Brightness));
-//      Hardware::ledShow();
-//    }
+#ifdef LED_PIN
+    uint8_t bar = map(OrgasmControl::getArousal(), 0, peak_limit, 0, LED_COUNT - 1);
+    uint8_t dot = map(OrgasmControl::getAveragePressure(), 0, 4096, 0, LED_COUNT - 1);
+    for (uint8_t i = 0; i < LED_COUNT; i++) {
+      if (i < bar) {
+        Hardware::setLedColor(i, CRGB(map(i, 0, LED_COUNT - 1, 0, LED_Brightness),
+                                      map(i, 0, LED_COUNT - 1, LED_Brightness, 0), 0));
+      } else {
+        Hardware::setLedColor(i);
+      }
+    }
 
-
+    Hardware::setLedColor(dot, CRGB(LED_Brightness, 0, LED_Brightness));
+    Hardware::ledShow();
+#endif
 
     // Update Icons
     WiFiHelper::drawSignalIcon();
