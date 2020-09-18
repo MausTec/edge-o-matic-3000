@@ -9,7 +9,7 @@
 #define DEBUG
 
 // Uncomment if compiling for NoGasm+
-#define NG_PLUS
+//#define NG_PLUS
 
 // Butt Pin
 #define BUTT_PIN        34
@@ -76,4 +76,5 @@ struct ConfigStruct {
 } extern Config;
 
 extern void loadConfigFromSd();
+extern void saveConfigToSd(long save_at_ms = 0);
 #endif

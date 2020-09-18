@@ -390,6 +390,9 @@ void loop() {
   }
 
   Page::DoLoop();
+
+  // Tick and see if we need to save config:
+  saveConfigToSd(-1);
 }
 
 // Entrypoints:

@@ -228,6 +228,7 @@ class pRunGraph : public Page {
     if (mode == Automatic) {
       // TODO this may go out of bounds. Also, change in steps?
       Config.sensitivity_threshold += (diff * step);
+      saveConfigToSd(millis() + 2000);
     } else {
       Hardware::changeMotorSpeed(diff * step);
     }
