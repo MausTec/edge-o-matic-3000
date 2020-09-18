@@ -4,6 +4,8 @@
 #define ARDUINOJSON_USE_LONG_LONG 1
 #include <ArduinoJson.h>
 
+#include <time.h>
+
 #include "config.h"
 
 #include "FS.h"
@@ -309,6 +311,20 @@ void setup() {
     webSocket = new WebSocketsServer(Config.websocket_port);
     webSocket->begin();
     webSocket->onEvent(onWebSocketEvent);
+
+    // Synchronize Local Clock
+    const char* ntpServer = "pool.ntp.org";
+    const long  gmtOffset_sec = 0;
+    const int   daylightOffset_sec = 3600;
+    configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
+
+    // Time Example TODO-Remove
+    struct tm timeinfo;
+    if(!getLocalTime(&timeinfo)){
+      Serial.println("Failed to obtain time");
+      return;
+    }
+    Serial.println(&timeinfo, "%A, %B %d %Y %H:%M:%S");
   }
 
   // Initialize Bluetooth

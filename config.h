@@ -76,5 +76,5 @@ struct ConfigStruct {
 } extern Config;
 
 extern void loadConfigFromSd();
-extern void saveConfigToSd(long save_at_ms = 0);
+extern void saveConfigToSd(long save_at_ms = -1);
 #endif

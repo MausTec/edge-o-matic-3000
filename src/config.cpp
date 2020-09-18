@@ -63,14 +63,16 @@ void saveConfigToSd(long save_at_ms) {
     Serial.println("Future save queued.");
     save_at_ms_tick = max(save_at_ms, save_at_ms_tick);
     return;
-  } else if (save_at_ms < 0 && save_at_ms_tick > 0) {
-    if (save_at_ms_tick < millis()) {
+  } else if (save_at_ms < 0) {
+    if (save_at_ms_tick > 0 && save_at_ms_tick < millis()) {
       Serial.println("Saving now from future save queue...");
       save_at_ms_tick = 0;
     } else {
       return;
     }
   }
+
+  Serial.println("SAMT: " + String(save_at_ms_tick) + " SAMs: " + String(save_at_ms));
 
   StaticJsonDocument<512> doc;
 
