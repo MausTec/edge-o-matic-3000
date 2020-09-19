@@ -103,17 +103,22 @@ namespace OrgasmControl {
       update_flag = true;
       last_update_ms = millis();
 
-      // Write out to logfile:
+      // Data for logfile or classic log.
+      String data =
+          String(getLastPressure()) + "," +
+          String(getAveragePressure()) + "," +
+          String(getArousal()) + "," +
+          String(Hardware::getMotorSpeed()) + "," +
+          String(Config.sensitivity_threshold);
+
+      // Write out to logfile, which includes millis:
       if (logfile) {
-        // millis,pressure,avg_pressure,arousal,motor_speed,sensitivity_threshold
-        String data =
-            String(last_update_ms - recording_start_ms) + "," +
-            String(getLastPressure()) + "," +
-            String(getAveragePressure()) + "," +
-            String(getArousal()) + "," +
-            String(Hardware::getMotorSpeed()) + "," +
-            String(Config.sensitivity_threshold);
-        logfile.println(data);
+        logfile.println(String(last_update_ms - recording_start_ms) + "," + data);
+      }
+
+      // Write to console for classic log mode:
+      if (Config.classic_serial) {
+        Serial.println(data);
       }
     } else {
       update_flag = false;
