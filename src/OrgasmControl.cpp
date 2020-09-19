@@ -38,7 +38,6 @@ namespace OrgasmControl {
 
       // Ope, orgasm incoming! Stop it!
       if (arousal > Config.sensitivity_threshold) {
-        UI.toast("ORGASM DETECTED!\n\n%d orgasms denied.");
         // Set the motor speed to 0, but actually set it to a negative number because cooldown delay
         motor_speed = max(-255.0f, -0.5f *
           (float)Config.motor_ramp_time_s *

@@ -4,6 +4,7 @@
 #include "../../include/Page.h"
 #include "../../include/OrgasmControl.h"
 #include "../../include/Hardware.h"
+#include "../../include/assets.h"
 
 enum RGView {
     GraphView,
@@ -16,11 +17,11 @@ enum RGMode {
 };
 
 class pRunGraph : public Page {
-  RGView view = GraphView;
-  RGMode mode = Automatic;
+  RGView view;
+  RGMode mode;
 
   void Enter() override {
-    view = GraphView;
+    view = StatsView;
     mode = Manual;
 
     updateButtons();
@@ -141,6 +142,12 @@ class pRunGraph : public Page {
       arousal_peak *= 0.995f; // Decay Peak Value
     }
 
+    UI.display->drawBitmap(0, 20, PLUG_ICON[0], 24, 24, SSD1306_WHITE);
+    UI.display->drawBitmap(26, 20, PLUG_ICON[1], 24, 24, SSD1306_WHITE);
+    UI.display->drawBitmap(52, 20, PLUG_ICON[2], 24, 24, SSD1306_WHITE);
+    UI.display->drawBitmap(78, 20, PLUG_ICON[3], 24, 24, SSD1306_WHITE);
+    UI.display->drawBitmap(104, 20, PLUG_ICON[4], 24, 24, SSD1306_WHITE);
+
     // Important Stats:
     // 1. Arousal
     // 2. Motor Speed
@@ -152,17 +159,21 @@ class pRunGraph : public Page {
     drawBar(11, 'M', Hardware::getMotorSpeed(), 255, mode == Automatic ? Config.motor_max_speed : 0);
     drawBar(SCREEN_HEIGHT - 18, 'A', OrgasmControl::getArousal(), 1023, Config.sensitivity_threshold, arousal_peak);
 
+    // Pressure Bar Drawing Stuff
     int press_x = SCREEN_WIDTH - 45;
     int press_y = SCREEN_HEIGHT - 22;
 
-    UI.display->setCursor(press_x, press_y-9);
-    UI.display->print("P: 98%");
-    UI.display->drawLine(press_x, press_y, press_x+3, press_y, SSD1306_WHITE);
-    UI.display->drawLine(press_x+9, press_y, SCREEN_WIDTH, press_y, SSD1306_WHITE);
-    UI.display->drawLine(press_x, press_y - 1, press_x, press_y + 1, SSD1306_WHITE);
-    UI.display->drawLine(SCREEN_WIDTH-1, press_y - 1, SCREEN_WIDTH, press_y + 1, SSD1306_WHITE);
-    //void fillTriangle(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, uint16_t color);
-    UI.display->fillTriangle(press_x + 5, press_y - 1, press_x + 7, press_y - 1, press_x + 6, press_y + 1, SSD1306_WHITE);
+    if (false) {
+      UI.display->setCursor(press_x, press_y - 9);
+      UI.display->print("P: 98%");
+      UI.display->drawLine(press_x, press_y, press_x + 3, press_y, SSD1306_WHITE);
+      UI.display->drawLine(press_x + 9, press_y, SCREEN_WIDTH, press_y, SSD1306_WHITE);
+      UI.display->drawLine(press_x, press_y - 1, press_x, press_y + 1, SSD1306_WHITE);
+      UI.display->drawLine(SCREEN_WIDTH - 1, press_y - 1, SCREEN_WIDTH, press_y + 1, SSD1306_WHITE);
+      //void fillTriangle(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, uint16_t color);
+      UI.display->fillTriangle(press_x + 5, press_y - 1, press_x + 7, press_y - 1, press_x + 6, press_y + 1,
+                               SSD1306_WHITE);
+    }
   }
 
   void Render() override {
