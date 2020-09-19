@@ -72,8 +72,6 @@ void saveConfigToSd(long save_at_ms) {
     }
   }
 
-  Serial.println("SAMT: " + String(save_at_ms_tick) + " SAMs: " + String(save_at_ms));
-
   StaticJsonDocument<512> doc;
 
   SD.remove(CONFIG_FILENAME ".bak");
