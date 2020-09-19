@@ -1,9 +1,10 @@
 #ifndef __OrgasmControl_h
 #define __OrgasmControl_h
 
-#include "Arduino.h"
+#include <Arduino.h>
 #include "../config.h"
 #include "RunningAverage.h"
+#include <SD.h>
 
 namespace OrgasmControl {
   void tick();
@@ -20,6 +21,11 @@ namespace OrgasmControl {
   // Set Controls
   void controlMotor(bool control = true);
 
+  // Recording Control
+  void startRecording();
+  void stopRecording();
+  bool isRecording();
+
   namespace {
     long last_update_ms = 0;
 
@@ -34,6 +40,10 @@ namespace OrgasmControl {
     float motor_speed = 0;
     bool update_flag = false;
     bool control_motor = true;
+
+    // File Writer
+    long recording_start_ms = 0;
+    File logfile;
 
     void updateArousal();
     void updateMotorSpeed();

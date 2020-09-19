@@ -49,7 +49,7 @@ byte WIFI_ICON[4][8] PROGMEM = {
 // SD_ICON
 //  0 : SD_PRESENT
 //  1 : SD_IN_USE
-byte SD_ICON[1][8] PROGMEM = {
+byte SD_ICON[2][8] PROGMEM = {
     {
         0b00011100,
         0b00101010,
