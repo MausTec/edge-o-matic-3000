@@ -1,4 +1,5 @@
 #include "../include/Hardware.h"
+#include "../include/OrgasmControl.h"
 
 #include <Wire.h>
 
@@ -107,10 +108,19 @@ namespace Hardware {
 
   namespace {
     void initializeButtons() {
-
       Key1.attachClick([]() {
         idle_since_ms = millis();
         UI.onKeyPress(0);
+      });
+
+      Key1.attachPress([]() {
+        if (OrgasmControl::isRecording()) {
+          OrgasmControl::stopRecording();
+          UI.toast("Recording Stopped");
+        } else {
+          OrgasmControl::startRecording();
+          UI.toast("Recording Started");
+        }
       });
 
       Key2.attachClick([]() {

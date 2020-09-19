@@ -57,6 +57,43 @@ namespace OrgasmControl {
     }
   }
 
+  void startRecording() {
+    if (logfile) {
+      stopRecording();
+    }
+
+    struct tm timeinfo;
+    char filename_date[16];
+    if(!getLocalTime(&timeinfo)){
+      Serial.println("Failed to obtain time");
+      return;
+    }
+    strftime(filename_date, 16, "%Y%m%d-%H%M%S", &timeinfo);
+    String logfile_name = "/log-" + String(filename_date) + ".csv";
+
+    Serial.println("Opening logfile: " + logfile_name);
+    logfile = SD.open(logfile_name, FILE_WRITE);
+
+    if (!logfile) {
+      Serial.println("Couldn't open logfile to save!" + String(logfile));
+    } else {
+      recording_start_ms = millis();
+      logfile.println("millis,pressure,avg_pressure,arousal,motor_speed,sensitivity_threshold");
+    }
+  }
+
+  void stopRecording() {
+    if (logfile) {
+      Serial.println("Closing logfile.");
+      logfile.close();
+      logfile = File();
+    }
+  }
+
+  bool isRecording() {
+    return (bool)logfile;
+  }
+
   void tick() {
     long update_frequency_ms = (1.0f / Config.update_frequency_hz) * 1000.0f;
 
@@ -65,6 +102,19 @@ namespace OrgasmControl {
       updateMotorSpeed();
       update_flag = true;
       last_update_ms = millis();
+
+      // Write out to logfile:
+      if (logfile) {
+        // millis,pressure,avg_pressure,arousal,motor_speed,sensitivity_threshold
+        String data =
+            String(last_update_ms - recording_start_ms) + "," +
+            String(getLastPressure()) + "," +
+            String(getAveragePressure()) + "," +
+            String(getArousal()) + "," +
+            String(Hardware::getMotorSpeed()) + "," +
+            String(Config.sensitivity_threshold);
+        logfile.println(data);
+      }
     } else {
       update_flag = false;
     }
