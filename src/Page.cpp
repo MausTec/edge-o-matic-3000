@@ -88,3 +88,4 @@ Page* Page::CurrentPage() {
 // Instantiate UI Pages
 pDebug DebugPage = pDebug();
 pRunGraph RunGraphPage = pRunGraph();
+pSnake SnakePage = pSnake();
