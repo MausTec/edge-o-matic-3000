@@ -39,7 +39,7 @@ namespace OrgasmControl {
     long arousal = 0;
     float motor_speed = 0;
     bool update_flag = false;
-    bool control_motor = true;
+    bool control_motor = false;
 
     // File Writer
     long recording_start_ms = 0;
