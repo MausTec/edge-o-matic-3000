@@ -1,4 +1,6 @@
 #include "../../include/UIMenu.h"
 
-UIMenu MainMenu("Main Menu");
-MainMenu.addItem("Test Item");
+UIMenu MainMenu("Main Menu", [](UIMenu *menu) {
+  Serial.println("Initialized a menu?");
+  menu->addItem("Test Item");
+});

@@ -104,6 +104,21 @@ void UserInterface::onKeyPress(byte i) {
     cb();
   }
 
+  // Open Main Menu?
+  if (i == 0) {
+    if (UI.isMenuOpen()) {
+      UI.closeMenu();
+      return;
+    }
+  } else if (i == 3) {
+    // Rotary button ALWAYS operates on menus.
+    if (!UI.isMenuOpen()) {
+      UI.openMenu(&MainMenu);
+    }
+    return;
+  }
+
+  // TODO: Accept a flag and return if true.
   if (Page::currentPage != nullptr) {
     Page::currentPage->onKeyPress(i);
   }
@@ -305,4 +320,21 @@ void UserInterface::toast(char *message, long duration) {
 
 bool UserInterface::isMenuOpen() {
   return current_menu != nullptr;
+}
+
+UIMenu *UserInterface::closeMenu() {
+  if (current_menu == nullptr)
+    return nullptr;
+
+  UIMenu *prev = current_menu->close();
+  openMenu(prev);
+  return prev;
+}
+
+void UserInterface::openMenu(UIMenu *menu) {
+  if (menu != nullptr) {
+    menu->open(current_menu);
+  }
+
+  current_menu = menu;
 }
