@@ -56,6 +56,39 @@ void UIMenu::render() {
         break;
       }
     }
+
+    int menu_item_count = 0;
+    int current_item_position = 0;
+    item = first_item;
+    while (item != nullptr) {
+      menu_item_count++;
+      if (item == current_item) {
+        current_item_position = menu_item_count;
+      }
+      item = item->next;
+    }
+
+    Serial.println("Item " + String(current_item_position) + "/" + String(menu_item_count));
+
+    if (menu_item_count == 0) {
+      // final bail to avoid divisions by 0
+      return;
+    }
+
+    const int scroll_track_start_y = 11;
+    const int scroll_track_end_y = SCREEN_HEIGHT - 10;
+    const int scroll_track_height = scroll_track_end_y - scroll_track_start_y;
+    int scroll_height = max((int)floor((float)scroll_track_height / ((float)menu_item_count/4)), 4);
+    int scroll_start_y;
+    if (menu_item_count >= 1) {
+      scroll_start_y = floor((float)(scroll_track_height - scroll_height) * ((float)(current_item_position-1)/(menu_item_count-1)));
+    } else {
+      scroll_start_y = 0;
+    }
+
+    Serial.println("Scroll height: " + String(scroll_height) + "/" + String(scroll_track_height) + " @ " + String(scroll_start_y));
+    UI.display->fillRect(SCREEN_WIDTH-3, scroll_track_start_y - 1, 3, scroll_track_height + 1, SSD1306_BLACK);
+    UI.display->fillRect(SCREEN_WIDTH-2, scroll_track_start_y + scroll_start_y, 2, scroll_height, SSD1306_WHITE);
   }
 
   // Finish Up
