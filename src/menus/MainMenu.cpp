@@ -9,7 +9,7 @@ UIMenu MainMenu("Main Menu", [](UIMenu *menu) {
     Serial.println("Another Test Item Callback");
   });
 
-  for (int i = 0; i < 100; i++) {
+  for (int i = 0; i < 4; i++) {
     menu->addItem("ITEM");
   }
 });
