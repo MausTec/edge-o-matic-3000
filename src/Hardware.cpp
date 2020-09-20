@@ -73,7 +73,6 @@ namespace Hardware {
     if (new_speed == motor_speed) return;
 
     motor_speed = new_speed;
-    Serial.println("Setting motor speed: " + String(speed) + " norm: " + String(motor_speed));
     analogWrite(MOT_PWM_PIN, motor_speed);
   }
 
@@ -150,7 +149,7 @@ namespace Hardware {
       });
 
       // TODO: This should be EncoderSw
-      EncoderSw.attachDoubleClick([]() {
+      EncoderSw.attachPress([]() {
         UI.screenshot();
       });
     }

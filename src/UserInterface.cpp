@@ -96,35 +96,41 @@ void UserInterface::drawButtons() {
 }
 
 void UserInterface::onKeyPress(byte i) {
-#ifdef DEBUG
-  Serial.println("UI::onKeyPress(" + String(i) + ")");
-#endif
-  ButtonCallback cb = buttons[i].fn;
-  if (cb != nullptr) {
-    cb();
-  }
+  // FIXME: This segfaults in the menu context on btn3 (encoder)
+//  ButtonCallback cb = buttons[i].fn;
+//  if (cb != nullptr) {
+//    return cb();
+//  }
 
-  // Open Main Menu?
-  if (i == 0) {
-    if (UI.isMenuOpen()) {
+  if (UI.isMenuOpen()) {
+    if (i == 0) {
       UI.closeMenu();
-      return;
+    } else {
+      current_menu->handleClick();
     }
+
+    return;
   } else if (i == 3) {
-    // Rotary button ALWAYS operates on menus.
-    if (!UI.isMenuOpen()) {
-      UI.openMenu(&MainMenu);
-    }
+    UI.openMenu(&MainMenu);
     return;
   }
 
-  // TODO: Accept a flag and return if true.
   if (Page::currentPage != nullptr) {
     Page::currentPage->onKeyPress(i);
   }
 }
 
 void UserInterface::onEncoderChange(int value) {
+  if (UI.isMenuOpen()) {
+    // Todo we can pass diff here to provide a better fast scrolly experience.
+    if (value < 0) {
+      current_menu->selectPrev();
+    } else {
+      current_menu->selectNext();
+    }
+    return;
+  }
+
   if (Page::currentPage != nullptr) {
     Page::currentPage->onEncoderChange(value);
   }
