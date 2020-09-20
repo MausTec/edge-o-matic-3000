@@ -20,6 +20,9 @@ public:
   void open(UIMenu *previous = nullptr);
   UIMenu *close();
   void render();
+  void selectNext();
+  void selectPrev();
+  void handleClick();
 
 private:
   char *title;

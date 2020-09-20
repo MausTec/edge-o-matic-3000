@@ -1,6 +1,15 @@
 #include "../../include/UIMenu.h"
 
 UIMenu MainMenu("Main Menu", [](UIMenu *menu) {
-  Serial.println("Initialized a menu?");
-  menu->addItem("Test Item");
+  menu->addItem("Test Item", []() {
+    Serial.println("Test Item Callback");
+  });
+
+  menu->addItem("Another Item", []() {
+    Serial.println("Another Test Item Callback");
+  });
+
+  for (int i = 0; i < 100; i++) {
+    menu->addItem("ITEM");
+  }
 });
