@@ -14,10 +14,11 @@ typedef struct UIMenuItem {
 
 class UIMenu {
 public:
-  UIMenu(char *title);
+  UIMenu(char *t, void(*fn)(UIMenu*) = nullptr);
 
   void addItem(char *text, MenuCallback cb = nullptr);
   void open(UIMenu *previous = nullptr);
+  UIMenu *close();
   void render();
 
 private:

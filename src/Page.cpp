@@ -69,16 +69,7 @@ void Page::Render() {
 }
 
 void Page::onKeyPress(byte i) {
-  // Open Main Menu?
-  if (i == 0) {
-    if (UI.isMenuOpen()) {
-      UI.closeMenu();
-    }
-  } else if (i == 3) {
-    if (!UI.isMenuOpen()) {
-      UI.openMenu(&MainMenu);
-    }
-  }
+  // noop
 }
 
 void Page::onEncoderChange(int diff) {
