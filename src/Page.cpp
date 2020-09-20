@@ -35,7 +35,14 @@ void Page::Rerender() {
   }
 
   UI.drawToast();
-  UI.render();
+
+  // Skip rendering the page IFF a menu is open.
+  // We could technically still render and the menu should write over it but,
+  // that's wasted ticks, and Render() should not assume to ever be called on
+  // a Page.
+  if (!UI.isMenuOpen()) {
+    UI.render();
+  }
 }
 
 void Page::DoLoop() {
@@ -62,7 +69,16 @@ void Page::Render() {
 }
 
 void Page::onKeyPress(byte i) {
-  // noop
+  // Open Main Menu?
+  if (i == 0) {
+    if (UI.isMenuOpen()) {
+      UI.closeMenu();
+    }
+  } else if (i == 3) {
+    if (!UI.isMenuOpen()) {
+      UI.openMenu(&MainMenu);
+    }
+  }
 }
 
 void Page::onEncoderChange(int diff) {

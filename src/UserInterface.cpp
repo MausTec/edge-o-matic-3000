@@ -302,3 +302,7 @@ void UserInterface::toast(char *message, long duration) {
   strncpy(toast_message, message, 19*4);
   toast_expiration = millis() + duration;
 }
+
+bool UserInterface::isMenuOpen() {
+  return current_menu != nullptr;
+}

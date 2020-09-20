@@ -2,6 +2,7 @@
 #define __User_Interface_h
 
 #include "../config.h"
+#include "UIMenu.h"
 
 #define BUTTON_HEIGHT 9
 #define BUTTON_WIDTH  42 // (SCREEN_WIDTH / 3)
@@ -67,6 +68,11 @@ public:
   void toast(char *message, long duration = 3000);
   void drawToast();
 
+  // Menu Handling
+  void openMenu(UIMenu *menu);
+  UIMenu *closeMenu();
+  bool isMenuOpen();
+
   // Debug
   void screenshot(String &buffer);
   void screenshot(void);
@@ -88,6 +94,9 @@ private:
   // Toast Data
   char toast_message[19*4] = "";
   long toast_expiration = 0;
+
+  // Menu
+  UIMenu *current_menu = nullptr;
 };
 
 extern UserInterface UI;
