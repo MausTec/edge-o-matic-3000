@@ -68,8 +68,6 @@ void UIMenu::render() {
       item = item->next;
     }
 
-    Serial.println("Item " + String(current_item_position) + "/" + String(menu_item_count));
-
     if (menu_item_count == 0) {
       // final bail to avoid divisions by 0
       return;
@@ -86,7 +84,6 @@ void UIMenu::render() {
       scroll_start_y = 0;
     }
 
-    Serial.println("Scroll height: " + String(scroll_height) + "/" + String(scroll_track_height) + " @ " + String(scroll_start_y));
     UI.display->fillRect(SCREEN_WIDTH-3, scroll_track_start_y - 1, 3, scroll_track_height + 1, SSD1306_BLACK);
     UI.display->fillRect(SCREEN_WIDTH-2, scroll_track_start_y + scroll_start_y, 2, scroll_height, SSD1306_WHITE);
   }
@@ -99,6 +96,8 @@ void UIMenu::render() {
 void UIMenu::open(UIMenu *previous) {
   prev = previous;
   current_item = first_item;
+  UI.clearButtons();
+  UI.setButton(0, "BACK");
   render();
 }
 
