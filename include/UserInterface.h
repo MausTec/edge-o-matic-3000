@@ -41,6 +41,7 @@ public:
   void drawChartAxes();
   void drawChart(int peakLimit);
   void drawStatus(const char* status = nullptr);
+  void drawPattern(int start_x, int start_y, int width, int height, int pattern = 2, int color = SSD1306_WHITE);
 
   // Chart Data
   void addChartReading(int index, int value);
