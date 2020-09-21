@@ -1,15 +1,18 @@
 #include "../../include/UIMenu.h"
+#include "../../include/UserInterface.h"
+
+UIMenu WiFiMenu("WiFi Settings", [](UIMenu *menu) {
+  menu->addItem("Enable WiFi", []() {
+    UI.toast("Not Implemented", 3000);
+  });
+
+  menu->addItem("Connection Status", []() {
+    UI.toast("Status!");
+  });
+});
 
 UIMenu MainMenu("Main Menu", [](UIMenu *menu) {
-  menu->addItem("Test Item", []() {
-    Serial.println("Test Item Callback");
+  menu->addItem("WiFi Settings", []() {
+    UI.openMenu(&WiFiMenu);
   });
-
-  menu->addItem("Another Item", []() {
-    Serial.println("Another Test Item Callback");
-  });
-
-  for (int i = 0; i < 4; i++) {
-    menu->addItem("ITEM");
-  }
 });
