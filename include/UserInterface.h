@@ -36,6 +36,7 @@ class UserInterface {
 public:
   UserInterface(Adafruit_SSD1306* display);
   bool begin();
+  void tick();
 
   // Common Element Drawing Functions
   void drawChartAxes();
@@ -68,6 +69,8 @@ public:
   // Toast
   void toast(char *message, long duration = 3000);
   void drawToast();
+  bool toastRenderPending();
+  bool hasToast();
 
   // Menu Handling
   void openMenu(UIMenu *menu, bool save_history = true);
@@ -95,6 +98,7 @@ private:
   // Toast Data
   char toast_message[19*4] = "";
   long toast_expiration = 0;
+  bool toast_render_pending = false;
 
   // Menu
   UIMenu *current_menu = nullptr;

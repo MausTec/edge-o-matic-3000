@@ -285,11 +285,22 @@ void UserInterface::screenshot() {
   String buffer;
   screenshot(buffer);
   Serial.println(buffer);
+  toast("Screenshot Saved", 3000);
 }
 
 void UserInterface::drawToast() {
-  if (toast_message == nullptr || millis() > toast_expiration)
+  toast_render_pending = false;
+
+  // Can C++ just let me do toast_message == ""
+  // because that'd be prettier.
+  if (toast_message[0] == '\0')
     return;
+
+  if (millis() > toast_expiration) {
+    toast_message[0] = '\0';
+    toast_render_pending = true;
+    return;
+  }
 
   // Line width = 18 char
   const int padding = 2;
@@ -336,6 +347,7 @@ void UserInterface::drawToast() {
 void UserInterface::toast(char *message, long duration) {
   strncpy(toast_message, message, 19*4);
   toast_expiration = millis() + duration;
+  toast_render_pending = true;
 }
 
 bool UserInterface::isMenuOpen() {
@@ -361,4 +373,20 @@ void UserInterface::openMenu(UIMenu *menu, bool save_history) {
   if (current_menu == nullptr) {
     Page::Reenter();
   }
+}
+
+bool UserInterface::toastRenderPending() {
+  bool trp = toast_render_pending || (toast_message[0] != '\0' && millis() > toast_expiration);
+  return trp;
+}
+
+void UserInterface::tick() {
+  if (current_menu != nullptr) {
+    current_menu->tick();
+  }
+}
+
+bool UserInterface::hasToast() {
+  bool has_toast = toast_message[0] != '\0' && millis() < toast_expiration;
+  return has_toast;
 }

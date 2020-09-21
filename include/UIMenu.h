@@ -23,6 +23,7 @@ public:
   void selectNext();
   void selectPrev();
   void handleClick();
+  void tick();
 
 private:
   char *title;
