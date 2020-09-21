@@ -27,7 +27,21 @@ void Page::GoBack() {
   }
 }
 
+void Page::Reenter() {
+  if (currentPage != nullptr) {
+    currentPage->Enter(false);
+  }
+}
+
 void Page::Rerender() {
+  // Skip rendering the page IFF a menu is open.
+  // We could technically still render and the menu should write over it but,
+  // that's wasted ticks, and Render() should not assume to ever be called on
+  // a Page.
+  if (UI.isMenuOpen()) {
+    return;
+  }
+
   UI.clear(false);
 
   if (currentPage != nullptr) {
@@ -35,14 +49,7 @@ void Page::Rerender() {
   }
 
   UI.drawToast();
-
-  // Skip rendering the page IFF a menu is open.
-  // We could technically still render and the menu should write over it but,
-  // that's wasted ticks, and Render() should not assume to ever be called on
-  // a Page.
-  if (!UI.isMenuOpen()) {
-    UI.render();
-  }
+  UI.render();
 }
 
 void Page::DoLoop() {
@@ -56,7 +63,7 @@ void Page::Loop() {
   // noop
 }
 
-void Page::Enter() {
+void Page::Enter(bool) {
   // noop
 }
 

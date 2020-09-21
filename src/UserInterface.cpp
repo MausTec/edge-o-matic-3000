@@ -357,4 +357,8 @@ void UserInterface::openMenu(UIMenu *menu, bool save_history) {
   }
 
   current_menu = menu;
+
+  if (current_menu == nullptr) {
+    Page::Reenter();
+  }
 }

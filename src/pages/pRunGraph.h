@@ -20,12 +20,14 @@ class pRunGraph : public Page {
   RGView view;
   RGMode mode;
 
-  void Enter() override {
-    view = StatsView;
-    mode = Manual;
+  void Enter(bool reinitialize) override {
+    if (reinitialize) {
+      view = StatsView;
+      mode = Manual;
+      OrgasmControl::controlMotor(false);
+    }
 
     updateButtons();
-    OrgasmControl::controlMotor(false);
     UI.setButton(1, "STOP");
   }
 
