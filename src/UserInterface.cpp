@@ -73,7 +73,19 @@ void UserInterface::setButton(byte i, char *text, ButtonCallback fn) {
   buttons[i].show = true;
 }
 
+void UserInterface::drawPattern(int start_x, int start_y, int width, int height, int pattern, int color) {
+  for (int x = start_x; x < start_x + width; x++) {
+    for (int y = start_y; y < start_y + height; y++) {
+      if (!((x+y)%pattern)) {
+        this->display->drawPixel(x, y, color);
+      }
+    }
+  }
+}
+
 void UserInterface::drawButtons() {
+  this->display->drawLine(0, BUTTON_START_Y-1, SCREEN_WIDTH, BUTTON_START_Y-1, SSD1306_BLACK);
+
   for (int i = 0; i < 3; i++) {
     UIButton b = buttons[i];
     int offset_left = 1;
@@ -88,9 +100,11 @@ void UserInterface::drawButtons() {
 
     if (b.show) {
       this->display->fillRect(button_start_l, BUTTON_START_Y, BUTTON_WIDTH, BUTTON_HEIGHT, SSD1306_WHITE);
-      this->display->setCursor(button_start_l + offset_left, BUTTON_START_Y + 1);
       this->display->setTextColor(SSD1306_BLACK, SSD1306_WHITE);
+      this->display->setCursor(button_start_l + offset_left, BUTTON_START_Y + 1);
       this->display->print(b.text);
+    } else {
+      this->drawPattern(button_start_l, BUTTON_START_Y, BUTTON_WIDTH, BUTTON_HEIGHT, 3, SSD1306_WHITE);
     }
   }
 }
