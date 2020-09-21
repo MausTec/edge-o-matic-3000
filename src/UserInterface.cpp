@@ -337,9 +337,9 @@ UIMenu *UserInterface::closeMenu() {
   return prev;
 }
 
-void UserInterface::openMenu(UIMenu *menu) {
+void UserInterface::openMenu(UIMenu *menu, bool save_history) {
   if (menu != nullptr) {
-    menu->open(current_menu);
+    menu->open(current_menu, save_history);
   }
 
   current_menu = menu;

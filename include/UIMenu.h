@@ -17,7 +17,7 @@ public:
   UIMenu(char *t, void(*fn)(UIMenu*) = nullptr);
 
   void addItem(char *text, MenuCallback cb = nullptr);
-  void open(UIMenu *previous = nullptr);
+  void open(UIMenu *previous = nullptr, bool save_history = true);
   UIMenu *close();
   void render();
   void selectNext();

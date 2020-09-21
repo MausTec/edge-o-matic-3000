@@ -69,7 +69,7 @@ public:
   void drawToast();
 
   // Menu Handling
-  void openMenu(UIMenu *menu);
+  void openMenu(UIMenu *menu, bool save_history = true);
   UIMenu *closeMenu();
   bool isMenuOpen();
 
