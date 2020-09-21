@@ -15,7 +15,7 @@
 #define CHART_END_X (SCREEN_WIDTH)
 #define CHART_WIDTH (CHART_END_X - CHART_START_X)
 
-#define STATUS_SIZE 14
+#define STATUS_SIZE 16
 
 #define WIFI_ICON_IDX 0
 #define SD_ICON_IDX 1
