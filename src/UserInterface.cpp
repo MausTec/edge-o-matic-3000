@@ -347,7 +347,7 @@ UIMenu *UserInterface::closeMenu() {
     return nullptr;
 
   UIMenu *prev = current_menu->close();
-  openMenu(prev);
+  openMenu(prev, false);
   return prev;
 }
 

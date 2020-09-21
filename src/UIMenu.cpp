@@ -26,11 +26,19 @@ void UIMenu::addItem(char *text, MenuCallback cb) {
 
 void UIMenu::render() {
   UI.clear(false);
-  UI.drawStatus(title);
+
+  if (prev == nullptr) {
+    UI.drawStatus(title);
+  } else {
+    char new_title[STATUS_SIZE] = "< ";
+    strncat(new_title, title, STATUS_SIZE - 2);
+    UI.drawStatus(new_title);
+  }
+
   UI.drawIcons();
   UI.display->drawLine(0, 9, SCREEN_WIDTH, 9, SSD1306_WHITE);
 
-  // Menu items here
+  // Step back 2 items or to start
   UIMenuItem *item = current_item;
   for (int i = 0; i < 2; i++) {
     if (item == nullptr || item->prev == nullptr)
@@ -38,6 +46,7 @@ void UIMenu::render() {
     item = item->prev;
   }
 
+  // Render the next 5 items (todo adjust for screen height)
   if (item != nullptr) {
     for (int count = 0; count < 5; count++) {
       int menu_item_y = 10 + (10 * count);
@@ -57,6 +66,7 @@ void UIMenu::render() {
       }
     }
 
+    // Count items and get position
     int menu_item_count = 0;
     int current_item_position = 0;
     item = first_item;
@@ -93,8 +103,15 @@ void UIMenu::render() {
 }
 
 void UIMenu::open(UIMenu *previous, bool save_history) {
-  if (save_history)
+
+  Serial.println("Opening menu: " + String(title));
+  if (save_history) {
     prev = previous;
+    if (previous != nullptr) {
+      Serial.println("-> Prev: " + String(previous->title));
+    }
+  }
+
   current_item = first_item;
   UI.clearButtons();
   UI.setButton(0, "BACK");
