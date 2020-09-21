@@ -347,6 +347,7 @@ void loop() {
   Console::loop(); // <- TODO rename to tick
   Hardware::tick();
   OrgasmControl::tick();
+  UI.tick();
 
   // Look for and handle WebSocket data
   if (webSocket != nullptr)

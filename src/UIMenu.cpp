@@ -99,7 +99,19 @@ void UIMenu::render() {
 
   // Finish Up
   UI.drawButtons();
+  UI.drawToast();
   UI.render();
+}
+
+void UIMenu::tick() {
+  if (UI.toastRenderPending()) {
+    if (!UI.hasToast()) {
+      render();
+    } else {
+      UI.drawToast();
+      UI.render();
+    }
+  }
 }
 
 void UIMenu::open(UIMenu *previous, bool save_history) {
