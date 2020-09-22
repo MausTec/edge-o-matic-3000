@@ -7,7 +7,7 @@
 UIMenu WiFiMenu("WiFi Settings", [](UIMenu *menu) {
   if (WiFiHelper::connected()) {
     menu->addItem("Disable WiFi", [](UIMenu *m) {
-      UI.toastNow("Disconnecting...", 0);
+      UI.toastNow("Disconnecting...", 0, false);
       Config.wifi_on = false;
       WiFiHelper::disconnect();
       saveConfigToSd(0);
@@ -23,7 +23,7 @@ UIMenu WiFiMenu("WiFi Settings", [](UIMenu *menu) {
         return;
       }
 
-      UI.toastNow("Connecting...", 0);
+      UI.toastNow("Connecting...", 0, false);
       Config.wifi_on = true;
       if (WiFiHelper::begin()) {
         UI.toastNow("WiFi Connected!", 3000);
@@ -39,10 +39,17 @@ UIMenu WiFiMenu("WiFi Settings", [](UIMenu *menu) {
   }
 
   menu->addItem("Connection Status", [](UIMenu*) {
-    String status = WiFiHelper::connected() ? "Connected" : "Disconnected";
-    status += "\nIP: " + WiFiHelper::ip();
-    status += "\nSignal: " + WiFiHelper::signalStrengthStr();
-    UI.toast(status.c_str());
+    String status = "";
+
+    if (WiFiHelper::connected()) {
+      status += "Connected";
+      status += "\n" + WiFiHelper::ip();
+      status += "\nSignal: " + WiFiHelper::signalStrengthStr();
+    } else {
+      status += "Disconnected";
+    }
+
+    UI.toast(status.c_str(), 0);
   });
 });
 

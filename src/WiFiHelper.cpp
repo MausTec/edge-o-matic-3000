@@ -14,7 +14,7 @@ namespace WiFiHelper {
 
   String ip() {
     if (connected()) {
-      return (String)WiFi.localIP();
+      return WiFi.localIP().toString();
     } else {
       return "";
     }

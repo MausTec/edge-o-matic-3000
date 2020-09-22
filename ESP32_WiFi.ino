@@ -254,6 +254,7 @@ void resetSD() {
 
 void setupHardware() {
   pinMode(BUTT_PIN, INPUT);
+  pinMode(MOT_PWM_PIN, OUTPUT);
 
   if(!Hardware::initialize()) {
     Serial.println("Hardware initialization failed!");
@@ -275,8 +276,6 @@ void setup() {
 
   // Go to the splash page:
   Page::Go(&DebugPage, false);
-
-  pinMode(MOT_PWM_PIN, OUTPUT);
 
   // Setup SD, which loads our config
   resetSD();

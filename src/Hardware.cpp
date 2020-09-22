@@ -12,8 +12,8 @@ namespace Hardware {
 #ifndef LED_PIN
     pinMode(RJ_LED_1_PIN, OUTPUT);
     pinMode(RJ_LED_2_PIN, OUTPUT);
-    digitalWrite(RJ_LED_1_PIN, HIGH);
-    digitalWrite(RJ_LED_2_PIN, HIGH);
+    digitalWrite(RJ_LED_1_PIN, LOW);
+    digitalWrite(RJ_LED_2_PIN, LOW);
 #endif
 
     Wire.begin();

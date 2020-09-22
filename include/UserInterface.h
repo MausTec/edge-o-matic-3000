@@ -69,8 +69,8 @@ public:
   void onEncoderChange(int value);
 
   // Toast
-  void toast(const char *message, long duration = 3000);
-  void toastNow(const char *message, long duration = 3000);
+  void toast(const char *message, long duration = 3000, bool allow_clear = true);
+  void toastNow(const char *message, long duration = 3000, bool allow_clear = true);
   void drawToast();
   bool toastRenderPending();
   bool hasToast();
@@ -102,6 +102,7 @@ private:
   char toast_message[19*4] = "";
   long toast_expiration = 0;
   bool toast_render_pending = false;
+  bool toast_allow_clear = true;
 
   // Menu
   UIMenu *current_menu = nullptr;
