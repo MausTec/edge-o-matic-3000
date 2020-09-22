@@ -301,8 +301,6 @@ void setup() {
     BT.advertise();
   }
 
-  Hardware::setEncoderColor(CRGB::White);
-
   // I'm always one for the dramatics:
   delay(3000);
   UI.fadeTo();
