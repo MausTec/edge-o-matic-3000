@@ -112,7 +112,7 @@ class pSnake : public Page {
     return false;
   }
 
-  void Enter() override {
+  void Enter(bool) override {
     // Add 3 starting nodes:
     for (int i = 0; i < 3; i++)
       add_node(Right, true);

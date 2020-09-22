@@ -2,6 +2,7 @@
 #define __User_Interface_h
 
 #include "../config.h"
+#include "UIMenu.h"
 
 #define BUTTON_HEIGHT 9
 #define BUTTON_WIDTH  42 // (SCREEN_WIDTH / 3)
@@ -14,7 +15,9 @@
 #define CHART_END_X (SCREEN_WIDTH)
 #define CHART_WIDTH (CHART_END_X - CHART_START_X)
 
-#define STATUS_SIZE 14
+#define STATUS_SIZE 16
+#define TOAST_WIDTH 16
+#define TOAST_LINES 4
 
 #define WIFI_ICON_IDX 0
 #define SD_ICON_IDX 1
@@ -35,11 +38,13 @@ class UserInterface {
 public:
   UserInterface(Adafruit_SSD1306* display);
   bool begin();
+  void tick();
 
   // Common Element Drawing Functions
   void drawChartAxes();
   void drawChart(int peakLimit);
   void drawStatus(const char* status = nullptr);
+  void drawPattern(int start_x, int start_y, int width, int height, int pattern = 2, int color = SSD1306_WHITE);
 
   // Chart Data
   void addChartReading(int index, int value);
@@ -64,8 +69,16 @@ public:
   void onEncoderChange(int value);
 
   // Toast
-  void toast(char *message, long duration = 3000);
+  void toast(const char *message, long duration = 3000, bool allow_clear = true);
+  void toastNow(const char *message, long duration = 3000, bool allow_clear = true);
   void drawToast();
+  bool toastRenderPending();
+  bool hasToast();
+
+  // Menu Handling
+  void openMenu(UIMenu *menu, bool save_history = true);
+  UIMenu *closeMenu();
+  bool isMenuOpen();
 
   // Debug
   void screenshot(String &buffer);
@@ -88,6 +101,11 @@ private:
   // Toast Data
   char toast_message[19*4] = "";
   long toast_expiration = 0;
+  bool toast_render_pending = false;
+  bool toast_allow_clear = true;
+
+  // Menu
+  UIMenu *current_menu = nullptr;
 };
 
 extern UserInterface UI;

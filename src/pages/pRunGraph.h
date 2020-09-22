@@ -20,12 +20,14 @@ class pRunGraph : public Page {
   RGView view;
   RGMode mode;
 
-  void Enter() override {
-    view = StatsView;
-    mode = Manual;
+  void Enter(bool reinitialize) override {
+    if (reinitialize) {
+      view = StatsView;
+      mode = Manual;
+      OrgasmControl::controlMotor(false);
+    }
 
     updateButtons();
-    OrgasmControl::controlMotor(false);
     UI.setButton(1, "STOP");
   }
 
@@ -215,7 +217,6 @@ class pRunGraph : public Page {
         mode = Manual;
         Hardware::setMotorSpeed(0);
         OrgasmControl::controlMotor(false);
-        UI.toast("I stopped!");
         break;
       case 2:
         if (mode == Automatic) {
@@ -234,7 +235,6 @@ class pRunGraph : public Page {
 
   void onEncoderChange(int diff) override {
     const int step = 255/20;
-    Serial.println("Encoder change: " + String(diff));
 
     if (mode == Automatic) {
       // TODO this may go out of bounds. Also, change in steps?

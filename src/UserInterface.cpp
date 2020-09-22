@@ -20,8 +20,19 @@ bool UserInterface::begin() {
 }
 
 void UserInterface::drawStatus(const char *status) {
-  if (status != nullptr)
+  if (status != nullptr) {
     strlcpy(this->status, status, STATUS_SIZE);
+    int sum = 0;
+    for (int i = 0; i < strlen(this->status); i++) {
+      sum += (int)this->status[i];
+    }
+
+    Hardware::setEncoderColor(CHSV(
+        sum % 255,
+        255,
+        128
+    ));
+  }
 
   // actually calculate ---------------\/
   this->display->fillRect(0, 0, SCREEN_WIDTH - 18, 10, SSD1306_BLACK);
@@ -73,7 +84,19 @@ void UserInterface::setButton(byte i, char *text, ButtonCallback fn) {
   buttons[i].show = true;
 }
 
+void UserInterface::drawPattern(int start_x, int start_y, int width, int height, int pattern, int color) {
+  for (int x = start_x; x < start_x + width; x++) {
+    for (int y = start_y; y < start_y + height; y++) {
+      if (!((x+y)%pattern)) {
+        this->display->drawPixel(x, y, color);
+      }
+    }
+  }
+}
+
 void UserInterface::drawButtons() {
+  this->display->drawLine(0, BUTTON_START_Y-1, SCREEN_WIDTH, BUTTON_START_Y-1, SSD1306_BLACK);
+
   for (int i = 0; i < 3; i++) {
     UIButton b = buttons[i];
     int offset_left = 1;
@@ -88,20 +111,33 @@ void UserInterface::drawButtons() {
 
     if (b.show) {
       this->display->fillRect(button_start_l, BUTTON_START_Y, BUTTON_WIDTH, BUTTON_HEIGHT, SSD1306_WHITE);
-      this->display->setCursor(button_start_l + offset_left, BUTTON_START_Y + 1);
       this->display->setTextColor(SSD1306_BLACK, SSD1306_WHITE);
+      this->display->setCursor(button_start_l + offset_left, BUTTON_START_Y + 1);
       this->display->print(b.text);
+    } else {
+      this->drawPattern(button_start_l, BUTTON_START_Y, BUTTON_WIDTH, BUTTON_HEIGHT, 3, SSD1306_WHITE);
     }
   }
 }
 
 void UserInterface::onKeyPress(byte i) {
-#ifdef DEBUG
-  Serial.println("UI::onKeyPress(" + String(i) + ")");
-#endif
-  ButtonCallback cb = buttons[i].fn;
-  if (cb != nullptr) {
-    cb();
+  // FIXME: This segfaults in the menu context on btn3 (encoder)
+//  ButtonCallback cb = buttons[i].fn;
+//  if (cb != nullptr) {
+//    return cb();
+//  }
+
+  if (UI.isMenuOpen()) {
+    if (i == 0) {
+      UI.closeMenu();
+    } else {
+      current_menu->handleClick();
+    }
+
+    return;
+  } else if (i == 3) {
+    UI.openMenu(&MainMenu);
+    return;
   }
 
   if (Page::currentPage != nullptr) {
@@ -110,6 +146,16 @@ void UserInterface::onKeyPress(byte i) {
 }
 
 void UserInterface::onEncoderChange(int value) {
+  if (UI.isMenuOpen()) {
+    // Todo we can pass diff here to provide a better fast scrolly experience.
+    if (value < 0) {
+      current_menu->selectPrev();
+    } else {
+      current_menu->selectNext();
+    }
+    return;
+  }
+
   if (Page::currentPage != nullptr) {
     Page::currentPage->onEncoderChange(value);
   }
@@ -250,11 +296,22 @@ void UserInterface::screenshot() {
   String buffer;
   screenshot(buffer);
   Serial.println(buffer);
+  toast("Screenshot Saved", 3000);
 }
 
 void UserInterface::drawToast() {
-  if (toast_message == nullptr || millis() > toast_expiration)
+  toast_render_pending = false;
+
+  // Can C++ just let me do toast_message == ""
+  // because that'd be prettier.
+  if (toast_message[0] == '\0')
     return;
+
+  if (toast_expiration != 0 && millis() > toast_expiration) {
+    toast_message[0] = '\0';
+    toast_render_pending = true;
+    return;
+  }
 
   // Line width = 18 char
   const int padding = 2;
@@ -288,8 +345,10 @@ void UserInterface::drawToast() {
   display->drawRect(start_x + margin, start_y + margin, SCREEN_WIDTH - (start_x * 2) - (margin * 2), SCREEN_HEIGHT - (start_y * 2) - (margin * 2), SSD1306_WHITE);
   display->setTextColor(SSD1306_WHITE, SSD1306_BLACK);
 
-  // TODO - this is destructive, which sucks.
-  char *tok = strtok(toast_message, "\n");
+  char tmp[19*4] = "";
+  strcpy(tmp, toast_message);
+
+  char *tok = strtok(tmp, "\n");
   while (tok != NULL) {
     display->setCursor(start_x + margin + padding + 1, text_start_y);
     display->print(tok);
@@ -298,7 +357,56 @@ void UserInterface::drawToast() {
   }
 }
 
-void UserInterface::toast(char *message, long duration) {
+void UserInterface::toast(const char *message, long duration, bool allow_clear) {
   strncpy(toast_message, message, 19*4);
-  toast_expiration = millis() + duration;
+  toast_expiration = duration > 0 ? millis() + duration : 0;
+  toast_render_pending = true;
+  toast_allow_clear = allow_clear;
+}
+
+void UserInterface::toastNow(const char *message, long duration, bool allow_clear) {
+  toast(message, duration, allow_clear);
+  drawToast();
+  render();
+}
+
+bool UserInterface::isMenuOpen() {
+  return current_menu != nullptr;
+}
+
+UIMenu *UserInterface::closeMenu() {
+  if (current_menu == nullptr)
+    return nullptr;
+
+  UIMenu *prev = current_menu->close();
+  openMenu(prev, false);
+  return prev;
+}
+
+void UserInterface::openMenu(UIMenu *menu, bool save_history) {
+  if (menu != nullptr) {
+    menu->open(current_menu, save_history);
+  }
+
+  current_menu = menu;
+
+  if (current_menu == nullptr) {
+    Page::Reenter();
+  }
+}
+
+bool UserInterface::toastRenderPending() {
+  bool trp = toast_render_pending || (toast_message[0] != '\0' && millis() > toast_expiration);
+  return trp;
+}
+
+void UserInterface::tick() {
+  if (current_menu != nullptr) {
+    current_menu->tick();
+  }
+}
+
+bool UserInterface::hasToast() {
+  bool has_toast = toast_message[0] != '\0' && millis() < toast_expiration;
+  return has_toast;
 }
