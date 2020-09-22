@@ -12,8 +12,8 @@ namespace Hardware {
 #ifndef LED_PIN
     pinMode(RJ_LED_1_PIN, OUTPUT);
     pinMode(RJ_LED_2_PIN, OUTPUT);
-    digitalWrite(RJ_LED_1_PIN, HIGH);
-    digitalWrite(RJ_LED_2_PIN, HIGH);
+    digitalWrite(RJ_LED_1_PIN, LOW);
+    digitalWrite(RJ_LED_2_PIN, LOW);
 #endif
 
     Wire.begin();
@@ -37,10 +37,6 @@ namespace Hardware {
       encoderCount = count;
     }
 
-    analogWrite(ENCODER_RD_PIN, encoderColor.r);
-    analogWrite(ENCODER_GR_PIN, encoderColor.g);
-    analogWrite(ENCODER_BL_PIN, encoderColor.b);
-
     if (Config.screen_dim_seconds > 0) {
       if ((millis() - idle_since_ms) > Config.screen_dim_seconds * 1000) {
         if (!idle) {
@@ -63,6 +59,7 @@ namespace Hardware {
   }
 
   void setEncoderColor(CRGB color) {
+    encoderColor = color;
     analogWrite(ENCODER_RD_PIN, color.r);
     analogWrite(ENCODER_GR_PIN, color.g);
     analogWrite(ENCODER_BL_PIN, color.b);
@@ -73,7 +70,6 @@ namespace Hardware {
     if (new_speed == motor_speed) return;
 
     motor_speed = new_speed;
-    Serial.println("Setting motor speed: " + String(speed) + " norm: " + String(motor_speed));
     analogWrite(MOT_PWM_PIN, motor_speed);
   }
 
@@ -139,6 +135,8 @@ namespace Hardware {
       pinMode(ENCODER_GR_PIN, OUTPUT);
       pinMode(ENCODER_BL_PIN, OUTPUT);
 
+      setEncoderColor(CRGB::Black);
+
       ESP32Encoder::useInternalWeakPullResistors = UP;
       Encoder.attachSingleEdge(ENCODER_A_PIN, ENCODER_B_PIN);
       Encoder.setCount(128);
@@ -150,7 +148,7 @@ namespace Hardware {
       });
 
       // TODO: This should be EncoderSw
-      EncoderSw.attachDoubleClick([]() {
+      EncoderSw.attachPress([]() {
         UI.screenshot();
       });
     }

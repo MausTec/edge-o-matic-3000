@@ -13,13 +13,14 @@ public:
   static void GoBack();
   static void DoLoop();
   static void Rerender();
+  static void Reenter();
   static void AttachButtonHandlers();
   static Page* CurrentPage();
 
   // Page Lifecycle
   virtual void Render();
   virtual void Loop();
-  virtual void Enter();
+  virtual void Enter(bool reinitialize = true);
   virtual void Exit();
 
   // Event Hooks

@@ -42,7 +42,7 @@ namespace Hardware {
 #ifdef LED_PIN
     CRGB leds[LED_COUNT];
 #endif
-    CRGB encoderColor;
+    CRGB encoderColor = CRGB::Black;
 
     OneButton Key1(KEY_1_PIN, true, false);
     OneButton Key2(KEY_2_PIN, true, false);

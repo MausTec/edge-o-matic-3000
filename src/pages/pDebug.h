@@ -5,7 +5,7 @@
 #include "../../include/assets.h"
 
 class pDebug : public Page {
-  void Enter() override {
+  void Enter(bool) override {
     Serial.println("Debug page entered.");
   }
 
