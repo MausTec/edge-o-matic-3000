@@ -27,22 +27,9 @@
 #include "include/OrgasmControl.h"
 #include "include/WiFiHelper.h"
 
-// For the Butt Device:
-// MotorControl
-// PressureSensor
-// UserInterface
-// WirelessLink
-// SDCard
-
-#define MODE_AUTO 0
-#define MODE_MANUAL 1
-
-#define WINDOW_SIZE 5
-
 uint8_t LED_Brightness = 13;
 
-uint8_t mode = MODE_AUTO;
-
+// Declare LCD
 #ifdef NG_PLUS
   Adafruit_SSD1306 display(128, 64);
 #else
@@ -50,19 +37,12 @@ uint8_t mode = MODE_AUTO;
 #endif
 
 UserInterface UI(&display);
-
 BluetoothServer BT;
-RunningAverage PressureAverage;
-float arousal = 0.0;
 
 // Globals
 WebSocketsServer* webSocket; // This is now a pointer, because apparently there is no default constructor and
                              // it *must* be initialized with a port, which we don't know until config load.
 uint8_t last_connection;
-int ramp_time_s = 30;
-int motor_max = 255;
-float motor_speed = 0;
-uint16_t peak_limit = 600;
 
 void sendSettings(uint8_t num) {
   if (webSocket == nullptr) return;
@@ -70,9 +50,9 @@ void sendSettings(uint8_t num) {
   StaticJsonDocument<200> doc;
   doc["cmd"] = "SETTINGS";
   doc["brightness"] = LED_Brightness;
-  doc["peak_limit"] = peak_limit;
-  doc["motor_max"] = motor_max;
-  doc["ramp_time_s"] = ramp_time_s;
+  doc["peak_limit"] = Config.sensitivity_threshold;
+  doc["motor_max"] = Config.motor_max_speed;
+  doc["ramp_time_s"] = Config.motor_ramp_time_s;
 
   // Blow the Network Load
   String payload;
@@ -142,7 +122,7 @@ void onMessage(uint8_t num, uint8_t * payload) {
     if (strcmp(cmd, "SET_BRIGHTNESS") == 0) {
       LED_Brightness = doc["brightness"];
     } else if (strcmp(cmd, "SET_LIMIT") == 0) {
-      peak_limit = doc["limit"];
+      Config.sensitivity_threshold = doc["limit"];
     } else if (strcmp(cmd, "GET_SETTINGS") == 0) {
       sendSettings(num);
     } else if (strcmp(cmd, "RESET_SD") == 0) {
@@ -332,7 +312,7 @@ void loop() {
 
     // Update LEDs
 #ifdef LED_PIN
-    uint8_t bar = map(OrgasmControl::getArousal(), 0, peak_limit, 0, LED_COUNT - 1);
+    uint8_t bar = map(OrgasmControl::getArousal(), 0, Config.sensitivity_threshold, 0, LED_COUNT - 1);
     uint8_t dot = map(OrgasmControl::getAveragePressure(), 0, 4096, 0, LED_COUNT - 1);
     for (uint8_t i = 0; i < LED_COUNT; i++) {
       if (i < bar) {
