@@ -296,7 +296,7 @@ void UserInterface::drawToast() {
   if (toast_message[0] == '\0')
     return;
 
-  if (millis() > toast_expiration) {
+  if (toast_expiration != 0 && millis() > toast_expiration) {
     toast_message[0] = '\0';
     toast_render_pending = true;
     return;
@@ -346,14 +346,15 @@ void UserInterface::drawToast() {
   }
 }
 
-void UserInterface::toast(const char *message, long duration) {
+void UserInterface::toast(const char *message, long duration, bool allow_clear) {
   strncpy(toast_message, message, 19*4);
-  toast_expiration = millis() + duration;
+  toast_expiration = duration > 0 ? millis() + duration : 0;
   toast_render_pending = true;
+  toast_allow_clear = allow_clear;
 }
 
-void UserInterface::toastNow(const char *message, long duration) {
-  toast(message, duration);
+void UserInterface::toastNow(const char *message, long duration, bool allow_clear) {
+  toast(message, duration, allow_clear);
   drawToast();
   render();
 }
