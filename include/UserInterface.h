@@ -16,6 +16,8 @@
 #define CHART_WIDTH (CHART_END_X - CHART_START_X)
 
 #define STATUS_SIZE 16
+#define TOAST_WIDTH 16
+#define TOAST_LINES 4
 
 #define WIFI_ICON_IDX 0
 #define SD_ICON_IDX 1
@@ -67,7 +69,8 @@ public:
   void onEncoderChange(int value);
 
   // Toast
-  void toast(char *message, long duration = 3000);
+  void toast(const char *message, long duration = 3000);
+  void toastNow(const char *message, long duration = 3000);
   void drawToast();
   bool toastRenderPending();
   bool hasToast();

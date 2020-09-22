@@ -334,8 +334,10 @@ void UserInterface::drawToast() {
   display->drawRect(start_x + margin, start_y + margin, SCREEN_WIDTH - (start_x * 2) - (margin * 2), SCREEN_HEIGHT - (start_y * 2) - (margin * 2), SSD1306_WHITE);
   display->setTextColor(SSD1306_WHITE, SSD1306_BLACK);
 
-  // TODO - this is destructive, which sucks.
-  char *tok = strtok(toast_message, "\n");
+  char tmp[19*4] = "";
+  strcpy(tmp, toast_message);
+
+  char *tok = strtok(tmp, "\n");
   while (tok != NULL) {
     display->setCursor(start_x + margin + padding + 1, text_start_y);
     display->print(tok);
@@ -344,10 +346,16 @@ void UserInterface::drawToast() {
   }
 }
 
-void UserInterface::toast(char *message, long duration) {
+void UserInterface::toast(const char *message, long duration) {
   strncpy(toast_message, message, 19*4);
   toast_expiration = millis() + duration;
   toast_render_pending = true;
+}
+
+void UserInterface::toastNow(const char *message, long duration) {
+  toast(message, duration);
+  drawToast();
+  render();
 }
 
 bool UserInterface::isMenuOpen() {

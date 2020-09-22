@@ -1,9 +1,9 @@
 #include "../include/UIMenu.h"
 #include "../include/UserInterface.h"
 
-UIMenu::UIMenu(char *t, void(*fn)(UIMenu *)) {
+UIMenu::UIMenu(char *t, MenuCallback fn) {
   title = t;
-  fn(this);
+  initializer = fn;
 }
 
 void UIMenu::addItem(char *text, MenuCallback cb) {
@@ -38,11 +38,16 @@ void UIMenu::render() {
   UI.drawIcons();
   UI.display->drawLine(0, 9, SCREEN_WIDTH, 9, SSD1306_WHITE);
 
+  Serial.println("Menu " + String(title) + " has " + String(getItemCount()) + " items.");
+  Serial.println(" Selected: " + String(getCurrentPosition()));
+
   // Step back 2 items or to start
   UIMenuItem *item = current_item;
   for (int i = 0; i < 2; i++) {
-    if (item == nullptr || item->prev == nullptr)
+    if (item == nullptr || item->prev == nullptr) {
       break;
+    }
+    Serial.println("Backtracking...");
     item = item->prev;
   }
 
@@ -67,16 +72,8 @@ void UIMenu::render() {
     }
 
     // Count items and get position
-    int menu_item_count = 0;
-    int current_item_position = 0;
-    item = first_item;
-    while (item != nullptr) {
-      menu_item_count++;
-      if (item == current_item) {
-        current_item_position = menu_item_count;
-      }
-      item = item->next;
-    }
+    int menu_item_count = getItemCount();
+    int current_item_position = getCurrentPosition();
 
     // Render Scrollbar
     if (menu_item_count > 3) {
@@ -115,8 +112,10 @@ void UIMenu::tick() {
 }
 
 void UIMenu::open(UIMenu *previous, bool save_history) {
+  initialize();
 
   Serial.println("Opening menu: " + String(title));
+
   if (save_history) {
     prev = previous;
     if (previous != nullptr) {
@@ -124,7 +123,6 @@ void UIMenu::open(UIMenu *previous, bool save_history) {
     }
   }
 
-  current_item = first_item;
   UI.clearButtons();
   UI.setButton(0, "BACK");
   render();
@@ -136,29 +134,84 @@ UIMenu *UIMenu::close() {
 }
 
 void UIMenu::selectNext() {
+  if (millis() - last_menu_change < 500) {
+    return; // debounce
+  } else {
+    last_menu_change = millis();
+  }
+
   if (current_item == nullptr || current_item->next == nullptr) {
     current_item = first_item;
   } else {
     current_item = current_item->next;
   }
+
   render();
-  // This is a debounce.
-  delay(100);
 }
 
 void UIMenu::selectPrev() {
+  if (millis() - last_menu_change < 500) {
+    return; // debounce
+  } else {
+    last_menu_change = millis();
+  }
+
   if (current_item == nullptr || current_item->prev == nullptr) {
     current_item = last_item;
   } else {
     current_item = current_item->prev;
   }
+
   render();
-  // This is a debounce.
-  delay(100);
 }
 
 void UIMenu::handleClick() {
   if (current_item != nullptr && current_item->cb != nullptr) {
-    current_item->cb();
+    current_item->cb(this);
   }
+}
+
+void UIMenu::clearItems() {
+  UIMenuItem *item = first_item;
+  while (item != nullptr) {
+    UIMenuItem *tmp = item;
+    item = item->next;
+    free(tmp);
+  }
+  first_item = nullptr;
+  current_item = nullptr;
+  last_item = nullptr;
+}
+
+void UIMenu::initialize() {
+  clearItems();
+  initializer(this);
+  current_item = first_item;
+}
+
+int UIMenu::getItemCount() {
+  int menu_item_count = 0;
+  UIMenuItem *item = first_item;
+  while (item != nullptr) {
+    menu_item_count++;
+    item = item->next;
+  }
+
+  return menu_item_count;
+}
+
+int UIMenu::getCurrentPosition() {
+  int menu_item_count = 0;
+  int menu_item_position = 0;
+  UIMenuItem *item = first_item;
+  while (item != nullptr) {
+    menu_item_count++;
+    if (item == current_item) {
+      menu_item_position = menu_item_count;
+      break;
+    }
+    item = item->next;
+  }
+
+  return menu_item_position;
 }

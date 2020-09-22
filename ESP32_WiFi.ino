@@ -286,45 +286,12 @@ void setup() {
 
   // Initialize WiFi
   if (Config.wifi_on) {
-    // Connect to access point
-    Serial.println("Connecting");
-    WiFi.begin(Config.wifi_ssid, Config.wifi_key);
-    UI.display->setCursor(0,0);
-    int count = 0;
-    while ( WiFi.status() != WL_CONNECTED ) {
-      delay(500);
-      UI.display->print(".");
-      UI.render();
-      if (count++ > 3) {
-        UI.drawStatus("");
-        UI.display->setCursor(0,0);
-      }
-      Serial.print(".");
-    }
-
-    // Print our IP address
-    Serial.println("Connected!");
-    Serial.print("My IP address: ");
-    Serial.println(WiFi.localIP());
+    WiFiHelper::begin();
 
     // Start WebSocket server and assign callback
     webSocket = new WebSocketsServer(Config.websocket_port);
     webSocket->begin();
     webSocket->onEvent(onWebSocketEvent);
-
-    // Synchronize Local Clock
-    const char* ntpServer = "pool.ntp.org";
-    const long  gmtOffset_sec = 0;
-    const int   daylightOffset_sec = 3600;
-    configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
-
-    // Time Example TODO-Remove
-    struct tm timeinfo;
-    if(!getLocalTime(&timeinfo)){
-      Serial.println("Failed to obtain time");
-      return;
-    }
-    Serial.println(&timeinfo, "%A, %B %d %Y %H:%M:%S");
   }
 
   // Initialize Bluetooth

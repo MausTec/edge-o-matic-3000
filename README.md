@@ -77,6 +77,26 @@ I2C redriver IC or compatible module to interface with this. Additionaly, this i
 |7|`SDA-`|
 |8|`SDA+`|
 
+# Development
+
+The official hardware looks like an ESP32-WROOM dev module. Conveniently, you can use the same module for your own builds.
+This is currently developed in the horrid confines of the Arduino IDE for the compiler toolchain. Install ESP support for
+Arduino. Use your fav editor. CLion is great.
+
+#### Board Settings
+
+|Setting|Value|
+|---|---|
+|Board|**ESP32 Dev Module**|
+|Upload Speed|921600|
+|CPU Frequency|240MHz (WiFi/BT)|
+|Flash Frequency|80MHz|
+|Flash Mode|QIO|
+|Flash Size|**4MB (32Mb)**|
+|Partition Scheme|**Huge APP (3MB No OTA/1MB SPIFFS)**|
+|Core Debug Level|None|
+|PSRAM|Disabled|
+
 # Thanks!
 
 For helping develop the software, hardware, and other nerdy bits:
