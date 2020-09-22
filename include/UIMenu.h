@@ -4,6 +4,32 @@
 #include "../config.h"
 #include <functional>
 
+/**
+ * Time in ms to ignore scroll events.
+ *
+ * This prevents that absolutely infuriating thing my CR-10 does when I go to scroll one item and it
+ * registers two clicks because I was *kinda sorta* between the next thing. However, this also makes
+ * it super annoying to scroll through menus at light speed, so this has been reduced from 500ms to
+ * 300ms. There is truly no winning, but having this debounce here seemed to make my life slightly
+ * less full of fire and rage.
+ *
+ * If I was an actual dragon, I would have set the scroll wheel on fire. Do I need larger smoothing
+ * capacitors? 100nF was too big, 10nF seemed just right, but I still have this absolutely annoying
+ * bounce that sometimes happens when you're in-between detents on the scroll wheel. Is this an issue
+ * with the PEL12T? The no-name (also a PEL12 variant) SparkFun encoder does this too. I think every
+ * encoder in the universe does this (see CR-10).
+ *
+ * Maybe I just need to learn patience when scrolling.
+ * That would explain why the scroll wheel on my mouse is wearing out.
+ *
+ * But look, that scroll wheel has seen the duality of heal staff and murder gun when I mained Mercy,
+ * and that is a pretty tense environment when I'm furiously scrolling to grab my pistol and shoot
+ * a Junkrat for--     what was I on about?
+ *
+ * Oh yeah, rotary encoders are of the devil.
+ */
+#define MENU_SCROLL_DEBOUNCE 300
+
 class UIMenu;
 
 typedef void(*MenuCallback)(UIMenu*);
