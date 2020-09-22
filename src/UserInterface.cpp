@@ -127,6 +127,13 @@ void UserInterface::onKeyPress(byte i) {
 //    return cb();
 //  }
 
+  if (hasToast()) {
+    if (toast_allow_clear) {
+      UI.toast("", 0);
+    }
+    return;
+  }
+
   if (UI.isMenuOpen()) {
     if (i == 0) {
       UI.closeMenu();
@@ -355,6 +362,13 @@ void UserInterface::drawToast() {
     text_start_y += 7 + padding;
     tok = strtok(NULL, "\n");
   }
+
+  // TODO: This doesn't actually temp override the buttons, but since it's
+  //       only a condition which shows up in the menu, conveniently, "BACK"
+  //       is the only option.
+  if (toast_allow_clear) {
+    drawButtons();
+  }
 }
 
 void UserInterface::toast(const char *message, long duration, bool allow_clear) {
@@ -407,6 +421,6 @@ void UserInterface::tick() {
 }
 
 bool UserInterface::hasToast() {
-  bool has_toast = toast_message[0] != '\0' && millis() < toast_expiration;
+  bool has_toast = toast_message[0] != '\0' && (toast_expiration == 0 || millis() < toast_expiration);
   return has_toast;
 }
