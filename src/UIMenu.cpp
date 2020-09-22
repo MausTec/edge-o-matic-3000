@@ -134,7 +134,7 @@ UIMenu *UIMenu::close() {
 }
 
 void UIMenu::selectNext() {
-  if (millis() - last_menu_change < 500) {
+  if (millis() - last_menu_change < MENU_SCROLL_DEBOUNCE) {
     return; // debounce
   } else {
     last_menu_change = millis();
@@ -150,7 +150,7 @@ void UIMenu::selectNext() {
 }
 
 void UIMenu::selectPrev() {
-  if (millis() - last_menu_change < 500) {
+  if (millis() - last_menu_change < MENU_SCROLL_DEBOUNCE) {
     return; // debounce
   } else {
     last_menu_change = millis();
