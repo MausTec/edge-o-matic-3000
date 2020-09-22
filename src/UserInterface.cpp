@@ -20,8 +20,19 @@ bool UserInterface::begin() {
 }
 
 void UserInterface::drawStatus(const char *status) {
-  if (status != nullptr)
+  if (status != nullptr) {
     strlcpy(this->status, status, STATUS_SIZE);
+    int sum = 0;
+    for (int i = 0; i < strlen(this->status); i++) {
+      sum += (int)this->status[i];
+    }
+
+    Hardware::setEncoderColor(CHSV(
+        sum % 255,
+        255,
+        128
+    ));
+  }
 
   // actually calculate ---------------\/
   this->display->fillRect(0, 0, SCREEN_WIDTH - 18, 10, SSD1306_BLACK);

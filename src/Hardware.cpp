@@ -37,10 +37,6 @@ namespace Hardware {
       encoderCount = count;
     }
 
-    analogWrite(ENCODER_RD_PIN, encoderColor.r);
-    analogWrite(ENCODER_GR_PIN, encoderColor.g);
-    analogWrite(ENCODER_BL_PIN, encoderColor.b);
-
     if (Config.screen_dim_seconds > 0) {
       if ((millis() - idle_since_ms) > Config.screen_dim_seconds * 1000) {
         if (!idle) {
@@ -63,6 +59,7 @@ namespace Hardware {
   }
 
   void setEncoderColor(CRGB color) {
+    encoderColor = color;
     analogWrite(ENCODER_RD_PIN, color.r);
     analogWrite(ENCODER_GR_PIN, color.g);
     analogWrite(ENCODER_BL_PIN, color.b);
@@ -137,6 +134,8 @@ namespace Hardware {
       pinMode(ENCODER_RD_PIN, OUTPUT);
       pinMode(ENCODER_GR_PIN, OUTPUT);
       pinMode(ENCODER_BL_PIN, OUTPUT);
+
+      setEncoderColor(CRGB::Black);
 
       ESP32Encoder::useInternalWeakPullResistors = UP;
       Encoder.attachSingleEdge(ENCODER_A_PIN, ENCODER_B_PIN);
