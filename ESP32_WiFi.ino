@@ -7,6 +7,7 @@
 #include <time.h>
 
 #include "config.h"
+#include "VERSION.h"
 
 #include "FS.h"
 #include "SD.h"
@@ -26,6 +27,7 @@
 #include "include/Console.h"
 #include "include/OrgasmControl.h"
 #include "include/WiFiHelper.h"
+#include "include/UpdateHelper.h"
 
 uint8_t LED_Brightness = 13;
 
@@ -247,9 +249,21 @@ void setupHardware() {
   }
 }
 
+TaskHandle_t BackgroundLoopTask;
+
+void backgroundLoop(void*) {
+  for (;;) {
+//    UpdateHelper::checkForUpdates();
+    delay(1000);
+  }
+}
+
 void setup() {
   // Start Serial port
   Serial.begin(115200);
+
+  Serial.println("Maus-Tec Edge-o-Matic 3000");
+  Serial.println("Version: " VERSION);
 
   // Setup Hardware
   setupHardware();
@@ -280,6 +294,16 @@ void setup() {
     Serial.println("Now Discoverable!");
     BT.advertise();
   }
+
+  // Start background worker:
+  xTaskCreatePinnedToCore(
+      backgroundLoop, /* Task function. */
+      "backgroundLoop",   /* name of task. */
+      10000,     /* Stack size of task */
+      NULL,      /* parameter of the task */
+      1,         /* priority of the task */
+      &BackgroundLoopTask,    /* Task handle to keep track of created task */
+      0);        /* pin task to core 0 */
 
   // I'm always one for the dramatics:
   delay(3000);
