@@ -87,5 +87,6 @@ extern UIMenu MainMenu;
 extern UIMenu GamesMenu;
 extern UIMenu NetworkMenu;
 extern UIMenu UISettingsMenu;
+extern UIMenu EdgingSettingsMenu;
 
 #endif

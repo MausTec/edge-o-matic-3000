@@ -2,12 +2,11 @@
 #include "../../include/UserInterface.h"
 #include "../../include/Page.h"
 
-void buildMenu(UIMenu *menu) {
+static void buildMenu(UIMenu *menu) {
   menu->addItem("Automatic Edging", &RunGraphPage);
 
-  menu->addItem("Edging Settings");
-  menu->addItem("UI Settings");
-
+  menu->addItem(&EdgingSettingsMenu);
+  menu->addItem(&UISettingsMenu);
   menu->addItem(&NetworkMenu);
   menu->addItem(&GamesMenu);
 }
