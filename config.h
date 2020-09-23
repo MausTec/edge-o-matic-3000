@@ -56,11 +56,11 @@
 
 struct ConfigStruct {
   // Networking
-  char wifi_ssid[256];
-  char wifi_key[256];
+  char wifi_ssid[64];
+  char wifi_key[64];
   bool wifi_on;
 
-  char bt_display_name[256];
+  char bt_display_name[64];
   bool bt_on;
 
   // UI And Stuff

@@ -4,6 +4,8 @@
 #include "../config.h"
 #include <functional>
 
+#define TITLE_SIZE 16
+
 /**
  * Time in ms to ignore scroll events.
  *
@@ -28,12 +30,11 @@
  *
  * Oh yeah, rotary encoders are of the devil.
  */
-#define MENU_SCROLL_DEBOUNCE 300
+#define MENU_SCROLL_DEBOUNCE 50
 
 class UIMenu;
 
 typedef void(*MenuCallback)(UIMenu*);
-//typedef std::function<void(UIMenu*)> MenuCallback;
 
 typedef struct UIMenuItem {
   char *text;
@@ -60,7 +61,7 @@ public:
   int getCurrentPosition();
 
 private:
-  char *title;
+  char title[TITLE_SIZE + 1];
 
   UIMenu *prev = nullptr;
 
@@ -73,5 +74,8 @@ private:
 };
 
 extern UIMenu MainMenu;
+extern UIMenu GamesMenu;
+extern UIMenu NetworkMenu;
+extern UIMenu UISettingsMenu;
 
 #endif

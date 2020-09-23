@@ -6,7 +6,16 @@ Page* Page::previousPages[HISTORY_LENGTH] = { nullptr };
 size_t Page::historyIndex = 0;
 
 void Page::Go(Page* page, bool saveHistory) {
-  if (page == currentPage) return;
+  // Close Menus & toasts
+  UI.openMenu(nullptr, false, false);
+  UI.toast("");
+
+  // Skip Current Page
+  if (page == currentPage) {
+    Reenter();
+    return;
+  }
+
   previousPage = currentPage;
 
   if (previousPage != nullptr)
