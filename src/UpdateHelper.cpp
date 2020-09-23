@@ -61,7 +61,7 @@ namespace UpdateHelper {
       UI.toastNow("Updating...\n[##########] 100%");
 
       // whe finished remove the binary from sd card to indicate end of the process
-      fs.move("/update.bin", "/update-" VERSION ".bin");
+      // fs.mv("/update.bin", "/update-" VERSION ".bin");
       delay(2000);
       ESP.restart();
     } else {
