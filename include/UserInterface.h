@@ -21,12 +21,21 @@
 
 #define WIFI_ICON_IDX 0
 #define SD_ICON_IDX 1
-#define BT_ICON_IDX 2
+#define RECORD_ICON_IDX 2
+#define UPDATE_ICON_IDX 3
 
 #include <Adafruit_SSD1306.h>
 
 typedef void (*ButtonCallback)(void);
 typedef void (*RotaryCallback)(int count);
+
+typedef struct {
+  byte status = 0;
+  long flash_delay = 0;
+  long last_flash = 0;
+  bool show = false;
+  // byte *icon = nullptr;
+} UIIcon;
 
 typedef struct {
   bool show = false;
@@ -56,8 +65,11 @@ public:
   void render();
 
   // Icons
-  void drawWifiIcon(byte strength);
-  void drawSdIcon(byte status);
+  void drawWifiIcon(byte strength = 255, long flash_ms = 0);
+  void drawSdIcon(byte status = 255, long flash_ms = 0);
+  void drawRecordIcon(byte status = 255, long flash_ms = 0);
+  void drawUpdateIcon(byte status = 255, long flash_ms = 0);
+  void drawIcon(byte icon_idx, byte icon[][8], byte status, long flash_ms);
   void drawIcons();
 
   // Buttons
@@ -70,7 +82,9 @@ public:
 
   // Toast
   void toast(const char *message, long duration = 3000, bool allow_clear = true);
+  void toast(String &message, long duration = 3000, bool allow_clear = true);
   void toastNow(const char *message, long duration = 3000, bool allow_clear = true);
+  void toastNow(String &message, long duration = 3000, bool allow_clear = true);
   void drawToast();
   bool toastRenderPending();
   bool hasToast();
@@ -96,7 +110,7 @@ private:
 
   // Header Data
   char status[STATUS_SIZE] = {0};
-  char icons[4] = {0};
+  UIIcon icons[4];
 
   // Toast Data
   char toast_message[19*4] = "";

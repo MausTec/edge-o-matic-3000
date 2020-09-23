@@ -3,7 +3,12 @@
 
 #include "arduino.h"
 
+// External Library Config
+#define FASTLED_INTERNAL
+
+// SD card files:
 #define CONFIG_FILENAME "/config.json"
+#define UPDATE_FILENAME "/update.bin"
 
 // Uncomment to enable debug logging and functions.
 #define DEBUG

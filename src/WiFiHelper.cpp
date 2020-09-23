@@ -5,7 +5,7 @@
 
 namespace WiFiHelper {
   void drawSignalIcon() {
-    UI.drawWifiIcon(getWiFiStrength());
+    UI.drawWifiIcon(getWiFiStrength() + 1);
   }
 
   bool connected() {

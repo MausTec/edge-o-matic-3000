@@ -3,6 +3,8 @@
 
 #include "../include/Page.h"
 
+#define icon_y(idx) (SCREEN_WIDTH - (10 * (idx + 1)) + 2)
+
 UserInterface::UserInterface(Adafruit_SSD1306 *display) {
   this->display = display;
 }
@@ -35,7 +37,7 @@ void UserInterface::drawStatus(const char *status) {
   }
 
   // actually calculate ---------------\/
-  this->display->fillRect(0, 0, SCREEN_WIDTH - 18, 10, SSD1306_BLACK);
+  this->display->fillRect(0, 0, SCREEN_WIDTH - icon_y(3), 10, SSD1306_BLACK);
   this->display->setCursor(0,0);
   this->display->setTextColor(SSD1306_WHITE, SSD1306_BLACK);
   this->display->print(this->status);
@@ -265,25 +267,53 @@ void UserInterface::render() {
   this->display->display();
 }
 
-void UserInterface::drawWifiIcon(byte strength) {
-  this->icons[WIFI_ICON_IDX] = strength;
-  this->display->fillRect(SCREEN_WIDTH - 8, 0, 8, 8, SSD1306_BLACK);
-  this->display->drawBitmap(SCREEN_WIDTH - 8, 0, WIFI_ICON[strength], 8, 8, SSD1306_WHITE);
+void UserInterface::drawIcon(byte icon_idx, byte icon_graphic[][8], byte status, long flash_ms) {
+  UIIcon *icon = &icons[icon_idx];
+  byte icon_frame_idx;
+
+  if (status != 255) {
+    icon->status = status;
+    icon->flash_delay = flash_ms;
+    icon->show = 1;
+    icon->last_flash = millis();
+    icon_frame_idx = status;
+  } else {
+    icon_frame_idx = icon->status;
+    if (icon->flash_delay != 0 && ((millis() - icon->last_flash) > icon->flash_delay)) {
+      icon->last_flash = millis();
+      icon->show = !icon->show;
+    }
+  }
+
+  this->display->fillRect(icon_y(icon_idx), 0, 8, 8, SSD1306_BLACK);
+  if (icon_frame_idx > 0 && icon->show)
+    this->display->drawBitmap(icon_y(icon_idx), 0, icon_graphic[icon_frame_idx - 1], 8, 8, SSD1306_WHITE);
 }
 
-void UserInterface::drawSdIcon(byte status) {
-  this->icons[SD_ICON_IDX] = status;
-  this->display->fillRect(SCREEN_WIDTH - 18, 0, 8, 8, SSD1306_BLACK);
-  if (status > 0)
-    this->display->drawBitmap(SCREEN_WIDTH - 18, 0, SD_ICON[status-1], 8, 8, SSD1306_WHITE);
+void UserInterface::drawWifiIcon(byte status, long flash_ms) {
+  drawIcon(WIFI_ICON_IDX, WIFI_ICON, status, flash_ms);
+}
+
+void UserInterface::drawSdIcon(byte status, long flash_ms) {
+  drawIcon(SD_ICON_IDX, SD_ICON, status, flash_ms);
+}
+
+void UserInterface::drawRecordIcon(byte status, long flash_ms) {
+  drawIcon(RECORD_ICON_IDX, RECORD_ICON, status, flash_ms);
+}
+
+void UserInterface::drawUpdateIcon(byte status, long flash_ms) {
+  drawIcon(UPDATE_ICON_IDX, UPDATE_ICON, status, flash_ms);
 }
 
 /**
  * Redraw icons from memory.
  */
 void UserInterface::drawIcons() {
-  drawWifiIcon(icons[WIFI_ICON_IDX]);
-  drawSdIcon(icons[SD_ICON_IDX]);
+  drawWifiIcon();
+  drawSdIcon();
+  drawRecordIcon();
+  drawUpdateIcon();
 }
 
 void UserInterface::screenshot(String &out_data) {
@@ -378,10 +408,18 @@ void UserInterface::toast(const char *message, long duration, bool allow_clear) 
   toast_allow_clear = allow_clear;
 }
 
+void UserInterface::toast(String &message, long duration, bool allow_clear) {
+  toast(message.c_str(), duration, allow_clear);
+}
+
 void UserInterface::toastNow(const char *message, long duration, bool allow_clear) {
   toast(message, duration, allow_clear);
   drawToast();
   render();
+}
+
+void UserInterface::toastNow(String &message, long duration, bool allow_clear) {
+  toastNow(message.c_str(), duration, allow_clear);
 }
 
 bool UserInterface::isMenuOpen() {

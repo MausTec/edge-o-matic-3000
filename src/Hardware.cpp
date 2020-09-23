@@ -112,10 +112,8 @@ namespace Hardware {
       Key1.attachPress([]() {
         if (OrgasmControl::isRecording()) {
           OrgasmControl::stopRecording();
-          UI.toast("Recording Stopped");
         } else {
           OrgasmControl::startRecording();
-          UI.toast("Recording Started");
         }
       });
 

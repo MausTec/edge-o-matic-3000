@@ -260,7 +260,7 @@ void setup() {
   // Setup SD, which loads our config
   resetSD();
 
-  UI.drawWifiIcon(0);
+  UI.drawWifiIcon(1);
   UI.render();
 
   // Initialize WiFi
