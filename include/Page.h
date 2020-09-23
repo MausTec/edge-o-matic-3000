@@ -2,7 +2,6 @@
 #define __PAGE_h
 
 #include "Arduino.h"
-#include "UserInterface.h"
 
 #define HISTORY_LENGTH 5
 

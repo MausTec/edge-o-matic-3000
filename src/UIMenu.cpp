@@ -1,5 +1,6 @@
 #include "../include/UIMenu.h"
 #include "../include/UserInterface.h"
+#include "../include/Page.h"
 
 UIMenu::UIMenu(char *t, MenuCallback fn) {
   strlcpy(title, t, TITLE_SIZE);
@@ -22,6 +23,18 @@ void UIMenu::addItem(char *text, MenuCallback cb) {
   if (first_item == nullptr) {
     first_item = item;
   }
+}
+
+void UIMenu::addItem(UIMenu *submenu) {
+  addItem(submenu->title, [=](UIMenu*) {
+    UI.openMenu(submenu);
+  });
+}
+
+void UIMenu::addItem(char *text, Page *page) {
+  addItem(text, [=](UIMenu*) {
+    Page::Go(page);
+  });
 }
 
 void UIMenu::render() {
