@@ -150,6 +150,12 @@ namespace Console {
         }
         Config.sensor_sensitivity = atoi(args[1]);
         Hardware::setPressureSensitivity(Config.sensor_sensitivity);
+      } else if (!strcmp(option, "knob_rgb")) {
+        if (!args[1] || !args[2] || !args[3]) {
+          Serial.println("Usage: set knob_rgb r g b");
+          return 1;
+        }
+        Hardware::setEncoderColor(CRGB(atoi(args[1]), atoi(args[2]), atoi(args[3])));
       } else {
         Serial.println("Unknown config key: " + String(option));
         return 1;
