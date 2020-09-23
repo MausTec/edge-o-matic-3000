@@ -46,8 +46,8 @@
 #define ENCODER_A_PIN   33
 #define ENCODER_SW_PIN  35
 #define ENCODER_RD_PIN  2
-#define ENCODER_GR_PIN  27
-#define ENCODER_BL_PIN  4
+#define ENCODER_BL_PIN  27
+#define ENCODER_GR_PIN  4
 
 // Buttons
 #define KEY_1_PIN       39
