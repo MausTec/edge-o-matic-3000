@@ -1,60 +1,27 @@
 #include "../../include/UIMenu.h"
 #include "../../include/UserInterface.h"
-#include "../../include/WiFiHelper.h"
+#include "../../include/Page.h"
 
-#include <WiFi.h>
+void onAutoClick(UIMenu*) {
+  Page::Go(&RunGraphPage);
+}
 
-UIMenu WiFiMenu("WiFi Settings", [](UIMenu *menu) {
-  if (WiFiHelper::connected()) {
-    menu->addItem("Disable WiFi", [](UIMenu *m) {
-      UI.toastNow("Disconnecting...", 0, false);
-      Config.wifi_on = false;
-      WiFiHelper::disconnect();
-      saveConfigToSd(0);
-      UI.toast("Disconnected.", 3000);
-      m->initialize();
-      m->render();
-    });
+void onNetworkClick(UIMenu*) {
+  UI.openMenu(&NetworkMenu);
+}
 
-  } else {
-    menu->addItem("Enable WiFi", [](UIMenu *m) {
-      if (Config.wifi_ssid[0] == '\0' || Config.wifi_key[0] == '\0') {
-        UI.toastNow("No WiFi Config\nEdit config.json\non SD card.", 0);
-        return;
-      }
+void onGamesClick(UIMenu*) {
+  UI.openMenu(&GamesMenu);
+}
 
-      UI.toastNow("Connecting...", 0, false);
-      Config.wifi_on = true;
-      if (WiFiHelper::begin()) {
-        UI.toastNow("WiFi Connected!", 3000);
-        saveConfigToSd(0);
-        m->initialize();
-      } else {
-        UI.toastNow("Failed to connect.", 3000);
-        Config.wifi_on = false;
-      }
+void buildMenu(UIMenu *menu) {
+  menu->addItem("Automatic Edging", onAutoClick);
 
-      m->render();
-    });
-  }
+  menu->addItem("Edging Settings");
+  menu->addItem("UI Settings");
 
-  menu->addItem("Connection Status", [](UIMenu*) {
-    String status = "";
+  menu->addItem("Network Settings", onNetworkClick);
+  menu->addItem("Games", onGamesClick);
+}
 
-    if (WiFiHelper::connected()) {
-      status += "Connected";
-      status += "\n" + WiFiHelper::ip();
-      status += "\nSignal: " + WiFiHelper::signalStrengthStr();
-    } else {
-      status += "Disconnected";
-    }
-
-    UI.toast(status.c_str(), 0);
-  });
-});
-
-UIMenu MainMenu("Main Menu", [](UIMenu *menu) {
-  menu->addItem("WiFi Settings", [](UIMenu*) {
-    UI.openMenu(&WiFiMenu);
-  });
-});
+UIMenu MainMenu("Main Menu", &buildMenu);

@@ -2,7 +2,6 @@
 #define __User_Interface_h
 
 #include "../config.h"
-#include "UIMenu.h"
 
 #define BUTTON_HEIGHT 9
 #define BUTTON_WIDTH  42 // (SCREEN_WIDTH / 3)
@@ -23,6 +22,8 @@
 #define SD_ICON_IDX 1
 #define RECORD_ICON_IDX 2
 #define UPDATE_ICON_IDX 3
+
+#include "UIMenu.h"
 
 #include <Adafruit_SSD1306.h>
 
@@ -90,7 +91,7 @@ public:
   bool hasToast();
 
   // Menu Handling
-  void openMenu(UIMenu *menu, bool save_history = true);
+  void openMenu(UIMenu *menu, bool save_history = true, bool reenter = true);
   UIMenu *closeMenu();
   bool isMenuOpen();
 
@@ -109,11 +110,11 @@ private:
   UIButton buttons[3];
 
   // Header Data
-  char status[STATUS_SIZE] = {0};
+  char status[STATUS_SIZE + 1] = {0};
   UIIcon icons[4];
 
   // Toast Data
-  char toast_message[19*4] = "";
+  char toast_message[(TOAST_WIDTH*TOAST_LINES)+1] = "";
   long toast_expiration = 0;
   bool toast_render_pending = false;
   bool toast_allow_clear = true;

@@ -2,7 +2,7 @@
 #include "../include/UserInterface.h"
 
 UIMenu::UIMenu(char *t, MenuCallback fn) {
-  title = t;
+  strlcpy(title, t, TITLE_SIZE);
   initializer = fn;
 }
 
@@ -30,16 +30,13 @@ void UIMenu::render() {
   if (prev == nullptr) {
     UI.drawStatus(title);
   } else {
-    char new_title[STATUS_SIZE] = "< ";
-    strncat(new_title, title, STATUS_SIZE - 2);
+    char new_title[TITLE_SIZE + 1] = "< ";
+    strlcat(new_title, title, TITLE_SIZE - 2);
     UI.drawStatus(new_title);
   }
 
   UI.drawIcons();
   UI.display->drawLine(0, 9, SCREEN_WIDTH, 9, SSD1306_WHITE);
-
-  Serial.println("Menu " + String(title) + " has " + String(getItemCount()) + " items.");
-  Serial.println(" Selected: " + String(getCurrentPosition()));
 
   // Step back 2 items or to start
   UIMenuItem *item = current_item;
@@ -47,7 +44,6 @@ void UIMenu::render() {
     if (item == nullptr || item->prev == nullptr) {
       break;
     }
-    Serial.println("Backtracking...");
     item = item->prev;
   }
 
@@ -141,11 +137,10 @@ void UIMenu::selectNext() {
   }
 
   if (current_item == nullptr || current_item->next == nullptr) {
-    current_item = first_item;
-  } else {
-    current_item = current_item->next;
+    return;
   }
 
+  current_item = current_item->next;
   render();
 }
 
@@ -157,11 +152,10 @@ void UIMenu::selectPrev() {
   }
 
   if (current_item == nullptr || current_item->prev == nullptr) {
-    current_item = last_item;
-  } else {
-    current_item = current_item->prev;
+    return;
   }
 
+  current_item = current_item->prev;
   render();
 }
 

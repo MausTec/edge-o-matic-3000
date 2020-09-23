@@ -21,12 +21,12 @@ bool UserInterface::begin() {
   }
 }
 
-void UserInterface::drawStatus(const char *status) {
-  if (status != nullptr) {
-    strlcpy(this->status, status, STATUS_SIZE);
+void UserInterface::drawStatus(const char *s) {
+  if (s != nullptr) {
+    strlcpy(status, s, STATUS_SIZE);
     int sum = 0;
-    for (int i = 0; i < strlen(this->status); i++) {
-      sum += (int)this->status[i];
+    for (int i = 0; i < strlen(status); i++) {
+      sum += (int)status[i];
     }
 
     Hardware::setEncoderColor(CHSV(
@@ -40,7 +40,7 @@ void UserInterface::drawStatus(const char *status) {
   this->display->fillRect(0, 0, SCREEN_WIDTH - icon_y(3), 10, SSD1306_BLACK);
   this->display->setCursor(0,0);
   this->display->setTextColor(SSD1306_WHITE, SSD1306_BLACK);
-  this->display->print(this->status);
+  this->display->print(status);
 }
 
 void UserInterface::drawChartAxes() {
@@ -402,7 +402,7 @@ void UserInterface::drawToast() {
 }
 
 void UserInterface::toast(const char *message, long duration, bool allow_clear) {
-  strncpy(toast_message, message, 19*4);
+  strlcpy(toast_message, message, 19*4);
   toast_expiration = duration > 0 ? millis() + duration : 0;
   toast_render_pending = true;
   toast_allow_clear = allow_clear;
@@ -435,14 +435,14 @@ UIMenu *UserInterface::closeMenu() {
   return prev;
 }
 
-void UserInterface::openMenu(UIMenu *menu, bool save_history) {
+void UserInterface::openMenu(UIMenu *menu, bool save_history, bool reenter) {
   if (menu != nullptr) {
     menu->open(current_menu, save_history);
   }
 
   current_menu = menu;
 
-  if (current_menu == nullptr) {
+  if (current_menu == nullptr && reenter) {
     Page::Reenter();
   }
 }
