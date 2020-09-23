@@ -2,6 +2,7 @@
 #define __pDEBUG_h
 
 #include "../../include/Page.h"
+#include "../../include/UserInterface.h"
 #include "../../include/assets.h"
 
 class pDebug : public Page {

@@ -1,4 +1,5 @@
 #include "../include/Page.h"
+#include "../include/UserInterface.h"
 
 Page* Page::currentPage = nullptr;
 Page* Page::previousPage = nullptr;

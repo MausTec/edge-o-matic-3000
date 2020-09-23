@@ -33,8 +33,10 @@
 #define MENU_SCROLL_DEBOUNCE 50
 
 class UIMenu;
+class Page;
 
-typedef void(*MenuCallback)(UIMenu*);
+//typedef void(*MenuCallback)(UIMenu*);
+typedef std::function<void(UIMenu*)> MenuCallback;
 
 typedef struct UIMenuItem {
   char *text;
@@ -45,18 +47,26 @@ typedef struct UIMenuItem {
 
 class UIMenu {
 public:
+  // Construction
   UIMenu(char *t, MenuCallback = nullptr);
-
-  void addItem(char *text, MenuCallback cb = nullptr);
-  void clearItems();
-  void open(UIMenu *previous = nullptr, bool save_history = true);
-  UIMenu *close();
-  void render();
   void initialize();
+
+  // Item Manipulation
+  void addItem(char *text, MenuCallback cb = nullptr);
+  void addItem(char *text, Page *p);
+  void addItem(UIMenu *submenu);
+  void clearItems();
+
+  // Render Lifecycle
+  void open(UIMenu *previous = nullptr, bool save_history = true);
+  void render();
+  void tick();
+  UIMenu *close();
+
+  // Selection Handling
   void selectNext();
   void selectPrev();
   void handleClick();
-  void tick();
   int getItemCount();
   int getCurrentPosition();
 

@@ -2,6 +2,7 @@
 #define __pSNAKE_h
 
 #include "../../include/Page.h"
+#include "../../include/UserInterface.h"
 #include "../../config.h"
 
 #define SNAKE_CUBE_SIZE 3
