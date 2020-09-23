@@ -145,11 +145,8 @@ class pRunGraph : public Page {
       arousal_peak *= 0.995f; // Decay Peak Value
     }
 
-    UI.display->drawBitmap(0, 20, PLUG_ICON[0], 24, 24, SSD1306_WHITE);
-    UI.display->drawBitmap(26, 20, PLUG_ICON[1], 24, 24, SSD1306_WHITE);
-    UI.display->drawBitmap(52, 20, PLUG_ICON[2], 24, 24, SSD1306_WHITE);
-    UI.display->drawBitmap(78, 20, PLUG_ICON[3], 24, 24, SSD1306_WHITE);
-    UI.display->drawBitmap(104, 20, PLUG_ICON[4], 24, 24, SSD1306_WHITE);
+    int pressure_icon = map(OrgasmControl::getAveragePressure(), 0, 4095, 0, 4);
+    UI.display->drawBitmap(0, 20, PLUG_ICON[pressure_icon], 24, 24, SSD1306_WHITE);
 
     // Important Stats:
     // 1. Arousal
