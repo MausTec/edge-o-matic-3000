@@ -44,7 +44,7 @@ void UIMenu::render() {
     UI.drawStatus(title);
   } else {
     char new_title[TITLE_SIZE + 1] = "< ";
-    strlcat(new_title, title, TITLE_SIZE - 2);
+    strlcat(new_title, title, TITLE_SIZE);
     UI.drawStatus(new_title);
   }
 

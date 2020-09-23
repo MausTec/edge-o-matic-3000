@@ -58,4 +58,4 @@ static void buildMenu(UIMenu *menu) {
   menu->addItem("Connection Status", &onViewStatus);
 }
 
-UIMenu NetworkMenu("Network Settings", &buildMenu);
+UIMenu NetworkMenu("WiFi Settings", &buildMenu);
