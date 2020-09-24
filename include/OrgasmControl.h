@@ -17,6 +17,7 @@ namespace OrgasmControl {
   long getLastPressure();
   long getAveragePressure();
   bool updated();
+  int getDenialCount();
 
   // Set Controls
   void controlMotor(bool control = true);
@@ -40,6 +41,7 @@ namespace OrgasmControl {
     float motor_speed = 0;
     bool update_flag = false;
     bool control_motor = false;
+    int denial_count = 0;
 
     // File Writer
     long recording_start_ms = 0;
