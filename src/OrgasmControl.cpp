@@ -38,13 +38,16 @@ namespace OrgasmControl {
       );
 
       // Ope, orgasm incoming! Stop it!
-      if (arousal > Config.sensitivity_threshold) {
+      if (arousal > Config.sensitivity_threshold && motor_speed > 0) {
+        // The motor_speed check above, btw, is so we only hit this once per peak.
         // Set the motor speed to 0, but actually set it to a negative number because cooldown delay
         motor_speed = max(-255.0f, -0.5f *
           (float)Config.motor_ramp_time_s *
           (float)Config.update_frequency_hz *
               motor_increment
         );
+
+        denial_count++;
 
       } else if (motor_speed < Config.motor_max_speed) {
         motor_speed += motor_increment;
@@ -136,6 +139,10 @@ namespace OrgasmControl {
 
   bool updated() {
     return update_flag;
+  }
+
+  int getDenialCount() {
+    return denial_count;
   }
 
   /**

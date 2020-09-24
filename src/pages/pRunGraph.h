@@ -78,18 +78,18 @@ class pRunGraph : public Page {
     UI.display->setCursor(x + 1, y - 12);
     float pct1 = ((float) value / maximum);
     if (pct1 >= 1) {
-      UI.display->print("P: MAX");
+      UI.display->print("Pres: MAX");
     } else {
-      UI.display->printf("P: %02d%%", (int) floor(pct1 * 100.0f));
+      UI.display->printf("Pres: %02d%%", (int) floor(pct1 * 100.0f));
     }
 
     // Bottom Text
     UI.display->setCursor(x + 1, y + 6);
     float pct2 = ((float) lowerValue / lowerMaximum);
     if (pct2 >= 1) {
-      UI.display->print("S: MAX");
+      UI.display->print("Sens: MAX");
     } else {
-      UI.display->printf("S: %02d%%", (int) floor(pct2 * 100.0f));
+      UI.display->printf("Sens: %02d%%", (int) floor(pct2 * 100.0f));
     }
 
     // Calculate Markers
@@ -191,11 +191,24 @@ class pRunGraph : public Page {
     int pressure_icon = map(OrgasmControl::getAveragePressure(), 0, 4095, 0, 4);
     UI.display->drawBitmap(0, 19, PLUG_ICON[pressure_icon], 24, 24, SSD1306_WHITE);
 
+    const int horiz_split_x = (SCREEN_WIDTH / 2) + 25;
+
     // Pressure Bar Drawing Stuff
     const int press_x = 24 + 2;  // icon_x + icon_width + 2
     const int press_y = 19 + 12; // icon_y + (icon_height / 2)
-    drawCompactBar(press_x, press_y, (SCREEN_WIDTH / 2) - press_x - 2, OrgasmControl::getAveragePressure(), 4095,
+    drawCompactBar(press_x, press_y, horiz_split_x - press_x - 9, OrgasmControl::getAveragePressure(), 4095,
                    Config.sensor_sensitivity, 255);
+
+    // Draw a Border!
+    UI.display->drawLine(horiz_split_x - 3, 19, horiz_split_x - 3, SCREEN_HEIGHT - 21, SSD1306_WHITE);
+
+    // Orgasm Denial Counter
+    UI.display->setCursor(horiz_split_x + 3, 19);
+    UI.display->print("Denied");
+    UI.display->setCursor(horiz_split_x + 3, 19 + 9);
+    UI.display->setTextSize(2);
+    UI.display->printf("%3d", OrgasmControl::getDenialCount() % 1000);
+    UI.display->setTextSize(1);
   }
 
   void Render() override {
