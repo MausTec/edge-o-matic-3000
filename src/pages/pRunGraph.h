@@ -8,8 +8,8 @@
 #include "../../include/assets.h"
 
 enum RGView {
-    GraphView,
-    StatsView
+  GraphView,
+  StatsView
 };
 
 enum RGMode {
@@ -51,7 +51,7 @@ class pRunGraph : public Page {
   void renderChart() {
     // Update Counts
     char status[7] = "";
-    byte motor  = Hardware::getMotorSpeedPercent() * 100;
+    byte motor = Hardware::getMotorSpeedPercent() * 100;
     byte stat_a = OrgasmControl::getArousalPercent() * 100;
 
     UI.display->setTextColor(SSD1306_WHITE, SSD1306_BLACK);
@@ -72,19 +72,57 @@ class pRunGraph : public Page {
     UI.drawChart(Config.sensitivity_threshold);
   }
 
+  void
+  drawCompactBar(int x, int y, int width, int value, int maximum = 255, int lowerValue = 0, int lowerMaximum = 255) {
+    // Top Text
+    UI.display->setCursor(x + 1, y - 12);
+    float pct1 = ((float) value / maximum);
+    if (pct1 >= 1) {
+      UI.display->print("P: MAX");
+    } else {
+      UI.display->printf("P: %02d%%", (int) floor(pct1 * 100.0f));
+    }
+
+    // Bottom Text
+    UI.display->setCursor(x + 1, y + 6);
+    float pct2 = ((float) lowerValue / lowerMaximum);
+    if (pct2 >= 1) {
+      UI.display->print("S: MAX");
+    } else {
+      UI.display->printf("S: %02d%%", (int) floor(pct2 * 100.0f));
+    }
+
+    // Calculate Markers
+    const int bar_height = 3;
+    int marker_1_x = max(x + 2, min((int) map(value, 0, maximum, x + 2, x + width - 2), x + width - 2));
+    int marker_2_x = max(x + 2, min((int) map(lowerValue, 0, lowerMaximum, x + 2, x + width - 2), x + width - 2));
+
+    // Center line + End
+    UI.display->drawLine(x, y, max(x, marker_1_x - 3), y, SSD1306_WHITE); // left half
+    UI.display->drawLine(min(x + width, marker_1_x + 3), y, x + width, y, SSD1306_WHITE); // right half
+    UI.display->drawLine(x, y - bar_height, x, y + bar_height, SSD1306_WHITE); // left bar
+    UI.display->drawLine(x + width, y - bar_height, x + width, y + bar_height, SSD1306_WHITE); // right bar
+
+    // Markers
+    UI.display->fillTriangle(marker_1_x - 2, y - bar_height, marker_1_x + 2, y - bar_height, marker_1_x, y - 1,
+                             SSD1306_WHITE);
+    UI.display->fillTriangle(marker_2_x - 1, y + bar_height, marker_2_x + 1, y + bar_height, marker_2_x, y + 2,
+                             SSD1306_WHITE);
+  }
+
   void drawBar(int y, char label, int value, int maximum, int limit = 0, int peak = 0) {
     int box_left = 8;
-    int box_right = SCREEN_WIDTH - (6*3) - 3;
+    int box_right = SCREEN_WIDTH - (6 * 3) - 3;
     int box_width = box_right - box_left;
-    float pct = max(0.0f, min((float)value / (float)maximum, 1.0f));
-    int pct_width = floor((float)(box_width - 2) * pct);
+    float pct = max(0.0f, min((float) value / (float) maximum, 1.0f));
+    int pct_width = floor((float) (box_width - 2) * pct);
 
     // Calculate a Limit bar
     int limit_left, limit_width;
 
     if (limit > 0) {
-      float limit_pct = max(0.0f, min((float)limit / (float)maximum, 1.0f));
-      int limit_pct_width = floor((float)(box_width - 2) * (1.0f - limit_pct));
+      float limit_pct = max(0.0f, min((float) limit / (float) maximum, 1.0f));
+      int limit_pct_width = floor((float) (box_width - 2) * (1.0f - limit_pct));
       limit_left = box_right - limit_pct_width - 1;
       limit_width = box_right - limit_left - 2;
     }
@@ -93,8 +131,8 @@ class pRunGraph : public Page {
     int peak_left;
 
     if (peak > 0) {
-      float peak_pct = max(0.0f, min((float)peak / (float)maximum, 1.0f));
-      peak_left = box_left + floor((float)(box_width - 2) * peak_pct);
+      float peak_pct = max(0.0f, min((float) peak / (float) maximum, 1.0f));
+      peak_left = box_left + floor((float) (box_width - 2) * peak_pct);
     }
 
     // Render Stuff
@@ -115,7 +153,7 @@ class pRunGraph : public Page {
 
     // Draw Peak
     if (peak > 0) {
-      UI.display->drawLine(peak_left, y, peak_left, y+5, SSD1306_WHITE);
+      UI.display->drawLine(peak_left, y, peak_left, y + 5, SSD1306_WHITE);
     }
 
     // Print Labels
@@ -124,7 +162,7 @@ class pRunGraph : public Page {
     UI.display->setCursor(box_right + 3, y);
 
     if (value < maximum) {
-      UI.display->printf("%02d%%", (int)floor(pct * 100.0f));
+      UI.display->printf("%02d%%", (int) floor(pct * 100.0f));
     } else {
       UI.display->print("MAX");
     }
@@ -145,35 +183,19 @@ class pRunGraph : public Page {
       arousal_peak *= 0.995f; // Decay Peak Value
     }
 
-    int pressure_icon = map(OrgasmControl::getAveragePressure(), 0, 4095, 0, 4);
-    UI.display->drawBitmap(0, 20, PLUG_ICON[pressure_icon], 24, 24, SSD1306_WHITE);
-
-    // Important Stats:
-    // 1. Arousal
-    // 2. Motor Speed
-    // 3. Pressure
-    // 4. Arousal Sensitivity
-    // 5. Pressure Sensitivity
-    // 6. Max Motor Speed
-    // 7. Vibrate pattern???
-    drawBar(11, 'M', Hardware::getMotorSpeed(), 255, mode == Automatic ? Config.motor_max_speed : 0);
+    // Motor / Arousal bars
+    drawBar(10, 'M', Hardware::getMotorSpeed(), 255, mode == Automatic ? Config.motor_max_speed : 0);
     drawBar(SCREEN_HEIGHT - 18, 'A', OrgasmControl::getArousal(), 1023, Config.sensitivity_threshold, arousal_peak);
 
-    // Pressure Bar Drawing Stuff
-    int press_x = SCREEN_WIDTH - 45;
-    int press_y = SCREEN_HEIGHT - 22;
+    // Pressure Icon
+    int pressure_icon = map(OrgasmControl::getAveragePressure(), 0, 4095, 0, 4);
+    UI.display->drawBitmap(0, 19, PLUG_ICON[pressure_icon], 24, 24, SSD1306_WHITE);
 
-    if (false) {
-      UI.display->setCursor(press_x, press_y - 9);
-      UI.display->print("P: 98%");
-      UI.display->drawLine(press_x, press_y, press_x + 3, press_y, SSD1306_WHITE);
-      UI.display->drawLine(press_x + 9, press_y, SCREEN_WIDTH, press_y, SSD1306_WHITE);
-      UI.display->drawLine(press_x, press_y - 1, press_x, press_y + 1, SSD1306_WHITE);
-      UI.display->drawLine(SCREEN_WIDTH - 1, press_y - 1, SCREEN_WIDTH, press_y + 1, SSD1306_WHITE);
-      //void fillTriangle(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, uint16_t color);
-      UI.display->fillTriangle(press_x + 5, press_y - 1, press_x + 7, press_y - 1, press_x + 6, press_y + 1,
-                               SSD1306_WHITE);
-    }
+    // Pressure Bar Drawing Stuff
+    const int press_x = 24 + 2;  // icon_x + icon_width + 2
+    const int press_y = 19 + 12; // icon_y + (icon_height / 2)
+    drawCompactBar(press_x, press_y, (SCREEN_WIDTH / 2) - press_x - 2, OrgasmControl::getAveragePressure(), 4095,
+                   Config.sensor_sensitivity, 255);
   }
 
   void Render() override {
@@ -203,7 +225,7 @@ class pRunGraph : public Page {
   void onKeyPress(byte i) {
     Serial.println("Key Press: " + String(i));
 
-    switch(i) {
+    switch (i) {
       case 0:
         if (view == GraphView) {
           view = StatsView;
@@ -232,7 +254,7 @@ class pRunGraph : public Page {
   }
 
   void onEncoderChange(int diff) override {
-    const int step = 255/20;
+    const int step = 255 / 20;
 
     if (mode == Automatic) {
       // TODO this may go out of bounds. Also, change in steps?
