@@ -16,18 +16,19 @@ namespace OrgasmControl {
       pressure_value = Hardware::getPressure();
       PressureAverage.addValue(pressure_value);
       long p_avg = PressureAverage.getAverage();
+      long p_check = Config.use_average_values ? p_avg : pressure_value;
 
       // Increment arousal:
-      if (p_avg < last_value) { // falling edge of peak
-        if (p_avg > peak_start) { // first tick past peak?
-          if (p_avg - peak_start >= Config.sensitivity_threshold / 10) { // big peak
-            arousal += p_avg - peak_start;
+      if (p_check < last_value) { // falling edge of peak
+        if (p_check > peak_start) { // first tick past peak?
+          if (p_check - peak_start >= Config.sensitivity_threshold / 10) { // big peak
+            arousal += p_check - peak_start;
           }
         }
-        peak_start = p_avg;
+        peak_start = p_check;
       }
 
-      last_value = p_avg;
+      last_value = p_check;
     }
 
     void updateMotorSpeed() {

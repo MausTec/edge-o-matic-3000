@@ -125,6 +125,12 @@ namespace Console {
           return 0;
         }
         Config.classic_serial = atob(args[1]);
+      } else if(!strcmp(option, "use_average_values")) {
+        if (!args[1]) {
+          Serial.println(String(Config.use_average_values));
+          return 0;
+        }
+        Config.use_average_values = atob(args[1]);
       } else if(!strcmp(option, "sensitivity_threshold")) {
         if (!args[1]) {
           Serial.println(String(Config.sensitivity_threshold));
