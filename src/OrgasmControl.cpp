@@ -51,6 +51,8 @@ namespace OrgasmControl {
 
       } else if (motor_speed < Config.motor_max_speed) {
         motor_speed += motor_increment;
+      } else if (motor_speed > Config.motor_max_speed) {
+        motor_speed = Config.motor_max_speed;
       }
 
       // Control motor if we are not manually doing so.
@@ -175,5 +177,14 @@ namespace OrgasmControl {
 
   void controlMotor(bool control) {
     control_motor = control;
+  }
+
+  void pauseControl() {
+    prev_control_motor = control_motor;
+    control_motor = false;
+  }
+
+  void resumeControl() {
+    control_motor = prev_control_motor;
   }
 }

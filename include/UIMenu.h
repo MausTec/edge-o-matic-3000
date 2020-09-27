@@ -59,27 +59,32 @@ public:
 
   // Render Lifecycle
   void open(UIMenu *previous = nullptr, bool save_history = true);
-  void render();
-  void tick();
-  UIMenu *close();
+  void onOpen(MenuCallback cb = nullptr);
+  void onClose(MenuCallback cb = nullptr);
+  virtual void render();
+  virtual void tick();
+  virtual UIMenu *close();
 
   // Selection Handling
-  void selectNext();
-  void selectPrev();
-  void handleClick();
-  int getItemCount();
-  int getCurrentPosition();
+  virtual void selectNext();
+  virtual void selectPrev();
+  virtual void handleClick();
+  virtual int getItemCount();
+  virtual int getCurrentPosition();
 
-private:
+protected:
   char title[TITLE_SIZE + 1];
 
   UIMenu *prev = nullptr;
 
+private:
   UIMenuItem *first_item = nullptr;
   UIMenuItem *last_item = nullptr;
   UIMenuItem *current_item = nullptr;
 
   MenuCallback initializer = nullptr;
+  MenuCallback on_open = nullptr;
+  MenuCallback on_close = nullptr;
   long last_menu_change = 0;
 };
 

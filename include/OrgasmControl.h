@@ -21,6 +21,8 @@ namespace OrgasmControl {
 
   // Set Controls
   void controlMotor(bool control = true);
+  void pauseControl();
+  void resumeControl();
 
   // Recording Control
   void startRecording();
@@ -41,6 +43,7 @@ namespace OrgasmControl {
     float motor_speed = 0;
     bool update_flag = false;
     bool control_motor = false;
+    bool prev_control_motor = false;
     int denial_count = 0;
 
     // File Writer

@@ -24,11 +24,12 @@
 #define UPDATE_ICON_IDX 3
 
 #include "UIMenu.h"
+#include <functional>
 
 #include <Adafruit_SSD1306.h>
 
-typedef void (*ButtonCallback)(void);
-typedef void (*RotaryCallback)(int count);
+typedef std::function<void(void)> ButtonCallback;
+typedef std::function<void(int)> RotaryCallback;
 
 typedef struct {
   byte status = 0;
@@ -89,6 +90,10 @@ public:
   void drawToast();
   bool toastRenderPending();
   bool hasToast();
+
+  // Basic UI Elements
+  void drawCompactBar(int x, int y, int width, int value, int maximum = 255, int lowerValue = 0, int lowerMaximum = 255);
+  void drawBar(int y, char label, int value, int maximum, int limit = 0, int peak = 0);
 
   // Menu Handling
   void openMenu(UIMenu *menu, bool save_history = true, bool reenter = true);
