@@ -30,7 +30,7 @@ UIInput MotorMaxSpeedInput("Motor Max Speed", [](UIMenu *ip) {
 
 UIInput ArousalLimitInput("Arousal Limit", [](UIMenu *ip) {
   UIInput *input = (UIInput*) ip;
-  input->setMax(4095);
+  input->setMax(1023);
   input->setStep(16);
   input->setValue(Config.sensitivity_threshold);
   input->onChange([](int value) {
