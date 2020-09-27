@@ -13,5 +13,6 @@
   "sensitivity_threshold": 600,
   "motor_ramp_time_s": 30,
   "update_frequency_hz": 50,
-  "sensor_sensitivity": 64
+  "sensor_sensitivity": 64,
+  "use_average_values": false
 }

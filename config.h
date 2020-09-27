@@ -78,6 +78,7 @@ struct ConfigStruct {
   int motor_ramp_time_s;
   int update_frequency_hz;
   byte sensor_sensitivity;
+  bool use_average_values;
 } extern Config;
 
 extern void loadConfigFromSd();

@@ -53,6 +53,7 @@ void loadConfigFromSd() {
   Config.motor_ramp_time_s = doc["motor_ramp_time_s"] | 30;
   Config.update_frequency_hz = doc["update_frequency_hz"] | 50;
   Config.sensor_sensitivity = doc["sensor_sensitivity"] | 128;
+  Config.use_average_values = doc["use_average_values"] | false;
 }
 
 void saveConfigToSd(long save_at_ms) {
@@ -111,6 +112,7 @@ void saveConfigToSd(long save_at_ms) {
   doc["motor_ramp_time_s"] = Config.motor_ramp_time_s;
   doc["update_frequency_hz"] = Config.update_frequency_hz;
   doc["sensor_sensitivity"] = Config.sensor_sensitivity;
+  doc["use_average_values"] = Config.use_average_values;
 
 
   // Serialize and move temp file
