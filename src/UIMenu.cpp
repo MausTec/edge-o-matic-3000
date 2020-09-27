@@ -123,6 +123,10 @@ void UIMenu::tick() {
 void UIMenu::open(UIMenu *previous, bool save_history) {
   initialize();
 
+  if (on_open != nullptr) {
+    on_open(this);
+  }
+
   Serial.println("Opening menu: " + String(title));
 
   if (save_history) {
@@ -139,6 +143,9 @@ void UIMenu::open(UIMenu *previous, bool save_history) {
 
 UIMenu *UIMenu::close() {
   Serial.println("Closing menu: " + String(title));
+  if (on_close != nullptr) {
+    on_close(this);
+  }
   return prev;
 }
 
@@ -221,4 +228,12 @@ int UIMenu::getCurrentPosition() {
   }
 
   return menu_item_position;
+}
+
+void UIMenu::onOpen(MenuCallback cb) {
+  on_open = cb;
+}
+
+void UIMenu::onClose(MenuCallback cb) {
+  on_close = cb;
 }
