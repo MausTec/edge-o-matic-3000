@@ -28,8 +28,50 @@ UIInput MotorMaxSpeedInput("Motor Max Speed", [](UIMenu *ip) {
   });
 });
 
+UIInput ArousalLimitInput("Arousal Limit", [](UIMenu *ip) {
+  UIInput *input = (UIInput*) ip;
+  input->setMax(4095);
+  input->setStep(16);
+  input->setValue(Config.sensitivity_threshold);
+  input->onChange([](int value) {
+    Config.sensitivity_threshold = value;
+  });
+  input->onConfirm([](int) {
+    saveConfigToSd(0);
+  });
+});
+
+UIInput MotorRampTimeInput("Motor Ramp Time", [](UIMenu *ip) {
+  UIInput *input = (UIInput*) ip;
+  input->setMax(120);
+  input->setStep(10);
+  input->setValue(Config.motor_ramp_time_s);
+  input->onChange([](int value) {
+    Config.motor_ramp_time_s = value;
+  });
+  input->onConfirm([](int) {
+    saveConfigToSd(0);
+  });
+});
+
+UIInput SensorSensitivityInput("Sensor Sensitivity", [](UIMenu *ip) {
+  UIInput *input = (UIInput*) ip;
+  input->setMax(255);
+  input->setStep(1);
+  input->setValue(Config.sensor_sensitivity);
+  input->onChange([](int value) {
+    Config.sensor_sensitivity = value;
+  });
+  input->onConfirm([](int) {
+    saveConfigToSd(0);
+  });
+});
+
 static void buildMenu(UIMenu *menu) {
   menu->addItem(&MotorMaxSpeedInput);
+  menu->addItem(&MotorRampTimeInput);
+  menu->addItem(&ArousalLimitInput);
+  menu->addItem(&SensorSensitivityInput);
 }
 
 UIMenu EdgingSettingsMenu("Edging Settings", &buildMenu);
