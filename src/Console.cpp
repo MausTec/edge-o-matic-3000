@@ -162,6 +162,24 @@ namespace Console {
           return 1;
         }
         Hardware::setEncoderColor(CRGB(atoi(args[1]), atoi(args[2]), atoi(args[3])));
+      } else if (!strcmp(option, "wifi_ssid")) {
+        if (!args[1]) {
+          Serial.println(String(Config.wifi_ssid));
+          return 0;
+        }
+        strlcpy(Config.wifi_ssid, args[1], sizeof(Config.wifi_ssid));
+      } else if (!strcmp(option, "wifi_key")) {
+        if (!args[1]) {
+          Serial.println(String(Config.wifi_key));
+          return 0;
+        }
+        strlcpy(Config.wifi_key, args[1], sizeof(Config.wifi_key));
+      } else if (!strcmp(option, "bt_display_name")) {
+        if (!args[1]) {
+          Serial.println(String(Config.bt_display_name));
+          return 0;
+        }
+        strlcpy(Config.bt_display_name, args[1], sizeof(Config.bt_display_name));
       } else {
         Serial.println("Unknown config key: " + String(option));
         return 1;
@@ -173,15 +191,6 @@ namespace Console {
         Serial.println("A device reset will be required for the new settings to "
                        "take effect.");
       }
-
-//      int p = 0;
-//      char *c = args[p+1];
-//      while (c != NULL) {
-//        Serial.print(String(c) + " ");
-//        p++;
-//        c = args[p];
-//      }
-//      Serial.println();
     }
 
     int sh_bool(char **args) {
