@@ -20,22 +20,31 @@
 #define BUTT_PIN        34
 #define MOT_PWM_PIN     15
 
-// LCD Definitions
-#define SCREEN_WIDTH    128
-#define SCREEN_HEIGHT   64
-#define OLED_DC         13
-#define OLED_RESET      14
-#define OLED_CS         12
-
 // SD Connections
 #define SD_CS_PIN       5
 
 #ifndef NG_PLUS
+  // LCD Definitions
+  #define SCREEN_WIDTH    128
+  #define SCREEN_HEIGHT   64
+  #define OLED_DC         13
+  #define OLED_RESET      14
+  #define OLED_CS         12
+
   // External Bus (NoGasm WiFi)
   #define BUS_EN_PIN      20
   #define RJ_LED_1_PIN    17
   #define RJ_LED_2_PIN    16
+
+  // Buttons
+  #define KEY_1_PIN       39
+  #define KEY_2_PIN       25
+  #define KEY_3_PIN       26
 #else
+  // LCD Definitions
+  #define SCREEN_WIDTH 128
+  #define SCREEN_HEIGHT 32
+
   // LED Ring (NoGasm+)
   #define LED_PIN 17
   #define LED_COUNT 13
@@ -48,11 +57,6 @@
 #define ENCODER_RD_PIN  2
 #define ENCODER_BL_PIN  27
 #define ENCODER_GR_PIN  4
-
-// Buttons
-#define KEY_1_PIN       39
-#define KEY_2_PIN       25
-#define KEY_3_PIN       26
 
 struct ConfigStruct {
   // Networking
