@@ -35,7 +35,7 @@ void loadConfigFromSd() {
   Config.wifi_on = doc["wifi_on"] | false;
 
   // Copy Bluetooth Settings
-  strlcpy(Config.bt_display_name, doc["bt_display_name"] | "", sizeof(Config.bt_display_name));
+  strlcpy(Config.bt_display_name, doc["bt_display_name"] | "NoGasm WiFi", sizeof(Config.bt_display_name));
   Config.bt_on = doc["bt_on"] | false;
 
   // Copy Network Settings

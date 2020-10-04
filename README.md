@@ -19,21 +19,22 @@ and is automatically generated. Here is a quick summary of config variables:
 
 |Key|Type|Default|Note|
 |---|----|---|---|
-|`wifi_ssid`|String|"Netgear6969"|Your WiFi SSID|
-|`wifi_key`|String|"RobotsAreBetterThanPeople"|Your WiFi Password.|
-|`wifi_on`|Boolean|true|True to enable WiFi / Websocket server.|
+|`wifi_ssid`|String|""|Your WiFi SSID|
+|`wifi_key`|String|""|Your WiFi Password.|
+|`wifi_on`|Boolean|false|True to enable WiFi / Websocket server.|
 |`bt_display_name`|String|"NoGasm WiFi"|AzureFang* device name, you might wanna change this.|
-|`bt_on`|Boolean|true|True to enable the AzureFang connection.|
+|`bt_on`|Boolean|false|True to enable the AzureFang connection.|
 |`led_brightness`|Byte|128|LED Ring max brightness, only for NoGasm+.|
 |`websocket_port`|Int|80|Port to listen for incoming Websocket connections.|
 |`motor_max_speed`|Byte|128|Maximum speed for the motor in auto-ramp mode.|
 |`screen_dim_seconds`|Int|10|Time, in seconds, before the screen dims. 0 to disable.|
-|`pressure_smoothing`|Int|5|Number of samples to take an average of. Higher results in lag and lower resolution!|
+|`pressure_smoothing`|Byte|5|Number of samples to take an average of. Higher results in lag and lower resolution!|
 |`classic_serial`|Boolean|true|Output classic NoGasm values over serial for backwards compatibility.|
 |`sensitivity_threshold`|Int|600|The arousal threshold for orgasm detection. Lower = sooner cutoff.|
 |`motor_ramp_time_s`|Int|30|The time it takes for the motor to reach `motor_max_speed` in auto ramp mode.|
 |`update_frequency_hz`|Int|50|Update frequency for pressure readings and arousal steps. Higher = crash your serial monitor.|
-|`sensor_sensitivity`|Byte|64|Analog pressure prescaling. Adjust this until the pressure is ~60-70%|
+|`sensor_sensitivity`|Byte|128|Analog pressure prescaling. Adjust this until the pressure is ~60-70%|
+|`use_average_values`|Boolean|false|Use average values when calculating arousal. This smooths noisy data.|
 
 \* AzureFang refers to a common wireless technology that is blue and involves chewing face-rocks. However, the
    trademark holders of this technology require the name to be licensed, so we're totally just using AzureFang.
