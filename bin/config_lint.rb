@@ -45,6 +45,7 @@ end
 
 json_assignments = []
 json_reads = []
+json_defaults = {}
 
 config_cpp = File.join(DIR, "src", "config.cpp");
 File.foreach(config_cpp).with_index do |line, i|
@@ -60,6 +61,8 @@ File.foreach(config_cpp).with_index do |line, i|
     end
     if $3.nil? || $3 == ""
       error config_cpp, i, "JSON read #{$2.inspect} missing default value for #{type.inspect}"
+    else
+      json_defaults[$1] = $3.gsub(/\s*\|\s*/, '').gsub(/;\s*$/, '')
     end
     if type =~ /String|char\[\d+\]/
       error config_cpp, i, "JSON assigns #{$2.inspect} to string type! Use strlcpy!"
@@ -81,6 +84,8 @@ File.foreach(config_cpp).with_index do |line, i|
     end
     if $3.nil? || $3 == ""
       error config_cpp, i, "JSON read #{$2.inspect} missing default value for #{type.inspect}"
+    else
+      json_defaults[$1] = $3.gsub(/\s*\|\s*/, '').gsub(/;\s*$/, '')
     end
     if type !~ /String|char\[\d+\]/
       error config_cpp, i, "JSON assigns #{$2.inspect} as string, but the type should be #{type.inspect}"
@@ -191,6 +196,49 @@ end
 # Check Missing Sets
 (config_values.keys - console_sets).each do |value|
   error console_cpp, nil, "Missing Console set for #{value.inspect}"
+end
+
+#== Check Readme
+readme_md = File.join(DIR, "README.md")
+readme_keys = []
+File.foreach(readme_md).with_index do |line, i|
+  if line =~ /\|`(\w+)`\|(.*?)\|(.*?)\|(.*?)\|/
+    key = $1
+    type = $2
+    default = $3
+    note = $4
+    readme_keys << key
+
+    valid_type = config_values[key]
+    if valid_type.nil?
+      error readme_md, i, "Readme references unknown config key #{key.inspect}"
+    end
+
+    valid_default = json_defaults[key]
+    if valid_default.nil?
+      error readme_md, i, "Value #{key.inspect} has no default??"
+    elsif valid_default != default
+      error readme_md, i, "Default for #{key.inspect} was #{default}, expected #{valid_default}"
+    end
+
+    valid_type_str = case valid_type
+    when /char\[|String/
+    "String"
+    when "bool"
+    "Boolean"
+    else
+    valid_type.capitalize
+    end
+
+    if type != valid_type_str
+      error readme_md, i, "Type for #{key.inspect} was #{type}, expected #{valid_type_str}"
+    end
+  end
+end
+
+# Check Missing Sets
+(config_values.keys - readme_keys).each do |value|
+  error readme_md, nil, "Missing Readme entry for #{value.inspect}"
 end
 
 puts
