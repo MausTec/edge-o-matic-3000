@@ -83,6 +83,8 @@ struct ConfigStruct {
   int update_frequency_hz;
   byte sensor_sensitivity;
   bool use_average_values;
+
+//  bool test;
 } extern Config;
 
 extern void loadConfigFromSd();
