@@ -23,9 +23,11 @@ namespace Hardware {
   }
 
   void tick() {
+#ifdef KEY_1_PIN
     Key1.tick();
     Key2.tick();
     Key3.tick();
+#endif
 
     EncoderSw.tick();
 
@@ -157,7 +159,7 @@ namespace Hardware {
 
       FastLED.addLeds<WS2812B, LED_PIN, GRB>(leds, LED_COUNT);
       for (int i = 0; i < LED_COUNT; i++) {
-        leds[i] = CRGB::Black;
+        leds[i] = CRGB::Green;
       }
       FastLED.show();
 #endif
