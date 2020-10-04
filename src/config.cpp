@@ -56,37 +56,8 @@ void loadConfigFromSd() {
   Config.use_average_values = doc["use_average_values"] | false;
 }
 
-void saveConfigToSd(long save_at_ms) {
-  static long save_at_ms_tick = 0;
-
-  if (save_at_ms > 0) {
-    // Queue a future save:
-    Serial.println("Future save queued.");
-    save_at_ms_tick = max(save_at_ms, save_at_ms_tick);
-    return;
-  } else if (save_at_ms < 0) {
-    if (save_at_ms_tick > 0 && save_at_ms_tick < millis()) {
-      Serial.println("Saving now from future save queue...");
-      save_at_ms_tick = 0;
-    } else {
-      return;
-    }
-  }
-
+bool dumpConfigToJson(String &str) {
   StaticJsonDocument<512> doc;
-
-  SD.remove(CONFIG_FILENAME ".bak");
-  if (!SD.rename(CONFIG_FILENAME, CONFIG_FILENAME ".bak")) {
-    Serial.println(F("Failed to save over existing config!"));
-    return;
-  }
-
-  SD.remove(CONFIG_FILENAME);
-  File tmp = SD.open(CONFIG_FILENAME, FILE_WRITE);
-  if (!tmp) {
-    Serial.println(F("Failed to create temp file for config save!"));
-    return;
-  }
 
   // Copy WiFi Settings
   doc["wifi_ssid"] = Config.wifi_ssid;
@@ -114,12 +85,50 @@ void saveConfigToSd(long save_at_ms) {
   doc["sensor_sensitivity"] = Config.sensor_sensitivity;
   doc["use_average_values"] = Config.use_average_values;
 
+  // Serialize and move temp file
+  if (serializeJsonPretty(doc, str) == 0) {
+    Serial.println(F("Failed to serialize config!"));
+  }
+}
+
+void saveConfigToSd(long save_at_ms) {
+  static long save_at_ms_tick = 0;
+  String config;
+
+  if (save_at_ms > 0) {
+    // Queue a future save:
+    Serial.println("Future save queued.");
+    save_at_ms_tick = max(save_at_ms, save_at_ms_tick);
+    return;
+  } else if (save_at_ms < 0) {
+    if (save_at_ms_tick > 0 && save_at_ms_tick < millis()) {
+      Serial.println("Saving now from future save queue...");
+      save_at_ms_tick = 0;
+    } else {
+      return;
+    }
+  }
+
+  SD.remove(CONFIG_FILENAME ".bak");
+  if (!SD.rename(CONFIG_FILENAME, CONFIG_FILENAME ".bak")) {
+    Serial.println(F("Failed to save over existing config!"));
+    return;
+  }
+
+  SD.remove(CONFIG_FILENAME);
+  File tmp = SD.open(CONFIG_FILENAME, FILE_WRITE);
+  if (!tmp) {
+    Serial.println(F("Failed to create temp file for config save!"));
+    return;
+  }
 
   // Serialize and move temp file
-  if (serializeJson(doc, tmp) == 0) {
+  if (!dumpConfigToJson(config)) {
     Serial.println(F("Failed to serialize config to file!"));
     tmp.close();
   }
+
+  tmp.print(config);
 
   tmp.close();
 }

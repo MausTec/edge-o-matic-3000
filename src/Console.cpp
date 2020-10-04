@@ -34,6 +34,7 @@ namespace Console {
   namespace {
     int sh_help(char **args);
     int sh_set(char **args);
+    int sh_list(char **args);
     int sh_bool(char **args);
 
     Command commands[] = {
@@ -48,6 +49,12 @@ namespace Console {
         .alias = "s",
         .help = "Set a config value",
         .func = &sh_set
+      },
+      {
+        .cmd = "list",
+        .alias = "l",
+        .help = "List all config in JSON format",
+        .func = &sh_list
       },
       {
         .cmd = "bool",
@@ -191,6 +198,12 @@ namespace Console {
         Serial.println("A device reset will be required for the new settings to "
                        "take effect.");
       }
+    }
+
+    int sh_list(char **args) {
+      String config;
+      dumpConfigToJson(config);
+      Serial.println(config);
     }
 
     int sh_bool(char **args) {

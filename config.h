@@ -89,4 +89,5 @@ struct ConfigStruct {
 
 extern void loadConfigFromSd();
 extern void saveConfigToSd(long save_at_ms = -1);
+extern bool dumpConfigToJson(String &str);
 #endif
