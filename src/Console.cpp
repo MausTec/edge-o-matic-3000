@@ -2,7 +2,7 @@
 #include "../include/Hardware.h"
 #include "../config.h"
 
-typedef int (*cmd_func)(char**);
+typedef int (*cmd_func)(char**, String&);
 
 typedef struct Command {
   char *cmd;
@@ -32,10 +32,10 @@ bool atob(char *a) {
 
 namespace Console {
   namespace {
-    int sh_help(char **args);
-    int sh_set(char **args);
-    int sh_list(char **args);
-    int sh_bool(char **args);
+    int sh_help(char**, String&);
+    int sh_set(char**, String&);
+    int sh_list(char**, String&);
+    int sh_bool(char**, String&);
 
     Command commands[] = {
       {
@@ -64,224 +64,224 @@ namespace Console {
       }
     };
 
-    int sh_help(char **args) {
+    int sh_help(char **args, String &out) {
       for (int i = 0; i < sizeof(commands)/sizeof(Command); i++) {
         Command c = commands[i];
-        Serial.println(String(c.cmd) + "\t(" + String(c.alias) + ")\t" + String(c.help));
+        out += (String(c.cmd) + "\t(" + String(c.alias) + ")\t" + String(c.help)) + '\n';
       }
     }
 
-    int sh_set(char **args) {
+    int sh_set(char **args, String &out) {
       char *option = args[0];
       bool require_reboot = false;
 
       if (option == NULL) {
-        Serial.println("An option is required.");
+        out += "An option is required.\n";
         return 1;
       }
 
       // Go through boolean + int values first:
       if (!strcmp(option, "wifi_on")) {
         if (!args[1]) {
-          Serial.println(String(Config.wifi_on));
+          out += String(Config.wifi_on) + '\n';
           return 0;
         }
         Config.wifi_on = atob(args[1]);
         require_reboot = true;
       } else if(!strcmp(option, "bt_on")) {
         if (!args[1]) {
-          Serial.println(String(Config.bt_on));
+          out += String(Config.bt_on) + '\n';
           return 0;
         }
         Config.bt_on = atob(args[1]);
         require_reboot = true;
       } else if(!strcmp(option, "led_brightness")) {
         if (!args[1]) {
-          Serial.println(String(Config.led_brightness));
+          out += String(Config.led_brightness) + '\n';
           return 0;
         }
         Config.led_brightness = atoi(args[1]);
       } else if(!strcmp(option, "websocket_port")) {
         if (!args[1]) {
-          Serial.println(String(Config.websocket_port));
+          out += String(Config.websocket_port) + '\n';
           return 0;
         }
         Config.websocket_port = atoi(args[1]);
         require_reboot = true;
       } else if(!strcmp(option, "motor_max_speed")) {
         if (!args[1]) {
-          Serial.println(String(Config.motor_max_speed));
+          out += String(Config.motor_max_speed) + '\n';
           return 0;
         }
         Config.motor_max_speed = atoi(args[1]);
       } else if(!strcmp(option, "screen_dim_seconds")) {
         if (!args[1]) {
-          Serial.println(String(Config.screen_dim_seconds));
+          out += String(Config.screen_dim_seconds) + '\n';
           return 0;
         }
         Config.screen_dim_seconds = atoi(args[1]);
       } else if(!strcmp(option, "pressure_smoothing")) {
         if (!args[1]) {
-          Serial.println(String(Config.pressure_smoothing));
+          out += String(Config.pressure_smoothing) + '\n';
           return 0;
         }
         Config.pressure_smoothing = atoi(args[1]);
       } else if(!strcmp(option, "classic_serial")) {
         if (!args[1]) {
-          Serial.println(String(Config.classic_serial));
+          out += String(Config.classic_serial) + '\n';
           return 0;
         }
         Config.classic_serial = atob(args[1]);
       } else if(!strcmp(option, "use_average_values")) {
         if (!args[1]) {
-          Serial.println(String(Config.use_average_values));
+          out += String(Config.use_average_values) + '\n';
           return 0;
         }
         Config.use_average_values = atob(args[1]);
       } else if(!strcmp(option, "sensitivity_threshold")) {
         if (!args[1]) {
-          Serial.println(String(Config.sensitivity_threshold));
+          out += String(Config.sensitivity_threshold) + '\n';
           return 0;
         }
         Config.sensitivity_threshold = atoi(args[1]);
       } else if(!strcmp(option, "motor_ramp_time_s")) {
         if (!args[1]) {
-          Serial.println(String(Config.motor_ramp_time_s));
+          out += String(Config.motor_ramp_time_s) + '\n';
           return 0;
         }
         Config.motor_ramp_time_s = atoi(args[1]);
       } else if(!strcmp(option, "update_frequency_hz")) {
         if (!args[1]) {
-          Serial.println(String(Config.update_frequency_hz));
+          out += String(Config.update_frequency_hz) + '\n';
           return 0;
         }
         Config.update_frequency_hz = atoi(args[1]);
       } else if(!strcmp(option, "sensor_sensitivity")) {
         if (!args[1]) {
-          Serial.println(String(Config.sensor_sensitivity));
+          out += String(Config.sensor_sensitivity) + '\n';
           return 0;
         }
         Config.sensor_sensitivity = atoi(args[1]);
         Hardware::setPressureSensitivity(Config.sensor_sensitivity);
       } else if (!strcmp(option, "knob_rgb")) {
         if (!args[1] || !args[2] || !args[3]) {
-          Serial.println("Usage: set knob_rgb r g b");
+          out += ("Usage: set knob_rgb r g b") + '\n';
           return 1;
         }
         Hardware::setEncoderColor(CRGB(atoi(args[1]), atoi(args[2]), atoi(args[3])));
       } else if (!strcmp(option, "wifi_ssid")) {
         if (!args[1]) {
-          Serial.println(String(Config.wifi_ssid));
+          out += String(Config.wifi_ssid) + '\n';
           return 0;
         }
         strlcpy(Config.wifi_ssid, args[1], sizeof(Config.wifi_ssid));
       } else if (!strcmp(option, "wifi_key")) {
         if (!args[1]) {
-          Serial.println(String(Config.wifi_key));
+          out += String(Config.wifi_key) + '\n';
           return 0;
         }
         strlcpy(Config.wifi_key, args[1], sizeof(Config.wifi_key));
       } else if (!strcmp(option, "bt_display_name")) {
         if (!args[1]) {
-          Serial.println(String(Config.bt_display_name));
+          out += String(Config.bt_display_name) + '\n';
           return 0;
         }
         strlcpy(Config.bt_display_name, args[1], sizeof(Config.bt_display_name));
       } else {
-        Serial.println("Unknown config key: " + String(option));
+        out += ("Unknown config key: " + String(option)) + '\n';
         return 1;
       }
 
       saveConfigToSd(0);
 
       if (require_reboot) {
-        Serial.println("A device reset will be required for the new settings to "
-                       "take effect.");
+        out += ("A device reset will be required for the new settings to "
+                "take effect.\n");
       }
     }
 
-    int sh_list(char **args) {
-      String config;
-      dumpConfigToJson(config);
-      Serial.println(config);
+    int sh_list(char **args, String &out) {
+      dumpConfigToJson(out);
     }
 
-    int sh_bool(char **args) {
+    int sh_bool(char **args, String &out) {
       int p = 0;
       char *c = args[p];
       while (c != NULL) {
-        Serial.print(String(c) + "\t");
-        Serial.println(atob(c) ? "TRUE" : "FALSE");
+        out += (String(c) + "\t");
+        out += String(atob(c) ? "TRUE" : "FALSE") + '\n';
         p++;
         c = args[p];
       }
     }
+  }
 
-    /**
-     * Handles the message currently in the buffer.
-     */
-    void handleMessage() {
-      const int TOK_BUFSIZE = 64;
-      const char* TOK_DELIM = " \t\r\n\a";
+  /**
+   * Handles the message currently in the buffer.
+   */
+  void handleMessage(char *line, String &out) {
+    const int TOK_BUFSIZE = 64;
+    const char* TOK_DELIM = " \t\r\n\a";
 
-      Serial.println("> " + String(buffer));
+    int bufsize = TOK_BUFSIZE;
+    int position = 0;
 
-      int bufsize = TOK_BUFSIZE;
-      int position = 0;
+    char *tokens[bufsize] = { 0 };
+    char *token;
 
-      char *tokens[bufsize] = { 0 };
-      char *token;
-
-      if (!tokens) {
-        Serial.println("allocation error :(");
-        return;
-      }
-
-      token = strtok(buffer, TOK_DELIM);
-      while (token != NULL) {
-        tokens[position] = token;
-        position++;
-
-        if (position > bufsize) {
-          // buffer overflow, extend?
-        }
-
-        token = strtok(NULL, TOK_DELIM);
-      }
-
-      tokens[position] = 0;
-
-      // Empty command!
-      if (position == 0) {
-        return;
-      }
-
-      // Find Cmd
-      char *cmd = tokens[0];
-      bool handled = false;
-
-      for (int i = 0; cmd[i]; i++) {
-        // Command to lower
-        cmd[i] = tolower(cmd[i]);
-      }
-
-      for (int i = 0; i < sizeof(commands)/sizeof(Command); i++) {
-        Command c = commands[i];
-
-        if (strcmp(c.cmd, cmd) == 0 || strcmp(c.alias, cmd) == 0) {
-          c.func(tokens+1);
-          handled = true;
-          break;
-        }
-      }
-
-      if (!handled) {
-        Serial.println("Unknown command.");
-      }
-
-      buffer_i = 0;
-      buffer[buffer_i] = 0;
+    if (!tokens) {
+      out += "allocation error :(";
+      return;
     }
+
+    token = strtok(line, TOK_DELIM);
+    while (token != NULL) {
+      tokens[position] = token;
+      position++;
+
+      if (position > bufsize) {
+        // buffer overflow, extend?
+      }
+
+      token = strtok(NULL, TOK_DELIM);
+    }
+
+    tokens[position] = 0;
+
+    // Empty command!
+    if (position == 0) {
+      return;
+    }
+
+    // Find Cmd
+    char *cmd = tokens[0];
+    bool handled = false;
+
+    for (int i = 0; cmd[i]; i++) {
+      // Command to lower
+      cmd[i] = tolower(cmd[i]);
+    }
+
+    for (int i = 0; i < sizeof(commands)/sizeof(Command); i++) {
+      Command c = commands[i];
+
+      if (strcmp(c.cmd, cmd) == 0 || strcmp(c.alias, cmd) == 0) {
+        c.func(tokens+1, out);
+        handled = true;
+        break;
+      }
+    }
+
+    if (!handled) {
+      out += "Unknown command.";
+    }
+  }
+
+  void handleMessage(char *line) {
+    String response;
+    Serial.println("> " + String(line));
+    handleMessage(line, response);
+    Serial.println(response);
   }
 
   /**
@@ -294,7 +294,9 @@ namespace Console {
       char incoming = Serial.read();
 
       if (incoming == '\n') {
-        handleMessage();
+        handleMessage(buffer);
+        buffer_i = 0;
+        buffer[buffer_i] = 0;
       } else {
         buffer[buffer_i] = incoming;
         buffer_i++;
