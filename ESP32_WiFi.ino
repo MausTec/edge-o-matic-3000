@@ -45,6 +45,7 @@ BluetoothServer BT;
 WebSocketsServer* webSocket; // This is now a pointer, because apparently there is no default constructor and
                              // it *must* be initialized with a port, which we don't know until config load.
 uint8_t last_connection;
+bool stream_data = false;
 
 void sendSettings(uint8_t num) {
   if (webSocket == nullptr) return;
@@ -133,6 +134,24 @@ void onMessage(uint8_t num, uint8_t * payload) {
       sendSdStatus();
     } else if (strcmp(cmd, "GET_WIFI_STATUS") == 0) {
       sendWxStatus();
+    } else if (strcmp(cmd, "CONSOLE") == 0) {
+      String response;
+      String payload;
+
+      DynamicJsonDocument resp_doc(3072);
+      resp_doc["cmd"] = "CONSOLE_RESP";
+      resp_doc["nonce"] = doc["nonce"];
+
+      char line[SERIAL_BUFFER_LEN];
+      strlcpy(line, doc["line"], SERIAL_BUFFER_LEN - 1);
+
+      Console::handleMessage(line, response);
+      resp_doc["resp"] = response;
+
+      serializeJson(resp_doc, payload);
+      webSocket->sendTXT(num, payload);
+    } else if (strcmp(cmd, "STREAM") == 0) {
+      stream_data = doc["enabled"];
     } else {
       Serial.println("???");
     }
@@ -354,7 +373,7 @@ void loop() {
     // Update Icons
     WiFiHelper::drawSignalIcon();
 
-    if (webSocket != nullptr) {
+    if (webSocket != nullptr && stream_data) {
       String screenshot;
       UI.screenshot(screenshot);
 
