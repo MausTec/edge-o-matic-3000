@@ -6,6 +6,7 @@
 #include "SPI.h"
 
 #include "../config.h"
+#include "../include/UserInterface.h"
 
 ConfigStruct Config;
 
@@ -109,22 +110,27 @@ void saveConfigToSd(long save_at_ms) {
     }
   }
 
-  SD.remove(CONFIG_FILENAME ".bak");
-  if (!SD.rename(CONFIG_FILENAME, CONFIG_FILENAME ".bak")) {
-    Serial.println(F("Failed to save over existing config!"));
-    return;
+  if (SD.exists(CONFIG_FILENAME)) {
+    SD.remove(CONFIG_FILENAME ".bak");
+    if (!SD.rename(CONFIG_FILENAME, CONFIG_FILENAME ".bak")) {
+      Serial.println(F("Failed to save over existing config!"));
+      UI.toast("Error " E_SAV_BAK);
+      return;
+    }
   }
 
   SD.remove(CONFIG_FILENAME);
   File tmp = SD.open(CONFIG_FILENAME, FILE_WRITE);
   if (!tmp) {
     Serial.println(F("Failed to create temp file for config save!"));
+    UI.toast("Error " E_SAV_TMP);
     return;
   }
 
   // Serialize and move temp file
   if (!dumpConfigToJson(config)) {
     Serial.println(F("Failed to serialize config to file!"));
+    UI.toast("Error " E_SAV_SER);
     tmp.close();
   }
 

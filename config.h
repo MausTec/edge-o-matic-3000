@@ -2,6 +2,7 @@
 #define __config_h
 
 #include "arduino.h"
+#include "errors.h"
 
 // External Library Config
 #define FASTLED_INTERNAL
