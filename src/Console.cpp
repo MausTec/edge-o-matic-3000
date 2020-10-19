@@ -35,6 +35,7 @@ namespace Console {
     int sh_help(char**, String&);
     int sh_set(char**, String&);
     int sh_list(char**, String&);
+    int sh_external(char**, String&);
     int sh_bool(char**, String&);
 
     Command commands[] = {
@@ -57,6 +58,12 @@ namespace Console {
         .func = &sh_list
       },
       {
+        .cmd = "external",
+        .alias = "e",
+        .help = "Control the external port",
+        .func = &sh_external
+      },
+      {
         .cmd = "bool",
         .alias = "b",
         .help = "Test the bool cast",
@@ -69,6 +76,28 @@ namespace Console {
         Command c = commands[i];
         out += (String(c.cmd) + "\t(" + String(c.alias) + ")\t" + String(c.help)) + '\n';
       }
+    }
+
+    int sh_external(char **args, String &out) {
+      if (args[0] == NULL) {
+        out += "Subcommand required!\n";
+        return 1;
+      } else if (! strcmp(args[0], "enable")) {
+        Hardware::enableExternalBus();
+        out += "External bus enabled.\n";
+      } else if (! strcmp(args[0], "disable")) {
+        Hardware::disableExternalBus();
+        out += "External bus disabled.\n";
+      } else if (! strcmp(args[0], "slave")) {
+        Hardware::enableExternalBus();
+        Hardware::joinI2c(I2C_SLAVE_ADDR);
+        out += "Joined external bus as slave.\n";
+      } else {
+        out += "Unknown subcommand!\n";
+        return 1;
+      }
+
+      return 0;
     }
 
     int sh_set(char **args, String &out) {

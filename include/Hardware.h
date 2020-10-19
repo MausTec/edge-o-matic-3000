@@ -27,6 +27,12 @@ namespace Hardware {
   long getPressure();
   void setPressureSensitivity(byte value);
 
+  void enableExternalBus();
+  void disableExternalBus();
+  void joinI2c(byte address);
+  void leaveI2c();
+  void handleI2c(int avail);
+
   namespace {
     void initializeEncoder();
 
@@ -38,6 +44,9 @@ namespace Hardware {
     long idle_since_ms = 0;
 
     int motor_speed = 0;
+
+    byte i2c_slave_addr = 0;
+    bool external_connected = false;
 
 #ifdef LED_PIN
     CRGB leds[LED_COUNT];

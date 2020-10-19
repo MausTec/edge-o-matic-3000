@@ -36,6 +36,9 @@
   #define BUS_EN_PIN      20
   #define RJ_LED_1_PIN    17
   #define RJ_LED_2_PIN    16
+  #define SDA_PIN 21
+  #define SCL_PIN 22
+  #define I2C_SLAVE_ADDR 0x69
 
   // Buttons
   #define KEY_1_PIN       39
