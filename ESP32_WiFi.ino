@@ -257,6 +257,8 @@ void setupHardware() {
   pinMode(BUTT_PIN, INPUT);
   pinMode(MOT_PWM_PIN, OUTPUT);
 
+  Hardware::enableExternalBus();
+
   if(!Hardware::initialize()) {
     Serial.println("Hardware initialization failed!");
     for(;;){}

@@ -1,7 +1,7 @@
 #include "../include/Hardware.h"
 #include "../include/OrgasmControl.h"
 
-#include <Wire.h>
+#include <WireSlave.h>
 
 namespace Hardware {
   bool initialize() {
@@ -67,12 +67,32 @@ namespace Hardware {
     analogWrite(ENCODER_BL_PIN, color.b);
   }
 
+  void enableExternalBus() {
+    digitalWrite(BUS_EN_PIN, LOW);
+    digitalWrite(RJ_LED_1_PIN, HIGH);
+    external_connected = true;
+  }
+
+  void disableExternalBus() {
+    digitalWrite(BUS_EN_PIN, HIGH);
+    digitalWrite(RJ_LED_1_PIN, LOW);
+    external_connected = false;
+  }
+
   void setMotorSpeed(int speed) {
     int new_speed = min(max(speed, 0), 255);
     if (new_speed == motor_speed) return;
 
     motor_speed = new_speed;
     analogWrite(MOT_PWM_PIN, motor_speed);
+
+    if (external_connected) {
+      Serial.println("Sending data to I2C remote...");
+      Wire.beginTransmission(I2C_SLAVE_ADDR);
+      Wire.write(0x10);
+      Wire.write(motor_speed);
+      Wire.endTransmission();
+    }
   }
 
   void changeMotorSpeed(int diff) {
@@ -102,6 +122,32 @@ namespace Hardware {
     Wire.beginTransmission(0x2F);
     Wire.write((byte)(255 - value) / 2);
     Wire.endTransmission();
+  }
+
+  void joinI2c(byte address) {
+    i2c_slave_addr = address;
+    bool success = WireSlave1.begin(SDA_PIN, SCL_PIN, I2C_SLAVE_ADDR);
+    if (!success) {
+      Serial.println("I2C slave init failed");
+      return;
+    }
+    WireSlave1.onReceive(handleI2c);
+    Serial.println("I2C joined.");
+  }
+
+  void leaveI2c() {
+    i2c_slave_addr = 0;
+  }
+
+  void handleI2c(int avail) {
+    digitalWrite(RJ_LED_2_PIN, HIGH);
+    char msg[32] = {0};
+    int i = 0;
+    while (Wire.available()) {
+      msg[i++] = Wire.read();
+    }
+    Serial.println("Rec'd " + String(avail) + " bytes on I2C: " + String(msg));
+    digitalWrite(RJ_LED_2_PIN, LOW);
   }
 
   namespace {
