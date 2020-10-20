@@ -9,7 +9,10 @@ namespace Hardware {
     initializeEncoder();
     initializeLEDs();
 
-#ifndef LED_PIN
+#ifdef BUS_EN_PIN
+    pinMode(BUS_EN_PIN, OUTPUT);
+    digitalWrite(BUS_EN_PIN, LOW);
+
     pinMode(RJ_LED_1_PIN, OUTPUT);
     pinMode(RJ_LED_2_PIN, OUTPUT);
     digitalWrite(RJ_LED_1_PIN, LOW);
@@ -28,6 +31,11 @@ namespace Hardware {
     Key2.tick();
     Key3.tick();
 #endif
+
+    if (i2c_slave_addr > 0) {
+      // THIS WILL FREEZE. Patch WireSlave.cpp to include a timeout in the native call! 10 ticks does it.
+      WireSlave1.update();
+    }
 
     EncoderSw.tick();
 
@@ -68,15 +76,19 @@ namespace Hardware {
   }
 
   void enableExternalBus() {
-    digitalWrite(BUS_EN_PIN, LOW);
+    digitalWrite(BUS_EN_PIN, HIGH);
     digitalWrite(RJ_LED_1_PIN, HIGH);
     external_connected = true;
   }
 
   void disableExternalBus() {
-    digitalWrite(BUS_EN_PIN, HIGH);
+    digitalWrite(BUS_EN_PIN, LOW);
     digitalWrite(RJ_LED_1_PIN, LOW);
     external_connected = false;
+
+    if (i2c_slave_addr > 0) {
+      leaveI2c();
+    }
   }
 
   void setMotorSpeed(int speed) {
@@ -86,11 +98,19 @@ namespace Hardware {
     motor_speed = new_speed;
     analogWrite(MOT_PWM_PIN, motor_speed);
 
-    if (external_connected) {
+    if (external_connected && i2c_slave_addr == 0) {
       Serial.println("Sending data to I2C remote...");
+
+      WirePacker packer;
+
+      packer.write(0x10);
+      packer.write(motor_speed);
+      packer.end();
+
       Wire.beginTransmission(I2C_SLAVE_ADDR);
-      Wire.write(0x10);
-      Wire.write(motor_speed);
+      while (packer.available()) {    // write every packet byte
+        Wire.write(packer.read());
+      }
       Wire.endTransmission();
     }
   }
@@ -126,6 +146,7 @@ namespace Hardware {
 
   void joinI2c(byte address) {
     i2c_slave_addr = address;
+    digitalWrite(RJ_LED_2_PIN, HIGH);
     bool success = WireSlave1.begin(SDA_PIN, SCL_PIN, I2C_SLAVE_ADDR);
     if (!success) {
       Serial.println("I2C slave init failed");
@@ -137,17 +158,27 @@ namespace Hardware {
 
   void leaveI2c() {
     i2c_slave_addr = 0;
+    digitalWrite(RJ_LED_2_PIN, LOW);
   }
 
   void handleI2c(int avail) {
-    digitalWrite(RJ_LED_2_PIN, HIGH);
-    char msg[32] = {0};
-    int i = 0;
-    while (Wire.available()) {
-      msg[i++] = Wire.read();
-    }
-    Serial.println("Rec'd " + String(avail) + " bytes on I2C: " + String(msg));
     digitalWrite(RJ_LED_2_PIN, LOW);
+    Serial.println("Incoming!");
+    byte msg[32] = {0};
+    int i = 0;
+    while (WireSlave1.available()) {
+      msg[i++] = WireSlave1.read();
+    }
+
+    if (i > 0) {
+      switch(msg[0]) {
+        case 0x10:
+          // Motor Speed
+          Hardware::setMotorSpeed(msg[1]);
+          break;
+      }
+    }
+    digitalWrite(RJ_LED_2_PIN, HIGH);
   }
 
   namespace {
