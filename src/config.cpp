@@ -16,7 +16,7 @@ ConfigStruct Config;
  * void loadConfigFromSd();
  */
 void loadConfigFromSd() {
-  StaticJsonDocument<512> doc;
+  DynamicJsonDocument doc(2048);
 
   if (!SD.exists(CONFIG_FILENAME)) {
     Serial.println("Couldn't find config.json on your SD card!");
@@ -27,6 +27,7 @@ void loadConfigFromSd() {
     if (e) {
       Serial.println(F("Failed to deserialize JSON, using default config!"));
       Serial.println(F("^-- This means no WiFi. Please ensure your SD card has config.json present."));
+      Serial.println(e.c_str());
     }
   }
 
@@ -58,7 +59,7 @@ void loadConfigFromSd() {
 }
 
 bool dumpConfigToJson(String &str) {
-  StaticJsonDocument<512> doc;
+  DynamicJsonDocument doc(2048);
 
   // Copy WiFi Settings
   doc["wifi_ssid"] = Config.wifi_ssid;

@@ -1,6 +1,9 @@
 #include "../include/Console.h"
 #include "../include/Hardware.h"
+#include "../include/SDHelper.h"
 #include "../config.h"
+
+#include <SD.h>
 
 typedef int (*cmd_func)(char**, String&);
 
@@ -37,6 +40,9 @@ namespace Console {
     int sh_list(char**, String&);
     int sh_external(char**, String&);
     int sh_bool(char**, String&);
+    int sh_cat(char**, String&);
+    int sh_dir(char**, String&);
+    int sh_cd(char**, String&);
 
     Command commands[] = {
       {
@@ -62,6 +68,24 @@ namespace Console {
         .alias = "e",
         .help = "Control the external port",
         .func = &sh_external
+      },
+      {
+        .cmd = "cat",
+        .alias = "c",
+        .help = "Print a file to the serial console",
+        .func = &sh_cat
+      },
+      {
+        .cmd = "dir",
+        .alias = "d",
+        .help = "List current directory",
+        .func = &sh_dir
+      },
+      {
+        .cmd = "cd",
+        .alias = ".",
+        .help = "Change directory",
+        .func = &sh_cd
       },
       {
         .cmd = "bool",
@@ -98,6 +122,54 @@ namespace Console {
       }
 
       return 0;
+    }
+
+    int sh_cat(char **args, String &out) {
+      if (args[0] == NULL) {
+        out += "Please specify a filename!\n";
+        return 1;
+      }
+
+      File file = SD.open(cwd + String("/") + String(args[0]));
+      if (!file) {
+        out += "File not found!\n";
+        return 1;
+      }
+
+      SDHelper::printFile(file, out);
+      return 0;
+    }
+
+    int sh_dir(char **args, String &out) {
+      File f = SD.open(cwd);
+      if (!f) {
+        out += "Invalid directory.\n";
+        return 1;
+      }
+      SDHelper::printDirectory(f, 1, out);
+      return 0;
+    }
+
+    int sh_cd(char **args, String &out) {
+      if (args[0] == NULL) {
+        out += "Directory required.";
+        return 1;
+      }
+
+      String newDir;
+      if (! strcmp(args[0], "..")) {
+        newDir = cwd.substring(0, cwd.lastIndexOf("/"));
+      } else {
+        newDir = cwd + String("/") + String(args[0]);
+      }
+
+      File f = SD.open(newDir);
+      if (!f || !f.isDirectory()) {
+        out += "Invalid directory.\n";
+        return 1;
+      }
+      cwd = newDir;
+      f.close();
     }
 
     int sh_set(char **args, String &out) {

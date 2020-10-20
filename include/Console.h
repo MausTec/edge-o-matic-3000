@@ -13,6 +13,7 @@ namespace Console {
   namespace {
     char buffer[SERIAL_BUFFER_LEN] = {0};
     size_t buffer_i = 0;
+    String cwd = "/";
   }
 }
 

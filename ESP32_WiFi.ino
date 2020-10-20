@@ -70,7 +70,7 @@ void sendWxStatus() {
   doc["cmd"] = "WIFI_STATUS";
   doc["ssid"] = Config.wifi_ssid;
   doc["ip"] = WiFi.localIP().toString();
-  doc["signal_strength"] = WiFi.RSSI();
+  doc["rssi"] = WiFi.RSSI();
 
   // Blow the Network Load
   String payload;
@@ -257,8 +257,6 @@ void setupHardware() {
   pinMode(BUTT_PIN, INPUT);
   pinMode(MOT_PWM_PIN, OUTPUT);
 
-  Hardware::enableExternalBus();
-
   if(!Hardware::initialize()) {
     Serial.println("Hardware initialization failed!");
     for(;;){}
@@ -376,8 +374,8 @@ void loop() {
     WiFiHelper::drawSignalIcon();
 
     if (webSocket != nullptr && stream_data) {
-      String screenshot;
-      UI.screenshot(screenshot);
+//      String screenshot;
+//      UI.screenshot(screenshot);
 
       // Serialize Data
       DynamicJsonDocument doc(3072);
@@ -386,7 +384,7 @@ void loop() {
       doc["motor"] = Hardware::getMotorSpeed();
       doc["arousal"] = OrgasmControl::getArousal();
       doc["millis"] = millis();
-      doc["screenshot"] = screenshot;
+//      doc["screenshot"] = screenshot;
 
       // Blow the Network Load
       String payload;

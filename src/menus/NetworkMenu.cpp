@@ -56,6 +56,8 @@ static void buildMenu(UIMenu *menu) {
   }
 
   menu->addItem("Connection Status", &onViewStatus);
+
+  menu->addItem(&AccessoryPortMenu);
 }
 
 UIMenu NetworkMenu("WiFi Settings", &buildMenu);
