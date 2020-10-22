@@ -23,11 +23,19 @@ void UIInput::render() {
   UI.display->print(current_value);
   UI.display->setTextSize(1);
 
-  UI.drawBar(32, '\0', current_value, max_value);
+  UI.drawBar(32, 'V', current_value, max_value);
+
+  if (get_secondary_value != nullptr) {
+    UI.drawBar(32 + 8, 'P', get_secondary_value(current_value), 4095);
+  }
 
   UI.drawButtons();
   UI.drawToast();
   UI.render();
+}
+
+void UIInput::getSecondaryValue(GetValueCallback cb) {
+  get_secondary_value = cb;
 }
 
 void UIInput::setMax(int n) {
@@ -67,6 +75,9 @@ void UIInput::selectPrev() {
   }
   render();
 }
+void UIInput::setPollPeriod(int p_ms) {
+  poll_period = p_ms;
+}
 void UIInput::handleClick() {
   default_value = current_value;
   if (on_confirm != nullptr) {
@@ -79,6 +90,14 @@ UIMenu *UIInput::close() {
     on_change(default_value);
   }
   return UIMenu::close();
+}
+void UIInput::tick() {
+  static long last_poll = 0;
+  if (poll_period > 0 && millis() - last_poll > poll_period) {
+    last_poll = millis();
+    render();
+  }
+  UIMenu::tick();
 }
 
 void UIInput::set_current(int v) {

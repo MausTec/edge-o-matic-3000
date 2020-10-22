@@ -3,6 +3,7 @@
 class UIInput;
 
 typedef std::function<void(int)> InputCallback;
+typedef std::function<int(int)> GetValueCallback;
 
 class UIInput : public UIMenu {
 public:
@@ -12,8 +13,10 @@ public:
   void setMax(int);
   void setValue(int);
   void setStep(int);
+  void setPollPeriod(int);
   void onChange(InputCallback);
   void onConfirm(InputCallback);
+  void getSecondaryValue(GetValueCallback);
 
   // Navigation (which now changes value)
   void selectNext() override;
@@ -23,6 +26,7 @@ public:
   int getCurrentPosition() override;
 
   UIMenu *close() override;
+  void tick() override;
 
 private:
   int current_value = 0;
@@ -30,9 +34,11 @@ private:
   int max_value = 255;
   int default_value = 0;
   int increment = 1;
+  int poll_period = 0;
 
   InputCallback on_change = nullptr;
   InputCallback on_confirm = nullptr;
+  GetValueCallback get_secondary_value = nullptr;
 
   void set_current(int);
 };
