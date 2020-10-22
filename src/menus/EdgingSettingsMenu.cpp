@@ -59,8 +59,13 @@ UIInput SensorSensitivityInput("Sensor Sensitivity", [](UIMenu *ip) {
   input->setMax(255);
   input->setStep(1);
   input->setValue(Config.sensor_sensitivity);
+  input->setPollPeriod(1000 / 30);
+  input->getSecondaryValue([](int value) {
+    return Hardware::getPressure();
+  });
   input->onChange([](int value) {
     Config.sensor_sensitivity = value;
+    Hardware::setPressureSensitivity(value);
   });
   input->onConfirm([](int) {
     saveConfigToSd(0);
