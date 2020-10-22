@@ -5,6 +5,8 @@
 
 #include <SD.h>
 
+#define cmd_f [](char**, String&) -> int
+
 typedef int (*cmd_func)(char**, String&);
 
 typedef struct Command {
@@ -39,7 +41,6 @@ namespace Console {
     int sh_set(char**, String&);
     int sh_list(char**, String&);
     int sh_external(char**, String&);
-    int sh_bool(char**, String&);
     int sh_cat(char**, String&);
     int sh_dir(char**, String&);
     int sh_cd(char**, String&);
@@ -88,10 +89,10 @@ namespace Console {
         .func = &sh_cd
       },
       {
-        .cmd = "bool",
-        .alias = "b",
-        .help = "Test the bool cast",
-        .func = &sh_bool
+        .cmd = "restart",
+        .alias = "R",
+        .help = "Restart the device",
+        .func = cmd_f { ESP.restart(); }
       }
     };
 
@@ -303,17 +304,6 @@ namespace Console {
 
     int sh_list(char **args, String &out) {
       dumpConfigToJson(out);
-    }
-
-    int sh_bool(char **args, String &out) {
-      int p = 0;
-      char *c = args[p];
-      while (c != NULL) {
-        out += (String(c) + "\t");
-        out += String(atob(c) ? "TRUE" : "FALSE") + '\n';
-        p++;
-        c = args[p];
-      }
     }
   }
 
