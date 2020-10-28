@@ -27,6 +27,24 @@ namespace WebSocketHelper {
       webSocket->loop();
   }
 
+  void sendSystemInfo(int num) {
+    if (webSocket == nullptr) return;
+    StaticJsonDocument<200> doc;
+
+    doc["device"] = "Edge-o-Matic 3000";
+    doc["serial"] = "";
+    doc["hwVersion"] = "";
+    doc["fwVersion"] = VERSION;
+
+    // Blow the Network Load
+    StaticJsonDocument<1024> envelope;
+    envelope["info"] = doc;
+
+    String payload;
+    serializeJson(envelope, payload);
+    webSocket->sendTXT(num > 0 ? num : last_connection, payload);
+  }
+
   void sendSettings(int num) {
     if (webSocket == nullptr) return;
 
@@ -179,6 +197,7 @@ namespace WebSocketHelper {
         {
           IPAddress ip = webSocket->remoteIP(num);
           last_connection = num;
+          sendSystemInfo(num);
           Serial.printf("[%u] Connection from ", num);
           Serial.println(ip.toString());
         }
