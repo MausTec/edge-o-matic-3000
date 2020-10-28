@@ -1,5 +1,4 @@
 #include <WiFi.h>
-#include <WebSocketsServer.h>
 
 #define ARDUINOJSON_USE_LONG_LONG 1
 #include <ArduinoJson.h>
@@ -28,6 +27,7 @@
 #include "include/OrgasmControl.h"
 #include "include/WiFiHelper.h"
 #include "include/UpdateHelper.h"
+#include "include/WebSocketHelper.h"
 
 uint8_t LED_Brightness = 13;
 
@@ -42,162 +42,6 @@ UserInterface UI(&display);
 BluetoothServer BT;
 
 // Globals
-WebSocketsServer* webSocket; // This is now a pointer, because apparently there is no default constructor and
-                             // it *must* be initialized with a port, which we don't know until config load.
-uint8_t last_connection;
-bool stream_data = false;
-
-void sendSettings(uint8_t num) {
-  if (webSocket == nullptr) return;
-
-  StaticJsonDocument<200> doc;
-  doc["cmd"] = "SETTINGS";
-  doc["brightness"] = LED_Brightness;
-  doc["peak_limit"] = Config.sensitivity_threshold;
-  doc["motor_max"] = Config.motor_max_speed;
-  doc["ramp_time_s"] = Config.motor_ramp_time_s;
-
-  // Blow the Network Load
-  String payload;
-  serializeJson(doc, payload);
-  webSocket->sendTXT(num, payload);
-}
-
-void sendWxStatus() {
-  if (webSocket == nullptr) return;
-
-  StaticJsonDocument<200> doc;
-  doc["cmd"] = "WIFI_STATUS";
-  doc["ssid"] = Config.wifi_ssid;
-  doc["ip"] = WiFi.localIP().toString();
-  doc["rssi"] = WiFi.RSSI();
-
-  // Blow the Network Load
-  String payload;
-  serializeJson(doc, payload);
-  webSocket->sendTXT(last_connection, payload);
-}
-
-void sendSdStatus() {
-  if (webSocket == nullptr) return;
-
-  uint8_t cardType = SD.cardType();
-  uint64_t cardSize = SD.cardSize() / (1024 * 1024);
-  
-  StaticJsonDocument<200> doc;
-  doc["cmd"] = "SD_STATUS";
-  doc["size"] = cardSize;
-
-  switch(cardType) {
-    case CARD_MMC:
-      doc["type"] = "MMC";
-      break;
-    case CARD_SD:
-      doc["type"] = "SD";
-      break;
-    case CARD_SDHC:
-      doc["type"] = "SDHC";
-      break;
-    default:
-      doc["type"] = "UNKNOWN";
-      break;
-  }
-  
-  // Blow the Network Load
-  String payload;
-  serializeJson(doc, payload);
-  webSocket->sendTXT(last_connection, payload);
-}
-
-void onMessage(uint8_t num, uint8_t * payload) {
-  Serial.printf("[%u] %s", num, payload);
-  Serial.println();
-
-  StaticJsonDocument<200> doc;
-  DeserializationError err = deserializeJson(doc, payload);
-
-  if (err) {
-    Serial.println("Deserialization Error!");
-  } else if(doc["cmd"]) {
-    const char* cmd = doc["cmd"];
-    Serial.println(cmd);
-
-    if (strcmp(cmd, "SET_BRIGHTNESS") == 0) {
-      LED_Brightness = doc["brightness"];
-    } else if (strcmp(cmd, "SET_LIMIT") == 0) {
-      Config.sensitivity_threshold = doc["limit"];
-    } else if (strcmp(cmd, "GET_SETTINGS") == 0) {
-      sendSettings(num);
-    } else if (strcmp(cmd, "RESET_SD") == 0) {
-      resetSD();
-    } else if (strcmp(cmd, "GET_SD_STATUS") == 0) {
-      sendSdStatus();
-    } else if (strcmp(cmd, "GET_WIFI_STATUS") == 0) {
-      sendWxStatus();
-    } else if (strcmp(cmd, "CONSOLE") == 0) {
-      String response;
-      String payload;
-
-      DynamicJsonDocument resp_doc(3072);
-      resp_doc["cmd"] = "CONSOLE_RESP";
-      resp_doc["nonce"] = doc["nonce"];
-
-      char line[SERIAL_BUFFER_LEN];
-      strlcpy(line, doc["line"], SERIAL_BUFFER_LEN - 1);
-
-      Console::handleMessage(line, response);
-      resp_doc["resp"] = response;
-
-      serializeJson(resp_doc, payload);
-      webSocket->sendTXT(num, payload);
-    } else if (strcmp(cmd, "STREAM") == 0) {
-      stream_data = doc["enabled"];
-    } else {
-      Serial.println("???");
-    }
-  }
-}
-
-// Called when receiving any WebSocket message
-void onWebSocketEvent(uint8_t num,
-                      WStype_t type,
-                      uint8_t * payload,
-                      size_t length) {
-
-  // Figure out the type of WebSocket event
-  switch(type) {
-
-    // Client has disconnected
-    case WStype_DISCONNECTED:
-      Serial.printf("[%u] Disconnected!\n", num);
-      break;
-
-    // New client has connected
-    case WStype_CONNECTED:
-      {
-        IPAddress ip = webSocket->remoteIP(num);
-        last_connection = num;
-        Serial.printf("[%u] Connection from ", num);
-        Serial.println(ip.toString());
-      }
-      break;
-
-    // Echo text message back to client
-    case WStype_TEXT:
-      onMessage(num, payload);
-      break;
-
-    // For everything else: do nothing
-    case WStype_BIN:
-    case WStype_ERROR:
-    case WStype_FRAGMENT_TEXT_START:
-    case WStype_FRAGMENT_BIN_START:
-    case WStype_FRAGMENT:
-    case WStype_FRAGMENT_FIN:
-    default:
-      break;
-  }
-}
 
 void printDirectory(File dir, int numTabs) {
   while (true) {
@@ -272,8 +116,8 @@ TaskHandle_t BackgroundLoopTask;
 
 void backgroundLoop(void*) {
   for (;;) {
-//    UpdateHelper::checkForUpdates();
-    delay(1000);
+    WebSocketHelper::tick();
+    delay(1);
   }
 }
 
@@ -299,11 +143,7 @@ void setup() {
   // Initialize WiFi
   if (Config.wifi_on) {
     WiFiHelper::begin();
-
-    // Start WebSocket server and assign callback
-    webSocket = new WebSocketsServer(Config.websocket_port);
-    webSocket->begin();
-    webSocket->onEvent(onWebSocketEvent);
+    WebSocketHelper::begin();
   }
 
   // Initialize Bluetooth
@@ -336,10 +176,6 @@ void loop() {
   OrgasmControl::tick();
   UI.tick();
 
-  // Look for and handle WebSocket data
-  if (webSocket != nullptr)
-    webSocket->loop();
-
   static long lastStatusTick = 0;
   static long lastTick = 0;
   static int led_i = 0;
@@ -347,10 +183,10 @@ void loop() {
   // Periodically send out WiFi status:
   if (millis() - lastStatusTick > 1000 * 10) {
     lastStatusTick = millis();
-    sendWxStatus();
+    WebSocketHelper::sendWxStatus();
   }
   
-  if (millis() - lastTick > 1000/2) {
+  if (millis() - lastTick > 1000/15) {
     lastTick = millis();
 
     // Update LEDs
@@ -372,25 +208,7 @@ void loop() {
 
     // Update Icons
     WiFiHelper::drawSignalIcon();
-
-    if (webSocket != nullptr && stream_data) {
-//      String screenshot;
-//      UI.screenshot(screenshot);
-
-      // Serialize Data
-      DynamicJsonDocument doc(3072);
-      doc["pressure"] = OrgasmControl::getLastPressure();
-      doc["pavg"] = OrgasmControl::getAveragePressure();
-      doc["motor"] = Hardware::getMotorSpeed();
-      doc["arousal"] = OrgasmControl::getArousal();
-      doc["millis"] = millis();
-//      doc["screenshot"] = screenshot;
-
-      // Blow the Network Load
-      String payload;
-      serializeJson(doc, payload);
-      webSocket->sendTXT(last_connection, payload);
-    }
+    WebSocketHelper::sendReadings();
   }
 
   Page::DoLoop();
