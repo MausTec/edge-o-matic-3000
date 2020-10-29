@@ -58,9 +58,7 @@ void loadConfigFromSd() {
   Config.use_average_values = doc["use_average_values"] | false;
 }
 
-bool dumpConfigToJson(String &str) {
-  DynamicJsonDocument doc(2048);
-
+void dumpConfigToJsonObject(JsonDocument &doc) {
   // Copy WiFi Settings
   doc["wifi_ssid"] = Config.wifi_ssid;
   doc["wifi_key"] = Config.wifi_key;
@@ -86,11 +84,19 @@ bool dumpConfigToJson(String &str) {
   doc["update_frequency_hz"] = Config.update_frequency_hz;
   doc["sensor_sensitivity"] = Config.sensor_sensitivity;
   doc["use_average_values"] = Config.use_average_values;
+}
+
+bool dumpConfigToJson(String &str) {
+  DynamicJsonDocument doc(2048);
+  dumpConfigToJsonObject(doc);
 
   // Serialize and move temp file
   if (serializeJsonPretty(doc, str) == 0) {
     Serial.println(F("Failed to serialize config!"));
+    return false;
   }
+
+  return true;
 }
 
 void saveConfigToSd(long save_at_ms) {

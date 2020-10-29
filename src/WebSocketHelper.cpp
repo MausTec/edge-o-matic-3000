@@ -4,8 +4,6 @@
 #include <FS.h>
 #include <SD.h>
 #include <SPI.h>
-#define ARDUINOJSON_USE_LONG_LONG 1
-#include <ArduinoJson.h>
 
 #include "../include/Console.h"
 #include "../include/OrgasmControl.h"
@@ -27,62 +25,68 @@ namespace WebSocketHelper {
       webSocket->loop();
   }
 
-  void sendSystemInfo(int num) {
+  void send(const char *cmd, JsonDocument &doc, int num) {
     if (webSocket == nullptr) return;
-    StaticJsonDocument<200> doc;
 
+    StaticJsonDocument<1024> envelope;
+    envelope[cmd] = doc;
+
+    String payload;
+    serializeJson(envelope, payload);
+
+    if (num > 0) {
+      webSocket->sendTXT(num, payload);
+    } else {
+      for (auto const &p : connections) {
+        int num = p.first;
+        webSocket->sendTXT(num, payload);
+      }
+    }
+  }
+
+  void send(const char *cmd, String text, int num) {
+    StaticJsonDocument<1024> doc;
+    doc["text"] = text;
+    send(cmd, doc, num);
+  }
+
+  /*
+   * Helpers here which handle sending all server responses.
+   * The first parameter should be int num, followed by any additional
+   * parameters needed for this request (int nonce, ...)
+   */
+
+  void sendSystemInfo(int num) {
+    StaticJsonDocument<200> doc;
     doc["device"] = "Edge-o-Matic 3000";
     doc["serial"] = "";
     doc["hwVersion"] = "";
     doc["fwVersion"] = VERSION;
 
-    // Blow the Network Load
-    StaticJsonDocument<1024> envelope;
-    envelope["info"] = doc;
-
-    String payload;
-    serializeJson(envelope, payload);
-    webSocket->sendTXT(num > 0 ? num : last_connection, payload);
+    send("info", doc, num);
   }
 
   void sendSettings(int num) {
-    if (webSocket == nullptr) return;
+    StaticJsonDocument<4096> doc;
+    dumpConfigToJsonObject(doc);
 
-    StaticJsonDocument<200> doc;
-    doc["cmd"] = "SETTINGS";
-    doc["peak_limit"] = Config.sensitivity_threshold;
-    doc["motor_max"] = Config.motor_max_speed;
-    doc["ramp_time_s"] = Config.motor_ramp_time_s;
-
-    // Blow the Network Load
-    String payload;
-    serializeJson(doc, payload);
-    webSocket->sendTXT(num > 0 ? num : last_connection, payload);
+    send("configList", doc, num);
   }
 
   void sendWxStatus(int num) {
-    if (webSocket == nullptr) return;
-
     StaticJsonDocument<200> doc;
-    doc["cmd"] = "WIFI_STATUS";
     doc["ssid"] = Config.wifi_ssid;
     doc["ip"] = WiFi.localIP().toString();
     doc["rssi"] = WiFi.RSSI();
 
-    // Blow the Network Load
-    String payload;
-    serializeJson(doc, payload);
-    webSocket->sendTXT(num > 0 ? num : last_connection, payload);
+    send("wifiStatus", doc, num);
   }
 
   void sendSdStatus(int num) {
-    if (webSocket == nullptr) return;
-
     uint8_t cardType = SD.cardType();
     uint64_t cardSize = SD.cardSize() / (1024 * 1024);
 
     StaticJsonDocument<200> doc;
-    doc["cmd"] = "SD_STATUS";
     doc["size"] = cardSize;
 
     switch(cardType) {
@@ -100,14 +104,10 @@ namespace WebSocketHelper {
         break;
     }
 
-    // Blow the Network Load
-    String payload;
-    serializeJson(doc, payload);
-    webSocket->sendTXT(num > 0 ? num : last_connection, payload);
+    send("sdStatus", doc, num);
   }
 
   void sendReadings(int num) {
-    if (webSocket == nullptr) return;
 //    String screenshot;
 //    UI.screenshot(screenshot);
 
@@ -120,13 +120,27 @@ namespace WebSocketHelper {
     doc["millis"] = millis();
 //    doc["screenshot"] = screenshot;
 
-    StaticJsonDocument<1024> envelope;
-    envelope["readings"] = doc;
+    send("readings", doc, num);
+  }
 
-    // Blow the Network Load
-    String payload;
-    serializeJson(envelope, payload);
-    webSocket->sendTXT(num > 0 ? num : last_connection, payload);
+  /*
+   * Helpers here for parsing and responding to commands sent
+   * by the client. First parameter should also be int num.
+   */
+
+  void cbSerialCmd(int num, JsonVariant args) {
+    int nonce = args["nonce"];
+    String text;
+
+    char line[SERIAL_BUFFER_LEN];
+    strlcpy(line, args["cmd"], SERIAL_BUFFER_LEN - 1);
+    Console::handleMessage(line, text);
+
+    DynamicJsonDocument resp(1024);
+    resp["nonce"] = nonce;
+    resp["text"] = text;
+
+    send("serialCmd", resp, num);
   }
 
   namespace {
@@ -139,41 +153,32 @@ namespace WebSocketHelper {
 
       if (err) {
         Serial.println("Deserialization Error!");
-      } else if(doc["cmd"]) {
-        const char* cmd = doc["cmd"];
-        Serial.println(cmd);
+      } else {
+        for (auto kvp : doc.as<JsonObject>()) {
+          auto cmd = kvp.key().c_str();
 
-        if (strcmp(cmd, "SET_BRIGHTNESS") == 0) {
-        } else if (strcmp(cmd, "SET_LIMIT") == 0) {
-          Config.sensitivity_threshold = doc["limit"];
-        } else if (strcmp(cmd, "GET_SETTINGS") == 0) {
-          sendSettings(num);
-        } else if (strcmp(cmd, "RESET_SD") == 0) {
-//          resetSD();
-        } else if (strcmp(cmd, "GET_SD_STATUS") == 0) {
-          sendSdStatus(num);
-        } else if (strcmp(cmd, "GET_WIFI_STATUS") == 0) {
-          sendWxStatus(num);
-        } else if (strcmp(cmd, "CONSOLE") == 0) {
-          String response;
-          String payload;
-
-          DynamicJsonDocument resp_doc(3072);
-          resp_doc["cmd"] = "CONSOLE_RESP";
-          resp_doc["nonce"] = doc["nonce"];
-
-          char line[SERIAL_BUFFER_LEN];
-          strlcpy(line, doc["line"], SERIAL_BUFFER_LEN - 1);
-
-          Console::handleMessage(line, response);
-          resp_doc["resp"] = response;
-
-          serializeJson(resp_doc, payload);
-          webSocket->sendTXT(num, payload);
-        } else if (strcmp(cmd, "STREAM") == 0) {
-          stream_data = doc["enabled"];
-        } else {
-          Serial.println("???");
+          if (! strcmp(cmd, "configSet")) {
+//            cbConfigSet(num, kvp.value());
+          } else if (! strcmp(cmd, "info")) {
+            sendSystemInfo(num);
+          } else if (! strcmp(cmd, "configList")) {
+            sendSettings(num);
+          } else if (! strcmp(cmd, "serialCmd")) {
+            cbSerialCmd(num, kvp.value());
+          } else if (! strcmp(cmd, "getWiFiStatus")) {
+            sendWxStatus(num);
+          } else if (! strcmp(cmd, "getSDStatus")) {
+            sendSdStatus(num);
+          } else if (! strcmp(cmd, "setMode")) {
+            // cbSetMode(num, kvp.value());
+          } else if (! strcmp(cmd, "setMotor")) {
+            // cbSetMotor(num, kvp.value());
+          } else if (! strcmp(cmd, "streamReadings")) {
+            WebSocketConnection *client = connections[num];
+            client->stream_readings = kvp.value();
+          } else {
+            send("error", String("Unknown command: ") + String(cmd), num);
+          }
         }
       }
     }
@@ -190,12 +195,18 @@ namespace WebSocketHelper {
         // Client has disconnected
         case WStype_DISCONNECTED:
           Serial.printf("[%u] Disconnected!\n", num);
+          connections.erase(num);
           break;
 
           // New client has connected
         case WStype_CONNECTED:
         {
+          WebSocketConnection *client = new WebSocketConnection;
           IPAddress ip = webSocket->remoteIP(num);
+          client->ip = ip;
+          client->num = num;
+          connections[num] = client;
+
           last_connection = num;
           sendSystemInfo(num);
           Serial.printf("[%u] Connection from ", num);

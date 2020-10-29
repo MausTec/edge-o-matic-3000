@@ -4,6 +4,8 @@
 #include "arduino.h"
 #include "errors.h"
 
+#include <ArduinoJson.h>
+
 // External Library Config
 #define FASTLED_INTERNAL
 
@@ -93,5 +95,6 @@ struct ConfigStruct {
 
 extern void loadConfigFromSd();
 extern void saveConfigToSd(long save_at_ms = -1);
+extern void dumpConfigToJsonObject(JsonDocument &doc);
 extern bool dumpConfigToJson(String &str);
 #endif
