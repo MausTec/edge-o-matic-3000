@@ -1,7 +1,7 @@
 #ifndef __WebSocketHelper_h
 #define __WebSocketHelper_h
 
-#include <WebSocketsServer.h>
+#include "./RedirectingWebSocketsServer.h"
 #include <map>
 
 #define ARDUINOJSON_USE_LONG_LONG 1
@@ -27,7 +27,7 @@ namespace WebSocketHelper {
   void sendReadings(int num = -1);
 
   namespace {
-    WebSocketsServer* webSocket;
+    RedirectingWebSocketsServer* webSocket;
     uint8_t last_connection;
     bool stream_data = false;
 
