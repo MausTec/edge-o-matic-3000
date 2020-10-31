@@ -121,11 +121,14 @@ console_sets = []
 last_check = ""
 
 # Check Console.cpp, which will soon move to config.cpp
-console_cpp = File.join(DIR, "src", "Console.cpp")
+console_cpp = File.join(DIR, "src", "config.cpp")
 File.foreach(console_cpp).with_index do |line, i|
   if line =~ /strcmp\s*\(\s*option\s*,\s*"(\w+)"/
     console_checks << $1
     last_check = $1
+    next
+  elsif last_check == ""
+    next
   end
 
   if line =~ /String\s*\(\s*Config\.(\w+)/
@@ -164,7 +167,7 @@ File.foreach(console_cpp).with_index do |line, i|
     end
   end
 
-  if line =~ /strlcpy\s*\(\s*Config\.(\w+)\s*,\s*args\[1\]\s*,\s*sizeof\s*\(\s*Config\.(\w+)/
+  if line =~ /strlcpy\s*\(\s*Config\.(\w+)\s*,\s*value\s*,\s*sizeof\s*\(\s*Config\.(\w+)/
     type = config_values[$1]
     console_sets << $1
     lval = $1
@@ -181,6 +184,8 @@ File.foreach(console_cpp).with_index do |line, i|
       error console_cpp, i, "Console assigns #{lval.inspect} as string, but the type should be #{type.inspect}"
     end
   end
+
+  last_check = ""
 end
 
 # Check Missing Checks
