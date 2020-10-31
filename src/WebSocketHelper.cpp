@@ -15,7 +15,7 @@
 namespace WebSocketHelper {
   void begin() {
     // Start WebSocket server and assign callback
-    webSocket = new WebSocketsServer(Config.websocket_port);
+    webSocket = new RedirectingWebSocketsServer(Config.websocket_port);
     webSocket->begin();
     webSocket->onEvent(onWebSocketEvent);
     Serial.println("Websocket server running.");
