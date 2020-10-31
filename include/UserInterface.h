@@ -65,6 +65,8 @@ public:
   void fadeTo(byte color = SSD1306_BLACK, bool half = false);
   void clear(bool render = true);
   void render();
+  void displayOff() { display_on = false; }
+  void displayOn() { display_on = true; }
 
   // Icons
   void drawWifiIcon(byte strength = 255, long flash_ms = 0);
@@ -107,6 +109,8 @@ public:
   Adafruit_SSD1306* display;
 
 private:
+  bool display_on = true;
+
   // Chart Data:
   int chartReadings[2][CHART_WIDTH] = {{0}, {0}};
   uint8_t chartCursor[2] = {0,0};

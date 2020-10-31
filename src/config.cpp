@@ -74,6 +74,7 @@ void loadConfigFromJsonObject(JsonDocument &doc) {
   // Copy UI Settings
   Config.led_brightness = doc["led_brightness"] | 128;
   Config.screen_dim_seconds = doc["screen_dim_seconds"] | 10;
+  Config.screen_timeout_seconds = doc["screen_timeout_seconds"] | 60;
 
   // Copy Orgasm Settings
   Config.motor_max_speed = doc["motor_max_speed"] | 128;
@@ -102,6 +103,7 @@ void dumpConfigToJsonObject(JsonDocument &doc) {
   // Copy UI Settings
   doc["led_brightness"] = Config.led_brightness;
   doc["screen_dim_seconds"] = Config.screen_dim_seconds;
+  doc["screen_timeout_seconds"] = Config.screen_timeout_seconds;
 
   // Copy Orgasm Settings
   doc["motor_max_speed"] = Config.motor_max_speed;
@@ -190,6 +192,8 @@ bool setConfigValue(const char *option, const char *value, bool &require_reboot)
     Config.motor_max_speed = atoi(value);
   } else if(!strcmp(option, "screen_dim_seconds")) {
     Config.screen_dim_seconds = atoi(value);
+  } else if(!strcmp(option, "screen_timeout_seconds")) {
+    Config.screen_timeout_seconds = atoi(value);
   } else if(!strcmp(option, "pressure_smoothing")) {
     Config.pressure_smoothing = atoi(value);
   } else if(!strcmp(option, "classic_serial")) {
@@ -234,6 +238,8 @@ bool getConfigValue(const char *option, String &out) {
     out += String(Config.motor_max_speed) + '\n';
   } else if(!strcmp(option, "screen_dim_seconds")) {
     out += String(Config.screen_dim_seconds) + '\n';
+  } else if(!strcmp(option, "screen_timeout_seconds")) {
+    out += String(Config.screen_timeout_seconds) + '\n';
   } else if(!strcmp(option, "pressure_smoothing")) {
     out += String(Config.pressure_smoothing) + '\n';
   } else if(!strcmp(option, "classic_serial")) {

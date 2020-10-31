@@ -83,6 +83,7 @@ struct ConfigStruct {
   // UI And Stuff
   byte led_brightness;
   int screen_dim_seconds;
+  int screen_timeout_seconds;
 
   // Server
   int websocket_port;

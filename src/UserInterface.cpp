@@ -361,7 +361,9 @@ void UserInterface::clear(bool render) {
 }
 
 void UserInterface::render() {
-  this->display->display();
+  if (display_on) {
+    this->display->display();
+  }
 }
 
 void UserInterface::drawIcon(byte icon_idx, byte icon_graphic[][8], byte status, long flash_ms) {

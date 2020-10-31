@@ -41,6 +41,7 @@ namespace Hardware {
     void initializeLEDs();
 
     bool idle = false;
+    bool standby = false;
     long idle_since_ms = 0;
 
     int motor_speed = 0;

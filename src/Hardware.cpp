@@ -39,7 +39,6 @@ namespace Hardware {
 
     EncoderSw.tick();
 
-    // Debug Encoder:
     int32_t count = Encoder.getCount();
     if (count != encoderCount) {
       idle_since_ms = millis();
@@ -47,16 +46,34 @@ namespace Hardware {
       encoderCount = count;
     }
 
-    if (Config.screen_dim_seconds > 0) {
-      if ((millis() - idle_since_ms) > Config.screen_dim_seconds * 1000) {
-        if (!idle) {
+    if ((Config.screen_dim_seconds + Config.screen_timeout_seconds) > 0 || idle || standby) {
+      long idle_time_ms = millis() - idle_since_ms;
+      bool do_dim = Config.screen_dim_seconds > 0 && idle_time_ms > Config.screen_dim_seconds * 1000;
+      bool do_off = Config.screen_timeout_seconds > 0 && idle_time_ms > Config.screen_timeout_seconds * 1000;
+
+      if (do_dim || do_off) {
+        if ((!idle && do_dim) || (!standby && do_off)) {
           UI.display->dim(true);
+
+          if (do_off) {
+            UI.fadeTo();
+            UI.displayOff();
+            UI.clear(false);
+            // This calls display instead of render because here
+            // render is disabled.
+            UI.display->display();
+            standby = true;
+          }
+
           idle = true;
         }
       } else {
-        if (idle) {
+        if (idle || standby) {
           UI.display->dim(false);
+          UI.displayOn();
+          UI.render();
           idle = false;
+          standby = false;
         }
       }
     }
