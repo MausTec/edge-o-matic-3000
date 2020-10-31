@@ -28,6 +28,7 @@ and is automatically generated. Here is a quick summary of config variables:
 |`websocket_port`|Int|80|Port to listen for incoming Websocket connections.|
 |`motor_max_speed`|Byte|128|Maximum speed for the motor in auto-ramp mode.|
 |`screen_dim_seconds`|Int|10|Time, in seconds, before the screen dims. 0 to disable.|
+|`screen_timeout_seconds`|Int|60|Time, in seconds, before the screen turns off. 0 to disable.|
 |`pressure_smoothing`|Byte|5|Number of samples to take an average of. Higher results in lag and lower resolution!|
 |`classic_serial`|Boolean|true|Output classic NoGasm values over serial for backwards compatibility.|
 |`sensitivity_threshold`|Int|600|The arousal threshold for orgasm detection. Lower = sooner cutoff.|
