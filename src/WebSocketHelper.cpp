@@ -8,6 +8,7 @@
 #include "../include/Console.h"
 #include "../include/OrgasmControl.h"
 #include "../include/Hardware.h"
+#include "../include/Page.h"
 
 #include "../config.h"
 
@@ -28,7 +29,7 @@ namespace WebSocketHelper {
   void send(const char *cmd, JsonDocument &doc, int num) {
     if (webSocket == nullptr) return;
 
-    StaticJsonDocument<1024> envelope;
+    DynamicJsonDocument envelope(1024);
     envelope[cmd] = doc;
 
     String payload;
@@ -45,7 +46,7 @@ namespace WebSocketHelper {
   }
 
   void send(const char *cmd, String text, int num) {
-    StaticJsonDocument<1024> doc;
+    DynamicJsonDocument doc(1024);
     doc["text"] = text;
     send(cmd, doc, num);
   }
@@ -57,7 +58,7 @@ namespace WebSocketHelper {
    */
 
   void sendSystemInfo(int num) {
-    StaticJsonDocument<200> doc;
+    DynamicJsonDocument doc(200);
     doc["device"] = "Edge-o-Matic 3000";
     doc["serial"] = "";
     doc["hwVersion"] = "";
@@ -67,14 +68,14 @@ namespace WebSocketHelper {
   }
 
   void sendSettings(int num) {
-    StaticJsonDocument<4096> doc;
+    DynamicJsonDocument doc(4096);
     dumpConfigToJsonObject(doc);
 
     send("configList", doc, num);
   }
 
   void sendWxStatus(int num) {
-    StaticJsonDocument<200> doc;
+    DynamicJsonDocument doc(200);
     doc["ssid"] = Config.wifi_ssid;
     doc["ip"] = WiFi.localIP().toString();
     doc["rssi"] = WiFi.RSSI();
@@ -86,7 +87,7 @@ namespace WebSocketHelper {
     uint8_t cardType = SD.cardType();
     uint64_t cardSize = SD.cardSize() / (1024 * 1024);
 
-    StaticJsonDocument<200> doc;
+    DynamicJsonDocument doc(200);
     doc["size"] = cardSize;
 
     switch(cardType) {
@@ -143,12 +144,32 @@ namespace WebSocketHelper {
     send("serialCmd", resp, num);
   }
 
+  void cbConfigSet(int num, JsonVariant args) {
+    auto config = args.as<JsonObject>();
+    bool restart_required = false;
+
+    for (auto kvp : config) {
+      setConfigValue(kvp.key().c_str(), kvp.value().as<String>().c_str(), restart_required);
+    }
+
+    // Send new settings to client:
+    saveConfigToSd(millis() + 300);
+  }
+
+  void cbSetMode(int num, JsonVariant mode) {
+    RunGraphPage.setMode(mode);
+  }
+
+  void cbSetMotor(int num, JsonVariant speed) {
+    Hardware::setMotorSpeed(speed);
+  }
+
   namespace {
     void onMessage(int num, uint8_t * payload) {
       Serial.printf("[%u] %s", num, payload);
       Serial.println();
 
-      StaticJsonDocument<200> doc;
+      DynamicJsonDocument doc(1024);
       DeserializationError err = deserializeJson(doc, payload);
 
       if (err) {
@@ -158,7 +179,7 @@ namespace WebSocketHelper {
           auto cmd = kvp.key().c_str();
 
           if (! strcmp(cmd, "configSet")) {
-//            cbConfigSet(num, kvp.value());
+            cbConfigSet(num, kvp.value());
           } else if (! strcmp(cmd, "info")) {
             sendSystemInfo(num);
           } else if (! strcmp(cmd, "configList")) {
@@ -170,9 +191,9 @@ namespace WebSocketHelper {
           } else if (! strcmp(cmd, "getSDStatus")) {
             sendSdStatus(num);
           } else if (! strcmp(cmd, "setMode")) {
-            // cbSetMode(num, kvp.value());
+             cbSetMode(num, kvp.value());
           } else if (! strcmp(cmd, "setMotor")) {
-            // cbSetMotor(num, kvp.value());
+             cbSetMotor(num, kvp.value());
           } else if (! strcmp(cmd, "streamReadings")) {
             WebSocketConnection *client = connections[num];
             client->stream_readings = kvp.value();

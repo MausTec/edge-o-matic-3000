@@ -6,6 +6,7 @@
 #include "../../include/OrgasmControl.h"
 #include "../../include/Hardware.h"
 #include "../../include/assets.h"
+#include "../../include/WebSocketHelper.h"
 
 enum RGView {
   GraphView,
@@ -176,12 +177,25 @@ class pRunGraph : public Page {
     if (mode == Automatic) {
       // TODO this may go out of bounds. Also, change in steps?
       Config.sensitivity_threshold += (diff * step);
-      saveConfigToSd(millis() + 2000);
+      saveConfigToSd(millis() + 300);
     } else {
       Hardware::changeMotorSpeed(diff * step);
     }
 
     Rerender();
+  }
+
+public:
+  void setMode(const char* newMode) {
+    if (! strcmp(newMode, "automatic")) {
+      mode = Automatic;
+      OrgasmControl::controlMotor(true);
+    } else if (! strcmp(newMode, "manual")) {
+      mode = Manual;
+      OrgasmControl::controlMotor(false);
+    }
+
+    updateButtons();
   }
 };
 

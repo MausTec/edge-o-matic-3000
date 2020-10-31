@@ -7,8 +7,31 @@
 
 #include "../config.h"
 #include "../include/UserInterface.h"
+#include "../include/Hardware.h"
+#include "../include/Page.h"
+
+#include <FastLed.h>
 
 ConfigStruct Config;
+
+/**
+ * Cast a string to a bool. Accepts "false", "no", "off", "0" to false, all other
+ * strings cast to true.
+ * @param a
+ * @return
+ */
+bool atob(const char *a) {
+//  for (int i = 0; a[i]; i++) {
+//    a[i] = tolower(a[i]);
+//  }
+
+  return !(
+      strcmp(a, "false") == 0 ||
+      strcmp(a, "no") == 0 ||
+      strcmp(a, "off") == 0 ||
+      strcmp(a, "0") == 0
+  );
+}
 
 /**
  * This code loads configuration into the Config struct.
@@ -31,6 +54,10 @@ void loadConfigFromSd() {
     }
   }
 
+  loadConfigFromJsonObject(doc);
+}
+
+void loadConfigFromJsonObject(JsonDocument &doc) {
   // Copy WiFi Settings
   strlcpy(Config.wifi_ssid, doc["wifi_ssid"] | "", sizeof(Config.wifi_ssid));
   strlcpy(Config.wifi_key, doc["wifi_key"] | "", sizeof(Config.wifi_key));
@@ -105,7 +132,6 @@ void saveConfigToSd(long save_at_ms) {
 
   if (save_at_ms > 0) {
     // Queue a future save:
-    Serial.println("Future save queued.");
     save_at_ms_tick = max(save_at_ms, save_at_ms_tick);
     return;
   } else if (save_at_ms < 0) {
@@ -116,6 +142,8 @@ void saveConfigToSd(long save_at_ms) {
       return;
     }
   }
+
+  WebSocketHelper::sendSettings();
 
   if (SD.exists(CONFIG_FILENAME)) {
     SD.remove(CONFIG_FILENAME ".bak");
@@ -144,4 +172,93 @@ void saveConfigToSd(long save_at_ms) {
   tmp.print(config);
 
   tmp.close();
+}
+
+bool setConfigValue(const char *option, const char *value, bool &require_reboot) {
+  if (!strcmp(option, "wifi_on")) {
+    Config.wifi_on = atob(value);
+    require_reboot = true;
+  } else if(!strcmp(option, "bt_on")) {
+    Config.bt_on = atob(value);
+    require_reboot = true;
+  } else if(!strcmp(option, "led_brightness")) {
+    Config.led_brightness = atoi(value);
+  } else if(!strcmp(option, "websocket_port")) {
+    Config.websocket_port = atoi(value);
+    require_reboot = true;
+  } else if(!strcmp(option, "motor_max_speed")) {
+    Config.motor_max_speed = atoi(value);
+  } else if(!strcmp(option, "screen_dim_seconds")) {
+    Config.screen_dim_seconds = atoi(value);
+  } else if(!strcmp(option, "pressure_smoothing")) {
+    Config.pressure_smoothing = atoi(value);
+  } else if(!strcmp(option, "classic_serial")) {
+    Config.classic_serial = atob(value);
+  } else if(!strcmp(option, "use_average_values")) {
+    Config.use_average_values = atob(value);
+  } else if(!strcmp(option, "sensitivity_threshold")) {
+    Config.sensitivity_threshold = atoi(value);
+  } else if(!strcmp(option, "motor_ramp_time_s")) {
+    Config.motor_ramp_time_s = atoi(value);
+  } else if(!strcmp(option, "update_frequency_hz")) {
+    Config.update_frequency_hz = atoi(value);
+  } else if(!strcmp(option, "sensor_sensitivity")) {
+    Config.sensor_sensitivity = atoi(value);
+    Hardware::setPressureSensitivity(Config.sensor_sensitivity);
+  } else if (!strcmp(option, "knob_rgb")) {
+    uint32_t color = strtoul(value, NULL, 16);
+    Hardware::setEncoderColor(CRGB(color));
+  } else if (!strcmp(option, "wifi_ssid")) {
+    strlcpy(Config.wifi_ssid, value, sizeof(Config.wifi_ssid));
+  } else if (!strcmp(option, "wifi_key")) {
+    strlcpy(Config.wifi_key, value, sizeof(Config.wifi_key));
+  } else if (!strcmp(option, "bt_display_name")) {
+    strlcpy(Config.bt_display_name, value, sizeof(Config.bt_display_name));
+  } else {
+    return false;
+  }
+
+  return true;
+}
+
+bool getConfigValue(const char *option, String &out) {
+  if (!strcmp(option, "wifi_on")) {
+    out += String(Config.wifi_on) + '\n';
+  } else if(!strcmp(option, "bt_on")) {
+    out += String(Config.bt_on) + '\n';
+  } else if(!strcmp(option, "led_brightness")) {
+    out += String(Config.led_brightness) + '\n';
+  } else if(!strcmp(option, "websocket_port")) {
+    out += String(Config.websocket_port) + '\n';
+  } else if(!strcmp(option, "motor_max_speed")) {
+    out += String(Config.motor_max_speed) + '\n';
+  } else if(!strcmp(option, "screen_dim_seconds")) {
+    out += String(Config.screen_dim_seconds) + '\n';
+  } else if(!strcmp(option, "pressure_smoothing")) {
+    out += String(Config.pressure_smoothing) + '\n';
+  } else if(!strcmp(option, "classic_serial")) {
+    out += String(Config.classic_serial) + '\n';
+  } else if(!strcmp(option, "use_average_values")) {
+    out += String(Config.use_average_values) + '\n';
+  } else if(!strcmp(option, "sensitivity_threshold")) {
+    out += String(Config.sensitivity_threshold) + '\n';
+  } else if(!strcmp(option, "motor_ramp_time_s")) {
+    out += String(Config.motor_ramp_time_s) + '\n';
+  } else if(!strcmp(option, "update_frequency_hz")) {
+    out += String(Config.update_frequency_hz) + '\n';
+  } else if(!strcmp(option, "sensor_sensitivity")) {
+    out += String(Config.sensor_sensitivity) + '\n';
+  } else if (!strcmp(option, "knob_rgb")) {
+    out += ("Usage: set knob_rgb 0xFFCCAA") + '\n';
+  } else if (!strcmp(option, "wifi_ssid")) {
+    out += String(Config.wifi_ssid) + '\n';
+  } else if (!strcmp(option, "wifi_key")) {
+    out += String(Config.wifi_key) + '\n';
+  } else if (!strcmp(option, "bt_display_name")) {
+    out += String(Config.bt_display_name) + '\n';
+  } else {
+    return false;
+  }
+
+  return true;
 }
