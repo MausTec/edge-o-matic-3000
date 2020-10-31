@@ -64,6 +64,13 @@
 #define ENCODER_BL_PIN  27
 #define ENCODER_GR_PIN  4
 
+union ConfigValue {
+  byte v_byte;
+  int  v_int;
+  char *v_char;
+  bool v_bool;
+};
+
 struct ConfigStruct {
   // Networking
   char wifi_ssid[64];
@@ -89,12 +96,13 @@ struct ConfigStruct {
   int update_frequency_hz;
   byte sensor_sensitivity;
   bool use_average_values;
-
-//  bool test;
 } extern Config;
 
 extern void loadConfigFromSd();
+extern void loadConfigFromJsonObject(JsonDocument &doc);
 extern void saveConfigToSd(long save_at_ms = -1);
+extern bool setConfigValue(const char *key, const char *value, bool &require_reboot);
+extern bool getConfigValue(const char *key, String &out);
 extern void dumpConfigToJsonObject(JsonDocument &doc);
 extern bool dumpConfigToJson(String &str);
 #endif

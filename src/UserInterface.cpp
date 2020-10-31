@@ -1,5 +1,6 @@
 #include "../include/UserInterface.h"
 #include "../include/Icons.h"
+#include "../include/WebSocketHelper.h"
 
 #include "../include/Page.h"
 
@@ -23,6 +24,7 @@ bool UserInterface::begin() {
 
 void UserInterface::drawStatus(const char *s) {
   if (s != nullptr) {
+    WebSocketHelper::send("mode", s);
     strlcpy(status, s, STATUS_SIZE);
     int sum = 0;
     for (int i = 0; i < strlen(status); i++) {

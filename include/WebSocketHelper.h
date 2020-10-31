@@ -19,7 +19,7 @@ namespace WebSocketHelper {
   void tick();
 
   void send(const char *cmd, JsonDocument &doc, int num = -1);
-  void send(const char *cmd, String text, int num);
+  void send(const char *cmd, String text, int num = -1);
 
   void sendSettings(int num = -1);
   void sendWxStatus(int num = -1);
