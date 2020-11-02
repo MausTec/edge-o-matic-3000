@@ -36,9 +36,11 @@ that you send only one command per request. To track responses to commands, you 
 some commands support. This is a numeric identifier that is returned with the associated response and can be used to 
 filter duplicate responses.
 
+
 ## Server Commands
 
 These commands are recognized by the WebSocket server running on the Edge-o-Matic 3000:
+
 
 ### `configSet`
 Sets one or more configuration values.
@@ -56,6 +58,7 @@ Sets one or more configuration values.
 }
 ```
 
+
 ### `configList`
 Requests all config values to be sent.
 
@@ -63,6 +66,7 @@ Requests all config values to be sent.
 ```json
 "configList": null
 ```
+
 
 ### `serialCmd`	
 Execute a string as a serial command.
@@ -82,6 +86,7 @@ Execute a string as a serial command.
 }
 ```
 
+
 ### `getWiFiStatus`
 Requests the Wi-Fi status to be sent.
 
@@ -90,6 +95,7 @@ Requests the Wi-Fi status to be sent.
 "getWiFiStatus": {}
 ```
 
+
 ### `getSDStatus`
 Requests SD Card status to be sent.
 
@@ -97,6 +103,7 @@ Requests SD Card status to be sent.
 ```json
 "getSDStatus": {}
 ```
+
 
 ### `setMode`
 Sets the current run mode.
@@ -111,6 +118,7 @@ Sets the current run mode.
 ```json
 "setMode": "automatic"
 ```
+
 
 ### `setMotor`
 Sets vibration speed. Will enter manual mode.
@@ -131,6 +139,7 @@ Sets vibration speed. Will enter manual mode.
 Your application should be prepared to handle these messages streamed from the server. The actual data may change as 
 this is a printed document and not live documentation. See GitHub for more up-to-date details.
 
+
 ### `configList`
 A listing of the current configuration.
 
@@ -147,6 +156,7 @@ A listing of the current configuration.
     "wifi_on": false
 }
 ```
+
 
 ### `serialCmd`
 The response from a serial command.
@@ -166,6 +176,7 @@ The response from a serial command.
 }
 ```
  
+
 ### `wifiStatus`
 The current Wi-Fi connection status.
 
@@ -186,6 +197,7 @@ The current Wi-Fi connection status.
 }
 ```
 
+
 ### `sdStatus`
 Current SD card status.
 
@@ -204,6 +216,7 @@ Current SD card status.
 }
 ```
  
+
 ### `readings`
 A collection of current readings and device status. This is streamed at the global update frequency, unless disabled, 
 and is used for providing real-time updates to your application.
