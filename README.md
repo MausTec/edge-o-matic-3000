@@ -11,6 +11,10 @@ stimulation accordingly. The net result: automated edging and orgasm denial.
 NoGasm WiFi and NG+ devices both support a Websocket connection and a Web UI. The current Web UI can be accessed
 at [nogasm-ui.maustec.io](http://nogasm-ui.maustec.io). The source code is at [github.com/maustec/nogasm-ui](https://github.com/maustec/nogasm-ui).
 
+## WebSocket API
+
+Documentation for the WebSocket API can be found in [doc/WebSocket.md](doc/WebSocket.md).
+
 ## Configuration
 
 If you have hardware already, please see `examples/config.json` or your own `config.json` file
