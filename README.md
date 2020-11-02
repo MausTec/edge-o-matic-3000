@@ -53,6 +53,8 @@ Hardware development and assembly helps keep pizza in the freezer and a roof ove
 Your support helps a small business grow into something neat, and ensures future devices like this can continue
 to be produced.
 
+The User Guide for the hardware can be downloaded at [doc/Edge-o-Matic_UserGuide.docx](doc/Edge-o-Matic_UserGuide.docx).
+
 ### ESP32 Pinout
 
 If you want to breadboard this project, I've included the pinout from the ESP32 below. Please reference the original
