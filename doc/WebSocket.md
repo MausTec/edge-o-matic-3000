@@ -19,7 +19,7 @@ arguments to that command. Responses streamed from the device should be handled 
     }
 }
 ```
-
+ 
 **The associated response:**
 
 ```json
@@ -40,7 +40,7 @@ filter duplicate responses.
 ## Server Commands
 
 These commands are recognized by the WebSocket server running on the Edge-o-Matic 3000:
-
+ 
 
 ### `configSet`
 Sets one or more configuration values.
@@ -57,7 +57,7 @@ Sets one or more configuration values.
     "motor_max_speed": 255 
 }
 ```
-
+ 
 
 ### `configList`
 Requests all config values to be sent.
@@ -66,7 +66,7 @@ Requests all config values to be sent.
 ```json
 "configList": null
 ```
-
+ 
 
 ### `serialCmd`	
 Execute a string as a serial command.
@@ -85,7 +85,7 @@ Execute a string as a serial command.
     "nonce": 1234
 }
 ```
-
+ 
 
 ### `getWiFiStatus`
 Requests the Wi-Fi status to be sent.
@@ -94,7 +94,7 @@ Requests the Wi-Fi status to be sent.
 ```json
 "getWiFiStatus": {}
 ```
-
+ 
 
 ### `getSDStatus`
 Requests SD Card status to be sent.
@@ -103,7 +103,7 @@ Requests SD Card status to be sent.
 ```json
 "getSDStatus": {}
 ```
-
+ 
 
 ### `setMode`
 Sets the current run mode.
@@ -118,7 +118,7 @@ Sets the current run mode.
 ```json
 "setMode": "automatic"
 ```
-
+ 
 
 ### `setMotor`
 Sets vibration speed. Will enter manual mode.
@@ -133,7 +133,7 @@ Sets vibration speed. Will enter manual mode.
 ```json
 "setMotor": 128
 ```
-
+ 
 
 ## Server Responses
 Your application should be prepared to handle these messages streamed from the server. The actual data may change as 
@@ -156,7 +156,7 @@ A listing of the current configuration.
     "wifi_on": false
 }
 ```
-
+ 
 
 ### `serialCmd`
 The response from a serial command.
@@ -196,7 +196,7 @@ The current Wi-Fi connection status.
     "ip": "10.0.102.192"
 }
 ```
-
+ 
 
 ### `sdStatus`
 Current SD card status.
@@ -215,7 +215,7 @@ Current SD card status.
     "type": "MMC"
 }
 ```
- 
+ 
 
 ### `readings`
 A collection of current readings and device status. This is streamed at the global update frequency, unless disabled, 
