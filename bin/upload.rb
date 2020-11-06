@@ -63,6 +63,7 @@ if opts[:tag]
   v = get_version
   puts `git commit VERSION.h -m "Set version to #{v.to_s}"`
   puts `git tag v#{v.to_s}`
+  puts `git push`
   puts `git push --tags`
 
   build_root = File.join(ROOT_PATH, "build", "arduino")
