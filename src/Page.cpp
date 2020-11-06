@@ -40,6 +40,7 @@ void Page::GoBack() {
 void Page::Reenter() {
   if (currentPage != nullptr) {
     currentPage->Enter(false);
+    Rerender();
   }
 }
 
