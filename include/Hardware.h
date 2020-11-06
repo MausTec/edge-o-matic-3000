@@ -33,6 +33,9 @@ namespace Hardware {
   void leaveI2c();
   void handleI2c(int avail);
 
+  String getDeviceSerial();
+  void setDeviceSerial(const char *serial);
+
   namespace {
     void initializeEncoder();
 

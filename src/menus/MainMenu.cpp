@@ -20,6 +20,10 @@ static void buildMenu(UIMenu *menu) {
       UI.toastNow("No valid updates.", 3000);
     }
   });
+
+  menu->addItem("System Info", [](UIMenu*) {
+    UI.toastNow(String("S/N: ") + Hardware::getDeviceSerial() + "\n" + "Version: " VERSION);
+  });
 }
 
 UIMenu MainMenu("Main Menu", &buildMenu);
