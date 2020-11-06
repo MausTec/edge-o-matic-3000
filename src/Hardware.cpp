@@ -2,9 +2,13 @@
 #include "../include/OrgasmControl.h"
 
 #include <WireSlave.h>
+#include <EEPROM.h>
+#define EEPROM_SIZE 512
 
 namespace Hardware {
   bool initialize() {
+    EEPROM.begin(EEPROM_SIZE);
+
     initializeButtons();
     initializeEncoder();
     initializeLEDs();
@@ -106,6 +110,44 @@ namespace Hardware {
     if (i2c_slave_addr > 0) {
       leaveI2c();
     }
+  }
+
+  String getDeviceSerial() {
+    int addr = 0x00;
+    int idx = 0;
+    char serial[255] = "";
+    char byte = '\0';
+
+    do {
+      byte = EEPROM.read(addr + idx);
+      serial[idx] = byte;
+      idx++;
+    } while (byte != '\0' && idx < 254);
+
+    // Double-ensure we're null terminated:
+    serial[idx] = '\0';
+
+    return String(serial);
+  }
+
+  void setDeviceSerial(const char *serial) {
+    int addr = 0x00;
+    int idx = 0;
+    char byte = '\0';
+
+    if (EEPROM.read(addr + idx) != '\0' && digitalRead(KEY_1_PIN) == HIGH) {
+      Serial.println("E_SER_SET");
+      return;
+    }
+
+    do {
+      byte = serial[idx];
+      EEPROM.write(addr + idx, byte);
+      EEPROM.commit();
+      idx++;
+    } while (byte != '\0');
+
+    Serial.println("OK");
   }
 
   void setMotorSpeed(int speed) {

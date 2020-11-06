@@ -81,12 +81,30 @@ namespace Console {
         .alias = "m",
         .help = "Set mode automatic|manual",
         .func = cmd_f { RunGraphPage.setMode(args[0]); }
+      },
+      {
+        .cmd = ".setser",
+        .alias = nullptr,
+        .help = nullptr,
+        .func = cmd_f {
+          Hardware::setDeviceSerial(args[0]);
+        }
+      },
+      {
+        .cmd = ".getser",
+        .alias = nullptr,
+        .help = nullptr,
+        .func = cmd_f {
+          out += "Device Serial: ";
+          out += Hardware::getDeviceSerial();
+        }
       }
     };
 
     int sh_help(char **args, String &out) {
       for (int i = 0; i < sizeof(commands)/sizeof(Command); i++) {
         Command c = commands[i];
+        if (c.help == nullptr) continue;
         out += (String(c.cmd) + "\t(" + String(c.alias) + ")\t" + String(c.help)) + '\n';
       }
     }
@@ -242,7 +260,7 @@ namespace Console {
     for (int i = 0; i < sizeof(commands)/sizeof(Command); i++) {
       Command c = commands[i];
 
-      if (strcmp(c.cmd, cmd) == 0 || strcmp(c.alias, cmd) == 0) {
+      if (strcmp(c.cmd, cmd) == 0 || (c.alias != nullptr && strcmp(c.alias, cmd) == 0)) {
         c.func(tokens+1, out);
         handled = true;
         break;
