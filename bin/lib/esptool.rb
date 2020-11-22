@@ -4,6 +4,7 @@ require 'open3'
 require 'fileutils'
 require 'rubyserial'
 require 'tty-prompt'
+require 'timeout'
 
 class ESPTool
   ROOT_PATH = File.absolute_path(File.join(File.dirname(__FILE__), "..", "..")).freeze
@@ -13,9 +14,13 @@ class ESPTool
 
   def initialize(port, bin_dir=ESPTOOL_PATH, bin_options={})
     @bin_dir = bin_dir
+
+    @port = select_port(port)
+    @baud = 115200
+
     @bin_options = {
         chip: 'esp32',
-        port: select_port(port),
+        port: @port,
         baud: '921600',
         before: 'default_reset',
         after: 'hard_reset'
@@ -53,6 +58,16 @@ class ESPTool
       sout.each_line { |l| puts l }
       serr.each_line { |l| puts l }
     end
+  end
+
+  def set_serial(serial_no)
+    serial = Serial.new(@port, @baud)
+    read_serial(serial, /^READY/)
+    serial.write(".setser #{serial_no}\n")
+    read_serial(serial, /^OK|^ERR_/)
+    serial.write(".getser\n")
+    read_serial(serial, /Serial:/)
+    serial.close
   end
 
 private
@@ -111,5 +126,17 @@ private
     end
 
     port
+  end
+
+  def read_serial(serial, match = /^\r\n$/, timeout = 3)
+    line = nil
+    Timeout::timeout(5) do
+      begin
+        line = serial.gets
+        puts "DEVICE: " + line
+      end while line !~ match
+    end
+  rescue Timeout::Error => e
+    # nop
   end
 end

@@ -26,7 +26,30 @@
 // SD Connections
 #define SD_CS_PIN       5
 
-#ifndef NG_PLUS
+// Encoder Connection
+#define ENCODER_B_PIN   32
+#define ENCODER_A_PIN   33
+#define ENCODER_SW_PIN  35
+#define ENCODER_RD_PIN  2
+#define ENCODER_BL_PIN  27
+#define ENCODER_GR_PIN  4
+
+#ifdef NG_PLUS
+  // LCD Definitions
+  #define SCREEN_WIDTH 128
+  #define SCREEN_HEIGHT 32
+
+  // LED Ring (NoGasm+)
+  #define LED_PIN 17
+  #define LED_COUNT 13
+
+  #define SDA_PIN 21
+  #define SCL_PIN 22
+
+  // Encoders are swapped
+  #define ENCODER_GR_PIN 27
+  #define ENCODER_BL_PIN 4
+#else
   // LCD Definitions
   #define SCREEN_WIDTH    128
   #define SCREEN_HEIGHT   64
@@ -46,23 +69,7 @@
   #define KEY_1_PIN       39
   #define KEY_2_PIN       25
   #define KEY_3_PIN       26
-#else
-  // LCD Definitions
-  #define SCREEN_WIDTH 128
-  #define SCREEN_HEIGHT 32
-
-  // LED Ring (NoGasm+)
-  #define LED_PIN 17
-  #define LED_COUNT 13
 #endif
-
-// Encoder Connection
-#define ENCODER_B_PIN   32
-#define ENCODER_A_PIN   33
-#define ENCODER_SW_PIN  35
-#define ENCODER_RD_PIN  2
-#define ENCODER_BL_PIN  27
-#define ENCODER_GR_PIN  4
 
 union ConfigValue {
   byte v_byte;

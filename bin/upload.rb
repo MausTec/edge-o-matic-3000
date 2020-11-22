@@ -21,6 +21,7 @@ TEXT
   opt :set_version, "Manually set the current version", type: :string, default: nil
   opt :inc_version, "Increase major|minor|patch", type: :string, default: nil
   opt :tag, "Tag this as a release and push", type: :bool, default: false
+  opt :serial, "Set a serial number for this device", type: :string, default: nil
 end
 
 def get_version
@@ -77,7 +78,16 @@ if opts[:tag]
   `gh release create v#{v.to_s} #{File.join(release_root, "eom3k-#{v.to_s}.bin")} #{File.join(release_root, "eom3k-#{v.to_s}.partitions.bin")} --notes-file #{File.join(ROOT_PATH, "doc", "ReleaseTemplate.md")}`
 end
 
-if opts[:upload]
+esptool = nil
+
+if opts[:port]
   esptool = ESPTool.new(opts[:port])
-  esptool.write_flash
+end
+
+if opts[:upload]
+  esptool&.write_flash
+end
+
+if opts[:serial]
+  esptool&.set_serial(opts[:serial])
 end
