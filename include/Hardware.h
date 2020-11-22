@@ -57,9 +57,11 @@ namespace Hardware {
 #endif
     CRGB encoderColor = CRGB::Black;
 
+#ifdef KEY_1_PIN
     OneButton Key1(KEY_1_PIN, true, false);
     OneButton Key2(KEY_2_PIN, true, false);
     OneButton Key3(KEY_3_PIN, true, false);
+#endif
 
     int32_t encoderCount;
     ESP32Encoder Encoder;

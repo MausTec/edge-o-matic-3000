@@ -125,7 +125,11 @@ void setup() {
   // Start Serial port
   Serial.begin(115200);
 
-  Serial.println("Maus-Tec Edge-o-Matic 3000");
+#ifdef NG_PLUS
+  Serial.println("Maus-Tec presents: NoGasm Plus");
+#else
+  Serial.println("Maus-Tec presents: Edge-o-Matic 3000");
+#endif
   Serial.println("Version: " VERSION);
 
   // Setup Hardware
@@ -165,9 +169,18 @@ void setup() {
       0);        /* pin task to core 0 */
 
   // I'm always one for the dramatics:
-  delay(3000);
-  UI.fadeTo();
+  // Hold Key1 for fast boot, used in testing.
+#ifdef KEY_1_PIN
+  if (digitalRead(KEY_1_PIN) == HIGH) {
+#else
+  if (true) {
+#endif
+    delay(3000);
+    UI.fadeTo();
+  }
+
   Page::Go(&RunGraphPage);
+  Serial.println("READY");
 }
 
 void loop() {

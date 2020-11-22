@@ -110,6 +110,10 @@ namespace Console {
     }
 
     int sh_external(char **args, String &out) {
+#ifdef NG_PLUS
+      out += "Not available on this device.\n";
+      return 1;
+#else
       if (args[0] == NULL) {
         out += "Subcommand required!\n";
         return 1;
@@ -129,6 +133,7 @@ namespace Console {
       }
 
       return 0;
+#endif
     }
 
     int sh_cat(char **args, String &out) {

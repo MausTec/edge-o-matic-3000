@@ -97,12 +97,15 @@ namespace Hardware {
   }
 
   void enableExternalBus() {
+#ifdef BUS_EN_PIN
     digitalWrite(BUS_EN_PIN, HIGH);
     digitalWrite(RJ_LED_1_PIN, HIGH);
     external_connected = true;
+#endif
   }
 
   void disableExternalBus() {
+#ifdef BUS_EN_PIN
     digitalWrite(BUS_EN_PIN, LOW);
     digitalWrite(RJ_LED_1_PIN, LOW);
     external_connected = false;
@@ -110,6 +113,7 @@ namespace Hardware {
     if (i2c_slave_addr > 0) {
       leaveI2c();
     }
+#endif
   }
 
   String getDeviceSerial() {
@@ -135,7 +139,11 @@ namespace Hardware {
     int idx = 0;
     char byte = '\0';
 
-    if (EEPROM.read(addr + idx) != '\0' && digitalRead(KEY_1_PIN) == HIGH) {
+    if (EEPROM.read(addr + idx) != '\0'
+#ifdef KEY_1_PIN
+    && digitalRead(KEY_1_PIN) == HIGH
+#endif
+    ) {
       Serial.println("E_SER_SET");
       return;
     }
@@ -166,7 +174,9 @@ namespace Hardware {
       packer.write(motor_speed);
       packer.end();
 
+#ifdef I2C_SLAVE_ADDR
       Wire.beginTransmission(I2C_SLAVE_ADDR);
+#endif
       while (packer.available()) {    // write every packet byte
         Wire.write(packer.read());
       }
@@ -204,6 +214,7 @@ namespace Hardware {
   }
 
   void joinI2c(byte address) {
+#ifdef I2C_SLAVE_ADDR
     i2c_slave_addr = address;
     digitalWrite(RJ_LED_2_PIN, HIGH);
     bool success = WireSlave1.begin(SDA_PIN, SCL_PIN, I2C_SLAVE_ADDR);
@@ -213,14 +224,18 @@ namespace Hardware {
     }
     WireSlave1.onReceive(handleI2c);
     Serial.println("I2C joined.");
+#endif
   }
 
   void leaveI2c() {
+#ifdef RJ_LED_2_PIN
     i2c_slave_addr = 0;
     digitalWrite(RJ_LED_2_PIN, LOW);
+#endif
   }
 
   void handleI2c(int avail) {
+#ifdef RJ_LED_2_PIN
     digitalWrite(RJ_LED_2_PIN, LOW);
     Serial.println("Incoming!");
     byte msg[32] = {0};
@@ -238,10 +253,12 @@ namespace Hardware {
       }
     }
     digitalWrite(RJ_LED_2_PIN, HIGH);
+#endif
   }
 
   namespace {
     void initializeButtons() {
+#ifdef KEY_1_PIN
       Key1.attachClick([]() {
         idle_since_ms = millis();
         UI.onKeyPress(0);
@@ -264,6 +281,7 @@ namespace Hardware {
         idle_since_ms = millis();
         UI.onKeyPress(2);
       });
+#endif
     }
 
     void initializeEncoder() {
@@ -292,8 +310,9 @@ namespace Hardware {
     void initializeLEDs() {
 #ifdef LED_PIN
       pinMode(LED_PIN, OUTPUT);
+      Serial.println("Setting up FastLED on pin " + String(LED_PIN));
 
-      FastLED.addLeds<WS2812B, LED_PIN, GRB>(leds, LED_COUNT);
+      FastLED.addLeds<WS2812B, LED_PIN>(leds, LED_COUNT);
       for (int i = 0; i < LED_COUNT; i++) {
         leds[i] = CRGB::Green;
       }
