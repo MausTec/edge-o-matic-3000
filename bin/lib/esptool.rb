@@ -107,10 +107,11 @@ private
 
     if port == 'auto'
       found_ports = search_ports_win
+      ignored_ports = ['COM1', 'COM9']
 
       # Reject COM1, maybe you don't want this
       if found_ports.length > 1
-        found_ports.reject! {|k,v| k == 'COM1'}
+        found_ports.reject! {|k,v| ignored_ports.include? k}
       end
 
       if found_ports.length > 1

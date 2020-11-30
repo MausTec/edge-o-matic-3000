@@ -3,6 +3,9 @@
 ROOT_PATH = File.absolute_path(File.join(File.dirname(__FILE__), "..")).freeze
 Dir.chdir(ROOT_PATH)
 
+build_root = File.join(ROOT_PATH, "build", "arduino")
+release_root = File.join(ROOT_PATH, "tmp", "release")
+
 require_relative './lib/esptool.rb'
 require_relative './lib/arduino.rb'
 require 'optimist'
@@ -22,6 +25,7 @@ TEXT
   opt :inc_version, "Increase major|minor|patch", type: :string, default: nil
   opt :tag, "Tag this as a release and push", type: :bool, default: false
   opt :serial, "Set a serial number for this device", type: :string, default: nil
+  opt :file_path, "Copy binary to a file path for update", type: :string, default: nil
 end
 
 def get_version
@@ -67,9 +71,6 @@ if opts[:tag]
   puts `git push`
   puts `git push --tags`
 
-  build_root = File.join(ROOT_PATH, "build", "arduino")
-  release_root = File.join(ROOT_PATH, "tmp", "release")
-
   FileUtils.rm_rf(release_root)
   FileUtils.mkdir_p(release_root)
   FileUtils.cp(File.join(build_root, "ESP32_WiFi.ino.bin"), File.join(release_root, "eom3k-#{v.to_s}.bin"))
@@ -90,4 +91,11 @@ end
 
 if opts[:serial]
   esptool&.set_serial(opts[:serial])
+end
+
+if opts[:file_path]
+  update_bin_path = File.join(build_root, "ESP32_WiFi.ino.bin")
+  target_update_path = File.join(opts[:file_path], "update.bin")
+  puts "Copying #{update_bin_path} to #{target_update_path}"
+  FileUtils.cp(update_bin_path, target_update_path)
 end
