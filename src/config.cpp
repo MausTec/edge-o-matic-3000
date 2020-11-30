@@ -43,6 +43,8 @@ void loadConfigFromSd() {
 
   if (!SD.exists(CONFIG_FILENAME)) {
     Serial.println("Couldn't find config.json on your SD card!");
+    loadConfigFromJsonObject(doc);
+    saveConfigToSd(0);
   } else {
     File configFile = SD.open(CONFIG_FILENAME);
     DeserializationError e = deserializeJson(doc, configFile);
@@ -52,9 +54,9 @@ void loadConfigFromSd() {
       Serial.println(F("^-- This means no WiFi. Please ensure your SD card has config.json present."));
       Serial.println(e.c_str());
     }
-  }
 
-  loadConfigFromJsonObject(doc);
+    loadConfigFromJsonObject(doc);
+  }
 }
 
 void loadConfigFromJsonObject(JsonDocument &doc) {

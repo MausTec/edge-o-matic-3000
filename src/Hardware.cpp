@@ -138,8 +138,11 @@ namespace Hardware {
     int addr = 0x00;
     int idx = 0;
     char byte = '\0';
+    char set = EEPROM.read(addr + idx);
 
-    if (EEPROM.read(addr + idx) != '\0'
+    // First char of serial is somewhere in ASCII range so uh,
+    // probably was initialized?
+    if (set >= ' ' && set <= '~'
 #ifdef KEY_1_PIN
     && digitalRead(KEY_1_PIN) == HIGH
 #endif

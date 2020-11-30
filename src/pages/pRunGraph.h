@@ -27,6 +27,7 @@ class pRunGraph : public Page {
       view = StatsView;
       mode = Manual;
       OrgasmControl::controlMotor(false);
+      Hardware::setPressureSensitivity(Config.sensor_sensitivity);
     }
 
     updateButtons();
