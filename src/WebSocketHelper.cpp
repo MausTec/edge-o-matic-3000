@@ -149,6 +149,10 @@ namespace WebSocketHelper {
     int nonce = args["nonce"];
     String path = args["path"];
 
+    if (path[0] != '/') {
+      path = String("/") + path;
+    }
+
     DynamicJsonDocument resp(1024);
     resp["nonce"] = nonce;
     JsonArray files = resp.createNestedArray("files");
@@ -174,6 +178,27 @@ namespace WebSocketHelper {
     }
 
     send("dir", resp, num);
+  }
+
+  void cbMkdir(int num, JsonVariant args) {
+    int nonce = args["nonce"];
+    String path = args["path"];
+
+    // Clean up Path:
+    if (path[0] != '/') {
+      path = String("/") + path;
+    }
+
+    DynamicJsonDocument resp(1024);
+    resp["nonce"] = nonce;
+    resp["path"] = path;
+
+    bool success = SD.mkdir(path);
+    if (!success) {
+      resp["error"] = "Failed to create directory.";
+    }
+
+    send("mkdir", resp, num);
   }
 
   void cbConfigSet(int num, JsonVariant args) {
@@ -231,6 +256,8 @@ namespace WebSocketHelper {
             client->stream_readings = kvp.value();
           } else if (! strcmp(cmd, "dir")) {
             cbDir(num, kvp.value());
+          } else if (! strcmp(cmd, "mkdir")) {
+            cbMkdir(num, kvp.value());
           } else {
             send("error", String("Unknown command: ") + String(cmd), num);
           }

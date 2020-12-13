@@ -95,9 +95,13 @@ class Arduino
     def compile
       command = 'compile'
       args = generate_args(command)
-      Open3::popen3(BUILDER_PATH, *args) do |sin, sout, serr|
+      Open3::popen3(BUILDER_PATH, *args) do |sin, sout, serr, wait_thr|
         sout.each_line { |l| puts l }
         serr.each_line { |l| puts l }
+        exit_status = wait_thr.value
+        if !exit_status.success?
+          raise "EXIT #{exit_status}"
+        end
       end
     end
 
