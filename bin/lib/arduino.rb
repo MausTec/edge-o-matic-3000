@@ -85,6 +85,7 @@ class Arduino
     def dump_prefs
       command = 'dump-prefs'
       args = generate_args(command)
+      FileUtils.mkdir_p(@builder_opts[:build_path])
       Open3::popen3(BUILDER_PATH, *args) do |sin, sout, serr|
         sout.each_line { |l| puts l }
         serr.each_line { |l| puts l }
