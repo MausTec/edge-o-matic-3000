@@ -1,6 +1,24 @@
 #include "../include/SDHelper.h"
 
 namespace SDHelper {
+  // FIXME: Apparently this fails to link. I think it's something weird with my setup.
+  void printDirectoryJson(File dir, JsonVariant files) {
+    while (true) {
+      File entry = dir.openNextFile();
+      if (! entry) {
+        break;
+      }
+
+      JsonArray list = files.to<JsonArray>();
+      JsonObject file = list.createNestedObject();
+      file["name"] = entry.name();
+      file["size"] = entry.size();
+      file["dir"]  = entry.isDirectory();
+
+      entry.close();
+    }
+  }
+
   void printDirectory(File dir, int numTabs, String &out) {
     while (true) {
       File entry =  dir.openNextFile();

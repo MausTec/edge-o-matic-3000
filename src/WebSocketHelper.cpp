@@ -9,6 +9,7 @@
 #include "../include/OrgasmControl.h"
 #include "../include/Hardware.h"
 #include "../include/Page.h"
+#include "../include/SDHelper.h"
 
 #include "../config.h"
 
@@ -60,7 +61,7 @@ namespace WebSocketHelper {
   void sendSystemInfo(int num) {
     DynamicJsonDocument doc(200);
     doc["device"] = "Edge-o-Matic 3000";
-    doc["serial"] = "";
+    doc["serial"] = String(Hardware::getDeviceSerial());
     doc["hwVersion"] = "";
     doc["fwVersion"] = VERSION;
 
@@ -144,6 +145,37 @@ namespace WebSocketHelper {
     send("serialCmd", resp, num);
   }
 
+  void cbDir(int num, JsonVariant args) {
+    int nonce = args["nonce"];
+    String path = args["path"];
+
+    DynamicJsonDocument resp(1024);
+    resp["nonce"] = nonce;
+    JsonArray files = resp.createNestedArray("files");
+
+    File f = SD.open(path);
+    if (!f) {
+      resp["error"] = "Invalid directory.";
+    } else {
+      while (true) {
+        File entry = f.openNextFile();
+        if (! entry) {
+          break;
+        }
+
+        JsonObject file = files.createNestedObject();
+        file["name"] = String(entry.name());
+        file["size"] = entry.size();
+        file["dir"]  = entry.isDirectory();
+
+        entry.close();
+      }
+      f.close();
+    }
+
+    send("dir", resp, num);
+  }
+
   void cbConfigSet(int num, JsonVariant args) {
     auto config = args.as<JsonObject>();
     bool restart_required = false;
@@ -197,6 +229,8 @@ namespace WebSocketHelper {
           } else if (! strcmp(cmd, "streamReadings")) {
             WebSocketConnection *client = connections[num];
             client->stream_readings = kvp.value();
+          } else if (! strcmp(cmd, "dir")) {
+            cbDir(num, kvp.value());
           } else {
             send("error", String("Unknown command: ") + String(cmd), num);
           }
