@@ -1,4 +1,5 @@
 #include "../include/WebSocketHelper.h"
+#include "../include/WebSocketSecureHelper.h"
 #include "../VERSION.h"
 
 #include <FS.h>
@@ -16,34 +17,25 @@
 namespace WebSocketHelper {
   void begin() {
     // Start WebSocket server and assign callback
-    webSocket = new RedirectingWebSocketsServer(Config.websocket_port);
-    webSocket->begin();
-    webSocket->onEvent(onWebSocketEvent);
-    Serial.println("Websocket server running.");
+//    webSocket = new RedirectingWebSocketsServer(Config.websocket_port);
+//    webSocket->begin();
+//    webSocket->onEvent(onWebSocketEvent);
+//    Serial.println("Websocket server running.");
+    WebSocketSecureHelper::setup();
   }
 
   void tick() {
-    if (webSocket != nullptr)
-      webSocket->loop();
+    WebSocketSecureHelper::loop();
   }
 
   void send(const char *cmd, JsonDocument &doc, int num) {
-    if (webSocket == nullptr) return;
-
     DynamicJsonDocument envelope(1024);
     envelope[cmd] = doc;
 
     String payload;
     serializeJson(envelope, payload);
 
-    if (num > 0) {
-      webSocket->sendTXT(num, payload);
-    } else {
-      for (auto const &p : connections) {
-        int num = p.first;
-        webSocket->sendTXT(num, payload);
-      }
-    }
+    WebSocketSecureHelper::send(num, payload);
   }
 
   void send(const char *cmd, String text, int num) {
@@ -221,96 +213,95 @@ namespace WebSocketHelper {
     Hardware::setMotorSpeed(speed);
   }
 
-  namespace {
-    void onMessage(int num, uint8_t * payload) {
-      Serial.printf("[%u] %s", num, payload);
-      Serial.println();
+  void onMessage(int num, const char * payload) {
+    Serial.printf("[%u] %s", num, payload);
+    Serial.println();
 
-      DynamicJsonDocument doc(1024);
-      DeserializationError err = deserializeJson(doc, payload);
+    DynamicJsonDocument doc(1024);
+    DeserializationError err = deserializeJson(doc, payload);
 
-      if (err) {
-        Serial.println("Deserialization Error!");
-      } else {
-        for (auto kvp : doc.as<JsonObject>()) {
-          auto cmd = kvp.key().c_str();
+    if (err) {
+      Serial.println("Deserialization Error!");
+    } else {
+      for (auto kvp : doc.as<JsonObject>()) {
+        auto cmd = kvp.key().c_str();
 
-          if (! strcmp(cmd, "configSet")) {
-            cbConfigSet(num, kvp.value());
-          } else if (! strcmp(cmd, "info")) {
-            sendSystemInfo(num);
-          } else if (! strcmp(cmd, "configList")) {
-            sendSettings(num);
-          } else if (! strcmp(cmd, "serialCmd")) {
-            cbSerialCmd(num, kvp.value());
-          } else if (! strcmp(cmd, "getWiFiStatus")) {
-            sendWxStatus(num);
-          } else if (! strcmp(cmd, "getSDStatus")) {
-            sendSdStatus(num);
-          } else if (! strcmp(cmd, "setMode")) {
-             cbSetMode(num, kvp.value());
-          } else if (! strcmp(cmd, "setMotor")) {
-             cbSetMotor(num, kvp.value());
-          } else if (! strcmp(cmd, "streamReadings")) {
-            WebSocketConnection *client = connections[num];
-            client->stream_readings = kvp.value();
-          } else if (! strcmp(cmd, "dir")) {
-            cbDir(num, kvp.value());
-          } else if (! strcmp(cmd, "mkdir")) {
-            cbMkdir(num, kvp.value());
-          } else {
-            send("error", String("Unknown command: ") + String(cmd), num);
-          }
-        }
-      }
-    }
-
-    // Called when receiving any WebSocket message
-    void onWebSocketEvent(int num,
-                          WStype_t type,
-                          uint8_t * payload,
-                          size_t length) {
-
-      // Figure out the type of WebSocket event
-      switch(type) {
-
-        // Client has disconnected
-        case WStype_DISCONNECTED:
-          Serial.printf("[%u] Disconnected!\n", num);
-          connections.erase(num);
-          break;
-
-          // New client has connected
-        case WStype_CONNECTED:
-        {
-          WebSocketConnection *client = new WebSocketConnection;
-          IPAddress ip = webSocket->remoteIP(num);
-          client->ip = ip;
-          client->num = num;
-          connections[num] = client;
-
-          last_connection = num;
+        if (! strcmp(cmd, "configSet")) {
+          cbConfigSet(num, kvp.value());
+        } else if (! strcmp(cmd, "info")) {
           sendSystemInfo(num);
-          Serial.printf("[%u] Connection from ", num);
-          Serial.println(ip.toString());
+        } else if (! strcmp(cmd, "configList")) {
+          sendSettings(num);
+        } else if (! strcmp(cmd, "serialCmd")) {
+          cbSerialCmd(num, kvp.value());
+        } else if (! strcmp(cmd, "getWiFiStatus")) {
+          sendWxStatus(num);
+        } else if (! strcmp(cmd, "getSDStatus")) {
+          sendSdStatus(num);
+        } else if (! strcmp(cmd, "setMode")) {
+          cbSetMode(num, kvp.value());
+        } else if (! strcmp(cmd, "setMotor")) {
+          cbSetMotor(num, kvp.value());
+        } else if (! strcmp(cmd, "streamReadings")) {
+          send("error", "E_DEPRECATED");
+        } else if (! strcmp(cmd, "dir")) {
+          cbDir(num, kvp.value());
+        } else if (! strcmp(cmd, "mkdir")) {
+          cbMkdir(num, kvp.value());
+        } else {
+          send("error", String("Unknown command: ") + String(cmd), num);
         }
-          break;
-
-          // Echo text message back to client
-        case WStype_TEXT:
-          onMessage(num, payload);
-          break;
-
-          // For everything else: do nothing
-        case WStype_BIN:
-        case WStype_ERROR:
-        case WStype_FRAGMENT_TEXT_START:
-        case WStype_FRAGMENT_BIN_START:
-        case WStype_FRAGMENT:
-        case WStype_FRAGMENT_FIN:
-        default:
-          break;
       }
     }
+  }
+
+  namespace {
+    // Called when receiving any WebSocket message
+//    void onWebSocketEvent(int num,
+//                          WStype_t type,
+//                          uint8_t * payload,
+//                          size_t length) {
+//
+//      // Figure out the type of WebSocket event
+//      switch(type) {
+//
+//        // Client has disconnected
+//        case WStype_DISCONNECTED:
+//          Serial.printf("[%u] Disconnected!\n", num);
+//          connections.erase(num);
+//          break;
+//
+//          // New client has connected
+//        case WStype_CONNECTED:
+//        {
+//          WebSocketConnection *client = new WebSocketConnection;
+//          IPAddress ip = webSocket->remoteIP(num);
+//          client->ip = ip;
+//          client->num = num;
+//          connections[num] = client;
+//
+//          last_connection = num;
+//          sendSystemInfo(num);
+//          Serial.printf("[%u] Connection from ", num);
+//          Serial.println(ip.toString());
+//        }
+//          break;
+//
+//          // Echo text message back to client
+//        case WStype_TEXT:
+//          onMessage(num, payload);
+//          break;
+//
+//          // For everything else: do nothing
+//        case WStype_BIN:
+//        case WStype_ERROR:
+//        case WStype_FRAGMENT_TEXT_START:
+//        case WStype_FRAGMENT_BIN_START:
+//        case WStype_FRAGMENT:
+//        case WStype_FRAGMENT_FIN:
+//        default:
+//          break;
+//      }
+//    }
   }
 }
