@@ -48,6 +48,7 @@ class Arduino
       }.merge(esp_opts)
 
       @prefs = {
+        'HTTPS_DISABLE_SELFSIGNING' => 'true',
         'build.warn_data_percentage' => '75',
         'runtime.tools.esptool_py.path' => 'C:\Users\eiser.000\AppData\Local\Arduino15\packages\esp32\tools\esptool_py\2.6.1',
         'runtime.tools.esptool_py-2.6.1.path' => 'C:\Users\eiser.000\AppData\Local\Arduino15\packages\esp32\tools\esptool_py\2.6.1',

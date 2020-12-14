@@ -97,7 +97,17 @@ namespace Console {
         .func = cmd_f {
           out += "Device Serial: ";
           out += Hardware::getDeviceSerial();
-        }
+        },
+      },
+      {
+          .cmd = "free",
+          .alias = "f",
+          .help = "Get free heap space",
+          .func = cmd_f {
+            out += "Heap: ";
+            out += xPortGetFreeHeapSize();
+            out += " bytes free";
+          },
       }
     };
 

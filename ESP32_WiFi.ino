@@ -28,6 +28,7 @@
 #include "include/WiFiHelper.h"
 #include "include/UpdateHelper.h"
 #include "include/WebSocketHelper.h"
+#include "include/WebSocketSecureHelper.h"
 
 uint8_t LED_Brightness = 13;
 
@@ -179,6 +180,12 @@ void setup() {
     UI.fadeTo();
   }
 
+  Serial.print("Free: ");
+  Serial.println(xPortGetFreeHeapSize());
+  WebSocketSecureHelper::setup();
+  Serial.print("Free: ");
+  Serial.println(xPortGetFreeHeapSize());
+
   Page::Go(&RunGraphPage);
   Serial.println("READY");
 }
@@ -187,6 +194,7 @@ void loop() {
   Console::loop(); // <- TODO rename to tick
   Hardware::tick();
   OrgasmControl::tick();
+  WebSocketSecureHelper::loop(); // <- do we begin/tick or do we setup/loop ?
   UI.tick();
 
   static long lastStatusTick = 0;
