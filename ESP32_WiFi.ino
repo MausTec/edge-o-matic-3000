@@ -123,8 +123,10 @@ void backgroundLoop(void*) {
 }
 
 void setup() {
+  auto hps = xPortGetFreeHeapSize();
   // Start Serial port
   Serial.begin(115200);
+  Serial.println("Heap: " + String(hps));
 
 #ifdef NG_PLUS
   Serial.println("Maus-Tec presents: NoGasm Plus");
@@ -145,11 +147,15 @@ void setup() {
   UI.drawWifiIcon(1);
   UI.render();
 
+  Serial.println("Heap before WiFi: " + String(xPortGetFreeHeapSize()));
+
   // Initialize WiFi
   if (Config.wifi_on) {
     WiFiHelper::begin();
     WebSocketHelper::begin();
   }
+
+  Serial.println("Heap before Bluetooth: " + String(xPortGetFreeHeapSize()));
 
   // Initialize Bluetooth
   if (Config.bt_on) {
@@ -158,6 +164,9 @@ void setup() {
     Serial.println("Now Discoverable!");
     BT.advertise();
   }
+
+
+  Serial.println("Heap after Bluetooth: " + String(xPortGetFreeHeapSize()));
 
   // Start background worker:
   xTaskCreatePinnedToCore(
@@ -182,6 +191,8 @@ void setup() {
 
   Page::Go(&RunGraphPage);
   Serial.println("READY");
+
+  Serial.println("Final Startup Heap: " + String(xPortGetFreeHeapSize()));
 }
 
 void loop() {
