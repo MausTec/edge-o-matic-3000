@@ -54,9 +54,13 @@ class ESPTool
       args.push(image)
     end
 
-    Open3::popen3(ESPTOOL_BIN, *args) do |sin, sout, serr|
+    Open3::popen3(ESPTOOL_BIN, *args) do |sin, sout, serr, wait_thr|
       sout.each_line { |l| puts l }
       serr.each_line { |l| puts l }
+
+      unless wait_thr.value.success?
+        throw "EXIT #{wait_thr.value}"
+      end
     end
   end
 
@@ -68,6 +72,27 @@ class ESPTool
     serial.write(".getser\n")
     read_serial(serial, /Serial:/)
     serial.close
+  end
+
+  def console!
+    serial = Serial.new(@port, @baud)
+    read_thr = Thread.new do
+      loop do
+        line = serial.gets
+        puts line
+      end
+    end
+    loop do
+      line = gets
+      serial.write line
+    end
+  rescue Interrupt
+    read_thr.report_on_exception = false
+    puts "Disconnecting..."
+    serial.close
+    read_thr.join
+  ensure
+    serial&.close rescue nil
   end
 
 private

@@ -26,6 +26,7 @@ TEXT
   opt :tag, "Tag this as a release and push", type: :bool, default: false
   opt :serial, "Set a serial number for this device", type: :string, default: nil
   opt :file_path, "Copy binary to a file path for update", type: :string, default: nil
+  opt :console, "Open a console to the device", type: :bool, default: false
 end
 
 def get_version
@@ -98,4 +99,8 @@ if opts[:file_path]
   target_update_path = File.join(opts[:file_path], "update.bin")
   puts "Copying #{update_bin_path} to #{target_update_path}"
   FileUtils.cp(update_bin_path, target_update_path)
+end
+
+if opts[:console]
+  esptool&.console!
 end
