@@ -107,6 +107,7 @@ struct ConfigStruct {
 } extern Config;
 
 extern void loadConfigFromSd();
+extern void loadDefaultConfig();
 extern void loadConfigFromJsonObject(JsonDocument &doc);
 extern void saveConfigToSd(long save_at_ms = -1);
 extern bool setConfigValue(const char *key, const char *value, bool &require_reboot);

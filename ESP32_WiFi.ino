@@ -72,6 +72,7 @@ void resetSD() {
   if(!SD.begin()) {
     UI.drawSdIcon(0);
     Serial.println("Card Mount Failed");
+    loadDefaultConfig();
     return;
   }
 

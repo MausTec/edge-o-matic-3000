@@ -42,7 +42,7 @@ void loadConfigFromSd() {
   DynamicJsonDocument doc(2048);
 
   if (!SD.exists(CONFIG_FILENAME)) {
-    Serial.println("Couldn't find config.json on your SD card!");
+    Serial.println(F("Couldn't find config.json on your SD card!"));
     loadConfigFromJsonObject(doc);
     saveConfigToSd(0);
   } else {
@@ -59,6 +59,15 @@ void loadConfigFromSd() {
   }
 }
 
+/**
+ * This code loads default config, which is useful if the SD card was not
+ * mounted, as it executes no SD commands.
+ */
+void loadDefaultConfig() {
+  DynamicJsonDocument doc(1);
+  loadConfigFromJsonObject(doc);
+}
+
 void loadConfigFromJsonObject(JsonDocument &doc) {
   // Copy WiFi Settings
   strlcpy(Config.wifi_ssid, doc["wifi_ssid"] | "", sizeof(Config.wifi_ssid));
@@ -71,7 +80,7 @@ void loadConfigFromJsonObject(JsonDocument &doc) {
 
   // Copy Network Settings
   Config.websocket_port = doc["websocket_port"] | 80;
-  Config.classic_serial = doc["classic_serial"] | true;
+  Config.classic_serial = doc["classic_serial"] | false;
 
   // Copy UI Settings
   Config.led_brightness = doc["led_brightness"] | 128;
@@ -140,7 +149,7 @@ void saveConfigToSd(long save_at_ms) {
     return;
   } else if (save_at_ms < 0) {
     if (save_at_ms_tick > 0 && save_at_ms_tick < millis()) {
-      Serial.println("Saving now from future save queue...");
+      Serial.println(F("Saving now from future save queue..."));
       save_at_ms_tick = 0;
     } else {
       return;
@@ -174,7 +183,6 @@ void saveConfigToSd(long save_at_ms) {
   }
 
   tmp.print(config);
-
   tmp.close();
 }
 
