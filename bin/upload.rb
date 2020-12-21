@@ -57,7 +57,7 @@ if opts[:inc_version]
 elsif opts[:set_version]
   v = Semantic::Version.new(opts[:set_version])
   set_version(v)
-else
+elsif opts[:compile]
   v = get_version
   (v.build || "build.0") =~ /build\.(\d+)/
   build = $1.to_i || 0
