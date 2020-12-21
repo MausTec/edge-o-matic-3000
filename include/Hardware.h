@@ -26,6 +26,11 @@ namespace Hardware {
 
   long getPressure();
   void setPressureSensitivity(byte value);
+  /**
+   * Gets the pressure sensitivity setting from the digitpot.
+   * @return current digipot wiper position (1-127)
+   */
+  byte getPressureSensitivity();
 
   void enableExternalBus();
   void disableExternalBus();

@@ -98,6 +98,25 @@ namespace Console {
           out += "Device Serial: ";
           out += Hardware::getDeviceSerial();
         }
+      },
+      {
+        .cmd = ".debugsens",
+        .alias = nullptr,
+        .help = nullptr,
+        .func = cmd_f {
+          out += "Set: ";
+          out += Config.sensor_sensitivity;
+          out += ", Actual: ";
+          out += Hardware::getPressureSensitivity();
+        },
+      },
+      {
+        .cmd = ".getver",
+        .alias = nullptr,
+        .help = nullptr,
+        .func = cmd_f {
+          out += VERSION;
+        }
       }
     };
 

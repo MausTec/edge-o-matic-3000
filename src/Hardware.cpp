@@ -216,6 +216,15 @@ namespace Hardware {
     Wire.endTransmission();
   }
 
+  byte getPressureSensitivity() {
+    Wire.requestFrom(0x2F, 1);
+    int val = 0;
+    while (Wire.available()) {
+      val = Wire.read();
+    }
+    return (byte)(127 - val) * 2;
+  }
+
   void joinI2c(byte address) {
 #ifdef I2C_SLAVE_ADDR
     i2c_slave_addr = address;
