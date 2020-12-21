@@ -34,7 +34,7 @@ and is automatically generated. Here is a quick summary of config variables:
 |`screen_dim_seconds`|Int|10|Time, in seconds, before the screen dims. 0 to disable.|
 |`screen_timeout_seconds`|Int|60|Time, in seconds, before the screen turns off. 0 to disable.|
 |`pressure_smoothing`|Byte|5|Number of samples to take an average of. Higher results in lag and lower resolution!|
-|`classic_serial`|Boolean|true|Output classic NoGasm values over serial for backwards compatibility.|
+|`classic_serial`|Boolean|false|Output classic NoGasm values over serial for backwards compatibility.|
 |`sensitivity_threshold`|Int|600|The arousal threshold for orgasm detection. Lower = sooner cutoff.|
 |`motor_ramp_time_s`|Int|30|The time it takes for the motor to reach `motor_max_speed` in auto ramp mode.|
 |`update_frequency_hz`|Int|50|Update frequency for pressure readings and arousal steps. Higher = crash your serial monitor.|
@@ -123,3 +123,8 @@ For being the first to order the NoGasm WiFi during the 5 unit pre-order run:
 For supporting my initial endeavour in hardware assembly and helping me scale:
 
 - @homphs
+
+# Contributions
+
+Any changes to configuration values should be linted. Run `ruby bin/config_lint.rb` to check documentation, serializers
+and structs for consistency.

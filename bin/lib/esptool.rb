@@ -78,8 +78,13 @@ class ESPTool
     serial = Serial.new(@port, @baud)
     read_thr = Thread.new do
       loop do
-        line = serial.gets
-        puts line
+        begin
+          line = serial.gets
+          puts line
+        rescue RubySerial::Error => e
+          puts "Read aborted: " + e.message
+          break
+        end
       end
     end
     loop do
