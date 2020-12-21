@@ -82,7 +82,11 @@ class ESPTool
           line = serial.gets
           puts line
         rescue RubySerial::Error => e
-          puts "Read aborted: " + e.message
+          if Thread.current.report_on_exception
+            read_thr.report_on_exception = false
+            Thread.current.abort_on_exception = true
+            raise e
+          end
           break
         end
       end
@@ -91,6 +95,8 @@ class ESPTool
       line = gets
       serial.write line
     end
+  rescue RubySerial::Error => e
+    puts "Disconnected: " + e.message
   rescue Interrupt
     read_thr.report_on_exception = false
     puts "Disconnecting..."
