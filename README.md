@@ -101,7 +101,7 @@ Arduino. Use your fav editor. CLion is great.
 |Flash Frequency|80MHz|
 |Flash Mode|QIO|
 |Flash Size|**4MB (32Mb)**|
-|Partition Scheme|**Huge APP (3MB No OTA/1MB SPIFFS)**|
+|Partition Scheme|**Minimal SPIFFS (1.9MB APP with OTA/190KB SPIFFS)**|
 |Core Debug Level|None|
 |PSRAM|Disabled|
 
