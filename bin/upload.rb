@@ -30,17 +30,20 @@ TEXT
 end
 
 def get_version
-  (tag, n, sha) = `git describe --tags`.split('-')
-  v = Semantic::Version.new(tag.gsub(/^v/, ''))
-  if n.to_i > 0
-    v.build = sha
+  $version ||= begin
+      (tag, n, sha) = `git describe --tags`.split('-')
+      v = Semantic::Version.new(tag.gsub(/^v/, ''))
+      if n.to_i > 0
+        v.build = sha
+      end
+      v
   end
-  v
 end
 
 def set_version(v)
   data = "#define VERSION \"#{v.to_s}\"\n"
   File.write(File.join(ROOT_PATH, "VERSION.h"), data)
+  $version = v
   puts "Set version to: #{v.to_s}"
 end
 
@@ -70,12 +73,14 @@ if opts[:tag]
   puts `git push`
   puts `git push --tags`
 
+  file_friendly_version = v.to_s.gsub(/\+/, '-')
+
   FileUtils.rm_rf(release_root)
   FileUtils.mkdir_p(release_root)
-  FileUtils.cp(File.join(build_root, "ESP32_WiFi.ino.bin"), File.join(release_root, "eom3k-#{v.to_s}.bin"))
-  FileUtils.cp(File.join(build_root, "ESP32_WiFi.ino.partitions.bin"), File.join(release_root, "eom3k-#{v.to_s}.partitions.bin"))
+  FileUtils.cp(File.join(build_root, "ESP32_WiFi.ino.bin"), File.join(release_root, "eom3k-#{file_friendly_version}.bin"))
+  FileUtils.cp(File.join(build_root, "ESP32_WiFi.ino.partitions.bin"), File.join(release_root, "eom3k-#{file_friendly_version}.partitions.bin"))
 
-  `gh release create v#{v.to_s} #{File.join(release_root, "eom3k-#{v.to_s}.bin")} #{File.join(release_root, "eom3k-#{v.to_s}.partitions.bin")} --notes-file #{File.join(ROOT_PATH, "doc", "ReleaseTemplate.md")}`
+  `gh release create v#{file_friendly_version} #{File.join(release_root, "eom3k-#{file_friendly_version}.bin")} #{File.join(release_root, "eom3k-#{file_friendly_version}.partitions.bin")} --notes-file #{File.join(ROOT_PATH, "doc", "ReleaseTemplate.md")}`
 end
 
 esptool = nil
