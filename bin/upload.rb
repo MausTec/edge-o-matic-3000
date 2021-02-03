@@ -19,7 +19,7 @@ TEXT
   opt :port, "Serial port to upload to", type: :string, default: 'auto'
   opt :ino_file, "Path to main .ino", type: :string, default: File.join(ROOT_PATH, "ESP32_WiFi.ino")
   opt :compile, "Recompile the software before upload", type: :bool, default: false
-  opt :upload, "Upload to the device", type: :bool, default: true
+  opt :upload, "Upload to the device", type: :bool, default: false
   opt :get_version, "Show software version and exit", type: :bool, default: false
   opt :set_version, "Manually set the current version", type: :string, default: nil
   opt :inc_version, "Increase major|minor|patch", type: :string, default: nil
@@ -30,13 +30,12 @@ TEXT
 end
 
 def get_version
-  version_h = File.read(File.join(ROOT_PATH, "VERSION.h"))
-  if version_h =~ /#define\s*VERSION\s*"(.*?)"/
-    v = Semantic::Version.new($1)
-    return v
-  else
-    raise "Unable to parse VERSION.h"
+  (tag, n, sha) = `git describe --tags`.split('-')
+  v = Semantic::Version.new(tag.gsub(/^v/, ''))
+  if n.to_i > 0
+    v.build = sha
   end
+  v
 end
 
 def set_version(v)
@@ -57,12 +56,6 @@ if opts[:inc_version]
 elsif opts[:set_version]
   v = Semantic::Version.new(opts[:set_version])
   set_version(v)
-elsif opts[:compile]
-  v = get_version
-  (v.build || "build.0") =~ /build\.(\d+)/
-  build = $1.to_i || 0
-  v.build = "build.#{build + 1}"
-  set_version(v)
 end
 
 if opts[:compile]
@@ -73,7 +66,6 @@ end
 
 if opts[:tag]
   v = get_version
-  puts `git commit VERSION.h -m "Set version to #{v.to_s}"`
   puts `git tag v#{v.to_s}`
   puts `git push`
   puts `git push --tags`
