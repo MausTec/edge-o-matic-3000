@@ -61,11 +61,7 @@ If you want to breadboard this project, I've included the pinout from the ESP32 
 NoGasm schematic for specific designs regarding the pressure prescaler and MOSFET wiring. Alternatively, ask Mau about
 their breadboard-friendly MOSFET boards, which can directly drive your power rails and your motor from 12V.
 
-|Device Pin|I/O|Function|
-|---|---|---|
-|-|-|-|
-
-\* Pinout Forthcoming, see `config.h` for a general idea.
+Full pinout details are in the Operator's Manual.
 
 ### That RJ45 Jack
 
@@ -91,6 +87,18 @@ The official hardware looks like an ESP32-WROOM dev module. Conveniently, you ca
 This is currently developed in the horrid confines of the Arduino IDE for the compiler toolchain. Install ESP support for
 Arduino. Use your fav editor. CLion is great.
 
+#### 3rd Party Dependencies
+
+This project uses the following libraries:
+
+- ArduinoJson library by Benoit Blanchon
+- FastLED library by Daniel Garcia
+- OneButton library by Matthias Hertel (version 1.5.0)
+- ESP32Encoder library by Kevin Harrington
+- Adafruit SSD1306 library by Adafruit (click "Install All" if it prompts you for dependencies)
+- ESP32Servo library by Kevin Harrington
+- ESP32 I2C Slave library by Gutierrez PS
+
 #### Board Settings
 
 |Setting|Value|
@@ -101,7 +109,7 @@ Arduino. Use your fav editor. CLion is great.
 |Flash Frequency|80MHz|
 |Flash Mode|QIO|
 |Flash Size|**4MB (32Mb)**|
-|Partition Scheme|**Huge APP (3MB No OTA/1MB SPIFFS)**|
+|Partition Scheme|**Minimal SPIFFS (1.9MB APP with OTA/190KB SPIFFS)**|
 |Core Debug Level|None|
 |PSRAM|Disabled|
 
