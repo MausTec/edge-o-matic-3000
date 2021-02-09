@@ -110,6 +110,7 @@ namespace WebSocketSecureHelper {
   void handleRoot(HTTPRequest *req, HTTPResponse *res) {
     res->setHeader("Content-Type", "text/html");
 
+    res->setStatusCode(302);
     res->setHeader("Location", (String("//nogasm-ui.maustec.io/#") + String(WiFi.localIP())).c_str());
 
     res->println("<!DOCTYPE html>");
