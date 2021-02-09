@@ -6,7 +6,7 @@
 namespace WiFiHelper {
   void drawSignalIcon() {
     if (Config.bt_on) {
-      UI.drawWifiIcon(4, 1000);
+      UI.drawWifiIcon(5, 1000);
     } else {
       UI.drawWifiIcon(getWiFiStrength() + 1);
     }
