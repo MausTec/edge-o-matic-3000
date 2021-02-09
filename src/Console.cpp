@@ -117,6 +117,16 @@ namespace Console {
         .func = cmd_f {
           out += VERSION;
         }
+      },
+      {
+          .cmd = "free",
+          .alias = "f",
+          .help = "Get free heap space",
+          .func = cmd_f {
+            out += "Heap: ";
+            out += xPortGetFreeHeapSize();
+            out += " bytes free";
+          },
       }
     };
 
