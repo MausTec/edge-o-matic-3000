@@ -1,11 +1,15 @@
 #include "../include/WiFiHelper.h"
-
 #include "../include/UserInterface.h"
+
 #include <WiFi.h>
 
 namespace WiFiHelper {
   void drawSignalIcon() {
-    UI.drawWifiIcon(getWiFiStrength() + 1);
+    if (Config.bt_on) {
+      UI.drawWifiIcon(4, 1000);
+    } else {
+      UI.drawWifiIcon(getWiFiStrength() + 1);
+    }
   }
 
   bool connected() {

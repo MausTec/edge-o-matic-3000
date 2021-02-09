@@ -123,11 +123,21 @@ namespace Console {
           .alias = "f",
           .help = "Get free heap space",
           .func = cmd_f {
-            out += "Heap: ";
-            out += xPortGetFreeHeapSize();
-            out += " bytes free";
+            out += "Heap (caps_alloc): " + String(xPortGetFreeHeapSize()) + '\n';
+            out += "Total heap: " + String(ESP.getHeapSize()) + '\n';
+            out += "Free heap: " + String(ESP.getFreeHeap()) + '\n';
+            out += "Total PSRAM: " + String(ESP.getPsramSize()) + '\n';
+            out += "Free PSRAM: " + String(ESP.getFreePsram()) + '\n';
           },
-      }
+      },
+      {
+        .cmd = "heapdump",
+        .alias = nullptr,
+        .help = nullptr,
+        .func = cmd_f {
+          heap_caps_dump_all();
+        },
+      },
     };
 
     int sh_help(char **args, String &out) {

@@ -17,10 +17,6 @@
 namespace WebSocketHelper {
   void begin() {
     // Start WebSocket server and assign callback
-//    webSocket = new RedirectingWebSocketsServer(Config.websocket_port);
-//    webSocket->begin();
-//    webSocket->onEvent(onWebSocketEvent);
-//    Serial.println("Websocket server running.");
     WebSocketSecureHelper::setup();
   }
 
@@ -253,55 +249,5 @@ namespace WebSocketHelper {
         }
       }
     }
-  }
-
-  namespace {
-    // Called when receiving any WebSocket message
-//    void onWebSocketEvent(int num,
-//                          WStype_t type,
-//                          uint8_t * payload,
-//                          size_t length) {
-//
-//      // Figure out the type of WebSocket event
-//      switch(type) {
-//
-//        // Client has disconnected
-//        case WStype_DISCONNECTED:
-//          Serial.printf("[%u] Disconnected!\n", num);
-//          connections.erase(num);
-//          break;
-//
-//          // New client has connected
-//        case WStype_CONNECTED:
-//        {
-//          WebSocketConnection *client = new WebSocketConnection;
-//          IPAddress ip = webSocket->remoteIP(num);
-//          client->ip = ip;
-//          client->num = num;
-//          connections[num] = client;
-//
-//          last_connection = num;
-//          sendSystemInfo(num);
-//          Serial.printf("[%u] Connection from ", num);
-//          Serial.println(ip.toString());
-//        }
-//          break;
-//
-//          // Echo text message back to client
-//        case WStype_TEXT:
-//          onMessage(num, payload);
-//          break;
-//
-//          // For everything else: do nothing
-//        case WStype_BIN:
-//        case WStype_ERROR:
-//        case WStype_FRAGMENT_TEXT_START:
-//        case WStype_FRAGMENT_BIN_START:
-//        case WStype_FRAGMENT:
-//        case WStype_FRAGMENT_FIN:
-//        default:
-//          break;
-//      }
-//    }
   }
 }

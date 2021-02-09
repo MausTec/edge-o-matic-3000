@@ -85,7 +85,7 @@ end
 
 esptool = nil
 
-if opts[:port]
+if opts[:port] && (opts[:upload] || opts[:serial] || opts[:console])
   esptool = ESPTool.new(opts[:port])
 end
 

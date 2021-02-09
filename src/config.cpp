@@ -75,17 +75,18 @@ void loadConfigFromJsonObject(JsonDocument &doc) {
   Config.wifi_on = doc["wifi_on"] | false;
 
   // Copy Bluetooth Settings
-  strlcpy(Config.bt_display_name, doc["bt_display_name"] | "NoGasm WiFi", sizeof(Config.bt_display_name));
+  strlcpy(Config.bt_display_name, doc["bt_display_name"] | "Edge-o-Matic 3000", sizeof(Config.bt_display_name));
   Config.bt_on = doc["bt_on"] | false;
 
   // Copy Network Settings
   Config.websocket_port = doc["websocket_port"] | 80;
   Config.classic_serial = doc["classic_serial"] | false;
+  Config.use_ssl = doc["use_ssl"] | false;
 
   // Copy UI Settings
   Config.led_brightness = doc["led_brightness"] | 128;
   Config.screen_dim_seconds = doc["screen_dim_seconds"] | 10;
-  Config.screen_timeout_seconds = doc["screen_timeout_seconds"] | 60;
+  Config.screen_timeout_seconds = doc["screen_timeout_seconds"] | 0;
 
   // Copy Orgasm Settings
   Config.motor_max_speed = doc["motor_max_speed"] | 128;
@@ -95,6 +96,16 @@ void loadConfigFromJsonObject(JsonDocument &doc) {
   Config.update_frequency_hz = doc["update_frequency_hz"] | 50;
   Config.sensor_sensitivity = doc["sensor_sensitivity"] | 128;
   Config.use_average_values = doc["use_average_values"] | false;
+
+  /**
+   * Setting Validations
+   */
+
+  // Bluetooth and WiFi cannot operate at the same time.
+  if (Config.wifi_on && Config.bt_on) {
+    Serial.println("Not enough memory for WiFi and Bluetooth, disabling BT.");
+    Config.bt_on = false;
+  }
 }
 
 void dumpConfigToJsonObject(JsonDocument &doc) {
@@ -110,6 +121,7 @@ void dumpConfigToJsonObject(JsonDocument &doc) {
   // Copy Network Settings
   doc["websocket_port"] = Config.websocket_port;
   doc["classic_serial"] = Config.classic_serial;
+  doc["use_ssl"] = Config.use_ssl;
 
   // Copy UI Settings
   doc["led_brightness"] = Config.led_brightness;
@@ -228,6 +240,8 @@ bool setConfigValue(const char *option, const char *value, bool &require_reboot)
     strlcpy(Config.wifi_key, value, sizeof(Config.wifi_key));
   } else if (!strcmp(option, "bt_display_name")) {
     strlcpy(Config.bt_display_name, value, sizeof(Config.bt_display_name));
+  } else if (!strcmp(option, "use_ssl")) {
+    Config.use_ssl = atob(value);
   } else {
     return false;
   }
@@ -272,6 +286,8 @@ bool getConfigValue(const char *option, String &out) {
     out += String(Config.wifi_key) + '\n';
   } else if (!strcmp(option, "bt_display_name")) {
     out += String(Config.bt_display_name) + '\n';
+  } else if (!strcmp(option, "use_ssl")) {
+    out += String(Config.use_ssl) + '\n';
   } else {
     return false;
   }
