@@ -30,6 +30,7 @@ and is automatically generated. Here is a quick summary of config variables:
 |`bt_on`|Boolean|false|True to enable the AzureFang connection.|
 |`led_brightness`|Byte|128|LED Ring max brightness, only for NoGasm+.|
 |`websocket_port`|Int|80|Port to listen for incoming Websocket connections.|
+|`use_ssl`|Boolean|false|Enable SSL server, which will eat all your RAM!|
 |`motor_max_speed`|Byte|128|Maximum speed for the motor in auto-ramp mode.|
 |`screen_dim_seconds`|Int|10|Time, in seconds, before the screen dims. 0 to disable.|
 |`screen_timeout_seconds`|Int|60|Time, in seconds, before the screen turns off. 0 to disable.|

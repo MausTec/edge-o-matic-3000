@@ -1,5 +1,6 @@
 #include "../include/WebSocketSecureHelper.h"
 #include "../include/WebSocketHelper.h"
+#include "../config.h"
 
 // Include certificate data
 #include "../include/ssl/cert.h"
@@ -7,17 +8,21 @@
 
 namespace WebSocketSecureHelper {
   void setup() {
-    // Create an SSL certificate object from the files included above ...
-    cert = new SSLCert(
-        example_crt_DER, example_crt_DER_len,
-        example_key_DER, example_key_DER_len
-    );
+    if (Config.use_ssl) {
+      // Create an SSL certificate object from the files included above ...
+      cert = new SSLCert(
+          example_crt_DER, example_crt_DER_len,
+          example_key_DER, example_key_DER_len
+      );
 
-    // ... and create a server based on this certificate.
-    // The constructor has some optional parameters like the TCP port that should be used
-    // and the max client count. For simplicity, we use a fixed amount of clients that is bound
-    // to the max client count.
-    secureServer = new HTTPSServer(cert, 443, MAX_CLIENTS);
+      // ... and create a server based on this certificate.
+      // The constructor has some optional parameters like the TCP port that should be used
+      // and the max client count. For simplicity, we use a fixed amount of clients that is bound
+      // to the max client count.
+      secureServer = new HTTPSServer(cert, 443, MAX_CLIENTS);
+    }
+
+    insecureServer = new HTTPServer(80, MAX_HTTP_CLIENTS);
 
     // Initialize the slots
     for (int i = 0; i < MAX_CLIENTS; i++) activeClients[i] = nullptr;
@@ -25,35 +30,48 @@ namespace WebSocketSecureHelper {
     // For every resource available on the server, we need to create a ResourceNode
     // The ResourceNode links URL and HTTP method to a handler function
     ResourceNode *nodeRoot = new ResourceNode("/", "GET", &handleRoot);
-    secureServer->registerNode(nodeRoot);
+    if (secureServer != nullptr) secureServer->registerNode(nodeRoot);
+    insecureServer->registerNode(nodeRoot);
 
     // Check CORS here. Some browsers appreciate proper preflights before connecting
     // to WebSockets. Security and all, yanno?
     ResourceNode *corsNode = new ResourceNode("/*", "OPTIONS", &handleCors);
-    secureServer->registerNode(corsNode);
+    if (secureServer != nullptr) secureServer->registerNode(corsNode);
+    insecureServer->registerNode(corsNode);
 
     // The websocket handler can be linked to the server by using a WebsocketNode:
     // (Note that the standard defines GET as the only allowed method here,
     // so you do not need to pass it explicitly)
     WebsocketNode *chatNode = new WebsocketNode("/", &RemoteHandler::create);
-    secureServer->registerNode(chatNode);
+    if (secureServer != nullptr) secureServer->registerNode(chatNode);
+    insecureServer->registerNode(chatNode);
 
     // Finally, add the 404 not found node to the server.
     // The path is ignored for the default node.
     ResourceNode *node404 = new ResourceNode("", "GET", &handle404);
-    secureServer->setDefaultNode(node404);
+    if (secureServer != nullptr) secureServer->setDefaultNode(node404);
+    insecureServer->setDefaultNode(node404);
 
     Serial.println("Starting server...");
-    secureServer->start();
-    if (secureServer->isRunning()) {
-      Serial.print("Server ready. Open the following URL in multiple browser windows to start chatting: https://");
+    if (secureServer != nullptr) {
+      secureServer->start();
+      if (secureServer->isRunning()) {
+        Serial.print("HTTPS server running at https://");
+        Serial.println(WiFi.localIP());
+      }
+    }
+
+    insecureServer->start();
+    if (insecureServer->isRunning()) {
+      Serial.print("HTTP server running at http://");
       Serial.println(WiFi.localIP());
     }
   }
 
   void loop() {
     // This call will let the server do its work
-    secureServer->loop();
+    if (secureServer != nullptr) secureServer->loop();
+    if (insecureServer != nullptr) insecureServer->loop();
   }
 
   void send(int num, String payload) {
@@ -92,17 +110,18 @@ namespace WebSocketSecureHelper {
   void handleRoot(HTTPRequest *req, HTTPResponse *res) {
     res->setHeader("Content-Type", "text/html");
 
-    // TODO Redirect here
+    res->setHeader("Location", (String("//nogasm-ui.maustec.io/#") + String(WiFi.localIP())).c_str());
 
     res->println("<!DOCTYPE html>");
     res->println("<html>");
     res->println("<head><title>Redirecting...</title></head>");
-    res->println("<body><h1>Redirecting...</h1><p>You are now being redirected to the Web UI for the Edge-o-Matic.</p></body>");
+    res->println("<body>");
+    res->println("<h1>Redirecting...</h1><p>You are now being redirected to the Web UI for the Edge-o-Matic.</p>");
+    res->println("</body>");
     res->println("</html>");
   }
 
   void handleCors(HTTPRequest *req, HTTPResponse *res) {
-    Serial.println(">> CORS here...");
     res->setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
     res->setHeader("Access-Control-Allow-Origin", "*");
     res->setHeader("Access-Control-Allow-Headers", "*");

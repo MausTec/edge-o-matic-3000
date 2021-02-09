@@ -2,12 +2,14 @@
 
 // Max clients to be connected to the ESP32
 #define MAX_CLIENTS 2
+#define MAX_HTTP_CLIENTS 5
 
 // We will use wifi
 #include <WiFi.h>
 
 // Includes for the server
 #include <HTTPSServer.hpp>
+#include <HTTPServer.hpp>
 #include <SSLCert.hpp>
 #include <HTTPRequest.hpp>
 #include <HTTPResponse.hpp>
@@ -56,6 +58,7 @@ namespace WebSocketSecureHelper {
   namespace {
     SSLCert *cert = nullptr;
     HTTPSServer *secureServer = nullptr;
+    HTTPServer *insecureServer = nullptr;
 
     // Simple array to store the active clients:
     WebsocketHandler *activeClients[MAX_CLIENTS];
