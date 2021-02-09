@@ -47,6 +47,11 @@ def set_version(v)
   puts "Set version to: #{v.to_s}"
 end
 
+def sh(cmd)
+  puts "$ #{cmd}"
+  puts `#{cmd}`
+end
+
 if opts[:get_version]
   puts get_version.to_s
   exit
@@ -69,9 +74,9 @@ end
 
 if opts[:tag]
   v = get_version
-  puts `git tag v#{v.to_s}`
-  puts `git push`
-  puts `git push --tags`
+  sh "git tag v#{v.to_s}"
+  sh "git push"
+  sh "git push --tags"
 
   file_friendly_version = v.to_s.gsub(/\+/, '-')
 
@@ -80,7 +85,7 @@ if opts[:tag]
   FileUtils.cp(File.join(build_root, "ESP32_WiFi.ino.bin"), File.join(release_root, "eom3k-#{file_friendly_version}.bin"))
   FileUtils.cp(File.join(build_root, "ESP32_WiFi.ino.partitions.bin"), File.join(release_root, "eom3k-#{file_friendly_version}.partitions.bin"))
 
-  `gh release create v#{file_friendly_version} #{File.join(release_root, "eom3k-#{file_friendly_version}.bin")} #{File.join(release_root, "eom3k-#{file_friendly_version}.partitions.bin")} --notes-file #{File.join(ROOT_PATH, "doc", "ReleaseTemplate.md")}`
+  sh "gh release create v#{file_friendly_version} #{File.join(release_root, "eom3k-#{file_friendly_version}.bin")} #{File.join(release_root, "eom3k-#{file_friendly_version}.partitions.bin")} --notes-file #{File.join(ROOT_PATH, "doc", "ReleaseTemplate.md")}"
 end
 
 esptool = nil

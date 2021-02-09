@@ -242,6 +242,7 @@ bool setConfigValue(const char *option, const char *value, bool &require_reboot)
     strlcpy(Config.bt_display_name, value, sizeof(Config.bt_display_name));
   } else if (!strcmp(option, "use_ssl")) {
     Config.use_ssl = atob(value);
+    require_reboot = true;
   } else {
     return false;
   }
