@@ -1,7 +1,7 @@
 #include <sstream>
 
 // Max clients to be connected to the ESP32
-#define MAX_CLIENTS 2
+#define MAX_CLIENTS 1
 #define MAX_HTTP_CLIENTS 5
 
 // We will use wifi
