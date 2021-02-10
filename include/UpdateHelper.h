@@ -37,6 +37,10 @@ namespace UpdateHelper {
 
   // Update Available
   UpdateSource checkForUpdates();
+
+  // Flags to check if there's an update pending. Set by checkForUpdates();
+  static bool pendingLocalUpdate = false;
+  static bool pendingWebUpdate = false;
 }
 
 #endif

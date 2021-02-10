@@ -1,5 +1,7 @@
 #include "../include/UpdateHelper.h"
 #include "../include/UserInterface.h"
+#include "../include/WiFiHelper.h"
+#include "../VERSION.h"
 
 #include <SD.h>
 #include <HTTPClient.h>
@@ -71,18 +73,27 @@ namespace UpdateHelper {
   }
 
   UpdateSource checkForUpdates() {
+    UpdateSource source = NoUpdate;
     // Check SD first:
     bool updateBin = SD.exists("/update.bin");
     if (updateBin) {
       Serial.println("Found: update.bin on SD card.");
-      return UpdateFromSD;
+      pendingLocalUpdate = true;
+      source = UpdateFromSD;
     }
 
     // Check Network:
-    // noop
+    if (WiFiHelper::connected()) {
+      String web = checkWebLatestVersion();
+      Serial.print("Web version was: ");
+      Serial.println(web);
+      if (compareVersion(web.c_str(), VERSION)) {
+        pendingWebUpdate = true;
+        source = UpdateFromServer;
+      }
+    }
 
-    Serial.println("No updates available.");
-    return NoUpdate;
+    return source;
   }
 
   String checkWebLatestVersion() {

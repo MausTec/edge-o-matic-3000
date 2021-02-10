@@ -94,5 +94,6 @@ extern UIMenu NetworkMenu;
 extern UIMenu UISettingsMenu;
 extern UIMenu EdgingSettingsMenu;
 extern UIMenu AccessoryPortMenu;
+extern UIMenu UpdateMenu;
 
 #endif
