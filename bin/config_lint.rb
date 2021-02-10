@@ -5,6 +5,16 @@
 DIR = File.expand_path(File.join(File.dirname(__FILE__), ".."))
 puts "IN: #{DIR}"
 
+require 'optimist'
+
+opts = Optimist::options do
+  banner <<-TEXT
+Validate that the Config struct is in sync with documentation and various getters/setters.
+TEXT
+
+  opt :fix, "Automatically try and fix stuff", default: false
+end
+
 # Parse in Config
 config_h = File.join(DIR, "config.h")
 in_struct = false
@@ -48,13 +58,25 @@ json_reads = []
 json_defaults = {}
 
 config_cpp = File.join(DIR, "src", "config.cpp");
+config_out = []
+fixed = false
+markers = {}
+
 File.foreach(config_cpp).with_index do |line, i|
+  if line =~ /^}\s+\/\/\s+(\w+)/
+    markers[$1] = $i
+  end
+
   # Check Read
   if line =~ /Config\.(\w+)\s*=\s*doc\["(\w+)"\](\s*\|\s*\S+)?/
     json_reads << $2
     type = config_values[$1]
     if $1 != $2
-      error config_cpp, i, "JSON read #{$2.inspect} does not match config key #{$1.inspect}"
+      if opts[:fix]
+        line.gsub!($2, $1)
+      else
+        error config_cpp, i, "JSON read #{$2.inspect} does not match config key #{$1.inspect}"
+      end
     end
     if type.nil?
       error config_cpp, i, "JSON read #{$2.inspect} to unknown key"
@@ -103,22 +125,31 @@ File.foreach(config_cpp).with_index do |line, i|
       error config_cpp, i, "JSON assignment #{$1.inspect} from unknown key"
     end
   end
+
+  config_out << line
 end
+
+if opts[:fix] && fixed
+  File.write(config_cpp + ".fix", config_out.join("\n"))
+end
+
+#===
 
 # Check Missing Assignments
 (config_values.keys - json_assignments).each do |value|
-  error config_cpp, nil, "Missing JSON assignment for #{value.inspect}"
+  error config_cpp, markers[:dumpConfigToJsonObject], "Missing JSON assignment for #{value.inspect}"
 end
 
 # Check Missing Reads
 (config_values.keys - json_reads).each do |value|
-  error config_cpp, nil, "Missing JSON read for #{value.inspect}"
+  error config_cpp, markers[:loadConfigFromJsonObject], "Missing JSON read for #{value.inspect}"
 end
 
 console_checks = []
 console_gets = []
 console_sets = []
 last_check = ""
+markers = {}
 
 # Check Console.cpp, which will soon move to config.cpp
 console_cpp = File.join(DIR, "src", "config.cpp")
@@ -129,6 +160,10 @@ File.foreach(console_cpp).with_index do |line, i|
     next
   elsif last_check == ""
     next
+  end
+
+  if line =~ /^}\s+\/\/\s+(\w+)/
+    markers[$1] = $i
   end
 
   if line =~ /String\s*\(\s*Config\.(\w+)/
@@ -190,17 +225,17 @@ end
 
 # Check Missing Checks
 (config_values.keys - console_checks).each do |value|
-  error console_cpp, nil, "Missing Console check for #{value.inspect}"
+  error console_cpp, markers[:getConfigValue], "Missing Console check for #{value.inspect}"
 end
 
 # Check Missing Gets
 (config_values.keys - console_gets).each do |value|
-  error console_cpp, nil, "Missing Console get for #{value.inspect}"
+  error console_cpp, markers[:getConfigValue], "Missing Console get for #{value.inspect}"
 end
 
 # Check Missing Sets
 (config_values.keys - console_sets).each do |value|
-  error console_cpp, nil, "Missing Console set for #{value.inspect}"
+  error console_cpp, markers[:setConfigValue], "Missing Console set for #{value.inspect}"
 end
 
 #== Check Readme
