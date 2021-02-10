@@ -26,14 +26,15 @@ and is automatically generated. Here is a quick summary of config variables:
 |`wifi_ssid`|String|""|Your WiFi SSID|
 |`wifi_key`|String|""|Your WiFi Password.|
 |`wifi_on`|Boolean|false|True to enable WiFi / Websocket server.|
-|`bt_display_name`|String|"NoGasm WiFi"|AzureFang* device name, you might wanna change this.|
+|`bt_display_name`|String|"Edge-o-Matic 3000"|AzureFang* device name, you might wanna change this.|
 |`bt_on`|Boolean|false|True to enable the AzureFang connection.|
 |`led_brightness`|Byte|128|LED Ring max brightness, only for NoGasm+.|
 |`websocket_port`|Int|80|Port to listen for incoming Websocket connections.|
 |`use_ssl`|Boolean|false|Enable SSL server, which will eat all your RAM!|
+|`hostname`|String|"eom3k"|Local hostname for your device.|
 |`motor_max_speed`|Byte|128|Maximum speed for the motor in auto-ramp mode.|
 |`screen_dim_seconds`|Int|10|Time, in seconds, before the screen dims. 0 to disable.|
-|`screen_timeout_seconds`|Int|60|Time, in seconds, before the screen turns off. 0 to disable.|
+|`screen_timeout_seconds`|Int|0|Time, in seconds, before the screen turns off. 0 to disable.|
 |`pressure_smoothing`|Byte|5|Number of samples to take an average of. Higher results in lag and lower resolution!|
 |`classic_serial`|Boolean|false|Output classic NoGasm values over serial for backwards compatibility.|
 |`sensitivity_threshold`|Int|600|The arousal threshold for orgasm detection. Lower = sooner cutoff.|

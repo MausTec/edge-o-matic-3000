@@ -2,6 +2,7 @@
 #include "../include/UserInterface.h"
 
 #include <WiFi.h>
+#include <ESPmDNS.h>
 
 namespace WiFiHelper {
   void drawSignalIcon() {
@@ -49,6 +50,13 @@ namespace WiFiHelper {
     Serial.println(" Connected!");
     Serial.print("My IP address: ");
     Serial.println(WiFi.localIP());
+
+    // Configure Hostname
+    if (strlen(Config.hostname) > 0) {
+      if(!MDNS.begin(Config.hostname)) {
+        Serial.println("Error starting mDNS! The hostname option will be ignored.");
+      }
+    }
 
     // Synchronize Local Clock
     const char* ntpServer = "pool.ntp.org";

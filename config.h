@@ -96,6 +96,7 @@ struct ConfigStruct {
   int websocket_port;
   bool classic_serial;
   bool use_ssl;
+  char hostname[64];
 
   // Orgasms and Stuff
   byte motor_max_speed;

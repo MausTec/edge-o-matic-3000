@@ -82,6 +82,7 @@ void loadConfigFromJsonObject(JsonDocument &doc) {
   Config.websocket_port = doc["websocket_port"] | 80;
   Config.classic_serial = doc["classic_serial"] | false;
   Config.use_ssl = doc["use_ssl"] | false;
+  strlcpy(Config.hostname, doc["hostname"] | "eom3k", sizeof(Config.hostname));
 
   // Copy UI Settings
   Config.led_brightness = doc["led_brightness"] | 128;
@@ -106,7 +107,7 @@ void loadConfigFromJsonObject(JsonDocument &doc) {
     Serial.println("Not enough memory for WiFi and Bluetooth, disabling BT.");
     Config.bt_on = false;
   }
-}
+} // loadConfigFromJsonObject
 
 void dumpConfigToJsonObject(JsonDocument &doc) {
   // Copy WiFi Settings
@@ -122,6 +123,7 @@ void dumpConfigToJsonObject(JsonDocument &doc) {
   doc["websocket_port"] = Config.websocket_port;
   doc["classic_serial"] = Config.classic_serial;
   doc["use_ssl"] = Config.use_ssl;
+  doc["hostname"] = Config.hostname;
 
   // Copy UI Settings
   doc["led_brightness"] = Config.led_brightness;
@@ -136,7 +138,7 @@ void dumpConfigToJsonObject(JsonDocument &doc) {
   doc["update_frequency_hz"] = Config.update_frequency_hz;
   doc["sensor_sensitivity"] = Config.sensor_sensitivity;
   doc["use_average_values"] = Config.use_average_values;
-}
+} // dumpConfigToJsonObject
 
 bool dumpConfigToJson(String &str) {
   DynamicJsonDocument doc(2048);
@@ -243,12 +245,15 @@ bool setConfigValue(const char *option, const char *value, bool &require_reboot)
   } else if (!strcmp(option, "use_ssl")) {
     Config.use_ssl = atob(value);
     require_reboot = true;
+  } else if (!strcmp(option, "hostname")) {
+    strlcpy(Config.hostname, value, sizeof(Config.hostname));
+    require_reboot = true;
   } else {
     return false;
   }
 
   return true;
-}
+} // setConfigValue
 
 bool getConfigValue(const char *option, String &out) {
   if (!strcmp(option, "wifi_on")) {
@@ -289,9 +294,11 @@ bool getConfigValue(const char *option, String &out) {
     out += String(Config.bt_display_name) + '\n';
   } else if (!strcmp(option, "use_ssl")) {
     out += String(Config.use_ssl) + '\n';
+  } else if (!strcmp(option, "hostname")) {
+    out += String(Config.hostname) + '\n';
   } else {
     return false;
   }
 
   return true;
-}
+} // getConfigValue
