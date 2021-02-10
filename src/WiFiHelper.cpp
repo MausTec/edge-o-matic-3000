@@ -1,5 +1,6 @@
 #include "../include/WiFiHelper.h"
 #include "../include/UserInterface.h"
+#include "../include/WebSocketHelper.h"
 
 #include <WiFi.h>
 #include <ESPmDNS.h>
@@ -33,7 +34,6 @@ namespace WiFiHelper {
     // Connect to access point
     Serial.print("Connecting..");
     WiFi.begin(Config.wifi_ssid, Config.wifi_key);
-    UI.display->setCursor(0,0);
     int count = 0;
     long connection_start_at_ms = millis();
     while ( WiFi.status() != WL_CONNECTED) {
@@ -72,6 +72,9 @@ namespace WiFiHelper {
     }
 
     Serial.println(&timeinfo, "%A, %B %d %Y %H:%M:%S");
+
+    // Connect to Websocket Servers
+    WebSocketHelper::begin();
     return true;
   }
 
@@ -90,7 +93,14 @@ namespace WiFiHelper {
     }
   }
 
+  /**
+   * @todo So this actually doesn't free up some resources used by WiFi. Specifically,
+   *       if starting Bluetooth after calling this to end WiFi, the device is totes gonna
+   *       crash. I need an exception decoder that's easier to use.
+   */
   void disconnect() {
+    MDNS.end();
+    WebSocketHelper::end();
     WiFi.disconnect(true);
   }
 

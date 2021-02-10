@@ -8,15 +8,17 @@
 #include <BLEUtils.h>
 #include <BLEServer.h>
 
-#define BLUETOOTH_NAME "EdgeLord 3000"
 #define SERVICE_UUID "52ecdfe9-590c-4226-8529-dd6bf4d817a6"
 #define CHARACTERISTIC_UUID "9f13cb96-7739-4558-8bd7-53654909962d"
 
 class BluetoothServer {
 public:
   BluetoothServer();
+  ~BluetoothServer();
   void begin();
   void advertise();
+  void disconnect();
+  void stopAdvertising();
 
 private:
   BLEServer *server;
@@ -24,5 +26,7 @@ private:
   BLECharacteristic *characteristic;
   BLEAdvertising *advertising;
 };
+
+extern BluetoothServer BT;
 
 #endif

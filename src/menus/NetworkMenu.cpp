@@ -1,6 +1,7 @@
 #include "../../include/UIMenu.h"
 #include "../../include/UserInterface.h"
 #include "../../include/WiFiHelper.h"
+#include "../../include/BluetoothServer.h"
 
 #include <WiFi.h>
 
@@ -37,9 +38,12 @@ static void onEnableWiFi(UIMenu *menu) {
 static void onViewStatus(UIMenu*) {
   String status = "";
 
-  if (WiFiHelper::connected()) {
-    status += "Connected";
-    status += "\n" + WiFiHelper::ip();
+  if (Config.bt_on) {
+    status += "Bluetooth On\n";
+    status += String(Config.bt_display_name);
+  } else if (WiFiHelper::connected()) {
+    status += "Connected\n";
+    status += WiFiHelper::ip();
     status += "\nSignal: " + WiFiHelper::signalStrengthStr();
   } else {
     status += "Disconnected";
@@ -48,16 +52,45 @@ static void onViewStatus(UIMenu*) {
   UI.toast(status.c_str(), 0);
 }
 
-static void buildMenu(UIMenu *menu) {
+static void onEnableBluetooth(UIMenu* menu) {
+  UI.toastNow("Enabling...", 0, false);
+  Config.bt_on = true;
+  Config.wifi_on = false;
+
   if (WiFiHelper::connected()) {
+    WiFiHelper::disconnect();
+  }
+
+  saveConfigToSd(0);
+  BT.begin();
+
+  menu->initialize();
+  menu->render();
+  UI.toastNow("Bluetooth On", 3000);
+}
+
+static void onDisableBluetooth(UIMenu* menu) {
+  UI.toastNow("Disconnecting...", 0, false);
+  Config.bt_on = false;
+  saveConfigToSd(0);
+  BT.disconnect();
+  menu->initialize();
+  menu->render();
+  UI.toastNow("Disconnected.", 3000);
+}
+
+static void buildMenu(UIMenu *menu) {
+  if (Config.bt_on) {
+    menu->addItem("Disable Bluetooth", &onDisableBluetooth);
+  } else if (WiFiHelper::connected()) {
     menu->addItem("Disable WiFi", &onDisableWiFi);
   } else {
     menu->addItem("Enable WiFi", &onEnableWiFi);
+    menu->addItem("Enable Bluetooth", &onEnableBluetooth);
   }
 
   menu->addItem("Connection Status", &onViewStatus);
-
   menu->addItem(&AccessoryPortMenu);
 }
 
-UIMenu NetworkMenu("WiFi Settings", &buildMenu);
+UIMenu NetworkMenu("Network Settings", &buildMenu);

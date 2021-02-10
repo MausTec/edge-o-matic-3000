@@ -24,6 +24,10 @@ namespace WebSocketHelper {
     WebSocketSecureHelper::loop();
   }
 
+  void end() {
+    WebSocketSecureHelper::end();
+  }
+
   void send(const char *cmd, JsonDocument &doc, int num) {
     DynamicJsonDocument envelope(1024);
     envelope[cmd] = doc;

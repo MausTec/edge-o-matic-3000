@@ -21,6 +21,7 @@ using namespace httpsserver;
 
 namespace WebSocketSecureHelper {
   void setup();
+  void end();
   void loop();
 
   // Send message to a specific client or all clients.
