@@ -2,6 +2,7 @@
 #include "../include/UserInterface.h"
 
 #include <SD.h>
+#include <HTTPClient.h>
 
 namespace UpdateHelper {
   // perform the actual update from a given stream
@@ -82,5 +83,42 @@ namespace UpdateHelper {
 
     Serial.println("No updates available.");
     return NoUpdate;
+  }
+
+  String checkWebLatestVersion() {
+    String version;
+    HTTPClient http;
+    http.begin(REMOTE_UPDATE_URL "/version.txt");
+    int httpCode = http.GET();
+
+    if (httpCode > 0) {
+      Serial.printf("GET: %d\n", httpCode);
+
+      if (httpCode == HTTP_CODE_OK) {
+        version = http.getString();
+        Serial.printf("Latest version: %s\n", version.c_str());
+      }
+    } else {
+      Serial.printf("GET Error: %s\n", http.errorToString(httpCode).c_str());
+    }
+
+    http.end();
+    return version;
+  }
+
+  int compareVersion(const char *a, const char *b) {
+    int va[3] = { 0, 0, 0 };
+    int vb[3] = { 0, 0, 0 };
+
+    sscanf(a[0] == 'v' ? a + 1 : a, "%d.%d.%d", &va[0], &va[1], &va[2]);
+    sscanf(b[0] == 'v' ? b + 1 : b, "%d.%d.%d", &vb[0], &vb[1], &vb[2]);
+
+    for (int i = 0; i <= 2; i++) {
+      if (va[i] != vb[i]) {
+        return va[i] > vb[i] ? 1 : -1;
+      }
+    }
+
+    return 0;
   }
 }
