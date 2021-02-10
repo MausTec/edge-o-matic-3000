@@ -10,10 +10,12 @@ static void onCheckForUpdates(UIMenu *menu) {
   menu->initialize();
 
   if (UpdateHelper::pendingLocalUpdate || UpdateHelper::pendingWebUpdate) {
-    UI.toastNow("Updates found!");
+    UI.toastNow("Updates found!", 3000);
   } else {
-    UI.toastNow("No Updates.");
+    UI.toastNow("No Updates.", 3000);
   }
+
+  menu->render();
 }
 
 static void onWebUpdate(UIMenu *menu) {
@@ -29,11 +31,11 @@ static void buildMenu(UIMenu *menu) {
   menu->addItem("Check for Updates...", &onCheckForUpdates);
 
   if (UpdateHelper::pendingWebUpdate) {
-    menu->addItem("Update from Web");
+    menu->addItem("Update from Web", &onWebUpdate);
   }
 
   if (UpdateHelper::pendingLocalUpdate) {
-    menu->addItem("Update from SD");
+    menu->addItem("Update from SD", &onLocalUpdate);
   }
 }
 

@@ -7,6 +7,19 @@
 #include "../include/ssl/private_key.h"
 
 namespace WebSocketSecureHelper {
+  void end() {
+    if (secureServer != nullptr) {
+      secureServer->stop();
+      free(secureServer);
+      secureServer = nullptr;
+    }
+
+    if (insecureServer != nullptr) {
+      insecureServer->stop();
+      free(insecureServer);
+      insecureServer = nullptr;
+    }
+  }
   void setup() {
     if (Config.use_ssl) {
       // Create an SSL certificate object from the files included above ...

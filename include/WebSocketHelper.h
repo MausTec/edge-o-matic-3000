@@ -6,6 +6,7 @@
 
 namespace WebSocketHelper {
   void begin();
+  void end();
   void tick();
 
   void send(const char *cmd, JsonDocument &doc, int num = -1);

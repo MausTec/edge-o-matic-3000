@@ -40,7 +40,6 @@ uint8_t LED_Brightness = 13;
 #endif
 
 UserInterface UI(&display);
-BluetoothServer BT;
 
 // Globals
 
@@ -153,7 +152,6 @@ void setup() {
   // Initialize WiFi
   if (Config.wifi_on) {
     WiFiHelper::begin();
-    WebSocketHelper::begin();
   }
 
   Serial.println("Heap before Bluetooth: " + String(xPortGetFreeHeapSize()));
