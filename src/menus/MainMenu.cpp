@@ -10,16 +10,7 @@ static void buildMenu(UIMenu *menu) {
   menu->addItem(&UISettingsMenu);
   menu->addItem(&NetworkMenu);
   menu->addItem(&GamesMenu);
-
-  menu->addItem("Update", [](UIMenu*) {
-    UpdateSource source = UpdateHelper::checkForUpdates();
-    if (source == UpdateFromSD) {
-      UI.toastNow("Updating...", 0, false);
-      UpdateHelper::updateFromFS(SD);
-    } else {
-      UI.toastNow("No valid updates.", 3000);
-    }
-  });
+  menu->addItem(&UpdateMenu);
 
   menu->addItem("System Info", [](UIMenu*) {
     UI.toastNow(String("S/N: ") + Hardware::getDeviceSerial() + "\n" + "Version: " VERSION);

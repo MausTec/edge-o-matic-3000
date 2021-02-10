@@ -127,22 +127,17 @@ void UIMenu::open(UIMenu *previous, bool save_history) {
     on_open(this);
   }
 
-  Serial.println("Opening menu: " + String(title));
-
   if (save_history) {
     prev = previous;
-    if (previous != nullptr) {
-      Serial.println("-> Prev: " + String(previous->title));
-    }
   }
 
   UI.clearButtons();
   UI.setButton(0, "BACK");
+  UI.setButton(2, "ENTER");
   render();
 }
 
 UIMenu *UIMenu::close() {
-  Serial.println("Closing menu: " + String(title));
   if (on_close != nullptr) {
     on_close(this);
   }
