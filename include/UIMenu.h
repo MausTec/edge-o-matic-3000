@@ -37,10 +37,13 @@ class Page;
 
 //typedef void(*MenuCallback)(UIMenu*);
 typedef std::function<void(UIMenu*)> MenuCallback;
+typedef std::function<void(UIMenu*, void*)> ParameterizedMenuCallback;
 
 typedef struct UIMenuItem {
-  char *text;
+  char text[21];
   MenuCallback cb;
+  ParameterizedMenuCallback pcb;
+  void *arg = nullptr;
   UIMenuItem *next = nullptr;
   UIMenuItem *prev = nullptr;
 } UIMenuItem;
@@ -48,13 +51,16 @@ typedef struct UIMenuItem {
 class UIMenu {
 public:
   // Construction
-  UIMenu(char *t, MenuCallback = nullptr);
+  UIMenu(const char *t, MenuCallback = nullptr);
   void initialize();
 
   // Item Manipulation
-  void addItem(char *text, MenuCallback cb = nullptr);
-  void addItem(char *text, Page *p);
+  void addItem(const char *text, ParameterizedMenuCallback pcb = nullptr, void *arg = nullptr);
+  void addItem(const char *text, MenuCallback cb = nullptr);
+  void addItem(const char *text, Page *p);
   void addItem(UIMenu *submenu);
+  void addItemAt(size_t index, const char *text, MenuCallback cb = nullptr);
+  void removeItem(size_t index);
   void clearItems();
 
   // Render Lifecycle
@@ -71,6 +77,8 @@ public:
   virtual void handleClick();
   virtual int getItemCount();
   virtual int getCurrentPosition();
+
+  UIMenuItem *firstItem() { return first_item; }
 
 protected:
   char title[TITLE_SIZE + 1];
@@ -95,5 +103,6 @@ extern UIMenu UISettingsMenu;
 extern UIMenu EdgingSettingsMenu;
 extern UIMenu AccessoryPortMenu;
 extern UIMenu UpdateMenu;
+extern UIMenu BluetoothScanMenu;
 
 #endif
