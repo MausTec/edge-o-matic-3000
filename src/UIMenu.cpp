@@ -2,16 +2,17 @@
 #include "../include/UserInterface.h"
 #include "../include/Page.h"
 
-UIMenu::UIMenu(char *t, MenuCallback fn) {
+UIMenu::UIMenu(const char *t, MenuCallback fn) {
   strlcpy(title, t, TITLE_SIZE);
   initializer = fn;
 }
 
-void UIMenu::addItem(char *text, MenuCallback cb) {
+void UIMenu::addItem(const char *text, MenuCallback cb) {
   UIMenuItem *item = new UIMenuItem();
-  item->text = text;
+  strncpy(item->text, text, 20);
   item->next = nullptr;
   item->cb = cb;
+  item->pcb = nullptr;
   item->prev = last_item;
 
   if (last_item != nullptr) {
@@ -25,13 +26,94 @@ void UIMenu::addItem(char *text, MenuCallback cb) {
   }
 }
 
+void UIMenu::addItem(const char *text, ParameterizedMenuCallback pcb, void *arg) {
+  UIMenuItem *item = new UIMenuItem();
+  strncpy(item->text, text, 20);
+  item->next = nullptr;
+  item->cb = nullptr;
+  item->pcb = pcb;
+  item->prev = last_item;
+  item->arg = arg;
+
+  if (last_item != nullptr) {
+    last_item->next = item;
+  }
+
+  last_item = item;
+
+  if (first_item == nullptr) {
+    first_item = item;
+  }
+}
+
+void UIMenu::removeItem(size_t index) {
+  UIMenuItem *ptr = this->first_item;
+
+  for (int i = 0; i < index && ptr != nullptr; i++) {
+    ptr = ptr->next;
+  }
+
+  if (ptr == nullptr) {
+    return;
+  }
+
+  if (first_item == ptr) {
+    this->first_item = ptr->next;
+  }
+
+  if (last_item == ptr) {
+    this->last_item = nullptr;
+  }
+
+  if (ptr->prev != nullptr) {
+    ptr->prev->next = ptr->next;
+  }
+
+  if (ptr->next != nullptr) {
+    ptr->next->prev = ptr->prev;
+  }
+
+  delete ptr;
+}
+
+void UIMenu::addItemAt(size_t index, const char *text, MenuCallback cb) {
+  UIMenuItem *ptr = this->first_item;
+
+  for (int i = 0; i < index && ptr != nullptr; i++) {
+    ptr = ptr->next;
+  }
+
+  // Last or First item:
+  if (ptr == nullptr) {
+    addItem(text, cb);
+    return;
+  }
+
+  UIMenuItem *item = new UIMenuItem();
+  strncpy(item->text, text, 20);
+  item->next = nullptr;
+  item->cb = cb;
+  item->pcb = nullptr;
+  item->prev = ptr->prev;
+  item->next = ptr;
+
+  if (ptr == this->first_item) {
+    this->first_item = item;
+  }
+
+  if (ptr->prev != nullptr) {
+    ptr->prev->next = item;
+  }
+  ptr->prev = item;
+}
+
 void UIMenu::addItem(UIMenu *submenu) {
   addItem(submenu->title, [=](UIMenu*) {
     UI.openMenu(submenu);
   });
 }
 
-void UIMenu::addItem(char *text, Page *page) {
+void UIMenu::addItem(const char *text, Page *page) {
   addItem(text, [=](UIMenu*) {
     Page::Go(page);
   });
@@ -60,7 +142,7 @@ void UIMenu::render() {
     item = item->prev;
   }
 
-  // Render the next 5 items (todo adjust for screen height)
+  // Render the next 5 items
   if (item != nullptr) {
     for (int count = 0; count < 5; count++) {
       int menu_item_y = 10 + (10 * count);
@@ -141,6 +223,7 @@ UIMenu *UIMenu::close() {
   if (on_close != nullptr) {
     on_close(this);
   }
+  clearItems();
   return prev;
 }
 
@@ -175,8 +258,12 @@ void UIMenu::selectPrev() {
 }
 
 void UIMenu::handleClick() {
-  if (current_item != nullptr && current_item->cb != nullptr) {
-    current_item->cb(this);
+  if (current_item != nullptr) {
+    if (current_item->cb != nullptr) {
+      current_item->cb(this);
+    } else if (current_item->pcb != nullptr) {
+      current_item->pcb(this, current_item->arg);
+    }
   }
 }
 

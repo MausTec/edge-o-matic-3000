@@ -82,6 +82,7 @@ static void onDisableBluetooth(UIMenu* menu) {
 static void buildMenu(UIMenu *menu) {
   if (Config.bt_on) {
     menu->addItem("Disable Bluetooth", &onDisableBluetooth);
+    menu->addItem(&BluetoothScanMenu);
   } else if (WiFiHelper::connected()) {
     menu->addItem("Disable WiFi", &onDisableWiFi);
   } else {
