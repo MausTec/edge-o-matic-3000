@@ -6,11 +6,20 @@
 #include <SD.h>
 #include <HTTPClient.h>
 
-#define UPDATE_BUFFER_SIZE (1024 * 4)
+#define UPDATE_BUFFER_SIZE (1024 * 1)
 
 namespace UpdateHelper {
   bool pendingLocalUpdate = false;
   bool pendingWebUpdate = false;
+
+  size_t waitUntilAvailable(Stream *stream, long timeout_ms = 10000) {
+    long start_ms = millis();
+    size_t available = 0;
+    while(available == 0 && millis() - start_ms < timeout_ms) {
+      available = stream->available();
+    }
+    return available;
+  }
 
   // perform the actual update from a given stream
   bool performUpdate(Stream &updateSource, size_t updateSize) {
@@ -27,6 +36,10 @@ namespace UpdateHelper {
         written += Update.write(buffer, read);
         log_d("Read %d bytes, Written %d/%d bytes. (Heap Free: %d bytes)", read, written, updateSize, xPortGetFreeHeapSize());
         UI.toastProgress("Updating...", (float)written/updateSize);
+
+        if (written < updateSize) {
+          waitUntilAvailable(&updateSource);
+        }
       }
 
       log_w("Stream ended. Last available: %d", availableBytes);
@@ -186,15 +199,6 @@ namespace UpdateHelper {
     }
 
     return location;
-  }
-
-  size_t waitUntilAvailable(Stream *stream, long timeout_ms = 10000) {
-    long start_ms = millis();
-    size_t available = 0;
-    while(available == 0 && millis() - start_ms < timeout_ms) {
-      available = stream->available();
-    }
-    return available;
   }
 
   void updateFromWeb() {
