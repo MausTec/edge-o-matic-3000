@@ -15,7 +15,7 @@
 #define CHART_WIDTH (CHART_END_X - CHART_START_X)
 
 #define STATUS_SIZE 16
-#define TOAST_WIDTH 16
+#define TOAST_WIDTH 18
 #define TOAST_LINES 4
 
 #define WIFI_ICON_IDX 0
@@ -89,6 +89,8 @@ public:
   void toast(String &message, long duration = 3000, bool allow_clear = true);
   void toastNow(const char *message, long duration = 3000, bool allow_clear = true);
   void toastNow(String &message, long duration = 3000, bool allow_clear = true);
+  void toastProgress(const char *message, float progress);
+  void toastProgress(String &message, float progress);
   void drawToast();
   bool toastRenderPending();
   bool hasToast();

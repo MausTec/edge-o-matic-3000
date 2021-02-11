@@ -44,7 +44,7 @@ class Arduino
         FlashFreq: 80,
         FlashSize: '4M',
         UploadSpeed: 921600,
-        DebugLevel: 'none'
+        DebugLevel: 'warn'
       }.merge(esp_opts)
 
       @prefs = {
