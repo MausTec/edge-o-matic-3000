@@ -521,6 +521,42 @@ void UserInterface::toastNow(String &message, long duration, bool allow_clear) {
   toastNow(message.c_str(), duration, allow_clear);
 }
 
+void UserInterface::toastProgress(const char *message, float progress) {
+  static int lastPerc = 0;
+  int perc = max(0.0, min(progress * 100.0, 100.0));
+
+  // Don't redraw if the percent didn't actually change.
+  if (perc == lastPerc) {
+    return;
+  } else {
+    lastPerc = perc;
+  }
+
+  char progressBar[TOAST_WIDTH + 1] = "";
+  char progressFmt[TOAST_WIDTH + 1] = "";
+  char percFill[TOAST_WIDTH - 6] = "";
+  char finalToast[TOAST_WIDTH * TOAST_LINES + 5] = "";
+
+  int fillBars = floor(((float)perc / 100) * sizeof(percFill));
+  for (int i = 0; i < fillBars; i++) {
+    strcat(percFill, "#");
+  }
+
+  sprintf(progressFmt, "[%%-%ds] %%3d%%%%", TOAST_WIDTH - 7);
+  sprintf(progressBar, progressFmt, percFill, perc);
+
+  strcpy(finalToast, message);
+  strcat(finalToast, "\n");
+  strcat(finalToast, progressBar);
+  log_d("%s", progressBar);
+
+  toastNow(finalToast, 0, false);
+}
+
+void UserInterface::toastProgress(String &message, float progress) {
+  toastProgress(message.c_str(), progress);
+}
+
 bool UserInterface::isMenuOpen() {
   return current_menu != nullptr;
 }

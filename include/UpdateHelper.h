@@ -6,6 +6,7 @@
 #include <SD_MMC.h>
 
 #define REMOTE_UPDATE_URL "http://us-central1-maustec-io.cloudfunctions.net/gh-release-embedded-bridge"
+#define UPDATE_FILENAME "/update.bin"
 
 enum UpdateSource {
   NoUpdate,
@@ -15,10 +16,11 @@ enum UpdateSource {
 
 namespace UpdateHelper {
   // perform the actual update from a given stream
-  void performUpdate(Stream &updateSource, size_t updateSize);
+  bool performUpdate(Stream &updateSource, size_t updateSize);
 
   // check given FS for valid update.bin and perform update if available
   void updateFromFS(fs::FS &fs);
+  void updateFromWeb();
 
   /**
    * Compares two versions, returning a value based on their SemVer equivalence:
@@ -39,8 +41,8 @@ namespace UpdateHelper {
   UpdateSource checkForUpdates();
 
   // Flags to check if there's an update pending. Set by checkForUpdates();
-  static bool pendingLocalUpdate = false;
-  static bool pendingWebUpdate = false;
+  extern bool pendingLocalUpdate;
+  extern bool pendingWebUpdate;
 }
 
 #endif

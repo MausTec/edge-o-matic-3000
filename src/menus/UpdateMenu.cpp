@@ -19,7 +19,9 @@ static void onCheckForUpdates(UIMenu *menu) {
 }
 
 static void onWebUpdate(UIMenu *menu) {
-  UI.toastNow("Not Implemented.");
+  UI.toastNow("Updating...", 0, false);
+  UpdateHelper::updateFromWeb();
+  UI.toastNow("Aborted.", 3000);
 }
 
 static void onLocalUpdate(UIMenu *menu) {
