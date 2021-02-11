@@ -6,6 +6,8 @@ require 'rubyserial'
 require 'tty-prompt'
 require 'timeout'
 
+require_relative './screenshot.rb'
+
 class ESPTool
   ROOT_PATH = File.absolute_path(File.join(File.dirname(__FILE__), "..", "..")).freeze
   ESPTOOL_PATH = 'C:\Users\eiser.000\AppData\Local\Arduino15\packages\esp32\tools\esptool_py\2.6.1'.freeze
@@ -80,7 +82,11 @@ class ESPTool
       loop do
         begin
           line = serial.gets
-          puts line
+          if line =~ /[A-Za-z0-9]{120,}/
+            save_screenshot(line.chomp)
+          else
+            puts line
+          end
         rescue RubySerial::Error => e
           if Thread.current.report_on_exception
             read_thr.report_on_exception = false
