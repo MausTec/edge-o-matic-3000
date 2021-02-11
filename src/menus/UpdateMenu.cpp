@@ -19,13 +19,12 @@ static void onCheckForUpdates(UIMenu *menu) {
 }
 
 static void onWebUpdate(UIMenu *menu) {
-  UI.toastNow("Updating...", 0, false);
+  UI.toastNow("Connecting...", 0, false);
   UpdateHelper::updateFromWeb();
-  UI.toastNow("Aborted.", 3000);
 }
 
 static void onLocalUpdate(UIMenu *menu) {
-  UI.toastNow("Updating...", 0, false);
+  UI.toastNow("Preparing...", 0, false);
   UpdateHelper::updateFromFS(SD);
 }
 

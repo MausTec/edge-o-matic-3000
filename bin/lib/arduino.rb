@@ -44,7 +44,7 @@ class Arduino
         FlashFreq: 80,
         FlashSize: '4M',
         UploadSpeed: 921600,
-        DebugLevel: 'warn'
+        DebugLevel: 'none'
       }.merge(esp_opts)
 
       @prefs = {
@@ -77,7 +77,7 @@ class Arduino
         built_in_libraries: system_lib_path,
         libraries: local_lib_path,
         build_path: build_path,
-        warnings: 'none',
+        warnings: 'none', # TODO: At some point fix errors.
         ide_version: '10813',
         vid_pid: '0403_6015'
       }.merge(builder_opts)
