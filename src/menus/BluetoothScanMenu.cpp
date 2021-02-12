@@ -1,4 +1,5 @@
 #include "../../include/UIMenu.h"
+#include "../../include/ButtplugRegistry.h"
 
 #include <BLEDevice.h>
 #include <BLEUtils.h>
@@ -10,6 +11,9 @@ BLEScan* pBLEScan = nullptr;
 bool scanning = false;
 UIMenu *globalMenuPtr = nullptr;
 
+static void startScan(UIMenu *);
+static void stopScan(UIMenu *);
+
 class MyAdvertisedDeviceCallbacks : public BLEAdvertisedDeviceCallbacks {
   UIMenu *menuPtr = nullptr;
 
@@ -19,13 +23,15 @@ public:
   }
 
   void onResult(BLEAdvertisedDevice advertisedDevice) {
-    Serial.printf("Advertised Device: %s \n", advertisedDevice.toString().c_str());
-    BLEAddress *addr = new BLEAddress(advertisedDevice.getAddress());
+    log_i("Advertised Device: %s \n", advertisedDevice.toString().c_str());
+    BLEAdvertisedDevice *device = new BLEAdvertisedDevice(advertisedDevice);
 
     if (advertisedDevice.haveName()) {
-      this->menuPtr->addItem(advertisedDevice.getName().c_str(), [](UIMenu *, void *address) {
-        Serial.printf("Clicked Device: %s \n", ((BLEAddress *) address)->toString().c_str());
-      }, addr);
+      this->menuPtr->addItem(advertisedDevice.getName().c_str(), [](UIMenu *menu, void *device) {
+        stopScan(menu);
+        log_i("Clicked Device: %s \n", ((BLEAdvertisedDevice *) device)->getAddress().toString().c_str());
+        Buttplug.connect((BLEAdvertisedDevice*) device);
+      }, device);
 
       this->menuPtr->render();
     }
@@ -44,9 +50,6 @@ static void freeMenuPtrs(UIMenu *menu) {
     ptr = ptr->next;
   }
 }
-
-static void startScan(UIMenu *);
-static void stopScan(UIMenu *);
 
 static void addScanItem(UIMenu *menu) {
   menu->removeItem(0);
@@ -93,8 +96,8 @@ static void menuOpen(UIMenu *menu) {
 static void menuClose(UIMenu *menu) {
   pBLEScan->stop();
   pBLEScan->clearResults();   // delete results fromBLEScan buffer to release memory
+  scanning = false;
   freeMenuPtrs(menu);
-  delete pBLEScan;
   pBLEScan = nullptr;
 }
 
