@@ -44,6 +44,7 @@ public:
 
   bool connected();
   size_t deviceCount();
+  void vibrateAll(uint8_t speed);
 
   ButtplugDevice *getDeviceByCharacteristic(BLERemoteCharacteristic* characteristic);
 
