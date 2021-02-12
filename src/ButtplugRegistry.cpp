@@ -102,7 +102,7 @@ bool ButtplugDevice::vibrate(uint8_t speed) {
 }
 
 void ButtplugRegistry::connect(BLEAdvertisedDevice *device) {
-  UI.toastNow(String("Connecting to:\n") + device->getAddress().toString().c_str());
+  UI.toastNow("Connecting...", 0, false);
   ButtplugDevice *d = new ButtplugDevice(device);
 
   if (d->connect()) {
@@ -110,8 +110,7 @@ void ButtplugRegistry::connect(BLEAdvertisedDevice *device) {
     d->sendRawCmd("DeviceType;");
     std::string resp = d->readRaw();
     log_i("Got DeviceType: %s", resp.c_str());
-
-    d->vibrate(128);
+    UI.toastNow("Connected!");
   } else {
     delete d;
   }
@@ -127,6 +126,12 @@ ButtplugDevice *ButtplugRegistry::getDeviceByCharacteristic(BLERemoteCharacteris
   }
 
   return nullptr;
+}
+
+void ButtplugRegistry::vibrateAll(uint8_t speed) {
+  for (auto *d : devices) {
+    d->vibrate(speed);
+  }
 }
 
 ButtplugRegistry Buttplug = ButtplugRegistry();
