@@ -23,13 +23,13 @@ public:
   }
 
   void onResult(BLEAdvertisedDevice advertisedDevice) {
-    log_i("Advertised Device: %s \n", advertisedDevice.toString().c_str());
+    log_i("Advertised Device: %s", advertisedDevice.toString().c_str());
     BLEAdvertisedDevice *device = new BLEAdvertisedDevice(advertisedDevice);
 
     if (advertisedDevice.haveName()) {
       this->menuPtr->addItem(advertisedDevice.getName().c_str(), [](UIMenu *menu, void *device) {
         stopScan(menu);
-        log_i("Clicked Device: %s \n", ((BLEAdvertisedDevice *) device)->getAddress().toString().c_str());
+        log_i("Clicked Device: %s", ((BLEAdvertisedDevice *) device)->getAddress().toString().c_str());
         Buttplug.connect((BLEAdvertisedDevice*) device);
       }, device);
 
@@ -101,10 +101,6 @@ static void menuClose(UIMenu *menu) {
   pBLEScan = nullptr;
 }
 
-/**
- * FIXME: Re-entering this causes an eventual crash during scanning.
- * @param menu
- */
 static void buildMenu(UIMenu *menu) {
   globalMenuPtr = menu;
   menu->onOpen(&menuOpen);

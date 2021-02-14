@@ -17,6 +17,7 @@ public:
   bool disconnect();
   void sendRawCmd(std::string cmd);
   std::string readRaw(bool waitForNotify = false);
+  std::string getName() { return this->device == nullptr ? "" : this->device->getName(); }
   void onNotify(uint8_t *data, size_t length);
   bool waitForNotify();
 
@@ -47,6 +48,8 @@ public:
   void vibrateAll(uint8_t speed);
 
   ButtplugDevice *getDeviceByCharacteristic(BLERemoteCharacteristic* characteristic);
+  std::vector<ButtplugDevice*> getDevices() { return devices; }
+  std::vector<ButtplugDevice*> *getDevicesPtr() { return &devices; }
 
 private:
   std::vector<ButtplugDevice*> devices;

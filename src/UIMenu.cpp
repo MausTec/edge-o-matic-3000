@@ -2,6 +2,8 @@
 #include "../include/UserInterface.h"
 #include "../include/Page.h"
 
+#include <esp32-hal-log.h>
+
 UIMenu::UIMenu(const char *t, MenuCallback fn) {
   strlcpy(title, t, TITLE_SIZE);
   initializer = fn;
@@ -107,10 +109,17 @@ void UIMenu::addItemAt(size_t index, const char *text, MenuCallback cb) {
   ptr->prev = item;
 }
 
-void UIMenu::addItem(UIMenu *submenu) {
-  addItem(submenu->title, [=](UIMenu*) {
-    UI.openMenu(submenu);
-  });
+void UIMenu::addItem(UIMenu *submenu, void *arg) {
+  addItem(submenu->title, [=](UIMenu*, void *argv) {
+    UI.openMenu(submenu, true, true, argv);
+  }, arg);
+}
+
+void UIMenu::addItem(std::string text, UIMenu *submenu, void *arg) {
+  addItem(text.c_str(), [=](UIMenu*, void *argv) {
+    log_i("Item added with argv=%x", argv);
+    UI.openMenu(submenu, true, true, argv);
+  }, arg);
 }
 
 void UIMenu::addItem(const char *text, Page *page) {
@@ -202,7 +211,9 @@ void UIMenu::tick() {
   }
 }
 
-void UIMenu::open(UIMenu *previous, bool save_history) {
+void UIMenu::open(UIMenu *previous, bool save_history, void *arg) {
+  this->current_arg = arg;
+  log_i("Menu open with arg=%x", arg);
   initialize();
 
   if (on_open != nullptr) {

@@ -4,6 +4,8 @@
 #include <BLEDevice.h>
 #include <Arduino.h>
 
+#include <algorithm>
+
 static void notifyCallback(BLERemoteCharacteristic* pBLERemoteCharacteristic, uint8_t* pData, size_t length, bool isNotify) {
   ButtplugDevice *device = Buttplug.getDeviceByCharacteristic(pBLERemoteCharacteristic);
 
@@ -12,6 +14,15 @@ static void notifyCallback(BLERemoteCharacteristic* pBLERemoteCharacteristic, ui
   } else {
     log_w("Notify came for unknown device.");
   }
+}
+
+bool ButtplugDevice::disconnect() {
+  this->client->disconnect();
+  auto *vec = Buttplug.getDevicesPtr();
+  log_i("Removing device from registry. %d devices known.", vec->size());
+  vec->erase(std::remove(vec->begin(), vec->end(), this), vec->end());
+  log_i("Removed? device from registry. %d devices known.", vec->size());
+  return true;
 }
 
 bool ButtplugDevice::connect() {
@@ -126,6 +137,10 @@ ButtplugDevice *ButtplugRegistry::getDeviceByCharacteristic(BLERemoteCharacteris
   }
 
   return nullptr;
+}
+
+bool ButtplugRegistry::connected() {
+  return this->devices.size() > 0;
 }
 
 void ButtplugRegistry::vibrateAll(uint8_t speed) {

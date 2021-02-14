@@ -570,9 +570,9 @@ UIMenu *UserInterface::closeMenu() {
   return prev;
 }
 
-void UserInterface::openMenu(UIMenu *menu, bool save_history, bool reenter) {
+void UserInterface::openMenu(UIMenu *menu, bool save_history, bool reenter, void *arg) {
   if (menu != nullptr) {
-    menu->open(current_menu, save_history);
+    menu->open(current_menu, save_history, arg);
   }
 
   current_menu = menu;
