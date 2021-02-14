@@ -2,6 +2,7 @@
 #include "../../include/UserInterface.h"
 #include "../../include/WiFiHelper.h"
 #include "../../include/BluetoothServer.h"
+#include "../../include/ButtplugRegistry.h"
 
 #include <WiFi.h>
 
@@ -83,6 +84,10 @@ static void buildMenu(UIMenu *menu) {
   if (Config.bt_on) {
     menu->addItem("Disable Bluetooth", &onDisableBluetooth);
     menu->addItem(&BluetoothScanMenu);
+
+    if (Buttplug.connected()) {
+      menu->addItem(&BluetoothDevicesMenu);
+    }
   } else if (WiFiHelper::connected()) {
     menu->addItem("Disable WiFi", &onDisableWiFi);
   } else {

@@ -100,9 +100,10 @@ public:
   void drawBar(int y, char label, int value, int maximum, int limit = 0, int peak = 0);
 
   // Menu Handling
-  void openMenu(UIMenu *menu, bool save_history = true, bool reenter = true);
+  void openMenu(UIMenu *menu, bool save_history = true, bool reenter = true, void *arg = nullptr);
   UIMenu *closeMenu();
   bool isMenuOpen();
+  bool isPreviousMenu(UIMenu *m) { return current_menu != nullptr && current_menu->isPreviousMenu(m); }
 
   // Debug
   void screenshot(String &buffer);

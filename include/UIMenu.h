@@ -3,8 +3,9 @@
 
 #include "../config.h"
 #include <functional>
+#include <string>
 
-#define TITLE_SIZE 16
+#define TITLE_SIZE 20
 
 /**
  * Time in ms to ignore scroll events.
@@ -56,15 +57,18 @@ public:
 
   // Item Manipulation
   void addItem(const char *text, ParameterizedMenuCallback pcb = nullptr, void *arg = nullptr);
+  void addItem(std::string text, ParameterizedMenuCallback pcb = nullptr, void *arg = nullptr) { addItem(text.c_str(), pcb, arg); }
   void addItem(const char *text, MenuCallback cb = nullptr);
+  void addItem(std::string text, MenuCallback cb = nullptr) { addItem(text.c_str(), cb); }
   void addItem(const char *text, Page *p);
-  void addItem(UIMenu *submenu);
+  void addItem(UIMenu *submenu, void *arg = nullptr);
+  void addItem(std::string text, UIMenu *submenu, void *arg = nullptr);
   void addItemAt(size_t index, const char *text, MenuCallback cb = nullptr);
   void removeItem(size_t index);
   void clearItems();
 
   // Render Lifecycle
-  void open(UIMenu *previous = nullptr, bool save_history = true);
+  void open(UIMenu *previous = nullptr, bool save_history = true, void *arg = nullptr);
   void onOpen(MenuCallback cb = nullptr);
   void onClose(MenuCallback cb = nullptr);
   virtual void render();
@@ -78,12 +82,19 @@ public:
   virtual int getItemCount();
   virtual int getCurrentPosition();
 
+  // Misc Queries
   UIMenuItem *firstItem() { return first_item; }
+  bool isPreviousMenu(UIMenu *m) { return prev == m; }
+  void *getCurrentArg() {
+    log_i("Getting current arg: %x", this->current_arg);
+    return this->current_arg;
+  }
 
 protected:
   char title[TITLE_SIZE + 1];
 
   UIMenu *prev = nullptr;
+  void *current_arg = nullptr;
 
 private:
   UIMenuItem *first_item = nullptr;
@@ -104,5 +115,6 @@ extern UIMenu EdgingSettingsMenu;
 extern UIMenu AccessoryPortMenu;
 extern UIMenu UpdateMenu;
 extern UIMenu BluetoothScanMenu;
+extern UIMenu BluetoothDevicesMenu;
 
 #endif
