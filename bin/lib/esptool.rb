@@ -72,8 +72,16 @@ class ESPTool
     serial.write(".setser #{serial_no}\n")
     read_serial(serial, /^OK|^ERR_/)
     serial.write(".getser\n")
-    read_serial(serial, /Serial:/)
+    validated = read_serial(serial, /Serial:\s*(\S+)/)
     serial.close
+
+    if validated == serial_no
+      puts "Serial set: %s" % [validated]
+      return true
+    else
+      puts "Serial Mismatch! Read: %s, Wrote: %s" % [validated.inspect, serial_no.inspect]
+      return false
+    end
   end
 
   def console!
@@ -149,7 +157,7 @@ private
 
     if port == 'auto'
       found_ports = search_ports_win
-      ignored_ports = ['COM1', 'COM9']
+      ignored_ports = ['COM1', 'COM18']
 
       # Reject COM1, maybe you don't want this
       if found_ports.length > 1
@@ -178,8 +186,10 @@ private
         line = serial.gets
         puts "DEVICE: " + line
       end while line !~ match
+      return $1
     end
   rescue Timeout::Error => e
     # nop
+    return nil
   end
 end

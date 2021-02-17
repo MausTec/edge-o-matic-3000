@@ -10,6 +10,7 @@ require_relative './lib/esptool.rb'
 require_relative './lib/arduino.rb'
 require 'optimist'
 require 'semantic'
+require 'yaml'
 
 opts = Optimist::options do
   banner <<-TEXT
@@ -25,6 +26,7 @@ TEXT
   opt :inc_version, "Increase major|minor|patch", type: :string, default: nil
   opt :tag, "Tag this as a release and push", type: :bool, default: false
   opt :serial, "Set a serial number for this device", type: :string, default: nil
+  opt :serial_prefix, "Autogen a serial from serials.yml", type: :string, default: nil
   opt :file_path, "Copy binary to a file path for update", type: :string, default: nil
   opt :console, "Open a console to the device", type: :bool, default: false
 end
@@ -90,7 +92,7 @@ end
 
 esptool = nil
 
-if opts[:port] && (opts[:upload] || opts[:serial] || opts[:console])
+if opts[:port] && (opts[:upload] || opts[:serial] || opts[:console] || opts[:serial_prefix])
   esptool = ESPTool.new(opts[:port])
 end
 
@@ -100,6 +102,16 @@ end
 
 if opts[:serial]
   esptool&.set_serial(opts[:serial])
+end
+
+if (prefix = opts[:serial_prefix])
+  serials = YAML.load(File.read("serials.yml"));
+  last_ser = serials[prefix]
+  last_ser += 1
+  if esptool&.set_serial("%s-%02d%03d" % [prefix, Date.today.year % 100, last_ser])
+    serials[prefix] = last_ser
+    File.write("serials.yml", YAML.dump(serials))
+  end
 end
 
 if opts[:file_path]
