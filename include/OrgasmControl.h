@@ -29,6 +29,9 @@ namespace OrgasmControl {
   void stopRecording();
   bool isRecording();
 
+  // Twitch Detect (In wrong place for 60hz)
+  void twitchDetect();
+
   namespace {
     long last_update_ms = 0;
 
@@ -45,6 +48,14 @@ namespace OrgasmControl {
     bool control_motor = false;
     bool prev_control_motor = false;
     int denial_count = 0;
+
+    //Timings - NEW
+    long motor_stop_time = 0;
+    long motor_start_time = 0;
+    long edge_time_out = 10000;
+    int minimum_on_time = 500;
+    int twitch_count = 0;
+
 
     // File Writer
     long recording_start_ms = 0;
