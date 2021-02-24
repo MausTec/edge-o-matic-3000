@@ -138,3 +138,5 @@ For supporting my initial endeavour in hardware assembly and helping me scale:
 
 Any changes to configuration values should be linted. Run `ruby bin/config_lint.rb` to check documentation, serializers
 and structs for consistency.
+
+Thanks for readin'!
