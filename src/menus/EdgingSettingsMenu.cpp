@@ -28,6 +28,19 @@ UIInput MotorMaxSpeedInput("Motor Max Speed", [](UIMenu *ip) {
   });
 });
 
+UIInput EdgeDelayInput("Edge Delay", [](UIMenu *ip) {
+  UIInput *input = (UIInput*) ip;
+  input->setMax(60);
+  input->setStep(1);
+  input->setValue(Config.edge_delay / 1000);
+  input->onChange([](int value) {
+    Config.edge_delay = value * 1000;
+  });
+  input->onConfirm([](int) {
+    saveConfigToSd(0);
+  });
+});
+
 UIInput ArousalLimitInput("Arousal Limit", [](UIMenu *ip) {
   UIInput *input = (UIInput*) ip;
   input->setMax(1023);
@@ -74,6 +87,7 @@ UIInput SensorSensitivityInput("Sensor Sensitivity", [](UIMenu *ip) {
 
 static void buildMenu(UIMenu *menu) {
   menu->addItem(&MotorMaxSpeedInput);
+  menu->addItem(&EdgeDelayInput);
   menu->addItem(&MotorRampTimeInput);
   menu->addItem(&ArousalLimitInput);
   menu->addItem(&SensorSensitivityInput);
