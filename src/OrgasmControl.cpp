@@ -34,7 +34,7 @@ namespace OrgasmControl {
     void updateMotorSpeed() {
       // Motor increment goes 0 - 100 in ramp_time_s, in steps of 1/update_fequency
       float motor_increment = (
-          (float)Config.motor_max_speed /
+          (float)Config.motor_max_speed - (float)Config.motor_start_speed  /
           ((float)Config.update_frequency_hz * (float)Config.motor_ramp_time_s)
       );
 
@@ -44,17 +44,17 @@ namespace OrgasmControl {
         time_out_over = true;
       }
       // Ope, orgasm incoming! Stop it!
-      if (arousal > Config.sensitivity_threshold && motor_speed > 0 && on_time > minimum_on_time) {
+      if (arousal > Config.sensitivity_threshold && motor_speed > 0 && on_time > Config.minimum_on_time) {
         // The motor_speed check above, btw, is so we only hit this once per peak.
         // Set the motor speed to 0, and set stop time.
         motor_speed = 0;
         motor_stop_time = millis();
       } else if (!time_out_over) {
           twitchDetect();
+      } else if (motor_speed == 0){
+          motor_start_time = millis();
+          motor_speed = Config.motor_start_speed;
       } else if (motor_speed < Config.motor_max_speed) {
-          if (motor_speed == 0){
-            motor_start_time = millis();
-          }
           motor_speed += motor_increment;
       } else if (motor_speed > Config.motor_max_speed) {
           motor_speed = Config.motor_max_speed;

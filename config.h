@@ -100,7 +100,9 @@ struct ConfigStruct {
 
   // Orgasms and Stuff
   byte motor_max_speed;
+  byte motor_start_speed;
   int edge_delay;
+  int minimum_on_time;
   byte pressure_smoothing;
   int sensitivity_threshold;
   int motor_ramp_time_s;

@@ -165,7 +165,6 @@ namespace Hardware {
   void setMotorSpeed(int speed) {
     int new_speed = min(max(speed, 0), 255);
     if (new_speed == motor_speed) return;
-
     motor_speed = new_speed;
     analogWrite(MOT_PWM_PIN, motor_speed);
     Buttplug.vibrateAll(new_speed);
