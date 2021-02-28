@@ -91,6 +91,9 @@ void loadConfigFromJsonObject(JsonDocument &doc) {
 
   // Copy Orgasm Settings
   Config.motor_max_speed = doc["motor_max_speed"] | 128;
+  Config.motor_start_speed = doc["motor_start_speed"] | 10;
+  Config.edge_delay = doc["edge_delay"] | 10000;
+  Config.minimum_on_time = doc["minimum_on_time"] | 1000;
   Config.pressure_smoothing = doc["pressure_smoothing"] | 5;
   Config.sensitivity_threshold = doc["sensitivity_threshold"] | 600;
   Config.motor_ramp_time_s = doc["motor_ramp_time_s"] | 30;
@@ -132,6 +135,9 @@ void dumpConfigToJsonObject(JsonDocument &doc) {
 
   // Copy Orgasm Settings
   doc["motor_max_speed"] = Config.motor_max_speed;
+  doc["motor_start_speed"] = Config.motor_start_speed;
+  doc["edge_delay"] = Config.edge_delay;
+  doc["minimum_on_time"] = Config.minimum_on_time;
   doc["pressure_smoothing"] = Config.pressure_smoothing;
   doc["sensitivity_threshold"] = Config.sensitivity_threshold;
   doc["motor_ramp_time_s"] = Config.motor_ramp_time_s;
@@ -214,6 +220,12 @@ bool setConfigValue(const char *option, const char *value, bool &require_reboot)
     require_reboot = true;
   } else if(!strcmp(option, "motor_max_speed")) {
     Config.motor_max_speed = atoi(value);
+  } else if(!strcmp(option, "motor_start_speed")) {
+    Config.motor_start_speed = atoi(value);
+  } else if(!strcmp(option, "edge_delay")) {
+    Config.edge_delay = atoi(value);
+  } else if(!strcmp(option, "minimum_on_time")) {
+    Config.minimum_on_time = atoi(value);
   } else if(!strcmp(option, "screen_dim_seconds")) {
     Config.screen_dim_seconds = atoi(value);
   } else if(!strcmp(option, "screen_timeout_seconds")) {
@@ -266,6 +278,12 @@ bool getConfigValue(const char *option, String &out) {
     out += String(Config.websocket_port) + '\n';
   } else if(!strcmp(option, "motor_max_speed")) {
     out += String(Config.motor_max_speed) + '\n';
+  } else if(!strcmp(option, "motor_start_speed")) {
+    out += String(Config.motor_start_speed) + '\n';
+  } else if(!strcmp(option, "edge_delay")) {
+    out += String(Config.edge_delay) + '\n';
+  } else if(!strcmp(option, "minimum_on_time")) {
+    out += String(Config.minimum_on_time) + '\n';
   } else if(!strcmp(option, "screen_dim_seconds")) {
     out += String(Config.screen_dim_seconds) + '\n';
   } else if(!strcmp(option, "screen_timeout_seconds")) {
