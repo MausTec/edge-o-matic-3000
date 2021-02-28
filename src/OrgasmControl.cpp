@@ -34,7 +34,7 @@ namespace OrgasmControl {
     void updateMotorSpeed() {
       // Motor increment goes 0 - 100 in ramp_time_s, in steps of 1/update_fequency
       float motor_increment = (
-          (float)Config.motor_max_speed - (float)Config.motor_start_speed  /
+          (float)(Config.motor_max_speed - Config.motor_start_speed)  /
           ((float)Config.update_frequency_hz * (float)Config.motor_ramp_time_s)
       );
 
