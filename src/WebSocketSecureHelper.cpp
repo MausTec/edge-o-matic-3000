@@ -20,6 +20,7 @@ namespace WebSocketSecureHelper {
       insecureServer = nullptr;
     }
   }
+
   void setup() {
     if (Config.use_ssl) {
       // Create an SSL certificate object from the files included above ...
@@ -145,7 +146,6 @@ namespace WebSocketSecureHelper {
   // In the create function of the handler, we create a new Handler and keep track
   // of it using the activeClients array
   WebsocketHandler *RemoteHandler::create() {
-    Serial.println("Creating new chat client!");
     WebsocketHandler *handler = new RemoteHandler();
     for (int i = 0; i < MAX_CLIENTS; i++) {
       if (activeClients[i] == nullptr) {
@@ -187,6 +187,11 @@ namespace WebSocketSecureHelper {
   }
 
   void RemoteHandler::sendText(String payload) {
+    if (this->closed()) {
+      this->onClose();
+      return;
+    }
+
     this->send(payload.c_str(), SEND_TYPE_TEXT);
   }
 }
