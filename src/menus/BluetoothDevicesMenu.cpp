@@ -19,10 +19,39 @@ static void doDisconnect(UIMenu *menu, void *d) {
   }
 }
 
+static void setVibrateMode(UIMenu *menu, void *m) {
+  ButtplugDevice *device = (ButtplugDevice*) menu->getCurrentArg();
+  VibrationMode::Mode mode = (VibrationMode::Mode) m;
+
+  Serial.print("Setting mode to: ");
+  switch(mode) {
+    case VibrationMode::Depletion:
+      Serial.println("Depletion");
+      break;
+    case VibrationMode::Enhancement:
+      Serial.println("Enhancement");
+      break;
+    case VibrationMode::RampStop:
+      Serial.println("RampStop");
+      break;
+  }
+}
+
+static void buildVibrateModeMenu(UIMenu *menu, void *d) {
+  ButtplugDevice *device = (ButtplugDevice*) menu->getCurrentArg();
+
+  menu->addItem("Depletion", &setVibrateMode, VibrationMode::Depletion);
+  menu->addItem("Enhancement", &setVibrateMode, VibrationMode::Enhancement);
+  menu->addItem("RampStop", &setVibrateMode, VibrationMode::RampStop);
+}
+
+UIMenu VibrateModeMenu("Vibrate Mode", &buildVibrateModeMenu);
+
 static void buildDeviceMenu(UIMenu *menu) {
   ButtplugDevice *device = (ButtplugDevice*) menu->getCurrentArg();
   //  menu->setTitle(device->getName());
   menu->addItem("Disconnect", &doDisconnect, device);
+  menu->addItem(&VibrateModeMenu, device);
 }
 
 UIMenu ManageDeviceMenu("Manage Device", &buildDeviceMenu);
