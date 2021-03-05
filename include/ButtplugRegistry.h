@@ -8,6 +8,14 @@
 
 class ButtplugRegistry;
 
+namespace VibrationMode {
+  enum Mode {
+    Depletion,
+    Enhancement,
+    RampStop
+  };
+}
+
 class ButtplugDevice {
 public:
   friend class ButtplugRegistry;

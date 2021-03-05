@@ -41,8 +41,8 @@ class ESPTool
     args << "write_flash"
     args += build_opts_array(options)
 
-    code_image = File.join(ROOT_PATH, "build", "arduino", 'ESP32_WiFi.ino.bin')
-    partitions_image = File.join(ROOT_PATH, "build", "arduino", 'ESP32_WiFi.ino.partitions.bin')
+    code_image = File.join(ROOT_PATH, "build", "arduino", 'nogasm-wifi.ino.bin')
+    partitions_image = File.join(ROOT_PATH, "build", "arduino", 'nogasm-wifi.ino.partitions.bin')
 
     images = {
         '0xe000': File.join(HARDWARE_PATH, "tools", "partitions", "boot_app0.bin"),

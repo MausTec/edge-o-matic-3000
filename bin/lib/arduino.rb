@@ -24,7 +24,7 @@ require 'fileutils'
 #-prefs=runtime.tools.xtensa-esp32-elf-gcc.path=C:\Users\eiser.000\AppData\Local\Arduino15\packages\esp32\tools\xtensa-esp32-elf-gcc\1.22.0-80-g6c4433a-5.2.0
 #-prefs=runtime.tools.xtensa-esp32-elf-gcc-1.22.0-80-g6c4433a-5.2.0.path=C:\Users\eiser.000\AppData\Local\Arduino15\packages\esp32\tools\xtensa-esp32-elf-gcc\1.22.0-80-g6c4433a-5.2.0
   #-verbose
-#E:\Documents\Arduino\ESP32_WiFi\ESP32_WiFi.ino
+#E:\Documents\Arduino\ESP32_WiFi\nogasm-wifi.ino
 
 class Arduino
   class Builder
