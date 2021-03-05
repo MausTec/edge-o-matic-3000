@@ -18,7 +18,7 @@ Compile and upload this code to the ESP, using the Arduino environment for now.
 TEXT
 
   opt :port, "Serial port to upload to", type: :string, default: 'auto'
-  opt :ino_file, "Path to main .ino", type: :string, default: File.join(ROOT_PATH, "ESP32_WiFi.ino")
+  opt :ino_file, "Path to main .ino", type: :string, default: File.join(ROOT_PATH, "nogasm-wifi.ino")
   opt :compile, "Recompile the software before upload", type: :bool, default: false
   opt :upload, "Upload to the device", type: :bool, default: false
   opt :get_version, "Show software version and exit", type: :bool, default: false
@@ -84,8 +84,8 @@ if opts[:tag]
 
   FileUtils.rm_rf(release_root)
   FileUtils.mkdir_p(release_root)
-  FileUtils.cp(File.join(build_root, "ESP32_WiFi.ino.bin"), File.join(release_root, "eom3k-#{file_friendly_version}.bin"))
-  FileUtils.cp(File.join(build_root, "ESP32_WiFi.ino.partitions.bin"), File.join(release_root, "eom3k-#{file_friendly_version}.partitions.bin"))
+  FileUtils.cp(File.join(build_root, "nogasm-wifi.ino.bin"), File.join(release_root, "eom3k-#{file_friendly_version}.bin"))
+  FileUtils.cp(File.join(build_root, "nogasm-wifi.ino.partitions.bin"), File.join(release_root, "eom3k-#{file_friendly_version}.partitions.bin"))
 
   sh "gh release create v#{file_friendly_version} #{File.join(release_root, "eom3k-#{file_friendly_version}.bin")} #{File.join(release_root, "eom3k-#{file_friendly_version}.partitions.bin")} --notes-file #{File.join(ROOT_PATH, "doc", "ReleaseTemplate.md")}"
 end
@@ -115,7 +115,7 @@ if (prefix = opts[:serial_prefix])
 end
 
 if opts[:file_path]
-  update_bin_path = File.join(build_root, "ESP32_WiFi.ino.bin")
+  update_bin_path = File.join(build_root, "nogasm-wifi.ino.bin")
   target_update_path = File.join(opts[:file_path], "update.bin")
   puts "Copying #{update_bin_path} to #{target_update_path}"
   FileUtils.cp(update_bin_path, target_update_path)
