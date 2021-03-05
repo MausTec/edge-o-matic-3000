@@ -32,13 +32,16 @@ and is automatically generated. Here is a quick summary of config variables:
 |`websocket_port`|Int|80|Port to listen for incoming Websocket connections.|
 |`use_ssl`|Boolean|false|Enable SSL server, which will eat all your RAM!|
 |`hostname`|String|"eom3k"|Local hostname for your device.|
+|`motor_start_speed`|Byte|10|The minimum speed the motor will start at in automatic mode.|
 |`motor_max_speed`|Byte|128|Maximum speed for the motor in auto-ramp mode.|
+|`motor_ramp_time_s`|Int|30|The time it takes for the motor to reach `motor_max_speed` in auto ramp mode.|
+|`edge_delay`|Int|10000|Time (ms) after edge detection before resuming stimulation.|
+|`minimum_on_time`|Int|1000|Time (ms) after stimulation starts before edge detection is resumed.|
 |`screen_dim_seconds`|Int|10|Time, in seconds, before the screen dims. 0 to disable.|
 |`screen_timeout_seconds`|Int|0|Time, in seconds, before the screen turns off. 0 to disable.|
 |`pressure_smoothing`|Byte|5|Number of samples to take an average of. Higher results in lag and lower resolution!|
 |`classic_serial`|Boolean|false|Output classic NoGasm values over serial for backwards compatibility.|
 |`sensitivity_threshold`|Int|600|The arousal threshold for orgasm detection. Lower = sooner cutoff.|
-|`motor_ramp_time_s`|Int|30|The time it takes for the motor to reach `motor_max_speed` in auto ramp mode.|
 |`update_frequency_hz`|Int|50|Update frequency for pressure readings and arousal steps. Higher = crash your serial monitor.|
 |`sensor_sensitivity`|Byte|128|Analog pressure prescaling. Adjust this until the pressure is ~60-70%|
 |`use_average_values`|Boolean|false|Use average values when calculating arousal. This smooths noisy data.|
