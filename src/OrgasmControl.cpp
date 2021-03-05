@@ -49,6 +49,7 @@ namespace OrgasmControl {
         // Set the motor speed to 0, and set stop time.
         motor_speed = 0;
         motor_stop_time = millis();
+        denial_count++;
       } else if (!time_out_over) {
           twitchDetect();
       } else if (motor_speed == 0){
@@ -187,6 +188,7 @@ namespace OrgasmControl {
   }
 
   void controlMotor(bool control) {
+    motor_speed = 0;
     control_motor = control;
   }
 
