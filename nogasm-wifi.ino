@@ -140,6 +140,7 @@ void setup() {
 
   // Go to the splash page:
   Page::Go(&DebugPage, false);
+  Hardware::setEncoderColor(CRGB::Red);
 
   // Setup SD, which loads our config
   resetSD();
@@ -184,7 +185,13 @@ void setup() {
 #else
   if (true) {
 #endif
-    delay(3000);
+    delay(500);
+    Hardware::setEncoderColor(CRGB::Green);
+    delay(500);
+    Hardware::setEncoderColor(CRGB::Blue);
+    delay(500);
+    Hardware::setEncoderColor(CRGB::White);
+    delay(500);
     UI.fadeTo();
   }
 

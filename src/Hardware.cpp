@@ -208,7 +208,14 @@ namespace Hardware {
   }
 
   long getPressure() {
-    return analogRead(BUTT_PIN);
+    float sum = 0;
+    const int samples = 3;
+
+    for (int i = 0; i < samples; i++) {
+      sum += analogRead(BUTT_PIN);
+    }
+
+    return floor(sum / samples);
   }
 
   void setPressureSensitivity(byte value) {
