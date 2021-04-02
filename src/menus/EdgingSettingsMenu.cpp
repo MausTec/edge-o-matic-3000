@@ -34,7 +34,7 @@ UIInput MotorStartSpeedInput("Motor Start Speed", [](UIMenu *ip) {
   input->setStep(1);
   input->setValue(Config.motor_start_speed);
   input->onChange([](int value) {
-    Config.motor_start_speed;
+    Config.motor_start_speed = value;
   });
   input->onConfirm([](int) {
     saveConfigToSd(0);
