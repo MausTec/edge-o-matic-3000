@@ -9,17 +9,13 @@ BluetoothServer::~BluetoothServer() {
 }
 
 void BluetoothServer::disconnect() {
-  BLEDevice::deinit();
   stopAdvertising();
+  BLEDevice::deinit(true);
 
-  free(this->characteristic);
   this->characteristic = nullptr;
-
-  free(this->service);
   this->service = nullptr;
-
-  free(this->server);
   this->server = nullptr;
+
   Serial.println("BLE Disconnected.");
 }
 
@@ -36,8 +32,8 @@ void BluetoothServer::begin() {
   Serial.println("Create Characteristic");
   this->characteristic = this->service->createCharacteristic(
       CHARACTERISTIC_UUID,
-      BLECharacteristic::PROPERTY_READ |
-      BLECharacteristic::PROPERTY_WRITE
+      NIMBLE_PROPERTY::READ |
+      NIMBLE_PROPERTY::WRITE
   );
 
   Serial.println("Set Characteristic");
@@ -46,14 +42,17 @@ void BluetoothServer::begin() {
 }
 
 void BluetoothServer::advertise() {
-  this->advertising = this->server->getAdvertising();
-  this->advertising->start();
+//  this->advertising = this->server->getAdvertising();
+  // FIXME: Broken after move to NimBLE
+//  this->advertising->start();
 }
 
 void BluetoothServer::stopAdvertising() {
-  this->advertising->stop();
-  free(this->advertising);
-  this->advertising = nullptr;
+  if (this->advertising != nullptr) {
+    this->advertising->stop();
+    free(this->advertising);
+    this->advertising = nullptr;
+  }
 }
 
 BluetoothServer BT;
