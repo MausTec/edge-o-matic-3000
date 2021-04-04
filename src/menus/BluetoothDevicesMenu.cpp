@@ -19,7 +19,7 @@ static void doDisconnect(UIMenu *menu, void *d) {
   }
 }
 
-static void setVibrateMode(UIMenu *menu, void *m) {
+static void setVibrateMode(UIMenu *menu, int m) {
   ButtplugDevice *device = (ButtplugDevice*) menu->getCurrentArg();
   VibrationMode::Mode mode = (VibrationMode::Mode) m;
 
@@ -37,19 +37,19 @@ static void setVibrateMode(UIMenu *menu, void *m) {
   }
 }
 
-static void buildVibrateModeMenu(UIMenu *menu, void *d) {
+static void buildVibrateModeMenu(UIMenu *menu) {
   ButtplugDevice *device = (ButtplugDevice*) menu->getCurrentArg();
 
   menu->addItem("Depletion", &setVibrateMode, VibrationMode::Depletion);
   menu->addItem("Enhancement", &setVibrateMode, VibrationMode::Enhancement);
-  menu->addItem("RampStop", &setVibrateMode, VibrationMode::RampStop);
+  menu->addItem("Ramp-Stop", &setVibrateMode, VibrationMode::RampStop);
 }
 
 UIMenu VibrateModeMenu("Vibrate Mode", &buildVibrateModeMenu);
 
 static void buildDeviceMenu(UIMenu *menu) {
   ButtplugDevice *device = (ButtplugDevice*) menu->getCurrentArg();
-  //  menu->setTitle(device->getName());
+  menu->setTitle(device->getName());
   menu->addItem("Disconnect", &doDisconnect, device);
   menu->addItem(&VibrateModeMenu, device);
 }

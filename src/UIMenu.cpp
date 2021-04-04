@@ -28,6 +28,27 @@ void UIMenu::addItem(const char *text, MenuCallback cb) {
   }
 }
 
+void UIMenu::addItem(const char *text, IParameterizedMenuCallback cb, int arg) {
+  UIMenuItem *item = new UIMenuItem();
+  strncpy(item->text, text, 20);
+  item->next = nullptr;
+  item->cb = nullptr;
+  item->pcb = nullptr;
+  item->ipcb = cb;
+  item->prev = last_item;
+  item->iarg = arg;
+
+  if (last_item != nullptr) {
+    last_item->next = item;
+  }
+
+  last_item = item;
+
+  if (first_item == nullptr) {
+    first_item = item;
+  }
+}
+
 void UIMenu::addItem(const char *text, ParameterizedMenuCallback pcb, void *arg) {
   UIMenuItem *item = new UIMenuItem();
   strncpy(item->text, text, 20);
@@ -228,6 +249,10 @@ void UIMenu::open(UIMenu *previous, bool save_history, void *arg) {
   UI.setButton(0, "BACK");
   UI.setButton(2, "ENTER");
   render();
+}
+
+void UIMenu::setTitle(const char *text) {
+  strncpy(this->title, text, TITLE_SIZE);
 }
 
 UIMenu *UIMenu::close() {

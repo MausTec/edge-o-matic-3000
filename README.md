@@ -103,6 +103,7 @@ This project uses the following libraries:
 - Adafruit SSD1306 library by Adafruit (click "Install All" if it prompts you for dependencies)
 - ESP32Servo library by Kevin Harrington
 - ESP32 I2C Slave library by Gutierrez PS
+- NimBLE (v1.2): https://github.com/h2zero/NimBLE-Arduino
 
 #### Board Settings
 
