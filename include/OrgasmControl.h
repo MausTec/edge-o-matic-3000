@@ -6,6 +6,15 @@
 #include "RunningAverage.h"
 #include <SD.h>
 
+namespace VibrationMode {
+  enum Mode {
+    RampStop = 1
+    Depletion = 2
+    Enhancement = 3
+    GlobalSync = 0
+  };
+}
+
 namespace OrgasmControl {
   void tick();
 
@@ -49,12 +58,11 @@ namespace OrgasmControl {
     bool prev_control_motor = false;
     int denial_count = 0;
 
-    //Timings - NEW
+    // Timings - NEW
     long motor_stop_time = 0;
     long motor_start_time = 0;
     long edge_time_out = 10000;
     int twitch_count = 0;
-
 
     // File Writer
     long recording_start_ms = 0;

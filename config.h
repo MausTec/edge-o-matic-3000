@@ -109,6 +109,9 @@ struct ConfigStruct {
   int update_frequency_hz;
   byte sensor_sensitivity;
   bool use_average_values;
+
+  // Vibration Output Mode
+  VibrationMode vibration_mode;
 } extern Config;
 
 extern void loadConfigFromSd();
