@@ -45,9 +45,19 @@ and is automatically generated. Here is a quick summary of config variables:
 |`update_frequency_hz`|Int|50|Update frequency for pressure readings and arousal steps. Higher = crash your serial monitor.|
 |`sensor_sensitivity`|Byte|128|Analog pressure prescaling. Adjust this until the pressure is ~60-70%|
 |`use_average_values`|Boolean|false|Use average values when calculating arousal. This smooths noisy data.|
+|`vibration_mode`|VibrationMode|RampStop|Vibration Mode for main vibrator control.|
 
 \* AzureFang refers to a common wireless technology that is blue and involves chewing face-rocks. However, the
    trademark holders of this technology require the name to be licensed, so we're totally just using AzureFang.
+   
+### Vibration Modes:
+
+|ID|Name|Description|
+|---|---|---|
+|1|Ramp-Stop|Vibrator ramps up from set min speed to max speed, stopping abruptly on arousal threshold crossing.|
+|2|Depletion|Vibrator speed ramps up from min to max, but is reduced as arousal approaches threshold.|
+|3|Enhancement|Vibrator speed ramps up as arousal increases, holding a peak for ramp_time.|
+|0|Global Sync|When set on secondary vibrators, they will follow the primary vibrator speed.|
 
 ## Hardware
 

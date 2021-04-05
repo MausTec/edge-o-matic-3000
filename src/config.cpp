@@ -101,6 +101,9 @@ void loadConfigFromJsonObject(JsonDocument &doc) {
   Config.sensor_sensitivity = doc["sensor_sensitivity"] | 128;
   Config.use_average_values = doc["use_average_values"] | false;
 
+  // Copy Vibration Settings
+  Config.vibration_mode = (VibrationMode) doc["vibration_mode"] | VibrationMode::RampStop;
+
   /**
    * Setting Validations
    */
@@ -144,6 +147,9 @@ void dumpConfigToJsonObject(JsonDocument &doc) {
   doc["update_frequency_hz"] = Config.update_frequency_hz;
   doc["sensor_sensitivity"] = Config.sensor_sensitivity;
   doc["use_average_values"] = Config.use_average_values;
+
+  // Vibration Settings
+  doc["vibration_mode"] = (int) Config.vibration_mode;
 } // dumpConfigToJsonObject
 
 bool dumpConfigToJson(String &str) {
@@ -260,6 +266,8 @@ bool setConfigValue(const char *option, const char *value, bool &require_reboot)
   } else if (!strcmp(option, "hostname")) {
     strlcpy(Config.hostname, value, sizeof(Config.hostname));
     require_reboot = true;
+  } else if (!strcmp(option, "vibration_mode")) {
+    Config.vibration_mode = (VibrationMode) atoi(value);
   } else {
     return false;
   }
@@ -314,6 +322,8 @@ bool getConfigValue(const char *option, String &out) {
     out += String(Config.use_ssl) + '\n';
   } else if (!strcmp(option, "hostname")) {
     out += String(Config.hostname) + '\n';
+  } else if (!strcmp(option, "vibration_mode")) {
+    out += String((int) Config.vibration_mode) + '\n';
   } else {
     return false;
   }
