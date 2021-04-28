@@ -22,7 +22,7 @@ static void doDisconnect(UIMenu *menu, void *d) {
 
 static void setVibrateMode(UIMenu *menu, int m) {
   ButtplugDevice *device = (ButtplugDevice*) menu->getCurrentArg();
-  VibrationMode::Mode mode = (VibrationMode::Mode) m;
+  VibrationMode mode = (VibrationMode) m;
 
   Serial.print("Setting mode to: ");
   switch(mode) {
@@ -41,9 +41,9 @@ static void setVibrateMode(UIMenu *menu, int m) {
 static void buildVibrateModeMenu(UIMenu *menu) {
   ButtplugDevice *device = (ButtplugDevice*) menu->getCurrentArg();
 
-  menu->addItem("Depletion", &setVibrateMode, VibrationMode::Depletion);
-  menu->addItem("Enhancement", &setVibrateMode, VibrationMode::Enhancement);
-  menu->addItem("Ramp-Stop", &setVibrateMode, VibrationMode::RampStop);
+  menu->addItem("Depletion", &setVibrateMode, (int) VibrationMode::Depletion);
+  menu->addItem("Enhancement", &setVibrateMode, (int) VibrationMode::Enhancement);
+  menu->addItem("Ramp-Stop", &setVibrateMode, (int) VibrationMode::RampStop);
 }
 
 UIMenu VibrateModeMenu("Vibrate Mode", &buildVibrateModeMenu);
