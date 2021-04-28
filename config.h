@@ -3,6 +3,7 @@
 
 #include "arduino.h"
 #include "errors.h"
+#include "include/VibrationModeController.h"
 
 #include <ArduinoJson.h>
 

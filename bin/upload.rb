@@ -27,6 +27,7 @@ TEXT
   opt :tag, "Tag this as a release and push", type: :bool, default: false
   opt :serial, "Set a serial number for this device", type: :string, default: nil
   opt :serial_prefix, "Autogen a serial from serials.yml", type: :string, default: nil
+  opt :serial_variant, "Append a veriant to the serial number.", type: :string, default: nil
   opt :file_path, "Copy binary to a file path for update", type: :string, default: nil
   opt :console, "Open a console to the device", type: :bool, default: false
   opt :exception, "Decode the last exception dump", type: :bool, default: false
@@ -125,7 +126,13 @@ if (prefix = opts[:serial_prefix])
   serials = YAML.load(File.read("serials.yml"));
   last_ser = serials[prefix]
   last_ser += 1
-  if esptool&.set_serial("%s-%02d%03d" % [prefix, Date.today.year % 100, last_ser])
+
+  serial = "%s-%02d%03d" % [prefix, Date.today.year % 100, last_ser]
+  if (variant = opts[:serial_variant])
+    serial += "-" + variant
+  end
+
+  if esptool&.set_serial(serial)
     serials[prefix] = last_ser
     File.write("serials.yml", YAML.dump(serials))
   end

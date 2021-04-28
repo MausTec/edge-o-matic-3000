@@ -4,16 +4,8 @@
 #include <Arduino.h>
 #include "../config.h"
 #include "RunningAverage.h"
+#include "VibrationModeController.h"
 #include <SD.h>
-
-namespace VibrationMode {
-  enum Mode {
-    RampStop = 1
-    Depletion = 2
-    Enhancement = 3
-    GlobalSync = 0
-  };
-}
 
 namespace OrgasmControl {
   void tick();
@@ -70,6 +62,7 @@ namespace OrgasmControl {
 
     void updateArousal();
     void updateMotorSpeed();
+    VibrationModeController* getVibrationMode();
   }
 }
 

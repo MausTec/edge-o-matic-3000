@@ -102,7 +102,7 @@ void loadConfigFromJsonObject(JsonDocument &doc) {
   Config.use_average_values = doc["use_average_values"] | false;
 
   // Copy Vibration Settings
-  Config.vibration_mode = (VibrationMode) doc["vibration_mode"] | VibrationMode::RampStop;
+  Config.vibration_mode = (VibrationMode)(doc["vibration_mode"] | (int)VibrationMode::RampStop);
 
   /**
    * Setting Validations
@@ -193,7 +193,6 @@ void saveConfigToSd(long save_at_ms) {
     }
   }
 
-  SD.remove(CONFIG_FILENAME);
   File tmp = SD.open(CONFIG_FILENAME, FILE_WRITE);
   if (!tmp) {
     Serial.println(F("Failed to create temp file for config save!"));
