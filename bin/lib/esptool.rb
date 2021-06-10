@@ -156,7 +156,7 @@ private
 
   def search_ports_win
     ports = {}
-    1.upto 64 do |index|
+    1.upto 255 do |index|
       begin
        serial = Serial.new  portname = 'COM' + index.to_s
         ports[portname] = 'is available' if serial
@@ -174,7 +174,7 @@ private
 
     if port == 'auto'
       found_ports = search_ports_win
-      ignored_ports = ['COM1', 'COM18']
+      ignored_ports = ['COM1', 'COM5']
 
       # Reject COM1, maybe you don't want this
       if found_ports.length > 1
