@@ -17,12 +17,12 @@ require 'fileutils'
   #-build-path C:\Users\eiser.000\AppData\Local\Temp\arduino_build_233518
   #-warnings=none
 #-prefs=build.warn_data_percentage=75
-#-prefs=runtime.tools.esptool_py.path=C:\Users\eiser.000\AppData\Local\Arduino15\packages\esp32\tools\esptool_py\2.6.1
-#-prefs=runtime.tools.esptool_py-2.6.1.path=C:\Users\eiser.000\AppData\Local\Arduino15\packages\esp32\tools\esptool_py\2.6.1
+#-prefs=runtime.tools.esptool_py.path=C:\Users\eiser.000\AppData\Local\Arduino15\packages\esp32\tools\esptool_py\3.0.0
+#-prefs=runtime.tools.esptool_py-3.0.0.path=C:\Users\eiser.000\AppData\Local\Arduino15\packages\esp32\tools\esptool_py\3.0.0
 #-prefs=runtime.tools.mkspiffs.path=C:\Users\eiser.000\AppData\Local\Arduino15\packages\esp32\tools\mkspiffs\0.2.3
 #-prefs=runtime.tools.mkspiffs-0.2.3.path=C:\Users\eiser.000\AppData\Local\Arduino15\packages\esp32\tools\mkspiffs\0.2.3
-#-prefs=runtime.tools.xtensa-esp32-elf-gcc.path=C:\Users\eiser.000\AppData\Local\Arduino15\packages\esp32\tools\xtensa-esp32-elf-gcc\1.22.0-80-g6c4433a-5.2.0
-#-prefs=runtime.tools.xtensa-esp32-elf-gcc-1.22.0-80-g6c4433a-5.2.0.path=C:\Users\eiser.000\AppData\Local\Arduino15\packages\esp32\tools\xtensa-esp32-elf-gcc\1.22.0-80-g6c4433a-5.2.0
+#-prefs=runtime.tools.xtensa-esp32-elf-gcc.path=C:\Users\eiser.000\AppData\Local\Arduino15\packages\esp32\tools\xtensa-esp32-elf-gcc\1.22.0-97-gc752ad5-5.2.0
+#-prefs=runtime.tools.xtensa-esp32-elf-gcc-1.22.0-97-gc752ad5-5.2.0.path=C:\Users\eiser.000\AppData\Local\Arduino15\packages\esp32\tools\xtensa-esp32-elf-gcc\1.22.0-97-gc752ad5-5.2.0
   #-verbose
 #E:\Documents\Arduino\ESP32_WiFi\nogasm-wifi.ino
 
@@ -50,12 +50,12 @@ class Arduino
       @prefs = {
         'HTTPS_DISABLE_SELFSIGNING' => 'true',
         'build.warn_data_percentage' => '75',
-        'runtime.tools.esptool_py.path' => 'C:\Users\eiser.000\AppData\Local\Arduino15\packages\esp32\tools\esptool_py\2.6.1',
-        'runtime.tools.esptool_py-2.6.1.path' => 'C:\Users\eiser.000\AppData\Local\Arduino15\packages\esp32\tools\esptool_py\2.6.1',
+        'runtime.tools.esptool_py.path' => 'C:\Users\eiser.000\AppData\Local\Arduino15\packages\esp32\tools\esptool_py\3.0.0',
+        'runtime.tools.esptool_py-3.0.0.path' => 'C:\Users\eiser.000\AppData\Local\Arduino15\packages\esp32\tools\esptool_py\3.0.0',
         'runtime.tools.mkspiffs.path' => 'C:\Users\eiser.000\AppData\Local\Arduino15\packages\esp32\tools\mkspiffs\0.2.3',
         'runtime.tools.mkspiffs-0.2.3.path' => 'C:\Users\eiser.000\AppData\Local\Arduino15\packages\esp32\tools\mkspiffs\0.2.3',
-        'runtime.tools.xtensa-esp32-elf-gcc.path' => 'C:\Users\eiser.000\AppData\Local\Arduino15\packages\esp32\tools\xtensa-esp32-elf-gcc\1.22.0-80-g6c4433a-5.2.0',
-        'runtime.tools.xtensa-esp32-elf-gcc-1.22.0-80-g6c4433a-5.2.0.path' => 'C:\Users\eiser.000\AppData\Local\Arduino15\packages\esp32\tools\xtensa-esp32-elf-gcc\1.22.0-80-g6c4433a-5.2.0'
+        'runtime.tools.xtensa-esp32-elf-gcc.path' => 'C:\Users\eiser.000\AppData\Local\Arduino15\packages\esp32\tools\xtensa-esp32-elf-gcc\1.22.0-97-gc752ad5-5.2.0',
+        'runtime.tools.xtensa-esp32-elf-gcc-1.22.0-97-gc752ad5-5.2.0.path' => 'C:\Users\eiser.000\AppData\Local\Arduino15\packages\esp32\tools\xtensa-esp32-elf-gcc\1.22.0-97-gc752ad5-5.2.0'
       }
 
       @tools = [

@@ -2,7 +2,8 @@
 #define __buttplug_registry_h
 
 #include <vector>
-#include <BLEAdvertisedDevice.h>
+#include <NimBLEDevice.h>
+//#include <NimBLEAdvertisedDevice.h>
 
 #define WAIT_FOR_NOTIFY_TIMEOUT_MS 10000
 
@@ -11,13 +12,13 @@ class ButtplugRegistry;
 class ButtplugDevice {
 public:
   friend class ButtplugRegistry;
-  ButtplugDevice(BLEAdvertisedDevice *device) : device(device) {};
+  ButtplugDevice(std::string name);
 
-  bool connect();
+  bool connect(NimBLEAdvertisedDevice*);
   bool disconnect();
   void sendRawCmd(std::string cmd);
   std::string readRaw(bool waitForNotify = false);
-  std::string getName() { return this->device == nullptr ? "" : this->device->getName(); }
+  std::string getName() { return this->name; };
   void onNotify(uint8_t *data, size_t length);
   bool waitForNotify();
 
@@ -29,7 +30,7 @@ public:
   bool vibrate(uint8_t speed);
 
 private:
-  BLEAdvertisedDevice *device = nullptr;
+  std::string name = "";
   BLERemoteService *service = nullptr;
   BLERemoteCharacteristic *txChar = nullptr;
   BLERemoteCharacteristic *rxChar = nullptr;
