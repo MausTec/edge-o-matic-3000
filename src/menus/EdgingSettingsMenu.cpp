@@ -1,7 +1,7 @@
-#include "../../include/UIMenu.h"
-#include "../../include/UIInput.h"
-#include "../../include/Hardware.h"
-#include "../../include/OrgasmControl.h"
+#include "UIMenu.h"
+#include "UIInput.h"
+#include "Hardware.h"
+#include "OrgasmControl.h"
 
 UIInput MotorMaxSpeedInput("Motor Max Speed", [](UIMenu *ip) {
   UIInput *input = (UIInput*) ip;

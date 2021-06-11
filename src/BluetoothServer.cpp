@@ -1,4 +1,4 @@
-#include "../include/BluetoothServer.h"
+#include "BluetoothServer.h"
 
 BluetoothServer::BluetoothServer() {
 

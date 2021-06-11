@@ -1,7 +1,7 @@
-#include "../include/OrgasmControl.h"
-#include "../include/Hardware.h"
-#include "../include/WiFiHelper.h"
-#include "../config.h"
+#include "OrgasmControl.h"
+#include "Hardware.h"
+#include "WiFiHelper.h"
+#include "config.h"
 
 namespace OrgasmControl {
   namespace {
