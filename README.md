@@ -61,22 +61,13 @@ and is automatically generated. Here is a quick summary of config variables:
 
 ## Hardware
 
-Hardware builds for this project can be purchased from Maus-Tec Electronics, at [maustec.io/nogasm](https://maustec.io/nogasm).
-OSHD pending final review.
+Hardware builds for this project can be purchased from Maus-Tec Electronics, at [maustec.io/nogasm](https://maustec.io/eom).
 
 Hardware development and assembly helps keep pizza in the freezer and a roof over the head of the maintainer.
 Your support helps a small business grow into something neat, and ensures future devices like this can continue
 to be produced.
 
 The User Guide for the hardware can be downloaded at [doc/Edge-o-Matic_UserGuide.docx](doc/Edge-o-Matic_UserGuide.docx).
-
-### ESP32 Pinout
-
-If you want to breadboard this project, I've included the pinout from the ESP32 below. Please reference the original
-NoGasm schematic for specific designs regarding the pressure prescaler and MOSFET wiring. Alternatively, ask Mau about
-their breadboard-friendly MOSFET boards, which can directly drive your power rails and your motor from 12V.
-
-Full pinout details are in the Operator's Manual.
 
 ### That RJ45 Jack
 
@@ -128,25 +119,6 @@ This project uses the following libraries:
 |Partition Scheme|**Minimal SPIFFS (1.9MB APP with OTA/190KB SPIFFS)**|
 |Core Debug Level|None|
 |PSRAM|Disabled|
-
-# Thanks!
-
-For helping develop the software, hardware, and other nerdy bits:
-
-- @Rhoboto
-- @qDot
-
-For being the first to order the NoGasm WiFi during the 5 unit pre-order run:
-
-- @hardplayswitch
-- (anonymous)
-- 
-- 
-- 
-
-For supporting my initial endeavour in hardware assembly and helping me scale:
-
-- @homphs
 
 # Contributions
 
