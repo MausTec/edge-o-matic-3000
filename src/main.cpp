@@ -1,6 +1,7 @@
 #include <WiFi.h>
 
-#define ARDUINOJSON_USE_LONG_LONG 1
+// Now included as a cli flag.
+// #define ARDUINOJSON_USE_LONG_LONG 1
 #include <ArduinoJson.h>
 
 #include <time.h>
