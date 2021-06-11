@@ -45,28 +45,29 @@ and is automatically generated. Here is a quick summary of config variables:
 |`update_frequency_hz`|Int|50|Update frequency for pressure readings and arousal steps. Higher = crash your serial monitor.|
 |`sensor_sensitivity`|Byte|128|Analog pressure prescaling. Adjust this until the pressure is ~60-70%|
 |`use_average_values`|Boolean|false|Use average values when calculating arousal. This smooths noisy data.|
+|`vibration_mode`|VibrationMode|RampStop|Vibration Mode for main vibrator control.|
 
 \* AzureFang refers to a common wireless technology that is blue and involves chewing face-rocks. However, the
    trademark holders of this technology require the name to be licensed, so we're totally just using AzureFang.
+   
+### Vibration Modes:
+
+|ID|Name|Description|
+|---|---|---|
+|1|Ramp-Stop|Vibrator ramps up from set min speed to max speed, stopping abruptly on arousal threshold crossing.|
+|2|Depletion|Vibrator speed ramps up from min to max, but is reduced as arousal approaches threshold.|
+|3|Enhancement|Vibrator speed ramps up as arousal increases, holding a peak for ramp_time.|
+|0|Global Sync|When set on secondary vibrators, they will follow the primary vibrator speed.|
 
 ## Hardware
 
-Hardware builds for this project can be purchased from Maus-Tec Electronics, at [maustec.io/nogasm](https://maustec.io/nogasm).
-OSHD pending final review.
+Hardware builds for this project can be purchased from Maus-Tec Electronics, at [maustec.io/nogasm](https://maustec.io/eom).
 
 Hardware development and assembly helps keep pizza in the freezer and a roof over the head of the maintainer.
 Your support helps a small business grow into something neat, and ensures future devices like this can continue
 to be produced.
 
 The User Guide for the hardware can be downloaded at [doc/Edge-o-Matic_UserGuide.docx](doc/Edge-o-Matic_UserGuide.docx).
-
-### ESP32 Pinout
-
-If you want to breadboard this project, I've included the pinout from the ESP32 below. Please reference the original
-NoGasm schematic for specific designs regarding the pressure prescaler and MOSFET wiring. Alternatively, ask Mau about
-their breadboard-friendly MOSFET boards, which can directly drive your power rails and your motor from 12V.
-
-Full pinout details are in the Operator's Manual.
 
 ### That RJ45 Jack
 
@@ -103,6 +104,7 @@ This project uses the following libraries:
 - Adafruit SSD1306 library by Adafruit (click "Install All" if it prompts you for dependencies)
 - ESP32Servo library by Kevin Harrington
 - ESP32 I2C Slave library by Gutierrez PS
+- NimBLE (v1.2): https://github.com/h2zero/NimBLE-Arduino
 
 #### Board Settings
 
@@ -117,25 +119,6 @@ This project uses the following libraries:
 |Partition Scheme|**Minimal SPIFFS (1.9MB APP with OTA/190KB SPIFFS)**|
 |Core Debug Level|None|
 |PSRAM|Disabled|
-
-# Thanks!
-
-For helping develop the software, hardware, and other nerdy bits:
-
-- @Rhoboto
-- @qDot
-
-For being the first to order the NoGasm WiFi during the 5 unit pre-order run:
-
-- @hardplayswitch
-- (anonymous)
-- 
-- 
-- 
-
-For supporting my initial endeavour in hardware assembly and helping me scale:
-
-- @homphs
 
 # Contributions
 

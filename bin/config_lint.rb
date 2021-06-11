@@ -68,7 +68,7 @@ File.foreach(config_cpp).with_index do |line, i|
   end
 
   # Check Read
-  if line =~ /Config\.(\w+)\s*=\s*doc\["(\w+)"\](\s*\|\s*\S+)?/
+  if line =~ /Config\.(\w+)\s*=(?:\s*\(\w+\))?\s*doc\["(\w+)"\](\s*\|\s*\S+)?/
     json_reads << $2
     type = config_values[$1]
     if $1 != $2
@@ -84,7 +84,9 @@ File.foreach(config_cpp).with_index do |line, i|
     if $3.nil? || $3 == ""
       error config_cpp, i, "JSON read #{$2.inspect} missing default value for #{type.inspect}"
     else
-      json_defaults[$1] = $3.gsub(/\s*\|\s*/, '').gsub(/;\s*$/, '')
+      key = $1
+      default_set = $3.gsub(/\s*\|\s*/, '').gsub(/;\s*$/, '')
+      json_defaults[key] = default_set.gsub(/#{type}::/, '')
     end
     if type =~ /String|char\[\d+\]/
       error config_cpp, i, "JSON assigns #{$2.inspect} to string type! Use strlcpy!"
@@ -115,7 +117,7 @@ File.foreach(config_cpp).with_index do |line, i|
   end
 
   # Check Assignment
-  if line =~ /doc\s*\[\"(\w+)\"\]\s*=\s*Config\.(\w+)/
+  if line =~ /doc\s*\[\"(\w+)\"\]\s*=(?:\s*\(\w+\))?\s*Config\.(\w+)/
     type = config_values[$2]
     json_assignments << $1
     if $1 != $2
@@ -166,7 +168,7 @@ File.foreach(console_cpp).with_index do |line, i|
     markers[$1] = $i
   end
 
-  if line =~ /String\s*\(\s*Config\.(\w+)/
+  if line =~ /String\s*\((?:\s*\(\w+\))?\s*Config\.(\w+)/
     console_gets << $1
     type = config_values[$1]
     if ($1 != last_check)
@@ -197,8 +199,13 @@ File.foreach(console_cpp).with_index do |line, i|
       if setter !~ /atoi\s*\(/
         error console_cpp, i, "Config option #{option.inspect} is #{type}, use atoi()"
       end
+    when /^([A-Z][a-zA-Z]+)$/
+      # Assume Enums Here
+      if setter !~ /\(#{$1}\)\s+atoi\s*\(/
+        error console_cpp, i, "Config option #{option.inspect} needs cast to #{type}, got: #{setter}"
+      end
     else
-      error console_cpp, i, "Config option #{option.inspect} using invalid setter"
+      error console_cpp, i, "Config option #{option.inspect} using invalid setter: #{setter}"
     end
   end
 
@@ -266,6 +273,8 @@ File.foreach(readme_md).with_index do |line, i|
     "String"
     when "bool"
     "Boolean"
+    when /^[A-Z]/
+    valid_type
     else
     valid_type.capitalize
     end

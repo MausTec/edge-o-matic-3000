@@ -27,8 +27,10 @@ TEXT
   opt :tag, "Tag this as a release and push", type: :bool, default: false
   opt :serial, "Set a serial number for this device", type: :string, default: nil
   opt :serial_prefix, "Autogen a serial from serials.yml", type: :string, default: nil
+  opt :serial_variant, "Append a veriant to the serial number.", type: :string, default: nil
   opt :file_path, "Copy binary to a file path for update", type: :string, default: nil
   opt :console, "Open a console to the device", type: :bool, default: false
+  opt :exception, "Decode the last exception dump", type: :bool, default: false
 end
 
 def get_version
@@ -36,7 +38,7 @@ def get_version
       (tag, n, sha) = `git describe --tags`.split('-')
       v = Semantic::Version.new(tag.gsub(/^v/, ''))
       if n.to_i > 0
-        v.build = sha
+        v.build = sha.chop
       end
       v
   end
@@ -54,6 +56,19 @@ def sh(cmd)
   puts `#{cmd}`
 end
 
+if opts[:exception]
+  tool = ESPTool.new nil
+  puts tool.send(:decode_exception, <<-DUMP)
+/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/esp-idf/components/freertos/queue.c:1442 (xQueueGenericReceive)- assert failed!
+abort() was called at PC 0x4009002d on core 1
+
+Backtrace: 0x400941ac:0x3ffd1700 0x400943dd:0x3ffd1720 0x4009002d:0x3ffd1740 0x400eb08e:0x3ffd1780 0x400f3bb2:0x3ffd17a0 0x400f3c31:0x3ffd17c0 0x400f3824:0x3ffd17e0 0x400f3961:0x3ffd1820 0x400ee8d2:0x3ffd1840 0x400eea64:0x3ffd1870 0x400e
+ef16:0x3ffd1890 0x400e69db:0x3ffd18b0 0x400d38cd:0x3ffd18d0 0x400d38ea:0x3ffd18f0 0x400dfc82:0x3ffd1910 0x401d1c97:0x3ffd1930 0x400d7269:0x3ffd1950 0x400d737b:0x3ffd1980 0x400d9006:0x3ffd19b0 0x400d4f8a:0x3ffd19d0 0x400e4ddd:0x3ffd19f0 0
+x400e4e8a:0x3ffd1a10 0x400d4fdb:0x3ffd1a30 0x400d3656:0x3ffd1a50 0x401070ed:0x3ffd1a70 0x40090341:0x3ffd1a90
+DUMP
+  exit 0
+end
+
 if opts[:get_version]
   puts get_version.to_s
   exit
@@ -65,6 +80,9 @@ if opts[:inc_version]
   set_version(new_v)
 elsif opts[:set_version]
   v = Semantic::Version.new(opts[:set_version])
+  set_version(v)
+else
+  v = get_version
   set_version(v)
 end
 
@@ -108,7 +126,13 @@ if (prefix = opts[:serial_prefix])
   serials = YAML.load(File.read("serials.yml"));
   last_ser = serials[prefix]
   last_ser += 1
-  if esptool&.set_serial("%s-%02d%03d" % [prefix, Date.today.year % 100, last_ser])
+
+  serial = "%s-%02d%03d" % [prefix, Date.today.year % 100, last_ser]
+  if (variant = opts[:serial_variant])
+    serial += "-" + variant
+  end
+
+  if esptool&.set_serial(serial)
     serials[prefix] = last_ser
     File.write("serials.yml", YAML.dump(serials))
   end
