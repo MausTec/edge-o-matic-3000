@@ -1,9 +1,9 @@
-#include "../include/Console.h"
-#include "../include/Hardware.h"
-#include "../include/SDHelper.h"
-#include "../include/Page.h"
-#include "../include/UpdateHelper.h"
-#include "../config.h"
+#include "Console.h"
+#include "Hardware.h"
+#include "SDHelper.h"
+#include "Page.h"
+#include "UpdateHelper.h"
+#include "config.h"
 
 #include <SD.h>
 

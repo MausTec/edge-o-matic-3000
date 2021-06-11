@@ -1,7 +1,7 @@
-#include "../../include/UIMenu.h"
-#include "../../include/UserInterface.h"
-#include "../../include/Page.h"
-#include "../../include/UpdateHelper.h"
+#include "UIMenu.h"
+#include "UserInterface.h"
+#include "Page.h"
+#include "UpdateHelper.h"
 
 static void buildMenu(UIMenu *menu) {
   menu->addItem("Automatic Edging", &RunGraphPage);

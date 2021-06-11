@@ -1,6 +1,6 @@
-#include "../../include/UIMenu.h"
-#include "../../include/UpdateHelper.h"
-#include "../../include/UserInterface.h"
+#include "UIMenu.h"
+#include "UpdateHelper.h"
+#include "UserInterface.h"
 
 #include <SD.h>
 

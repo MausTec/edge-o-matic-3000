@@ -5,10 +5,10 @@
 #include "SD.h"
 #include "SPI.h"
 
-#include "../config.h"
-#include "../include/UserInterface.h"
-#include "../include/Hardware.h"
-#include "../include/Page.h"
+#include "config.h"
+#include "UserInterface.h"
+#include "Hardware.h"
+#include "Page.h"
 
 #include <FastLed.h>
 

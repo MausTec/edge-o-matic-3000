@@ -18,17 +18,17 @@
 #include <OneButton.h>
 #include <ESP32Encoder.h>
 
-#include "include/Hardware.h"
-#include "include/UserInterface.h"
-#include "include/BluetoothServer.h"
-#include "include/Page.h"
-#include "include/RunningAverage.h"
-#include "include/Console.h"
-#include "include/OrgasmControl.h"
-#include "include/WiFiHelper.h"
-#include "include/UpdateHelper.h"
-#include "include/WebSocketHelper.h"
-#include "include/WebSocketSecureHelper.h"
+#include "Hardware.h"
+#include "UserInterface.h"
+#include "BluetoothServer.h"
+#include "Page.h"
+#include "RunningAverage.h"
+#include "Console.h"
+#include "OrgasmControl.h"
+#include "WiFiHelper.h"
+#include "UpdateHelper.h"
+#include "WebSocketHelper.h"
+#include "WebSocketSecureHelper.h"
 
 uint8_t LED_Brightness = 13;
 

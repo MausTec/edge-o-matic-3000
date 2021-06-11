@@ -1,10 +1,10 @@
 #ifndef __pDEBUG_h
 #define __pDEBUG_h
 
-#include "../../include/Page.h"
-#include "../../include/UserInterface.h"
-#include "../../include/assets.h"
-#include "../../VERSION.h"
+#include "Page.h"
+#include "UserInterface.h"
+#include "assets.h"
+#include "VERSION.h"
 
 class pDebug : public Page {
   void Enter(bool) override {

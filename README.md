@@ -1,4 +1,4 @@
-# NoGasm WiFi - An Automated Orgasm Denial Device
+# Edge-o-Matic 3000 - An Automated Orgasm Denial Device
 
 This code is an ESP32 rewrite of the core NoGasm project by Rhoboto: [github.com/nogasm/nogasm](https://github.com/nogasm/nogasm)
 
@@ -8,7 +8,7 @@ stimulation accordingly. The net result: automated edging and orgasm denial.
 
 ## Web UI
 
-NoGasm WiFi and NG+ devices both support a Websocket connection and a Web UI. The current Web UI can be accessed
+Edge-o-Matic 3000, NoGasm Plus, and Edge-o-Matic AiO devices both support a Websocket connection and a Web UI. The current Web UI can be accessed
 at [nogasm-ui.maustec.io](http://nogasm-ui.maustec.io). The source code is at [github.com/maustec/nogasm-ui](https://github.com/maustec/nogasm-ui).
 
 ## WebSocket API
@@ -61,7 +61,7 @@ and is automatically generated. Here is a quick summary of config variables:
 
 ## Hardware
 
-Hardware builds for this project can be purchased from Maus-Tec Electronics, at [maustec.io/nogasm](https://maustec.io/eom).
+Hardware builds for this project can be purchased from Maus-Tec Electronics, at [maustec.io/eom](https://maustec.io/eom).
 
 Hardware development and assembly helps keep pizza in the freezer and a roof over the head of the maintainer.
 Your support helps a small business grow into something neat, and ensures future devices like this can continue
@@ -86,39 +86,6 @@ I2C redriver IC or compatible module to interface with this. Additionaly, this i
 |6|NC|
 |7|`SDA-`|
 |8|`SDA+`|
-
-# Development
-
-The official hardware looks like an ESP32-WROOM dev module. Conveniently, you can use the same module for your own builds.
-This is currently developed in the horrid confines of the Arduino IDE for the compiler toolchain. Install ESP support for
-Arduino. Use your fav editor. CLion is great.
-
-#### 3rd Party Dependencies
-
-This project uses the following libraries:
-
-- ArduinoJson library by Benoit Blanchon
-- FastLED library by Daniel Garcia
-- OneButton library by Matthias Hertel (version 1.5.0)
-- ESP32Encoder library by Kevin Harrington
-- Adafruit SSD1306 library by Adafruit (click "Install All" if it prompts you for dependencies)
-- ESP32Servo library by Kevin Harrington
-- ESP32 I2C Slave library by Gutierrez PS
-- NimBLE (v1.2): https://github.com/h2zero/NimBLE-Arduino
-
-#### Board Settings
-
-|Setting|Value|
-|---|---|
-|Board|**ESP32 Dev Module**|
-|Upload Speed|921600|
-|CPU Frequency|240MHz (WiFi/BT)|
-|Flash Frequency|80MHz|
-|Flash Mode|QIO|
-|Flash Size|**4MB (32Mb)**|
-|Partition Scheme|**Minimal SPIFFS (1.9MB APP with OTA/190KB SPIFFS)**|
-|Core Debug Level|None|
-|PSRAM|Disabled|
 
 # Contributions
 

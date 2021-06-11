@@ -1,5 +1,5 @@
-#include "../../include/UIMenu.h"
-#include "../../include/ButtplugRegistry.h"
+#include "UIMenu.h"
+#include "ButtplugRegistry.h"
 
 #include <NimBLEDevice.h>
 //#include <NimBLEUtils.h>

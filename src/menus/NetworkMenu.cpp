@@ -1,8 +1,8 @@
-#include "../../include/UIMenu.h"
-#include "../../include/UserInterface.h"
-#include "../../include/WiFiHelper.h"
-#include "../../include/BluetoothServer.h"
-#include "../../include/ButtplugRegistry.h"
+#include "UIMenu.h"
+#include "UserInterface.h"
+#include "WiFiHelper.h"
+#include "BluetoothServer.h"
+#include "ButtplugRegistry.h"
 
 #include <WiFi.h>
 

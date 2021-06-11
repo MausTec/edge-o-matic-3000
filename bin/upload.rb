@@ -46,7 +46,7 @@ end
 
 def set_version(v)
   data = "#define VERSION \"#{v.to_s}\"\n"
-  File.write(File.join(ROOT_PATH, "VERSION.h"), data)
+  File.write(File.join(ROOT_PATH, "include", "VERSION.h"), data)
   $version = v
   puts "Set version to: #{v.to_s}"
 end
@@ -70,7 +70,9 @@ DUMP
 end
 
 if opts[:get_version]
-  puts get_version.to_s
+  v = get_version
+  puts v.to_s
+  set_version(v)
   exit
 end
 

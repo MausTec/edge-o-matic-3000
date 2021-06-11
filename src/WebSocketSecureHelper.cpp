@@ -1,10 +1,10 @@
-#include "../include/WebSocketSecureHelper.h"
-#include "../include/WebSocketHelper.h"
-#include "../config.h"
+#include "WebSocketSecureHelper.h"
+#include "WebSocketHelper.h"
+#include "config.h"
 
 // Include certificate data
-#include "../include/ssl/cert.h"
-#include "../include/ssl/private_key.h"
+#include "ssl/cert.h"
+#include "ssl/private_key.h"
 
 namespace WebSocketSecureHelper {
   void end() {
