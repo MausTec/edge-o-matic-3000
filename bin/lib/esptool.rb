@@ -10,8 +10,8 @@ require_relative './screenshot.rb'
 
 class ESPTool
   ROOT_PATH = File.absolute_path(File.join(File.dirname(__FILE__), "..", "..")).freeze
-  ESPTOOL_PATH = 'C:\Users\eiser.000\AppData\Local\Arduino15\packages\esp32\tools\esptool_py\2.6.1'.freeze
-  HARDWARE_PATH = 'C:\Users\eiser.000\AppData\Local\Arduino15\packages\esp32\hardware\esp32\1.0.4'.freeze
+  ESPTOOL_PATH = 'C:\Users\eiser.000\AppData\Local\Arduino15\packages\esp32\tools\esptool_py\3.0.0'.freeze
+  HARDWARE_PATH = 'C:\Users\eiser.000\AppData\Local\Arduino15\packages\esp32\hardware\esp32\1.0.6'.freeze
   ESPTOOL_BIN  = File.join(ESPTOOL_PATH, "esptool.exe").freeze
 
   def initialize(port, bin_dir=ESPTOOL_PATH, bin_options={})

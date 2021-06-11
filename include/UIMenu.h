@@ -56,7 +56,8 @@ class UIMenu {
 public:
   // Construction
   UIMenu(const char *t, MenuCallback = nullptr);
-  void initialize();
+  void initialize(bool reinit = false);
+  void rerender();
 
   // Item Manipulation
   void addItem(const char *text, ParameterizedMenuCallback pcb = nullptr, void *arg = nullptr);
@@ -104,6 +105,8 @@ protected:
 
   UIMenu *prev = nullptr;
   void *current_arg = nullptr;
+
+  UIMenuItem *getNthItem(int n);
 
 private:
   UIMenuItem *first_item = nullptr;

@@ -299,6 +299,8 @@ void UIMenu::handleClick() {
       current_item->cb(this);
     } else if (current_item->pcb != nullptr) {
       current_item->pcb(this, current_item->arg);
+    } else if (current_item->ipcb != nullptr) {
+      current_item->ipcb(this, current_item->iarg);
     }
   }
 }
@@ -315,10 +317,33 @@ void UIMenu::clearItems() {
   last_item = nullptr;
 }
 
-void UIMenu::initialize() {
+UIMenuItem *UIMenu::getNthItem(int n) {
+  UIMenuItem *p = first_item;
+  while (--n > 0 && p != nullptr) {
+    p = p->next;
+  }
+  return p;
+}
+
+void UIMenu::initialize(bool reinit) {
+  int position = -1;
+
+  if (reinit) {
+    position = getCurrentPosition();
+  }
+
   clearItems();
   initializer(this);
-  current_item = first_item;
+
+  if (!reinit) {
+    current_item = first_item;
+  } else {
+    if (position > getItemCount()) {
+      current_item = last_item;
+    } else {
+      current_item = getNthItem(position);
+    }
+  }
 }
 
 int UIMenu::getItemCount() {
@@ -354,4 +379,9 @@ void UIMenu::onOpen(MenuCallback cb) {
 
 void UIMenu::onClose(MenuCallback cb) {
   on_close = cb;
+}
+
+void UIMenu::rerender() {
+  initialize(true);
+  render();
 }
