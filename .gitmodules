@@ -1,0 +1,3 @@
+[submodule "lib/eom-hal"]
+	path = lib/eom-hal
+	url = https://github.com/MausTec/eom-hal-dist.git
