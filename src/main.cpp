@@ -6,6 +6,7 @@
 
 #include <time.h>
 
+#include "eom-hal.hpp"
 #include "config.h"
 #include "VERSION.h"
 
@@ -135,6 +136,8 @@ void setup() {
   Serial.println("Maus-Tec presents: Edge-o-Matic 3000");
 #endif
   Serial.println("Version: " VERSION);
+  Serial.print("EOM-HAL Version: ");
+  Serial.println(eom_hal_get_version());
 
   // Setup Hardware
   setupHardware();
@@ -247,18 +250,4 @@ void loop() {
 
   // Tick and see if we need to save config:
   saveConfigToSd(-1);
-}
-
-// Entrypoints:
-
-void app_main() {
-  // esp32 entry
-  setup();
-  while(1) loop();
-}
-
-int main(void) {
-  // cpp entry
-  setup();
-  while(1) loop();
 }
