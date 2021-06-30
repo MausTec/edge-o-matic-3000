@@ -1,11 +1,3 @@
-# Fork of 0.3.4
-Adding a clench detector on the orgasm detection routines to permit an other type of orgasm detection.
-
-if tuned high level it will trigger a failed orgasm.
-if tuned low it adds to the already great code to detect incomming orgasm.
-
-
-
 # Edge-o-Matic 3000 - An Automated Orgasm Denial Device
 
 This code is an ESP32 rewrite of the core NoGasm project by Rhoboto: [github.com/nogasm/nogasm](https://github.com/nogasm/nogasm)
