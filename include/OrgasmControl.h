@@ -59,6 +59,12 @@ namespace OrgasmControl {
     // File Writer
     long recording_start_ms = 0;
     File logfile;
+    
+    //  Clench variables
+	  long clench_pressure_threshold = 500; // setting start clench threshold to be over deflated plug
+	  int clench_duration = 0;
+    //	int clench_pressure_sensitivity = 200; //  placed in config.h
+    //	int clench_duration_threshold = 55;
 
     void updateArousal();
     void updateMotorSpeed();
