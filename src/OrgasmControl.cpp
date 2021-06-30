@@ -182,7 +182,9 @@ namespace OrgasmControl {
           String(getAveragePressure()) + "," +
           String(getArousal()) + "," +
           String(Hardware::getMotorSpeed()) + "," +
-          String(Config.sensitivity_threshold);
+          String(Config.sensitivity_threshold) + "," +
+	  String(clench_pressure_threshold) + "," +
+	  String(clench_duration);
 
       // Write out to logfile, which includes millis:
       if (logfile) {
