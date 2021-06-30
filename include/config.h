@@ -113,6 +113,10 @@ struct ConfigStruct {
 
   // Vibration Output Mode
   VibrationMode vibration_mode;
+  
+  // clench stuff
+  int clench_pressure_sensitivity = 200;
+  int clench_duration_threshold = 55;
 } extern Config;
 
 extern void loadConfigFromSd();
