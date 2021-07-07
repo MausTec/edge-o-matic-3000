@@ -113,6 +113,37 @@ namespace OrgasmControl {
         Hardware::setMotorSpeed(motor_speed);
       }
     }
+    
+    void updateEdgingTime() {
+      if (!control_motor) {
+        autoEdgingStartMillis = millis();
+        return;
+      }
+      if (autoEdgingDurationMinutes > 0 ) {   // Do the edging timer if not turned off
+        if ( millis() > (autoEdgingStartMillis + ( autoEdgingDurationMinutes * 60 * 1000 )) && postOrgasmStartMillis == 0) {  // Detect if edging time has passed
+          if (Config.sensitivity_threshold != 6000) original_sensitivity_threshold = Config.sensitivity_threshold;
+          Config.sensitivity_threshold = 6000; // make sure orgasm is now possible
+          if (arousal > original_sensitivity_threshold && motor_speed) { //now detect the orgasm to start post orgasm torture timer
+            postOrgasmStartMillis = millis();   // Start Post orgasm torture timer
+          }
+        } else {
+          postOrgasmStartMillis = 0;
+        }
+        
+        if ( millis() < (postOrgasmStartMillis + (postOrgasmDurationMinutes * 60 * 1000 )) && postOrgasmStartMillis >0) { // Detect if within post orgasm session
+          motor_speed = motor_max_speed;
+        }
+        if ( millis() >= (postOrgasmStartMillis + (postOrgasmDurationMinutes * 60 * 1000 )) && postOrgasmStartMillis >0) { // torture until timer reached
+          Config.sensitivity_threshold = original_sensitivity_threshold;
+          motor_speed = controller->stop();  // Turn off motor
+          postOrgasmStartMillis = 0;  // Turn off PostEorgasm torture
+          controlMotor(false);  // return to a manual mode
+        }
+      }
+     
+      
+    }
+    
   }
 
   void twitchDetect(){
@@ -172,6 +203,7 @@ namespace OrgasmControl {
 
     if (millis() - last_update_ms > update_frequency_ms) {
       updateArousal();
+      updateEdgingTime();
       updateMotorSpeed();
       update_flag = true;
       last_update_ms = millis();
