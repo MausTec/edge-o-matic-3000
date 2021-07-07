@@ -66,8 +66,16 @@ namespace OrgasmControl {
     //	int clench_pressure_sensitivity = 200; //  placed in config.h
     //	int clench_duration_threshold = 55;
 
+    // Autoedging Time and Post-Orgasm varables
+    int autoEdgingDurationMinutes = 3;
+    int postOrgasmDurationMinutes = 1;
+    int original_sensitivity_threshold;
+    long autoEdgingStartMillis;
+    long postOrgasmStartMillis;
+    
     void updateArousal();
     void updateMotorSpeed();
+    void updateEdgingTime();
     VibrationModeController* getVibrationMode();
   }
 }
