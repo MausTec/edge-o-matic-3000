@@ -47,7 +47,7 @@ namespace OrgasmControl {
       }
 
       last_value = p_check;
-      
+
       // detect muscle clenching.  (Can be used for ruined orgasm if tease threshold is set too high and clench duration threshold is also high)	
       if (p_check >= (clench_pressure_threshold + Config.clench_pressure_sensitivity) ) {
         clench_pressure_threshold = (p_check - (Config.clench_pressure_sensitivity/2)); // raise clench threshold to pressure - 1/2 sensitivity
@@ -55,7 +55,7 @@ namespace OrgasmControl {
 	    if (p_check >= clench_pressure_threshold) {
         clench_duration += 1;   // Start counting clench time if pressure over threshold
 		    if ( clench_duration > Config.clench_duration_threshold) {
-			    arousal *= 1.1;     // boost arousal  because clench duration exceeded 
+			    arousal += 100;     // boost arousal  because clench duration exceeded 
 			    if ( arousal > 4095 ) { arousal = 4096; } // protect arousal value to not go higher then 4096
 		    }
   		  if ( clench_duration >= (Config.clench_duration_threshold*2) ) { // desensitize clench threshold when clench too long. this is to stop arousal from going up
@@ -113,6 +113,38 @@ namespace OrgasmControl {
         Hardware::setMotorSpeed(motor_speed);
       }
     }
+    
+    void updateEdgingTime() {
+      if (!control_motor) {                   // keep edging start time to current time as long as system is in Manual Mode
+        autoEdgingStartMillis = millis();
+        postOrgasmStartMillis = 0;
+        return;
+      }
+      VibrationModeController *controller = getVibrationMode();
+
+      if (Config.autoEdgingDurationMinutes > 0 ) {   // Do the edging timer if not turned off
+        if ( millis() > (autoEdgingStartMillis + ( Config.autoEdgingDurationMinutes * 60 * 1000 )) && postOrgasmStartMillis == 0) {  // Detect if edging time has passed
+          if (Config.sensitivity_threshold != 6000) original_sensitivity_threshold = Config.sensitivity_threshold;
+          Config.sensitivity_threshold = 6000; // make sure orgasm is now possible
+          if (arousal > original_sensitivity_threshold) { //now detect the orgasm to start post orgasm torture timer
+            postOrgasmStartMillis = millis();   // Start Post orgasm torture timer
+          }
+        } 
+
+        if ( millis() < (postOrgasmStartMillis + (Config.postOrgasmDurationMinutes * 60 * 1000 )) && postOrgasmStartMillis >0) { // Detect if within post orgasm session
+          motor_speed = Config.motor_max_speed;
+        }
+        if ( millis() >= (postOrgasmStartMillis + (Config.postOrgasmDurationMinutes * 60 * 1000 )) && postOrgasmStartMillis >0) { // torture until timer reached
+          Config.sensitivity_threshold = original_sensitivity_threshold;
+          motor_speed = controller->stop();  // Turn off motor
+          Hardware::setMotorSpeed(motor_speed);
+          postOrgasmStartMillis = 0;  // Turn off PostEorgasm torture
+          controlMotor(false);  // return to a manual mode
+        }
+      }
+ 
+    }
+
   }
 
   void twitchDetect(){
@@ -172,6 +204,7 @@ namespace OrgasmControl {
 
     if (millis() - last_update_ms > update_frequency_ms) {
       updateArousal();
+      updateEdgingTime();
       updateMotorSpeed();
       update_flag = true;
       last_update_ms = millis();
@@ -183,8 +216,8 @@ namespace OrgasmControl {
           String(getArousal()) + "," +
           String(Hardware::getMotorSpeed()) + "," +
           String(Config.sensitivity_threshold) + "," +
-	  String(clench_pressure_threshold) + "," +
-	  String(clench_duration);
+	        String(clench_pressure_threshold) + "," +
+	        String(clench_duration);
 
       // Write out to logfile, which includes millis:
       if (logfile) {
