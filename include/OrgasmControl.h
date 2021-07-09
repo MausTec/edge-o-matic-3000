@@ -67,8 +67,8 @@ namespace OrgasmControl {
     //	int clench_duration_threshold = 55;
 
     // Autoedging Time and Post-Orgasm varables
-    int autoEdgingDurationMinutes = 3;
-    int postOrgasmDurationMinutes = 1;
+    // int autoEdgingDurationMinutes = 3;     //  placed in config.h
+    // int postOrgasmDurationMinutes = 1;     //  placed in config.h
     int original_sensitivity_threshold;
     long autoEdgingStartMillis;
     long postOrgasmStartMillis;

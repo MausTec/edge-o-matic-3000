@@ -107,6 +107,8 @@ void loadConfigFromJsonObject(JsonDocument &doc) {
   // Clench settings
   Config.clench_pressure_sensitivity = doc["clench_pressure_sensitivity"] | 200;
   Config.clench_duration_threshold = doc["clench_duration_threshold"] | 55;
+  Config.autoEdgingDurationMinutes = doc["auto_edging_duration_minutes"] | 30;
+  Config.postOrgasmDurationMinutes = doc["post_Orgasm_Duration_Minutes"] | 1;
 
   /**
    * Setting Validations
@@ -158,6 +160,8 @@ void dumpConfigToJsonObject(JsonDocument &doc) {
   // Clench settings
   doc["clench_pressure_sensitivity"] = Config.clench_pressure_sensitivity;
   doc["clench_duration_threshold"] = Config.clench_duration_threshold;
+  doc["auto_edging_duration_minutes"] = Config.autoEdgingDurationMinutes;
+  doc["post_Orgasm_Duration_Minutes"] = Config.postOrgasmDurationMinutes;
 } // dumpConfigToJsonObject
 
 bool dumpConfigToJson(String &str) {
@@ -279,6 +283,10 @@ bool setConfigValue(const char *option, const char *value, bool &require_reboot)
     Config.clench_pressure_sensitivity = atoi(value);
   } else if(!strcmp(option, "clench_duration_threshold")) {
     Config.clench_duration_threshold = atoi(value);
+  } else if(!strcmp(option, "auto_edging_duration_minutes")) {
+    Config.autoEdgingDurationMinutes = atoi(value);
+  } else if(!strcmp(option, "post_Orgasm_Duration_Minutes")) {
+    Config.postOrgasmDurationMinutes = atoi(value);
   } else {
     return false;
   }
@@ -339,6 +347,10 @@ bool getConfigValue(const char *option, String &out) {
     out += String(Config.clench_pressure_sensitivity) + '\n';
   } else if(!strcmp(option, "clench_duration_threshold")) {
     out += String(Config.clench_duration_threshold) + '\n';
+  } else if(!strcmp(option, "auto_edging_duration_minutes")) {
+    out += String(Config.autoEdgingDurationMinutes) + '\n';
+  } else if(!strcmp(option, "post_Orgasm_Duration_Minutes")) {
+    out += String(Config.postOrgasmDurationMinutes) + '\n';
   } else {
     return false;
   }
