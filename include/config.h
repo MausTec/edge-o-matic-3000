@@ -117,6 +117,9 @@ struct ConfigStruct {
   // clench stuff
   int clench_pressure_sensitivity = 200;
   int clench_duration_threshold = 55;
+
+  int autoEdgingDurationMinutes;
+  int postOrgasmDurationMinutes;
 } extern Config;
 
 extern void loadConfigFromSd();
