@@ -115,7 +115,7 @@ namespace OrgasmControl {
     }
     
     void updateEdgingTime() {
-      if (!control_motor) {
+      if (!control_motor) {                   // keep edging start time to current time as long as system is in Manual Mode
         autoEdgingStartMillis = millis();
         postOrgasmStartMillis = 0;
         return;
