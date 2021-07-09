@@ -47,7 +47,7 @@ namespace OrgasmControl {
       }
 
       last_value = p_check;
-      
+
       // detect muscle clenching.  (Can be used for ruined orgasm if tease threshold is set too high and clench duration threshold is also high)	
       if (p_check >= (clench_pressure_threshold + Config.clench_pressure_sensitivity) ) {
         clench_pressure_threshold = (p_check - (Config.clench_pressure_sensitivity/2)); // raise clench threshold to pressure - 1/2 sensitivity
@@ -122,8 +122,8 @@ namespace OrgasmControl {
       }
       VibrationModeController *controller = getVibrationMode();
 
-      if (autoEdgingDurationMinutes > 0 ) {   // Do the edging timer if not turned off
-        if ( millis() > (autoEdgingStartMillis + ( autoEdgingDurationMinutes * 60 * 1000 )) && postOrgasmStartMillis == 0) {  // Detect if edging time has passed
+      if (Config.autoEdgingDurationMinutes > 0 ) {   // Do the edging timer if not turned off
+        if ( millis() > (autoEdgingStartMillis + ( Config.autoEdgingDurationMinutes * 60 * 1000 )) && postOrgasmStartMillis == 0) {  // Detect if edging time has passed
           if (Config.sensitivity_threshold != 6000) original_sensitivity_threshold = Config.sensitivity_threshold;
           Config.sensitivity_threshold = 6000; // make sure orgasm is now possible
           if (arousal > original_sensitivity_threshold) { //now detect the orgasm to start post orgasm torture timer
@@ -131,10 +131,10 @@ namespace OrgasmControl {
           }
         } 
 
-        if ( millis() < (postOrgasmStartMillis + (postOrgasmDurationMinutes * 60 * 1000 )) && postOrgasmStartMillis >0) { // Detect if within post orgasm session
+        if ( millis() < (postOrgasmStartMillis + (Config.postOrgasmDurationMinutes * 60 * 1000 )) && postOrgasmStartMillis >0) { // Detect if within post orgasm session
           motor_speed = Config.motor_max_speed;
         }
-        if ( millis() >= (postOrgasmStartMillis + (postOrgasmDurationMinutes * 60 * 1000 )) && postOrgasmStartMillis >0) { // torture until timer reached
+        if ( millis() >= (postOrgasmStartMillis + (Config.postOrgasmDurationMinutes * 60 * 1000 )) && postOrgasmStartMillis >0) { // torture until timer reached
           Config.sensitivity_threshold = original_sensitivity_threshold;
           motor_speed = controller->stop();  // Turn off motor
           Hardware::setMotorSpeed(motor_speed);
@@ -144,7 +144,6 @@ namespace OrgasmControl {
       }
  
     }
-
 
   }
 
