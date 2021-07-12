@@ -48,29 +48,29 @@ namespace OrgasmControl {
 
       last_value = p_check;
 
-      // detect muscle clenching.  (Can be used for ruined orgasm if tease threshold is set too high and clench duration threshold is also high)	
+      // detect muscle clenching.  (Can be used for ruined orgasm if tease threshold is set too high)
       if (p_check >= (clench_pressure_threshold + Config.clench_pressure_sensitivity) ) {
         clench_pressure_threshold = (p_check - (Config.clench_pressure_sensitivity/2)); // raise clench threshold to pressure - 1/2 sensitivity
       }
-	    if (p_check >= clench_pressure_threshold) {
+      if (p_check >= clench_pressure_threshold) {
         clench_duration += 1;   // Start counting clench time if pressure over threshold
-		    if ( clench_duration > Config.clench_duration_threshold) {
-			    arousal += 100;     // boost arousal  because clench duration exceeded 
-			    if ( arousal > 4095 ) { arousal = 4096; } // protect arousal value to not go higher then 4096
-		    }
-  		  if ( clench_duration >= (Config.clench_duration_threshold*2) ) { // desensitize clench threshold when clench too long. this is to stop arousal from going up
-			    clench_pressure_threshold += 400;
-			    clench_duration = 0;
-		    }
-	    } else {                     // when not clenching lower clench time and decay clench threshold
-		    clench_duration -= 5;
-		    if ( clench_duration <=0 ) {
-			    clench_duration = 0;
-			    if ( (p_check + (Config.clench_pressure_sensitivity/2)) < clench_pressure_threshold ){  // clench pressure threshold value decays over time to a min of pressure + 1/2 sensitivity
-				    clench_pressure_threshold -= 1;
-			    }
-		    }
-	    } // end of clenching detection
+        if ( clench_duration > Config.clench_duration_threshold) {
+          arousal += 100;     // boost arousal  because clench duration exceeded
+          if ( arousal > 4095 ) { arousal = 4096; } // protect arousal value to not go higher then 4096
+        }
+        if ( clench_duration >= (Config.clench_duration_threshold*2) ) { // desensitize clench threshold when clench too long. this is to stop arousal from going up
+          clench_pressure_threshold += 400;
+          clench_duration = 0;
+        }
+      } else {                     // when not clenching lower clench time and decay clench threshold
+        clench_duration -= 5;
+        if ( clench_duration <=0 ) {
+          clench_duration = 0;
+          if ( (p_check + (Config.clench_pressure_sensitivity/2)) < clench_pressure_threshold ){  // clench pressure threshold value decays over time to a min of pressure + 1/2 sensitivity
+            clench_pressure_threshold -= 1;
+          }
+        }
+      } // end of clenching detection
     }
 
     void updateMotorSpeed() {
@@ -225,8 +225,8 @@ namespace OrgasmControl {
           String(getArousal()) + "," +
           String(Hardware::getMotorSpeed()) + "," +
           String(Config.sensitivity_threshold) + "," +
-	        String(clench_pressure_threshold) + "," +
-	        String(clench_duration);
+          String(clench_pressure_threshold) + "," +
+          String(clench_duration);
 
       // Write out to logfile, which includes millis:
       if (logfile) {
