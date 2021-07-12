@@ -69,6 +69,10 @@ to be produced.
 
 The User Guide for the hardware can be downloaded at [doc/Edge-o-Matic_UserGuide.docx](doc/Edge-o-Matic_UserGuide.docx).
 
+Information for emulating the hardware, including a breadboard-friendly pinout for the ESP32, will be available once again
+following a rewrite of the hardware layer of this code to align with current production units and variances in part availability.
+All production units shipped are compatible with the main code branch here on GitHub.
+
 ### That RJ45 Jack
 
 **The RJ45 Jack IS NOT ETHERNET!** That is a balanced twisted pair extension of the I2C bus on the controller, and is available
