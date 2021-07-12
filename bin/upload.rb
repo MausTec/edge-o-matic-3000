@@ -3,7 +3,7 @@
 ROOT_PATH = File.absolute_path(File.join(File.dirname(__FILE__), "..")).freeze
 Dir.chdir(ROOT_PATH)
 
-build_root = File.join(ROOT_PATH, "build", "arduino")
+build_root = File.join(ROOT_PATH, ".pio", "build", "esp32dev")
 release_root = File.join(ROOT_PATH, "tmp", "release")
 
 require_relative './lib/esptool.rb'
@@ -109,8 +109,8 @@ if opts[:tag]
 
   FileUtils.rm_rf(release_root)
   FileUtils.mkdir_p(release_root)
-  FileUtils.cp(File.join(build_root, "nogasm-wifi.ino.bin"), File.join(release_root, "eom3k-#{file_friendly_version}.bin"))
-  FileUtils.cp(File.join(build_root, "nogasm-wifi.ino.partitions.bin"), File.join(release_root, "eom3k-#{file_friendly_version}.partitions.bin"))
+  FileUtils.cp(File.join(build_root, "firmware.bin"), File.join(release_root, "eom3k-#{file_friendly_version}.bin"))
+  FileUtils.cp(File.join(build_root, "partitions.bin"), File.join(release_root, "eom3k-#{file_friendly_version}.partitions.bin"))
 
   sh "gh release create v#{file_friendly_version} #{File.join(release_root, "eom3k-#{file_friendly_version}.bin")} #{File.join(release_root, "eom3k-#{file_friendly_version}.partitions.bin")} --notes-file #{File.join(ROOT_PATH, "doc", "ReleaseTemplate.md")}"
 end
