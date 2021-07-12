@@ -1,15 +1,12 @@
 #include "Hardware.h"
 #include "OrgasmControl.h"
 #include "ButtplugRegistry.h"
+#include "eom-hal.hpp"
 
 #include <WireSlave.h>
-#include <EEPROM.h>
-#define EEPROM_SIZE 512
 
 namespace Hardware {
   bool initialize() {
-    EEPROM.begin(EEPROM_SIZE);
-
     initializeButtons();
     initializeEncoder();
     initializeLEDs();
@@ -24,7 +21,6 @@ namespace Hardware {
     digitalWrite(RJ_LED_2_PIN, LOW);
 #endif
 
-    Wire.begin();
     setPressureSensitivity(Config.sensor_sensitivity);
 
     return true;
@@ -118,48 +114,13 @@ namespace Hardware {
   }
 
   String getDeviceSerial() {
-    int addr = 0x00;
-    int idx = 0;
-    char serial[255] = "";
-    char byte = '\0';
-
-    do {
-      byte = EEPROM.read(addr + idx);
-      serial[idx] = byte;
-      idx++;
-    } while (byte != '\0' && idx < 254);
-
-    // Double-ensure we're null terminated:
-    serial[idx] = '\0';
-
+    char serial[40] = "";
+    auto err = eom_hal_get_device_serial(serial, 40);
     return String(serial);
   }
 
   void setDeviceSerial(const char *serial) {
-    int addr = 0x00;
-    int idx = 0;
-    char byte = '\0';
-    char set = EEPROM.read(addr + idx);
-
-    // First char of serial is somewhere in ASCII range so uh,
-    // probably was initialized?
-    if (set >= ' ' && set <= '~'
-#ifdef KEY_1_PIN
-    && digitalRead(KEY_1_PIN) == HIGH
-#endif
-    ) {
-      Serial.println("E_SER_SET");
-      return;
-    }
-
-    do {
-      byte = serial[idx];
-      EEPROM.write(addr + idx, byte);
-      EEPROM.commit();
-      idx++;
-    } while (byte != '\0');
-
-    Serial.println("OK");
+    Serial.println("E_DEPRECATED");
   }
 
   void setMotorSpeed(int speed) {
@@ -208,29 +169,15 @@ namespace Hardware {
   }
 
   long getPressure() {
-    float sum = 0;
-    const int samples = 3;
-
-    for (int i = 0; i < samples; i++) {
-      sum += analogRead(BUTT_PIN);
-    }
-
-    return floor(sum / samples);
+    return eom_hal_get_pressure_reading();
   }
 
   void setPressureSensitivity(byte value) {
-    Wire.beginTransmission(0x2F);
-    Wire.write((byte)(255 - value) / 2);
-    Wire.endTransmission();
+    eom_hal_set_sensor_sensitivity(value);
   }
 
   byte getPressureSensitivity() {
-    Wire.requestFrom(0x2F, 1);
-    int val = 0;
-    while (Wire.available()) {
-      val = Wire.read();
-    }
-    return (byte)(127 - val) * 2;
+    return eom_hal_get_sensor_sensitivity();
   }
 
   void joinI2c(byte address) {
