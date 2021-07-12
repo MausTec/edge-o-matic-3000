@@ -106,7 +106,7 @@ void loadConfigFromJsonObject(JsonDocument &doc) {
   
   // Clench settings
   Config.clench_pressure_sensitivity = doc["clench_pressure_sensitivity"] | 200;
-  Config.clench_duration_threshold = doc["clench_duration_threshold"] | 55;
+  Config.clench_duration_threshold = doc["clench_duration_threshold"] | 35;
   Config.autoEdgingDurationMinutes = doc["auto_edging_duration_minutes"] | 30;
   Config.postOrgasmDurationMinutes = doc["post_Orgasm_Duration_Minutes"] | 1;
 
