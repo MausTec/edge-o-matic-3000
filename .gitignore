@@ -19,3 +19,4 @@ VERSION.h
 .vscode/ipch
 vendor/
 tmp/
+*.code-workspace
