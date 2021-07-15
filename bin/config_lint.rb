@@ -16,7 +16,7 @@ TEXT
 end
 
 # Parse in Config
-config_h = File.join(DIR, "config.h")
+config_h = File.join(DIR, "include", "config.h")
 in_struct = false
 
 config_values = {}
