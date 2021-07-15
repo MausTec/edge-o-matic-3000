@@ -33,7 +33,7 @@ namespace WebSocketSecureHelper {
       // The constructor has some optional parameters like the TCP port that should be used
       // and the max client count. For simplicity, we use a fixed amount of clients that is bound
       // to the max client count.
-      secureServer = new HTTPSServer(cert, 443, MAX_CLIENTS);
+      secureServer = new HTTPSServer(cert, 443, MAX_HTTPS_CLIENTS);
     }
 
     insecureServer = new HTTPServer(80, MAX_HTTP_CLIENTS);

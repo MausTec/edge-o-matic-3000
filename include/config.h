@@ -87,6 +87,7 @@ struct ConfigStruct {
 
   char bt_display_name[64];
   bool bt_on;
+  bool force_bt_coex;
 
   // UI And Stuff
   byte led_brightness;
@@ -113,7 +114,9 @@ struct ConfigStruct {
 
   // Vibration Output Mode
   VibrationMode vibration_mode;
-} extern Config;
+};
+
+extern ConfigStruct Config;
 
 extern void loadConfigFromSd();
 extern void loadDefaultConfig();
