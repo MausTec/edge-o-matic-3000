@@ -41,12 +41,13 @@ static void onViewStatus(UIMenu*) {
 
   if (Config.bt_on) {
     status += "Bluetooth On\n";
-    status += String(Config.bt_display_name);
-  } else if (WiFiHelper::connected()) {
+    status += String(Config.bt_display_name) + '\n';
+  } 
+  
+  if (WiFiHelper::connected()) {
     status += "Connected\n";
-    status += WiFiHelper::ip();
-    status += "\nSignal: " + WiFiHelper::signalStrengthStr();
-  } else {
+    status += WiFiHelper::ip() + '\n';
+  } else if (!Config.bt_on) {
     status += "Disconnected";
   }
 
@@ -56,10 +57,13 @@ static void onViewStatus(UIMenu*) {
 static void onEnableBluetooth(UIMenu* menu) {
   UI.toastNow("Enabling...", 0, false);
   Config.bt_on = true;
-  Config.wifi_on = false;
 
-  if (WiFiHelper::connected()) {
-    WiFiHelper::disconnect();
+  if (!Config.force_bt_coex) {
+    Config.wifi_on = false;
+
+    if (WiFiHelper::connected()) {
+      WiFiHelper::disconnect();
+    }
   }
 
   saveConfigToSd(0);
@@ -88,11 +92,14 @@ static void buildMenu(UIMenu *menu) {
     if (Buttplug.connected()) {
       menu->addItem(&BluetoothDevicesMenu);
     }
-  } else if (WiFiHelper::connected()) {
-    menu->addItem("Disable WiFi", &onDisableWiFi);
-  } else {
-    menu->addItem("Enable WiFi", &onEnableWiFi);
+  } else if (Config.force_bt_coex || !Config.wifi_on) {
     menu->addItem("Enable Bluetooth", &onEnableBluetooth);
+  }
+  
+  if (WiFiHelper::connected()) {
+    menu->addItem("Disable WiFi", &onDisableWiFi);
+  } else if (Config.force_bt_coex || !Config.bt_on) {
+    menu->addItem("Enable WiFi", &onEnableWiFi);
   }
 
   menu->addItem("Connection Status", &onViewStatus);
