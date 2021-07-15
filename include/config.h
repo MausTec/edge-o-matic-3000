@@ -114,7 +114,9 @@ struct ConfigStruct {
 
   // Vibration Output Mode
   VibrationMode vibration_mode;
-} extern Config;
+};
+
+extern ConfigStruct Config;
 
 extern void loadConfigFromSd();
 extern void loadDefaultConfig();
