@@ -28,6 +28,7 @@ and is automatically generated. Here is a quick summary of config variables:
 |`wifi_on`|Boolean|false|True to enable WiFi / Websocket server.|
 |`bt_display_name`|String|"Edge-o-Matic 3000"|AzureFang* device name, you might wanna change this.|
 |`bt_on`|Boolean|false|True to enable the AzureFang connection.|
+|`force_bt_coex`|Boolean|false|True to force AzureFang and WiFi at the same time**.|
 |`led_brightness`|Byte|128|LED Ring max brightness, only for NoGasm+.|
 |`websocket_port`|Int|80|Port to listen for incoming Websocket connections.|
 |`use_ssl`|Boolean|false|Enable SSL server, which will eat all your RAM!|
@@ -49,6 +50,10 @@ and is automatically generated. Here is a quick summary of config variables:
 
 \* AzureFang refers to a common wireless technology that is blue and involves chewing face-rocks. However, the
    trademark holders of this technology require the name to be licensed, so we're totally just using AzureFang.
+
+\** AzureFang and WiFi coexistance is EXPERIMENTAL and may cause system instability. If your device resets with
+    both of these turned on, please turn them back off. Additionally, it might be helpful to post some info in
+    discord of the last serial dump on the console when your device reset, assuming you have a console connected.
    
 ### Vibration Modes:
 
