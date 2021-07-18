@@ -77,6 +77,7 @@ void loadConfigFromJsonObject(JsonDocument &doc) {
   // Copy Bluetooth Settings
   strlcpy(Config.bt_display_name, doc["bt_display_name"] | "Edge-o-Matic 3000", sizeof(Config.bt_display_name));
   Config.bt_on = doc["bt_on"] | false;
+  Config.force_bt_coex = doc["force_bt_coex"] | false;
 
   // Copy Network Settings
   Config.websocket_port = doc["websocket_port"] | 80;
@@ -115,7 +116,7 @@ void loadConfigFromJsonObject(JsonDocument &doc) {
    */
 
   // Bluetooth and WiFi cannot operate at the same time.
-  if (Config.wifi_on && Config.bt_on) {
+  if (Config.wifi_on && Config.bt_on && !Config.force_bt_coex) {
     Serial.println("Not enough memory for WiFi and Bluetooth, disabling BT.");
     Config.bt_on = false;
   }
@@ -130,6 +131,7 @@ void dumpConfigToJsonObject(JsonDocument &doc) {
   // Copy Bluetooth Settings
   doc["bt_display_name"] = Config.bt_display_name;
   doc["bt_on"] = Config.bt_on;
+  doc["force_bt_coex"] = Config.force_bt_coex;
 
   // Copy Network Settings
   doc["websocket_port"] = Config.websocket_port;
@@ -230,6 +232,8 @@ bool setConfigValue(const char *option, const char *value, bool &require_reboot)
   } else if(!strcmp(option, "bt_on")) {
     Config.bt_on = atob(value);
     require_reboot = true;
+  } else if(!strcmp(option, "force_bt_coex")) {
+    Config.force_bt_coex = atob(value);
   } else if(!strcmp(option, "led_brightness")) {
     Config.led_brightness = atoi(value);
   } else if(!strcmp(option, "websocket_port")) {
@@ -299,6 +303,8 @@ bool getConfigValue(const char *option, String &out) {
     out += String(Config.wifi_on) + '\n';
   } else if(!strcmp(option, "bt_on")) {
     out += String(Config.bt_on) + '\n';
+  } else if(!strcmp(option, "force_bt_coex")) {
+    out += String(Config.force_bt_coex) + '\n';
   } else if(!strcmp(option, "led_brightness")) {
     out += String(Config.led_brightness) + '\n';
   } else if(!strcmp(option, "websocket_port")) {
