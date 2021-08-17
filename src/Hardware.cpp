@@ -1,13 +1,79 @@
 #include "Hardware.h"
 #include "OrgasmControl.h"
 #include "ButtplugRegistry.h"
-#include "eom-hal.hpp"
+#include "eom-hal.h"
 
 #include <WireSlave.h>
 
 namespace Hardware {
+   namespace {
+    static void handle_key_press(eom_hal_button_t button, eom_hal_button_event_t event) {
+      idle_since_ms = millis();
+      
+      if (event == EOM_HAL_BUTTON_HOLD) {
+        switch (button) {
+          case EOM_HAL_BUTTON_BACK:
+            if (OrgasmControl::isRecording()) {
+              OrgasmControl::stopRecording();
+            } else {
+              OrgasmControl::startRecording();
+            }
+            break;
+
+          case EOM_HAL_BUTTON_MENU:
+            UI.screenshot();
+            break;
+        }
+      } else {
+        switch (button) {
+          case EOM_HAL_BUTTON_BACK:
+            UI.onKeyPress(0);
+            break;
+
+          case EOM_HAL_BUTTON_MID:
+            UI.onKeyPress(1);
+            break;
+
+          case EOM_HAL_BUTTON_OK:
+            UI.onKeyPress(2);
+            break;
+
+          case EOM_HAL_BUTTON_MENU:
+            UI.onKeyPress(3);
+            break;
+        }
+      }
+    }
+
+    void initializeEncoder() {
+      pinMode(ENCODER_RD_PIN, OUTPUT);
+      pinMode(ENCODER_GR_PIN, OUTPUT);
+      pinMode(ENCODER_BL_PIN, OUTPUT);
+
+      setEncoderColor(CRGB::Black);
+
+      ESP32Encoder::useInternalWeakPullResistors = UP;
+      Encoder.attachSingleEdge(ENCODER_A_PIN, ENCODER_B_PIN);
+      Encoder.setCount(128);
+      encoderCount = 128;
+    }
+
+    void initializeLEDs() {
+#ifdef LED_PIN
+      pinMode(LED_PIN, OUTPUT);
+      Serial.println("Setting up FastLED on pin " + String(LED_PIN));
+
+      FastLED.addLeds<WS2812B, LED_PIN>(leds, LED_COUNT);
+      for (int i = 0; i < LED_COUNT; i++) {
+        leds[i] = CRGB::Green;
+      }
+      FastLED.show();
+#endif
+    }
+  }
+
+
   bool initialize() {
-    initializeButtons();
     initializeEncoder();
     initializeLEDs();
 
@@ -23,22 +89,26 @@ namespace Hardware {
 
     setPressureSensitivity(Config.sensor_sensitivity);
 
+    // Alright so, when I made the interface for the HAL I thought it'd be great to
+    // have individual registration for each button. Oh how wrong I was, friendo!
+    // All my projects are now doing this, so I'm probably going to revise the interface
+    // for the HAL to register one global handler, since the button and hold is passed
+    // as a parameter anyway.
+    eom_hal_register_button_hold(EOM_HAL_BUTTON_BACK, handle_key_press);
+    eom_hal_register_button_hold(EOM_HAL_BUTTON_MENU, handle_key_press);
+    eom_hal_register_button_press(EOM_HAL_BUTTON_BACK, handle_key_press);
+    eom_hal_register_button_press(EOM_HAL_BUTTON_MID, handle_key_press);
+    eom_hal_register_button_press(EOM_HAL_BUTTON_OK, handle_key_press);
+    eom_hal_register_button_press(EOM_HAL_BUTTON_MENU, handle_key_press);
+
     return true;
   }
 
   void tick() {
-#ifdef KEY_1_PIN
-    Key1.tick();
-    Key2.tick();
-    Key3.tick();
-#endif
-
     if (i2c_slave_addr > 0) {
       // THIS WILL FREEZE. Patch WireSlave.cpp to include a timeout in the native call! 10 ticks does it.
-      WireSlave1.update();
+      // WireSlave1.update();
     }
-
-    EncoderSw.tick();
 
     int32_t count = Encoder.getCount();
     if (count != encoderCount) {
@@ -222,69 +292,4 @@ namespace Hardware {
     digitalWrite(RJ_LED_2_PIN, HIGH);
 #endif
   }
-
-  namespace {
-    void initializeButtons() {
-#ifdef KEY_1_PIN
-      Key1.attachClick([]() {
-        idle_since_ms = millis();
-        UI.onKeyPress(0);
-      });
-
-      Key1.attachPress([]() {
-        if (OrgasmControl::isRecording()) {
-          OrgasmControl::stopRecording();
-        } else {
-          OrgasmControl::startRecording();
-        }
-      });
-
-      Key2.attachClick([]() {
-        idle_since_ms = millis();
-        UI.onKeyPress(1);
-      });
-
-      Key3.attachClick([]() {
-        idle_since_ms = millis();
-        UI.onKeyPress(2);
-      });
-#endif
-    }
-
-    void initializeEncoder() {
-      pinMode(ENCODER_RD_PIN, OUTPUT);
-      pinMode(ENCODER_GR_PIN, OUTPUT);
-      pinMode(ENCODER_BL_PIN, OUTPUT);
-
-      setEncoderColor(CRGB::Black);
-
-      ESP32Encoder::useInternalWeakPullResistors = UP;
-      Encoder.attachSingleEdge(ENCODER_A_PIN, ENCODER_B_PIN);
-      Encoder.setCount(128);
-      encoderCount = 128;
-
-      EncoderSw.attachClick([]() {
-        idle_since_ms = millis();
-        UI.onKeyPress(3);
-      });
-
-      // TODO: This should be EncoderSw
-      EncoderSw.attachPress([]() {
-        UI.screenshot();
-      });
-    }
-
-    void initializeLEDs() {
-#ifdef LED_PIN
-      pinMode(LED_PIN, OUTPUT);
-      Serial.println("Setting up FastLED on pin " + String(LED_PIN));
-
-      FastLED.addLeds<WS2812B, LED_PIN>(leds, LED_COUNT);
-      for (int i = 0; i < LED_COUNT; i++) {
-        leds[i] = CRGB::Green;
-      }
-      FastLED.show();
-#endif
-    }
-  }
-}
+ }
