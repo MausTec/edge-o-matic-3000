@@ -10,6 +10,7 @@ class RunningAverage {
 public:
   void addValue(long value);
   long getAverage();
+  void fillValue(float value);
 
 private:
   long ra_index = 0;

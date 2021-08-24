@@ -3,6 +3,7 @@
 
 #include "errors.h"
 #include "VibrationModeController.h"
+#include "ArousalModeController.h"
 
 #include <ArduinoJson.h>
 
@@ -103,6 +104,12 @@ struct ConfigStruct {
   int update_frequency_hz;
   byte sensor_sensitivity;
   bool use_average_values;
+
+  //Widget's New Settings
+  int baseline_deviation_allowance;
+  int clench_ramp_speed;
+
+  ArousalMode arousal_mode;
 
   // Vibration Output Mode
   VibrationMode vibration_mode;

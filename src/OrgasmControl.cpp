@@ -27,26 +27,59 @@ namespace OrgasmControl {
      * This happens with a default update frequency of 50Hz.
      */
     void updateArousal() {
+
       // Decay stale arousal value:
-      arousal *= 0.99;
-
-      // Acquire new pressure and take average:
-      pressure_value = Hardware::getPressure();
-      PressureAverage.addValue(pressure_value);
+      // arousal *= 0.99;
       long p_avg = PressureAverage.getAverage();
-      long p_check = Config.use_average_values ? p_avg : pressure_value;
+      pressure_value = Hardware::getPressure();
 
-      // Increment arousal:
-      if (p_check < last_value) { // falling edge of peak
-        if (p_check > peak_start) { // first tick past peak?
-          if (p_check - peak_start >= Config.sensitivity_threshold / 10) { // big peak
-            arousal += p_check - peak_start;
-          }
-        }
-        peak_start = p_check;
+      //hack method to slow 50hz down to ~2hz
+      tick_counter ++;
+      if (tick_counter >= 25){
+        tick_counter = 0;
       }
 
-      last_value = p_check;
+      switch (Config.arousal_mode) {
+        case ArousalMode::Linear:
+          if (pressure_value - Config.baseline_deviation_allowance <= p_avg){
+            PressureAverage.addValue(pressure_value);
+            arousal *= 0.99;
+          } else {
+            arousal = pressure_value - p_avg;
+          }
+        break;
+        case ArousalMode::Clench:
+          if (pressure_value - Config.baseline_deviation_allowance <= p_avg){
+            PressureAverage.addValue(pressure_value);
+            arousal *= 0.99;
+          } else if (tick_counter == 0) {
+            float ramp_amount = (1 - p_avg/pressure_value) * Config.clench_ramp_speed;
+            arousal += ramp_amount;
+          }
+        break;
+        default:
+        case ArousalMode::Peak:
+          //AKA original detection code
+          // Acquire new pressure and take average:
+          arousal *= 0.99;
+          pressure_value = Hardware::getPressure();
+          PressureAverage.addValue(pressure_value);
+          p_avg = PressureAverage.getAverage();
+          long p_check = Config.use_average_values ? p_avg : pressure_value;
+
+          // Increment arousal:
+          if (p_check < last_value) { // falling edge of peak
+            if (p_check > peak_start) { // first tick past peak?
+              if (p_check - peak_start >= Config.sensitivity_threshold / 10) { // big peak
+                arousal += p_check - peak_start;
+              }
+            }
+            peak_start = p_check;
+          }
+
+          last_value = p_check;
+        break;
+      }
     }
 
     void updateMotorSpeed() {
@@ -76,6 +109,8 @@ namespace OrgasmControl {
 
       // Start from 0
       } else if (motor_speed == 0 && motor_start_time == 0){
+        pressure_value = Hardware::getPressure();
+        PressureAverage.fillValue(pressure_value);
         motor_speed = controller->start();
         motor_start_time = millis();
 
