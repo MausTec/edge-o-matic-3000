@@ -102,6 +102,12 @@ void loadConfigFromJsonObject(JsonDocument &doc) {
   Config.sensor_sensitivity = doc["sensor_sensitivity"] | 128;
   Config.use_average_values = doc["use_average_values"] | false;
 
+  // Widget's New Settings
+
+  Config.baseline_deviation_allowance = doc["baseline_deviation_allowance"] | 10;
+  Config.clench_ramp_speed = doc["clench_ramp_speed"] | 30;
+  Config.arousal_mode = (ArousalMode)(doc["arousal_mode"] | (int)ArousalMode::Peak);
+
   // Copy Vibration Settings
   Config.vibration_mode = (VibrationMode)(doc["vibration_mode"] | (int)VibrationMode::RampStop);
 
@@ -149,6 +155,11 @@ void dumpConfigToJsonObject(JsonDocument &doc) {
   doc["update_frequency_hz"] = Config.update_frequency_hz;
   doc["sensor_sensitivity"] = Config.sensor_sensitivity;
   doc["use_average_values"] = Config.use_average_values;
+
+  // Widget's New Settings
+  doc["baseline_deviation_allowance"] = Config.baseline_deviation_allowance;
+  doc["clench_ramp_speed"] = Config.clench_ramp_speed;
+  doc["arousal_mode"] = (int) Config.arousal_mode;
 
   // Vibration Settings
   doc["vibration_mode"] = (int) Config.vibration_mode;

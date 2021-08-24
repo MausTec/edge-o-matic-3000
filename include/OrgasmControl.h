@@ -5,6 +5,7 @@
 #include "config.h"
 #include "RunningAverage.h"
 #include "VibrationModeController.h"
+#include "ArousalModeController.h"
 #include <SD.h>
 
 namespace OrgasmControl {
@@ -49,6 +50,9 @@ namespace OrgasmControl {
     bool control_motor = false;
     bool prev_control_motor = false;
     int denial_count = 0;
+
+    //hack method to slow down 50 hz interval:
+    int tick_counter = 0;
 
     // Timings - NEW
     long motor_stop_time = 0;

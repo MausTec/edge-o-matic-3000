@@ -13,3 +13,11 @@ void RunningAverage::addValue(long value) {
 long RunningAverage::getAverage() {
   return ra_averaged;
 }
+
+void RunningAverage::fillValue(float value)
+{
+	for (int i = 0; i < RA_BUFFER_SIZE; i++) 
+	{
+		addValue(value);
+	}
+}

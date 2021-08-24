@@ -111,6 +111,65 @@ UIInput SensorSensitivityInput("Sensor Sensitivity", [](UIMenu *ip) {
   });
 });
 
+ // Widget's New Settings
+
+ UIInput BaselineDeviationAllowance("Deviation Allowance", [](UIMenu *ip) {
+  UIInput *input = (UIInput*) ip;
+  input->setMax(20);
+  input->setStep(1);
+  input->setValue(Config.baseline_deviation_allowance);
+  input->onChange([](int value) {
+    Config.baseline_deviation_allowance = value;
+  });
+  input->onConfirm([](int) {
+    saveConfigToSd(0);
+  });
+});
+
+UIInput ClenchRampSpeed("Clench Ramp Speed", [](UIMenu *ip) {
+  UIInput *input = (UIInput*) ip;
+  input->setMax(100);
+  input->setStep(5);
+  input->setValue(Config.clench_ramp_speed);
+  input->onChange([](int value) {
+    Config.clench_ramp_speed = value;
+  });
+  input->onConfirm([](int) {
+    saveConfigToSd(0);
+  });
+});
+
+
+static void setArousalMode(UIMenu *menu, int m) {
+  ArousalMode mode = (ArousalMode) m;
+  Config.arousal_mode = mode;
+  saveConfigToSd(0);
+  menu->rerender();
+}
+
+static void add_arousal_item(UIMenu *menu, std::string label, ArousalMode mode) {
+  std::string text = "";
+  if (Config.arousal_mode == mode) {
+    text += "X";
+  } else {
+    text += " ";
+  }
+  text += " " + label;
+
+  menu->addItem(text, &setArousalMode, (int) mode);
+}
+
+static void buildArousalModeMenu(UIMenu *menu) {
+  add_arousal_item(menu, "Peak", ArousalMode::Peak);
+  add_arousal_item(menu, "Linear", ArousalMode::Linear);
+  add_arousal_item(menu, "Clench", ArousalMode::Clench);
+}
+
+UIMenu ArousalModeMenu("Arousal Mode", &buildArousalModeMenu);
+
+//End of Widget's Additions
+
+
 static void setVibrateMode(UIMenu *menu, int m) {
   VibrationMode mode = (VibrationMode) m;
 
@@ -154,6 +213,7 @@ UIMenu VibrationModeMenu("Vibration Mode", &buildVibrationModeMenu);
 
 static void buildMenu(UIMenu *menu) {
   menu->addItem(&VibrationModeMenu);
+  menu->addItem(&ArousalModeMenu);
   menu->addItem(&MotorMaxSpeedInput);
   menu->addItem(&MotorStartSpeedInput);
   menu->addItem(&MotorRampTimeInput);
@@ -161,6 +221,8 @@ static void buildMenu(UIMenu *menu) {
   menu->addItem(&MinimumOnTimeInput);
   menu->addItem(&ArousalLimitInput);
   menu->addItem(&SensorSensitivityInput);
+  menu->addItem(&BaselineDeviationAllowance);
+  menu->addItem(&ClenchRampSpeed);
 }
 
 UIMenu EdgingSettingsMenu("Edging Settings", &buildMenu);

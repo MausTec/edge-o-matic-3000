@@ -5,4 +5,4 @@
  *
  * To figure out what version you're actually using, check your tags. Thanks!
  */
-#define VERSION "99.0.0"
+#define VERSION "Widget Test V0.0.3"
