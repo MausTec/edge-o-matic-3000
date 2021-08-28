@@ -1,3 +1,6 @@
 [submodule "lib/eom-hal"]
 	path = lib/eom-hal
 	url = https://github.com/MausTec/eom-hal-dist.git
+[submodule "lib/ts-code"]
+	path = lib/ts-code
+	url = https://github.com/MausTec/ts-code.git
