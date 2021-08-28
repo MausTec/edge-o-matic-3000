@@ -5,6 +5,8 @@
 #include "UpdateHelper.h"
 #include "config.h"
 
+#include "tscode.h"
+
 #include <SD.h>
 
 #define cmd_f [](char** args, String& out) -> int
@@ -17,6 +19,9 @@ typedef struct Command {
   char *help;
   cmd_func func;
 } Command;
+
+
+static bool tscode_mode = false;
 
 namespace Console {
   namespace {
@@ -357,6 +362,18 @@ namespace Console {
     Serial.println(response);
   }
 
+  tscode_command_response_t cmd_callback(tscode_command_t* cmd, char* response, size_t resp_len) {
+    _tscode_print_command(cmd);
+
+    switch (cmd->type) {
+      case EXIT_TSCODE_MODE:
+        tscode_mode = 0;
+        break;
+    }
+
+    return TSCODE_RESPONSE_OK;
+  }
+
   /**
    * Reads and stores incoming bytes onto the buffer until
    * we have a newline.
@@ -366,8 +383,21 @@ namespace Console {
       // read the incoming byte:
       char incoming = Serial.read();
 
-      if (incoming == '\n') {
-        handleMessage(buffer);
+      if (incoming == '\r') {
+        continue;
+      } else if (incoming == '\n') {
+        if (!tscode_mode) {
+          if (!strcmp(buffer, "TSCODE")) {
+            tscode_mode = true;
+          } else {
+            handleMessage(buffer);
+          }
+        } else {
+          char response[121] = "";
+          tscode_process_buffer(buffer, cmd_callback, response, 120);
+          Serial.println(response);
+        }
+
         buffer_i = 0;
         buffer[buffer_i] = 0;
       } else {
