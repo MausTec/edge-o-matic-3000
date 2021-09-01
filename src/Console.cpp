@@ -5,7 +5,7 @@
 #include "UpdateHelper.h"
 #include "config.h"
 
-#include "tscode.h"
+#include "eom_tscode_handler.h"
 
 #include <SD.h>
 
@@ -362,16 +362,16 @@ namespace Console {
     Serial.println(response);
   }
 
-  tscode_command_response_t cmd_callback(tscode_command_t* cmd, char* response, size_t resp_len) {
-    _tscode_print_command(cmd);
-
-    switch (cmd->type) {
-      case EXIT_TSCODE_MODE:
+  /**
+   * Intercept TS-code commands to see if we're changing modes, otherwise pass to global handler.
+   */
+  tscode_command_response_t tscode_handler(tscode_command_t* cmd, char* response, size_t resp_len) {
+      if (cmd->type == EXIT_TSCODE_MODE) {
         tscode_mode = 0;
-        break;
-    }
-
-    return TSCODE_RESPONSE_OK;
+        return TSCODE_RESPONSE_OK;
+      } else {
+        return eom_tscode_handler(cmd, response, resp_len);
+      }
   }
 
   /**
@@ -394,7 +394,7 @@ namespace Console {
           }
         } else {
           char response[121] = "";
-          tscode_process_buffer(buffer, cmd_callback, response, 120);
+          tscode_process_buffer(buffer, tscode_handler, response, 120);
           Serial.println(response);
         }
 
