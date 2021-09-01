@@ -366,7 +366,7 @@ namespace Console {
    * Intercept TS-code commands to see if we're changing modes, otherwise pass to global handler.
    */
   tscode_command_response_t tscode_handler(tscode_command_t* cmd, char* response, size_t resp_len) {
-      if (cmd->type == EXIT_TSCODE_MODE) {
+      if (cmd->type == TSCODE_EXIT_TSCODE_MODE) {
         tscode_mode = 0;
         return TSCODE_RESPONSE_OK;
       } else {
