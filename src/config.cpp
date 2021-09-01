@@ -94,6 +94,7 @@ void loadConfigFromJsonObject(JsonDocument &doc) {
   Config.motor_max_speed = doc["motor_max_speed"] | 128;
   Config.motor_start_speed = doc["motor_start_speed"] | 10;
   Config.edge_delay = doc["edge_delay"] | 10000;
+  Config.max_additional_delay = doc["max_additional_delay"] | 10000;
   Config.minimum_on_time = doc["minimum_on_time"] | 1000;
   Config.pressure_smoothing = doc["pressure_smoothing"] | 5;
   Config.sensitivity_threshold = doc["sensitivity_threshold"] | 600;
@@ -142,6 +143,7 @@ void dumpConfigToJsonObject(JsonDocument &doc) {
   doc["motor_max_speed"] = Config.motor_max_speed;
   doc["motor_start_speed"] = Config.motor_start_speed;
   doc["edge_delay"] = Config.edge_delay;
+  doc["max_additional_delay"] = Config.max_additional_delay;
   doc["minimum_on_time"] = Config.minimum_on_time;
   doc["pressure_smoothing"] = Config.pressure_smoothing;
   doc["sensitivity_threshold"] = Config.sensitivity_threshold;
@@ -233,6 +235,8 @@ bool setConfigValue(const char *option, const char *value, bool &require_reboot)
     Config.motor_start_speed = atoi(value);
   } else if(!strcmp(option, "edge_delay")) {
     Config.edge_delay = atoi(value);
+  } else if(!strcmp(option, "max_additional_delay")) {
+    Config.max_additional_delay = atoi(value);
   } else if(!strcmp(option, "minimum_on_time")) {
     Config.minimum_on_time = atoi(value);
   } else if(!strcmp(option, "screen_dim_seconds")) {
@@ -295,6 +299,8 @@ bool getConfigValue(const char *option, String &out) {
     out += String(Config.motor_start_speed) + '\n';
   } else if(!strcmp(option, "edge_delay")) {
     out += String(Config.edge_delay) + '\n';
+  } else if(!strcmp(option, "max_additional_delay")) {
+    out += String(Config.max_additional_delay) + '\n';
   } else if(!strcmp(option, "minimum_on_time")) {
     out += String(Config.minimum_on_time) + '\n';
   } else if(!strcmp(option, "screen_dim_seconds")) {

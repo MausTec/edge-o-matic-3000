@@ -31,7 +31,7 @@ File.foreach(config_h) do |line|
     next
   end
 
-  if line =~ /\s*}\s*extern/
+  if line =~ /\s*};/
     in_struct = false
     break
   end
@@ -68,7 +68,7 @@ File.foreach(config_cpp).with_index do |line, i|
   end
 
   # Check Read
-  if line =~ /Config\.(\w+)\s*=(?:\s*\(\w+\))?\s*doc\["(\w+)"\](\s*\|\s*\S+)?/
+  if line =~ /Config\.(\w+)\s*=(?:\s*\(\w+\)\()?\s*doc\["(\w+)"\](\s*\|\s*\S+)?\)?;?/
     json_reads << $2
     type = config_values[$1]
     if $1 != $2
@@ -85,7 +85,7 @@ File.foreach(config_cpp).with_index do |line, i|
       error config_cpp, i, "JSON read #{$2.inspect} missing default value for #{type.inspect}"
     else
       key = $1
-      default_set = $3.gsub(/\s*\|\s*/, '').gsub(/;\s*$/, '')
+      default_set = $3.gsub(/\s*\|\s*(\(.*?\))?/, '').gsub(/\)?;\s*$/, '')
       json_defaults[key] = default_set.gsub(/#{type}::/, '')
     end
     if type =~ /String|char\[\d+\]/
@@ -298,6 +298,7 @@ if $errors.length > 0
   end
   puts
   puts "#{$errors.length} errors!"
+  exit 1
 else
   puts "No errors!"
 end
