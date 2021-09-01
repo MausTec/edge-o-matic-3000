@@ -1,4 +1,4 @@
-#include "../include/RunningAverage.h"
+#include "RunningAverage.h"
 
 void RunningAverage::addValue(long value) {
   size_t ra_window = min(Config.pressure_smoothing, (byte)RA_BUFFER_SIZE);

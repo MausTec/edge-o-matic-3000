@@ -1,18 +1,18 @@
-#include "../include/WebSocketHelper.h"
-#include "../include/WebSocketSecureHelper.h"
-#include "../VERSION.h"
+#include "WebSocketHelper.h"
+#include "WebSocketSecureHelper.h"
+#include "VERSION.h"
 
 #include <FS.h>
 #include <SD.h>
 #include <SPI.h>
 
-#include "../include/Console.h"
-#include "../include/OrgasmControl.h"
-#include "../include/Hardware.h"
-#include "../include/Page.h"
-#include "../include/SDHelper.h"
+#include "Console.h"
+#include "OrgasmControl.h"
+#include "Hardware.h"
+#include "Page.h"
+#include "SDHelper.h"
 
-#include "../config.h"
+#include "config.h"
 
 namespace WebSocketHelper {
   void begin() {

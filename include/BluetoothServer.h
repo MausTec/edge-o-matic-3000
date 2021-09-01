@@ -1,12 +1,11 @@
 #ifndef __BluetoothServer_h
 #define __BluetoothServer_h
 
-#include <arduino.h>
-#include "../config.h"
+#include "config.h"
 
-#include <BLEDevice.h>
-#include <BLEUtils.h>
-#include <BLEServer.h>
+#include <NimBLEDevice.h>
+//#include <NimBLEUtils.h>
+//#include <NimBLEServer.h>
 
 #define SERVICE_UUID "52ecdfe9-590c-4226-8529-dd6bf4d817a6"
 #define CHARACTERISTIC_UUID "9f13cb96-7739-4558-8bd7-53654909962d"

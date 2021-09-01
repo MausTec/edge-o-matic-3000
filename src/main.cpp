@@ -1,10 +1,10 @@
 #include <WiFi.h>
-
-#define ARDUINOJSON_USE_LONG_LONG 1
 #include <ArduinoJson.h>
-
 #include <time.h>
 
+#include "EEPROM.h"
+
+#include "eom-hal.h"
 #include "config.h"
 #include "VERSION.h"
 
@@ -15,20 +15,19 @@
 #include <FastLED.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
-#include <OneButton.h>
 #include <ESP32Encoder.h>
 
-#include "include/Hardware.h"
-#include "include/UserInterface.h"
-#include "include/BluetoothServer.h"
-#include "include/Page.h"
-#include "include/RunningAverage.h"
-#include "include/Console.h"
-#include "include/OrgasmControl.h"
-#include "include/WiFiHelper.h"
-#include "include/UpdateHelper.h"
-#include "include/WebSocketHelper.h"
-#include "include/WebSocketSecureHelper.h"
+#include "Hardware.h"
+#include "UserInterface.h"
+#include "BluetoothServer.h"
+#include "Page.h"
+#include "RunningAverage.h"
+#include "Console.h"
+#include "OrgasmControl.h"
+#include "WiFiHelper.h"
+#include "UpdateHelper.h"
+#include "WebSocketHelper.h"
+#include "WebSocketSecureHelper.h"
 
 uint8_t LED_Brightness = 13;
 
@@ -37,35 +36,10 @@ uint8_t LED_Brightness = 13;
   Adafruit_SSD1306 display(128, 64);
 #else
   Adafruit_SSD1306 display(128, 64, &SPI, OLED_DC, OLED_RESET, OLED_CS);
+  //Adafruit_SSD1306 display = eom_hal_get_display();
 #endif
 
 UserInterface UI(&display);
-
-// Globals
-
-void printDirectory(File dir, int numTabs) {
-  while (true) {
-
-    File entry =  dir.openNextFile();
-    if (! entry) {
-      // no more files
-      break;
-    }
-    for (uint8_t i = 0; i < numTabs; i++) {
-      Serial.print('\t');
-    }
-    Serial.print(entry.name());
-    if (entry.isDirectory()) {
-      Serial.println("/");
-      printDirectory(entry, numTabs + 1);
-    } else {
-      // files have sizes, directories do not
-      Serial.print("\t\t");
-      Serial.println(entry.size(), DEC);
-    }
-    entry.close();
-  }
-}
 
 void resetSD() {
   // SD
@@ -99,7 +73,6 @@ void resetSD() {
 }
 
 void setupHardware() {
-  pinMode(BUTT_PIN, INPUT);
   pinMode(MOT_PWM_PIN, OUTPUT);
 
   if(!Hardware::initialize()) {
@@ -123,10 +96,9 @@ void backgroundLoop(void*) {
 }
 
 void setup() {
-  auto hps = xPortGetFreeHeapSize();
   // Start Serial port
   Serial.begin(115200);
-  Serial.println("Heap: " + String(hps));
+  eom_hal_init();
 
 #ifdef NG_PLUS
   Serial.println("Maus-Tec presents: NoGasm Plus");
@@ -134,6 +106,8 @@ void setup() {
   Serial.println("Maus-Tec presents: Edge-o-Matic 3000");
 #endif
   Serial.println("Version: " VERSION);
+  Serial.print("EOM-HAL Version: ");
+  Serial.println(eom_hal_get_version());
 
   // Setup Hardware
   setupHardware();
@@ -148,14 +122,10 @@ void setup() {
   UI.drawWifiIcon(1);
   UI.render();
 
-  Serial.println("Heap before WiFi: " + String(xPortGetFreeHeapSize()));
-
   // Initialize WiFi
   if (Config.wifi_on) {
     WiFiHelper::begin();
   }
-
-  Serial.println("Heap before Bluetooth: " + String(xPortGetFreeHeapSize()));
 
   // Initialize Bluetooth
   if (Config.bt_on) {
@@ -165,8 +135,6 @@ void setup() {
     BT.advertise();
   }
 
-
-  Serial.println("Heap after Bluetooth: " + String(xPortGetFreeHeapSize()));
 
   // Start background worker:
   xTaskCreatePinnedToCore(
@@ -179,29 +147,21 @@ void setup() {
       0);        /* pin task to core 0 */
 
   // I'm always one for the dramatics:
-  // Hold Key1 for fast boot, used in testing.
-#ifdef KEY_1_PIN
-  if (digitalRead(KEY_1_PIN) == HIGH) {
-#else
-  if (true) {
-#endif
-    delay(500);
-    Hardware::setEncoderColor(CRGB::Green);
-    delay(500);
-    Hardware::setEncoderColor(CRGB::Blue);
-    delay(500);
-    Hardware::setEncoderColor(CRGB::White);
-    delay(500);
-    UI.fadeTo();
-  }
+  delay(500);
+  Hardware::setEncoderColor(CRGB::Green);
+  delay(500);
+  Hardware::setEncoderColor(CRGB::Blue);
+  delay(500);
+  Hardware::setEncoderColor(CRGB::White);
+  delay(500);
+  UI.fadeTo();
 
   Page::Go(&RunGraphPage);
   Serial.println("READY");
-
-  Serial.println("Final Startup Heap: " + String(xPortGetFreeHeapSize()));
 }
 
 void loop() {
+  eom_hal_tick();
   Console::loop(); // <- TODO rename to tick
   Hardware::tick();
   OrgasmControl::tick();
@@ -246,18 +206,4 @@ void loop() {
 
   // Tick and see if we need to save config:
   saveConfigToSd(-1);
-}
-
-// Entrypoints:
-
-void app_main() {
-  // esp32 entry
-  setup();
-  while(1) loop();
-}
-
-int main(void) {
-  // cpp entry
-  setup();
-  while(1) loop();
 }
