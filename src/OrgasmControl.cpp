@@ -79,16 +79,13 @@ namespace OrgasmControl {
           random_additional_delay = random(Config.max_additional_delay);
         }
 
-      } else if (!time_out_over) {
-        twitchDetect();
-
-        // Start from 0
-      } else if (motor_speed == 0) {
+      // Start from 0
+      } else if (motor_speed == 0 && motor_start_time == 0) {
+        motor_speed = controller->start();
         motor_start_time = millis();
-        motor_speed = Config.motor_start_speed;
         random_additional_delay = 0;
 
-        // Increment or Change
+      // Increment or Change
       } else {
         motor_speed = controller->increment();
       }
