@@ -7,18 +7,18 @@ namespace OrgasmControl {
   namespace {
     VibrationModeController* getVibrationMode() {
       switch (Config.vibration_mode) {
-        case VibrationMode::Enhancement:
-          return &VibrationControllers::Enhancement;
+      case VibrationMode::Enhancement:
+        return &VibrationControllers::Enhancement;
 
-        case VibrationMode::Depletion:
-          return &VibrationControllers::Depletion;
+      case VibrationMode::Depletion:
+        return &VibrationControllers::Depletion;
 
-        case VibrationMode::Pattern:
-          return &VibrationControllers::Pattern;
+      case VibrationMode::Pattern:
+        return &VibrationControllers::Pattern;
 
-        default:
-        case VibrationMode::RampStop:
-          return &VibrationControllers::RampStop;
+      default:
+      case VibrationMode::RampStop:
+        return &VibrationControllers::RampStop;
       }
     }
 
@@ -52,13 +52,13 @@ namespace OrgasmControl {
     void updateMotorSpeed() {
       if (!control_motor) return;
 
-      VibrationModeController *controller = getVibrationMode();
+      VibrationModeController* controller = getVibrationMode();
       controller->tick(motor_speed, arousal);
 
       // Calculate timeout delay
       bool time_out_over = false;
       long on_time = millis() - motor_start_time;
-      if (millis() - motor_stop_time > Config.edge_delay){
+      if (millis() - motor_stop_time > Config.edge_delay + random_additional_delay) {
         time_out_over = true;
       }
 
@@ -68,16 +68,22 @@ namespace OrgasmControl {
 
       } else if (arousal > Config.sensitivity_threshold && motor_speed > 0 && on_time > Config.minimum_on_time) {
         // The motor_speed check above, btw, is so we only hit this once per peak.
-        // Set the motor speed to 0, and set stop time.
+        // Set the motor speed to 0, set stop time, and determine the new additional random time.
         motor_speed = controller->stop();
         motor_stop_time = millis();
         motor_start_time = 0;
         denial_count++;
 
+        // If Max Additional Delay is not disabled, caculate a new delay every time the motor is stopped.
+        if (Config.max_additional_delay != 0) {
+          random_additional_delay = random(Config.max_additional_delay);
+        }
+
       // Start from 0
-      } else if (motor_speed == 0 && motor_start_time == 0){
+      } else if (motor_speed == 0 && motor_start_time == 0) {
         motor_speed = controller->start();
         motor_start_time = millis();
+        random_additional_delay = 0;
 
       // Increment or Change
       } else {
@@ -91,12 +97,15 @@ namespace OrgasmControl {
     }
   }
 
-  void twitchDetect(){
-    if (arousal > Config.sensitivity_threshold){
+  void twitchDetect() {
+    if (arousal > Config.sensitivity_threshold) {
       motor_stop_time = millis();
     }
   }
 
+  /**
+   * \todo Recording functions don't need to be here.
+   */
   void startRecording() {
     if (logfile) {
       stopRecording();
@@ -106,7 +115,7 @@ namespace OrgasmControl {
 
     struct tm timeinfo;
     char filename_date[16];
-    if(!WiFiHelper::connected() || !getLocalTime(&timeinfo)){
+    if (!WiFiHelper::connected() || !getLocalTime(&timeinfo)) {
       Serial.println("Failed to obtain time");
       sprintf(filename_date, "%d", millis());
     } else {
@@ -140,7 +149,7 @@ namespace OrgasmControl {
   }
 
   bool isRecording() {
-    return (bool)logfile;
+    return (bool) logfile;
   }
 
   void tick() {
@@ -154,11 +163,11 @@ namespace OrgasmControl {
 
       // Data for logfile or classic log.
       String data =
-          String(getLastPressure()) + "," +
-          String(getAveragePressure()) + "," +
-          String(getArousal()) + "," +
-          String(Hardware::getMotorSpeed()) + "," +
-          String(Config.sensitivity_threshold);
+        String(getLastPressure()) + "," +
+        String(getAveragePressure()) + "," +
+        String(getArousal()) + "," +
+        String(Hardware::getMotorSpeed()) + "," +
+        String(Config.sensitivity_threshold);
 
       // Write out to logfile, which includes millis:
       if (logfile) {
@@ -187,7 +196,7 @@ namespace OrgasmControl {
    * @return normalized motor speed byte
    */
   byte getMotorSpeed() {
-    return min((float)floor(max(motor_speed, 0.0f)), 255.0f);
+    return min((float) floor(max(motor_speed, 0.0f)), 255.0f);
   }
 
   float getMotorSpeedPercent() {
@@ -199,7 +208,7 @@ namespace OrgasmControl {
   }
 
   float getArousalPercent() {
-    return (float)arousal / Config.sensitivity_threshold;
+    return (float) arousal / Config.sensitivity_threshold;
   }
 
   long getLastPressure() {
