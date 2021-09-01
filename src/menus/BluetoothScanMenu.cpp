@@ -1,10 +1,10 @@
-#include "../../include/UIMenu.h"
-#include "../../include/ButtplugRegistry.h"
+#include "UIMenu.h"
+#include "ButtplugRegistry.h"
 
-#include <BLEDevice.h>
-#include <BLEUtils.h>
-#include <BLEScan.h>
-#include <BLEAdvertisedDevice.h>
+#include <NimBLEDevice.h>
+//#include <NimBLEUtils.h>
+//#include <NimBLEScan.h>
+//#include <NimBLEAdvertisedDevice.h>
 
 int scanTime = 30; //In seconds
 BLEScan* pBLEScan = nullptr;
@@ -22,16 +22,16 @@ public:
     this->menuPtr = menu;
   }
 
-  void onResult(BLEAdvertisedDevice advertisedDevice) {
-    log_i("Advertised Device: %s", advertisedDevice.toString().c_str());
-    BLEAdvertisedDevice *device = new BLEAdvertisedDevice(advertisedDevice);
+  void onResult(BLEAdvertisedDevice* advertisedDevice) {
+    log_i("Advertised Device: %s", advertisedDevice->toString().c_str());
 
-    if (advertisedDevice.haveName()) {
-      this->menuPtr->addItem(advertisedDevice.getName().c_str(), [](UIMenu *menu, void *device) {
+    if (advertisedDevice->haveName()) {
+      this->menuPtr->addItem(advertisedDevice->getName().c_str(), [](UIMenu *menu, void *devicePtr) {
+        BLEAdvertisedDevice *device = (BLEAdvertisedDevice*) devicePtr;
+        log_i("Clicked Device: %s", device->getAddress().toString().c_str());
+        Buttplug.connect(device);
         stopScan(menu);
-        log_i("Clicked Device: %s", ((BLEAdvertisedDevice *) device)->getAddress().toString().c_str());
-        Buttplug.connect((BLEAdvertisedDevice*) device);
-      }, device);
+      }, advertisedDevice);
 
       this->menuPtr->render();
     }
@@ -39,16 +39,16 @@ public:
 };
 
 static void freeMenuPtrs(UIMenu *menu) {
-  UIMenuItem *ptr = menu->firstItem();
-
-  while (ptr != nullptr) {
-    if (ptr->arg != nullptr) {
-      BLEAddress *addr = (BLEAddress*) ptr->arg;
-      delete addr;
-      ptr->arg = nullptr;
-    }
-    ptr = ptr->next;
-  }
+//  UIMenuItem *ptr = menu->firstItem();
+//
+//  while (ptr != nullptr) {
+//    if (ptr->arg != nullptr) {
+//      BLEAddress *addr = (BLEAddress*) ptr->arg;
+//      delete addr;
+//      ptr->arg = nullptr;
+//    }
+//    ptr = ptr->next;
+//  }
 }
 
 static void addScanItem(UIMenu *menu) {
@@ -77,6 +77,7 @@ static void startScan(UIMenu *menu) {
 
 static void stopScan(UIMenu *menu) {
   scanning = false;
+  pBLEScan->clearResults();   // delete results fromBLEScan buffer to release memory
   pBLEScan->stop();
   addScanItem(menu);
   menu->render();

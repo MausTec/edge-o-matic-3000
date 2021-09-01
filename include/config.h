@@ -1,8 +1,8 @@
 #ifndef __config_h
 #define __config_h
 
-#include "arduino.h"
 #include "errors.h"
+#include "VibrationModeController.h"
 
 #include <ArduinoJson.h>
 
@@ -14,13 +14,12 @@
 #define UPDATE_FILENAME "/update.bin"
 
 // Uncomment to enable debug logging and functions.
-#define DEBUG
+//#define DEBUG
 
 // Uncomment if compiling for NoGasm+
 //#define NG_PLUS
 
 // Butt Pin
-#define BUTT_PIN        34
 #define MOT_PWM_PIN     15
 
 // SD Connections
@@ -29,7 +28,6 @@
 // Encoder Connection
 #define ENCODER_B_PIN   32
 #define ENCODER_A_PIN   33
-#define ENCODER_SW_PIN  35
 #define ENCODER_RD_PIN  2
 #define ENCODER_BL_PIN  27
 #define ENCODER_GR_PIN  4
@@ -64,11 +62,6 @@
   #define SDA_PIN 21
   #define SCL_PIN 22
   #define I2C_SLAVE_ADDR 0x09
-
-  // Buttons
-  #define KEY_1_PIN       39
-  #define KEY_2_PIN       25
-  #define KEY_3_PIN       26
 #endif
 
 union ConfigValue {
@@ -86,6 +79,7 @@ struct ConfigStruct {
 
   char bt_display_name[64];
   bool bt_on;
+  bool force_bt_coex;
 
   // UI And Stuff
   byte led_brightness;
@@ -110,7 +104,12 @@ struct ConfigStruct {
   int update_frequency_hz;
   byte sensor_sensitivity;
   bool use_average_values;
-} extern Config;
+
+  // Vibration Output Mode
+  VibrationMode vibration_mode;
+};
+
+extern ConfigStruct Config;
 
 extern void loadConfigFromSd();
 extern void loadDefaultConfig();

@@ -10,8 +10,8 @@ require_relative './screenshot.rb'
 
 class ESPTool
   ROOT_PATH = File.absolute_path(File.join(File.dirname(__FILE__), "..", "..")).freeze
-  ESPTOOL_PATH = 'C:\Users\eiser.000\AppData\Local\Arduino15\packages\esp32\tools\esptool_py\2.6.1'.freeze
-  HARDWARE_PATH = 'C:\Users\eiser.000\AppData\Local\Arduino15\packages\esp32\hardware\esp32\1.0.4'.freeze
+  ESPTOOL_PATH = 'C:\Users\eiser.000\AppData\Local\Arduino15\packages\esp32\tools\esptool_py\3.0.0'.freeze
+  HARDWARE_PATH = 'C:\Users\eiser.000\AppData\Local\Arduino15\packages\esp32\hardware\esp32\1.0.6'.freeze
   ESPTOOL_BIN  = File.join(ESPTOOL_PATH, "esptool.exe").freeze
 
   def initialize(port, bin_dir=ESPTOOL_PATH, bin_options={})
@@ -87,13 +87,30 @@ class ESPTool
   def console!
     serial = Serial.new(@port, @baud)
     read_thr = Thread.new do
+      in_stack_trace = false
+      stack_trace = []
       loop do
         begin
           line = serial.gets
+
           if line =~ /[A-Za-z0-9]{120,}/
             save_screenshot(line.chomp)
           else
             puts line
+          end
+
+          if line =~ /abort\(\) was called|Guru Meditation Error/
+            stack_trace = []
+            in_stack_trace = true
+          end
+
+          if in_stack_trace
+            stack_trace.push line
+          end
+
+          if line =~ /Backtrace:/
+            in_stack_trace = false
+            puts decode_exception(stack_trace.join("\n"))
           end
         rescue RubySerial::Error => e
           if Thread.current.report_on_exception
@@ -139,7 +156,7 @@ private
 
   def search_ports_win
     ports = {}
-    1.upto 64 do |index|
+    1.upto 255 do |index|
       begin
        serial = Serial.new  portname = 'COM' + index.to_s
         ports[portname] = 'is available' if serial
@@ -157,7 +174,7 @@ private
 
     if port == 'auto'
       found_ports = search_ports_win
-      ignored_ports = ['COM1', 'COM18']
+      ignored_ports = ['COM1', 'COM5']
 
       # Reject COM1, maybe you don't want this
       if found_ports.length > 1
@@ -177,6 +194,37 @@ private
     end
 
     port
+  end
+
+  def decode_exception(dump=nil)
+    cd = File.join(File.dirname(__FILE__), '..', '..')
+    jarfile = File.absolute_path(File.join(cd, 'tmp', 'esp-exception-decoder.jar'))
+    addr2line = "C:\\MinGW\\bin\\addr2line.exe"
+    exceptiontxt = File.absolute_path(File.join(cd, 'tmp', 'exception.txt'))
+    elffile = File.absolute_path(File.join(cd, 'build', 'arduino', 'nogasm-wifi.ino.elf'))
+
+    if dump
+      File.unlink(exceptiontxt)
+      File.write(exceptiontxt, dump)
+    end
+
+    args = [
+      '-jar',
+      jarfile,
+      addr2line,
+      elffile,
+      exceptiontxt
+    ]
+
+    out = []
+    err = []
+
+    Open3::popen3("java", *args) do |sin, sout, serr, wait_thr|
+      sout.each_line { |l| out << l }
+      serr.each_line { |l| err << l }
+    end
+
+    [ out, err ]
   end
 
   def read_serial(serial, match = /^\r\n$/, timeout = 3)

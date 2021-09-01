@@ -1,4 +1,4 @@
-# NoGasm WiFi - An Automated Orgasm Denial Device
+# Edge-o-Matic 3000 - An Automated Orgasm Denial Device
 
 This code is an ESP32 rewrite of the core NoGasm project by Rhoboto: [github.com/nogasm/nogasm](https://github.com/nogasm/nogasm)
 
@@ -8,7 +8,7 @@ stimulation accordingly. The net result: automated edging and orgasm denial.
 
 ## Web UI
 
-NoGasm WiFi and NG+ devices both support a Websocket connection and a Web UI. The current Web UI can be accessed
+Edge-o-Matic 3000, NoGasm Plus, and Edge-o-Matic AiO devices both support a Websocket connection and a Web UI. The current Web UI can be accessed
 at [nogasm-ui.maustec.io](http://nogasm-ui.maustec.io). The source code is at [github.com/maustec/nogasm-ui](https://github.com/maustec/nogasm-ui).
 
 ## WebSocket API
@@ -28,6 +28,7 @@ and is automatically generated. Here is a quick summary of config variables:
 |`wifi_on`|Boolean|false|True to enable WiFi / Websocket server.|
 |`bt_display_name`|String|"Edge-o-Matic 3000"|AzureFang* device name, you might wanna change this.|
 |`bt_on`|Boolean|false|True to enable the AzureFang connection.|
+|`force_bt_coex`|Boolean|false|True to force AzureFang and WiFi at the same time**.|
 |`led_brightness`|Byte|128|LED Ring max brightness, only for NoGasm+.|
 |`websocket_port`|Int|80|Port to listen for incoming Websocket connections.|
 |`use_ssl`|Boolean|false|Enable SSL server, which will eat all your RAM!|
@@ -46,14 +47,27 @@ and is automatically generated. Here is a quick summary of config variables:
 |`update_frequency_hz`|Int|50|Update frequency for pressure readings and arousal steps. Higher = crash your serial monitor.|
 |`sensor_sensitivity`|Byte|128|Analog pressure prescaling. Adjust this until the pressure is ~60-70%|
 |`use_average_values`|Boolean|false|Use average values when calculating arousal. This smooths noisy data.|
+|`vibration_mode`|VibrationMode|RampStop|Vibration Mode for main vibrator control.|
 
 \* AzureFang refers to a common wireless technology that is blue and involves chewing face-rocks. However, the
    trademark holders of this technology require the name to be licensed, so we're totally just using AzureFang.
 
+\** AzureFang and WiFi coexistance is EXPERIMENTAL and may cause system instability. If your device resets with
+    both of these turned on, please turn them back off. Additionally, it might be helpful to post some info in
+    discord of the last serial dump on the console when your device reset, assuming you have a console connected.
+   
+### Vibration Modes:
+
+|ID|Name|Description|
+|---|---|---|
+|1|Ramp-Stop|Vibrator ramps up from set min speed to max speed, stopping abruptly on arousal threshold crossing.|
+|2|Depletion|Vibrator speed ramps up from min to max, but is reduced as arousal approaches threshold.|
+|3|Enhancement|Vibrator speed ramps up as arousal increases, holding a peak for ramp_time.|
+|0|Global Sync|When set on secondary vibrators, they will follow the primary vibrator speed.|
+
 ## Hardware
 
-Hardware builds for this project can be purchased from Maus-Tec Electronics, at [maustec.io/nogasm](https://maustec.io/nogasm).
-OSHD pending final review.
+Hardware builds for this project can be purchased from Maus-Tec Electronics, at [maustec.io/eom](https://maustec.io/eom).
 
 Hardware development and assembly helps keep pizza in the freezer and a roof over the head of the maintainer.
 Your support helps a small business grow into something neat, and ensures future devices like this can continue
@@ -61,13 +75,9 @@ to be produced.
 
 The User Guide for the hardware can be downloaded at [doc/Edge-o-Matic_UserGuide.docx](doc/Edge-o-Matic_UserGuide.docx).
 
-### ESP32 Pinout
-
-If you want to breadboard this project, I've included the pinout from the ESP32 below. Please reference the original
-NoGasm schematic for specific designs regarding the pressure prescaler and MOSFET wiring. Alternatively, ask Mau about
-their breadboard-friendly MOSFET boards, which can directly drive your power rails and your motor from 12V.
-
-Full pinout details are in the Operator's Manual.
+Information for emulating the hardware, including a breadboard-friendly pinout for the ESP32, will be available once again
+following a rewrite of the hardware layer of this code to align with current production units and variances in part availability.
+All production units shipped are compatible with the main code branch here on GitHub.
 
 ### That RJ45 Jack
 
@@ -86,57 +96,6 @@ I2C redriver IC or compatible module to interface with this. Additionaly, this i
 |6|NC|
 |7|`SDA-`|
 |8|`SDA+`|
-
-# Development
-
-The official hardware looks like an ESP32-WROOM dev module. Conveniently, you can use the same module for your own builds.
-This is currently developed in the horrid confines of the Arduino IDE for the compiler toolchain. Install ESP support for
-Arduino. Use your fav editor. CLion is great.
-
-#### 3rd Party Dependencies
-
-This project uses the following libraries:
-
-- ArduinoJson library by Benoit Blanchon
-- FastLED library by Daniel Garcia
-- OneButton library by Matthias Hertel (version 1.5.0)
-- ESP32Encoder library by Kevin Harrington
-- Adafruit SSD1306 library by Adafruit (click "Install All" if it prompts you for dependencies)
-- ESP32Servo library by Kevin Harrington
-- ESP32 I2C Slave library by Gutierrez PS
-
-#### Board Settings
-
-|Setting|Value|
-|---|---|
-|Board|**ESP32 Dev Module**|
-|Upload Speed|921600|
-|CPU Frequency|240MHz (WiFi/BT)|
-|Flash Frequency|80MHz|
-|Flash Mode|QIO|
-|Flash Size|**4MB (32Mb)**|
-|Partition Scheme|**Minimal SPIFFS (1.9MB APP with OTA/190KB SPIFFS)**|
-|Core Debug Level|None|
-|PSRAM|Disabled|
-
-# Thanks!
-
-For helping develop the software, hardware, and other nerdy bits:
-
-- @Rhoboto
-- @qDot
-
-For being the first to order the NoGasm WiFi during the 5 unit pre-order run:
-
-- @hardplayswitch
-- (anonymous)
-- 
-- 
-- 
-
-For supporting my initial endeavour in hardware assembly and helping me scale:
-
-- @homphs
 
 # Contributions
 

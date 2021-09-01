@@ -1,7 +1,7 @@
-#include "../include/ButtplugRegistry.h"
-#include "../include/UserInterface.h"
+#include "ButtplugRegistry.h"
+#include "UserInterface.h"
 
-#include <BLEDevice.h>
+#include <NimBLEDevice.h>
 #include <Arduino.h>
 
 #include <algorithm>
@@ -17,51 +17,70 @@ static void notifyCallback(BLERemoteCharacteristic* pBLERemoteCharacteristic, ui
 }
 
 bool ButtplugDevice::disconnect() {
-  this->client->disconnect();
+  if (this->client != nullptr) {
+    this->client->disconnect();
+    NimBLEDevice::deleteClient(this->client);
+  }
+
   auto *vec = Buttplug.getDevicesPtr();
-  log_i("Removing device from registry. %d devices known.", vec->size());
+  log_d("Removing device from registry. %d devices known.", vec->size());
   vec->erase(std::remove(vec->begin(), vec->end(), this), vec->end());
-  log_i("Removed? device from registry. %d devices known.", vec->size());
+  log_d("Removed? device from registry. %d devices known.", vec->size());
   return true;
 }
 
-bool ButtplugDevice::connect() {
-  log_i("Connecting to: %s", this->device->getAddress().toString().c_str());
+bool ButtplugDevice::connect(BLEAdvertisedDevice *device) {
+  log_i("Connecting to: %s", device->getAddress().toString().c_str());
 
-  this->client = BLEDevice::createClient();
-  log_d("Created client.");
+  try {
+    this->client = BLEDevice::createClient();
+    log_d("Created client.");
+  } catch (...) {
+    log_e("Could not create client.");
+    this->disconnect();
+    return false;
+  }
 
-  this->client->connect(this->device);
+  this->client->connect(device);
   log_d("Connected to client.");
 
-  BLEUUID serviceUUID = this->device->getServiceUUID();
+
+  BLEUUID serviceUUID = device->getServiceUUID();
+  if (serviceUUID.toString() == "") {
+    log_w("No serviceUUID advertised.");
+    this->disconnect();
+    return false;
+  }
+
   log_w("Trying advertised service: %s", serviceUUID.toString().c_str());
   this->service = this->client->getService(serviceUUID);
 
   if (this->service == nullptr) {
     log_w("Failed to find service: %s", serviceUUID.toString().c_str());
-    this->client->disconnect();
+    this->disconnect();
     return false;
   }
 
-  std::map<std::string, BLERemoteCharacteristic*>* chars = this->service->getCharacteristics();
+  std::vector<BLERemoteCharacteristic*> *chars = this->service->getCharacteristics(true);
 
   // Find the chars we want:
-  for (auto const &c : *chars) {
-    if (c.second->canNotify()) {
-      log_i("Found characteristic: %s", c.first.c_str());
-      this->rxChar = c.second;
+  for (auto *c : *chars) {
+    log_i("Found characteristic: %s", c->toString().c_str());
+
+    if (c->canNotify()) {
+      log_i("Found notify characteristic.");
+      this->rxChar = c;
     }
 
-    if (c.second->canWrite()) {
-      log_i("Found characteristic: %s", c.first.c_str());
-      this->txChar = c.second;
+    if (c->canWrite()) {
+      log_i("Found write characteristic.");
+      this->txChar = c;
     }
   }
 
   if (this->txChar == nullptr || this->rxChar == nullptr) {
     log_w("Lovense requires RX and TX characteristics to be found.");
-    this->client->disconnect();
+    this->disconnect();
     return false;
   }
 
@@ -71,13 +90,20 @@ bool ButtplugDevice::connect() {
   return true;
 }
 
+ButtplugDevice::ButtplugDevice(std::string name) {
+  this->name = name;
+}
+
 void ButtplugDevice::onNotify(uint8_t *data, size_t length) {
   log_i("Got %d bytes.", length);
   this->notifyPending = true;
 }
 
 void ButtplugDevice::sendRawCmd(std::string cmd) {
-  this->txChar->writeValue(cmd);
+  if (! this->txChar->writeValue(cmd)) {
+    log_i("WRITE FAILED, DISCONNECT??");
+    this->disconnect();
+  }
 }
 
 std::string ButtplugDevice::readRaw(bool waitForNotify) {
@@ -114,15 +140,17 @@ bool ButtplugDevice::vibrate(uint8_t speed) {
 
 void ButtplugRegistry::connect(BLEAdvertisedDevice *device) {
   UI.toastNow("Connecting...", 0, false);
-  ButtplugDevice *d = new ButtplugDevice(device);
+  ButtplugDevice *d = new ButtplugDevice(device->getName());
+  log_i("Name was: %s", d->getName().c_str());
 
-  if (d->connect()) {
+  if (d->connect(device)) {
     devices.push_back(d);
     d->sendRawCmd("DeviceType;");
     std::string resp = d->readRaw();
     log_i("Got DeviceType: %s", resp.c_str());
     UI.toastNow("Connected!");
   } else {
+    UI.toastNow("Error Connecting.");
     delete d;
   }
 }

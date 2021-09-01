@@ -1,7 +1,7 @@
 #ifndef __UIMenu_h
 #define __UIMenu_h
 
-#include "../config.h"
+#include "config.h"
 #include <functional>
 #include <string>
 
@@ -39,12 +39,15 @@ class Page;
 //typedef void(*MenuCallback)(UIMenu*);
 typedef std::function<void(UIMenu*)> MenuCallback;
 typedef std::function<void(UIMenu*, void*)> ParameterizedMenuCallback;
+typedef std::function<void(UIMenu*, int)> IParameterizedMenuCallback;
 
 typedef struct UIMenuItem {
   char text[21];
   MenuCallback cb;
   ParameterizedMenuCallback pcb;
+  IParameterizedMenuCallback ipcb;
   void *arg = nullptr;
+  int iarg = NULL;
   UIMenuItem *next = nullptr;
   UIMenuItem *prev = nullptr;
 } UIMenuItem;
@@ -53,7 +56,8 @@ class UIMenu {
 public:
   // Construction
   UIMenu(const char *t, MenuCallback = nullptr);
-  void initialize();
+  void initialize(bool reinit = false);
+  void rerender();
 
   // Item Manipulation
   void addItem(const char *text, ParameterizedMenuCallback pcb = nullptr, void *arg = nullptr);
@@ -63,9 +67,15 @@ public:
   void addItem(const char *text, Page *p);
   void addItem(UIMenu *submenu, void *arg = nullptr);
   void addItem(std::string text, UIMenu *submenu, void *arg = nullptr);
+  void addItem(const char *text, IParameterizedMenuCallback pcb = nullptr, int arg = NULL);
+  void addItem(std::string text, IParameterizedMenuCallback pcb = nullptr, int arg = NULL) { addItem(text.c_str(), pcb, arg); };
   void addItemAt(size_t index, const char *text, MenuCallback cb = nullptr);
   void removeItem(size_t index);
   void clearItems();
+
+  // Menu Manipulation
+  void setTitle(const char *text);
+  void setTitle(std::string text) { setTitle(text.c_str()); };
 
   // Render Lifecycle
   void open(UIMenu *previous = nullptr, bool save_history = true, void *arg = nullptr);
@@ -95,6 +105,8 @@ protected:
 
   UIMenu *prev = nullptr;
   void *current_arg = nullptr;
+
+  UIMenuItem *getNthItem(int n);
 
 private:
   UIMenuItem *first_item = nullptr;

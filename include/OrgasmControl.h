@@ -2,8 +2,9 @@
 #define __OrgasmControl_h
 
 #include <Arduino.h>
-#include "../config.h"
+#include "config.h"
 #include "RunningAverage.h"
+#include "VibrationModeController.h"
 #include <SD.h>
 
 namespace OrgasmControl {
@@ -49,13 +50,12 @@ namespace OrgasmControl {
     bool prev_control_motor = false;
     int denial_count = 0;
 
-    //Timings - NEW
+    // Timings - NEW
     long motor_stop_time = 0;
     long motor_start_time = 0;
     long edge_time_out = 10000;
     long random_additional_delay = 0;
     int twitch_count = 0;
-
 
     // File Writer
     long recording_start_ms = 0;
@@ -63,6 +63,7 @@ namespace OrgasmControl {
 
     void updateArousal();
     void updateMotorSpeed();
+    VibrationModeController* getVibrationMode();
   }
 }
 

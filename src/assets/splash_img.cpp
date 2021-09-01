@@ -1,4 +1,4 @@
-#include "../../include/assets.h"
+#include "assets.h"
 
 // 'edge-o-matic_splash', 128x64px
 unsigned char SPLASH_IMG [] PROGMEM = {

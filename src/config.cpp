@@ -5,12 +5,12 @@
 #include "SD.h"
 #include "SPI.h"
 
-#include "../config.h"
-#include "../include/UserInterface.h"
-#include "../include/Hardware.h"
-#include "../include/Page.h"
+#include "config.h"
+#include "UserInterface.h"
+#include "Hardware.h"
+#include "Page.h"
 
-#include <FastLed.h>
+#include <FastLED.h>
 
 ConfigStruct Config;
 
@@ -77,6 +77,7 @@ void loadConfigFromJsonObject(JsonDocument &doc) {
   // Copy Bluetooth Settings
   strlcpy(Config.bt_display_name, doc["bt_display_name"] | "Edge-o-Matic 3000", sizeof(Config.bt_display_name));
   Config.bt_on = doc["bt_on"] | false;
+  Config.force_bt_coex = doc["force_bt_coex"] | false;
 
   // Copy Network Settings
   Config.websocket_port = doc["websocket_port"] | 80;
@@ -102,12 +103,15 @@ void loadConfigFromJsonObject(JsonDocument &doc) {
   Config.sensor_sensitivity = doc["sensor_sensitivity"] | 128;
   Config.use_average_values = doc["use_average_values"] | false;
 
+  // Copy Vibration Settings
+  Config.vibration_mode = (VibrationMode)(doc["vibration_mode"] | (int)VibrationMode::RampStop);
+
   /**
    * Setting Validations
    */
 
   // Bluetooth and WiFi cannot operate at the same time.
-  if (Config.wifi_on && Config.bt_on) {
+  if (Config.wifi_on && Config.bt_on && !Config.force_bt_coex) {
     Serial.println("Not enough memory for WiFi and Bluetooth, disabling BT.");
     Config.bt_on = false;
   }
@@ -122,6 +126,7 @@ void dumpConfigToJsonObject(JsonDocument &doc) {
   // Copy Bluetooth Settings
   doc["bt_display_name"] = Config.bt_display_name;
   doc["bt_on"] = Config.bt_on;
+  doc["force_bt_coex"] = Config.force_bt_coex;
 
   // Copy Network Settings
   doc["websocket_port"] = Config.websocket_port;
@@ -146,6 +151,9 @@ void dumpConfigToJsonObject(JsonDocument &doc) {
   doc["update_frequency_hz"] = Config.update_frequency_hz;
   doc["sensor_sensitivity"] = Config.sensor_sensitivity;
   doc["use_average_values"] = Config.use_average_values;
+
+  // Vibration Settings
+  doc["vibration_mode"] = (int) Config.vibration_mode;
 } // dumpConfigToJsonObject
 
 bool dumpConfigToJson(String &str) {
@@ -189,7 +197,6 @@ void saveConfigToSd(long save_at_ms) {
     }
   }
 
-  SD.remove(CONFIG_FILENAME);
   File tmp = SD.open(CONFIG_FILENAME, FILE_WRITE);
   if (!tmp) {
     Serial.println(F("Failed to create temp file for config save!"));
@@ -215,6 +222,8 @@ bool setConfigValue(const char *option, const char *value, bool &require_reboot)
   } else if(!strcmp(option, "bt_on")) {
     Config.bt_on = atob(value);
     require_reboot = true;
+  } else if(!strcmp(option, "force_bt_coex")) {
+    Config.force_bt_coex = atob(value);
   } else if(!strcmp(option, "led_brightness")) {
     Config.led_brightness = atoi(value);
   } else if(!strcmp(option, "websocket_port")) {
@@ -264,6 +273,8 @@ bool setConfigValue(const char *option, const char *value, bool &require_reboot)
   } else if (!strcmp(option, "hostname")) {
     strlcpy(Config.hostname, value, sizeof(Config.hostname));
     require_reboot = true;
+  } else if (!strcmp(option, "vibration_mode")) {
+    Config.vibration_mode = (VibrationMode) atoi(value);
   } else {
     return false;
   }
@@ -276,6 +287,8 @@ bool getConfigValue(const char *option, String &out) {
     out += String(Config.wifi_on) + '\n';
   } else if(!strcmp(option, "bt_on")) {
     out += String(Config.bt_on) + '\n';
+  } else if(!strcmp(option, "force_bt_coex")) {
+    out += String(Config.force_bt_coex) + '\n';
   } else if(!strcmp(option, "led_brightness")) {
     out += String(Config.led_brightness) + '\n';
   } else if(!strcmp(option, "websocket_port")) {
@@ -320,6 +333,8 @@ bool getConfigValue(const char *option, String &out) {
     out += String(Config.use_ssl) + '\n';
   } else if (!strcmp(option, "hostname")) {
     out += String(Config.hostname) + '\n';
+  } else if (!strcmp(option, "vibration_mode")) {
+    out += String((int) Config.vibration_mode) + '\n';
   } else {
     return false;
   }
