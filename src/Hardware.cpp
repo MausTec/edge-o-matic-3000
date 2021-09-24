@@ -6,41 +6,41 @@
 #include <WireSlave.h>
 
 namespace Hardware {
-   namespace {
+  namespace {
     static void handle_key_press(eom_hal_button_t button, eom_hal_button_event_t event) {
       idle_since_ms = millis();
-      
+
       if (event == EOM_HAL_BUTTON_HOLD) {
         switch (button) {
-          case EOM_HAL_BUTTON_BACK:
-            if (OrgasmControl::isRecording()) {
-              OrgasmControl::stopRecording();
-            } else {
-              OrgasmControl::startRecording();
-            }
-            break;
+        case EOM_HAL_BUTTON_BACK:
+          if (OrgasmControl::isRecording()) {
+            OrgasmControl::stopRecording();
+          } else {
+            OrgasmControl::startRecording();
+          }
+          break;
 
-          case EOM_HAL_BUTTON_MENU:
-            UI.screenshot();
-            break;
+        case EOM_HAL_BUTTON_MENU:
+          UI.screenshot();
+          break;
         }
       } else {
         switch (button) {
-          case EOM_HAL_BUTTON_BACK:
-            UI.onKeyPress(0);
-            break;
+        case EOM_HAL_BUTTON_BACK:
+          UI.onKeyPress(0);
+          break;
 
-          case EOM_HAL_BUTTON_MID:
-            UI.onKeyPress(1);
-            break;
+        case EOM_HAL_BUTTON_MID:
+          UI.onKeyPress(1);
+          break;
 
-          case EOM_HAL_BUTTON_OK:
-            UI.onKeyPress(2);
-            break;
+        case EOM_HAL_BUTTON_OK:
+          UI.onKeyPress(2);
+          break;
 
-          case EOM_HAL_BUTTON_MENU:
-            UI.onKeyPress(3);
-            break;
+        case EOM_HAL_BUTTON_MENU:
+          UI.onKeyPress(3);
+          break;
         }
       }
     }
@@ -76,16 +76,6 @@ namespace Hardware {
   bool initialize() {
     initializeEncoder();
     initializeLEDs();
-
-#ifdef BUS_EN_PIN
-    pinMode(BUS_EN_PIN, OUTPUT);
-    digitalWrite(BUS_EN_PIN, LOW);
-
-    pinMode(RJ_LED_1_PIN, OUTPUT);
-    pinMode(RJ_LED_2_PIN, OUTPUT);
-    digitalWrite(RJ_LED_1_PIN, LOW);
-    digitalWrite(RJ_LED_2_PIN, LOW);
-#endif
 
     setPressureSensitivity(Config.sensor_sensitivity);
 
@@ -189,7 +179,7 @@ namespace Hardware {
     return String(serial);
   }
 
-  void setDeviceSerial(const char *serial) {
+  void setDeviceSerial(const char* serial) {
     Serial.println("E_DEPRECATED");
   }
 
@@ -229,7 +219,7 @@ namespace Hardware {
   }
 
   float getMotorSpeedPercent() {
-    return (float)motor_speed / 255.0;
+    return (float) motor_speed / 255.0;
   }
 
   void ledShow() {
@@ -275,21 +265,21 @@ namespace Hardware {
 #ifdef RJ_LED_2_PIN
     digitalWrite(RJ_LED_2_PIN, LOW);
     Serial.println("Incoming!");
-    byte msg[32] = {0};
+    byte msg[32] = { 0 };
     int i = 0;
     while (WireSlave1.available()) {
       msg[i++] = WireSlave1.read();
     }
 
     if (i > 0) {
-      switch(msg[0]) {
-        case 0x10:
-          // Motor Speed
-          Hardware::setMotorSpeed(msg[1]);
-          break;
+      switch (msg[0]) {
+      case 0x10:
+        // Motor Speed
+        Hardware::setMotorSpeed(msg[1]);
+        break;
       }
     }
     digitalWrite(RJ_LED_2_PIN, HIGH);
 #endif
   }
- }
+}
