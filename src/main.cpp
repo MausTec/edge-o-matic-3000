@@ -1,14 +1,10 @@
 #include <WiFi.h>
-
-// Now included as a cli flag.
-// #define ARDUINOJSON_USE_LONG_LONG 1
 #include <ArduinoJson.h>
-
 #include <time.h>
 
 #include "EEPROM.h"
 
-#include "eom-hal.hpp"
+#include "eom-hal.h"
 #include "config.h"
 #include "VERSION.h"
 
@@ -19,7 +15,6 @@
 #include <FastLED.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
-#include <OneButton.h>
 #include <ESP32Encoder.h>
 
 #include "Hardware.h"
@@ -45,32 +40,6 @@ uint8_t LED_Brightness = 13;
 #endif
 
 UserInterface UI(&display);
-
-// Globals
-
-void printDirectory(File dir, int numTabs) {
-  while (true) {
-
-    File entry =  dir.openNextFile();
-    if (! entry) {
-      // no more files
-      break;
-    }
-    for (uint8_t i = 0; i < numTabs; i++) {
-      Serial.print('\t');
-    }
-    Serial.print(entry.name());
-    if (entry.isDirectory()) {
-      Serial.println("/");
-      printDirectory(entry, numTabs + 1);
-    } else {
-      // files have sizes, directories do not
-      Serial.print("\t\t");
-      Serial.println(entry.size(), DEC);
-    }
-    entry.close();
-  }
-}
 
 void resetSD() {
   // SD
@@ -104,7 +73,6 @@ void resetSD() {
 }
 
 void setupHardware() {
-  pinMode(BUTT_PIN, INPUT);
   pinMode(MOT_PWM_PIN, OUTPUT);
 
   if(!Hardware::initialize()) {
@@ -128,10 +96,8 @@ void backgroundLoop(void*) {
 }
 
 void setup() {
-  auto hps = xPortGetFreeHeapSize();
   // Start Serial port
   Serial.begin(115200);
-  Serial.println("Heap: " + String(hps));
   eom_hal_init();
 
 #ifdef NG_PLUS
@@ -181,27 +147,21 @@ void setup() {
       0);        /* pin task to core 0 */
 
   // I'm always one for the dramatics:
-  // Hold Key1 for fast boot, used in testing.
-#ifdef KEY_1_PIN
-  if (digitalRead(KEY_1_PIN) == HIGH) {
-#else
-  if (true) {
-#endif
-    delay(500);
-    Hardware::setEncoderColor(CRGB::Green);
-    delay(500);
-    Hardware::setEncoderColor(CRGB::Blue);
-    delay(500);
-    Hardware::setEncoderColor(CRGB::White);
-    delay(500);
-    UI.fadeTo();
-  }
+  delay(500);
+  Hardware::setEncoderColor(CRGB::Green);
+  delay(500);
+  Hardware::setEncoderColor(CRGB::Blue);
+  delay(500);
+  Hardware::setEncoderColor(CRGB::White);
+  delay(500);
+  UI.fadeTo();
 
   Page::Go(&RunGraphPage);
   Serial.println("READY");
 }
 
 void loop() {
+  eom_hal_tick();
   Console::loop(); // <- TODO rename to tick
   Hardware::tick();
   OrgasmControl::tick();

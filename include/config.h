@@ -1,7 +1,6 @@
 #ifndef __config_h
 #define __config_h
 
-#include "arduino.h"
 #include "errors.h"
 #include "VibrationModeController.h"
 
@@ -15,13 +14,12 @@
 #define UPDATE_FILENAME "/update.bin"
 
 // Uncomment to enable debug logging and functions.
-#define DEBUG
+//#define DEBUG
 
 // Uncomment if compiling for NoGasm+
 //#define NG_PLUS
 
 // Butt Pin
-#define BUTT_PIN        34
 #define MOT_PWM_PIN     15
 
 // SD Connections
@@ -30,7 +28,6 @@
 // Encoder Connection
 #define ENCODER_B_PIN   32
 #define ENCODER_A_PIN   33
-#define ENCODER_SW_PIN  35
 #define ENCODER_RD_PIN  2
 #define ENCODER_BL_PIN  27
 #define ENCODER_GR_PIN  4
@@ -65,11 +62,6 @@
   #define SDA_PIN 21
   #define SCL_PIN 22
   #define I2C_SLAVE_ADDR 0x09
-
-  // Buttons
-  #define KEY_1_PIN       39
-  #define KEY_2_PIN       25
-  #define KEY_3_PIN       26
 #endif
 
 union ConfigValue {
@@ -104,6 +96,7 @@ struct ConfigStruct {
   byte motor_max_speed;
   byte motor_start_speed;
   int edge_delay;
+  int max_additional_delay;
   int minimum_on_time;
   byte pressure_smoothing;
   int sensitivity_threshold;
