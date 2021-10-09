@@ -1,6 +1,7 @@
 #include "Hardware.h"
 #include "OrgasmControl.h"
 #include "ButtplugRegistry.h"
+#include "AccessoryDriver.h"
 #include "eom-hal.h"
 
 #include <WireSlave.h>
@@ -189,24 +190,7 @@ namespace Hardware {
     motor_speed = new_speed;
     analogWrite(MOT_PWM_PIN, motor_speed);
     Buttplug.vibrateAll(new_speed);
-
-    if (external_connected && i2c_slave_addr == 0) {
-      Serial.println("Sending data to I2C remote...");
-
-      WirePacker packer;
-
-      packer.write(0x10);
-      packer.write(motor_speed);
-      packer.end();
-
-#ifdef I2C_SLAVE_ADDR
-      Wire.beginTransmission(I2C_SLAVE_ADDR);
-#endif
-      while (packer.available()) {    // write every packet byte
-        Wire.write(packer.read());
-      }
-      Wire.endTransmission();
-    }
+    AccessoryDriver::broadcastSpeed(new_speed);
   }
 
   void changeMotorSpeed(int diff) {

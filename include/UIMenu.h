@@ -41,6 +41,12 @@ typedef std::function<void(UIMenu*)> MenuCallback;
 typedef std::function<void(UIMenu*, void*)> ParameterizedMenuCallback;
 typedef std::function<void(UIMenu*, int)> IParameterizedMenuCallback;
 
+enum AutocleanMethod {
+  AUTOCLEAN_OFF,
+  AUTOCLEAN_FREE,
+  AUTOCLEAN_DELETE,
+};
+
 typedef struct UIMenuItem {
   char text[21];
   MenuCallback cb;
@@ -100,6 +106,8 @@ public:
     return this->current_arg;
   }
 
+  void enableAutoCleanup(AutocleanMethod m) { autoclean = m; };
+
 protected:
   char title[TITLE_SIZE + 1];
 
@@ -117,6 +125,8 @@ private:
   MenuCallback on_open = nullptr;
   MenuCallback on_close = nullptr;
   long last_menu_change = 0;
+
+  AutocleanMethod autoclean = AUTOCLEAN_OFF;
 };
 
 extern UIMenu MainMenu;
