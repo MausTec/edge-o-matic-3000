@@ -1,5 +1,5 @@
-#include "../include/UIInput.h"
-#include "../include/UserInterface.h"
+#include "UIInput.h"
+#include "UserInterface.h"
 
 void UIInput::render() {
   UI.clear(false);

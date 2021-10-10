@@ -1,6 +1,6 @@
-#include "../../include/UIMenu.h"
-#include "../../include/UserInterface.h"
-#include "../../include/Hardware.h"
+#include "UIMenu.h"
+#include "UserInterface.h"
+#include "Hardware.h"
 
 static void buildMenu(UIMenu *menu) {
   menu->addItem("Disable", [](UIMenu*) { Hardware::disableExternalBus(); });

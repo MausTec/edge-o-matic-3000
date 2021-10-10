@@ -1,7 +1,7 @@
-#include "../../include/UIMenu.h"
-#include "../../include/ButtplugRegistry.h"
-#include "../../include/UserInterface.h"
-#include "../../include/OrgasmControl.h"
+#include "UIMenu.h"
+#include "ButtplugRegistry.h"
+#include "UserInterface.h"
+#include "OrgasmControl.h"
 
 #include <vector>
 

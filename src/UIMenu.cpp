@@ -1,6 +1,6 @@
-#include "../include/UIMenu.h"
-#include "../include/UserInterface.h"
-#include "../include/Page.h"
+#include "UIMenu.h"
+#include "UserInterface.h"
+#include "Page.h"
 
 #include <esp32-hal-log.h>
 

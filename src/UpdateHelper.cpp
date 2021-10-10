@@ -1,7 +1,7 @@
-#include "../include/UpdateHelper.h"
-#include "../include/UserInterface.h"
-#include "../include/WiFiHelper.h"
-#include "../VERSION.h"
+#include "UpdateHelper.h"
+#include "UserInterface.h"
+#include "WiFiHelper.h"
+#include "VERSION.h"
 
 #include <SD.h>
 #include <HTTPClient.h>

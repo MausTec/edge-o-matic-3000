@@ -5,12 +5,12 @@
 #include "SD.h"
 #include "SPI.h"
 
-#include "../config.h"
-#include "../include/UserInterface.h"
-#include "../include/Hardware.h"
-#include "../include/Page.h"
+#include "config.h"
+#include "UserInterface.h"
+#include "Hardware.h"
+#include "Page.h"
 
-#include <FastLed.h>
+#include <FastLED.h>
 
 ConfigStruct Config;
 
@@ -77,6 +77,7 @@ void loadConfigFromJsonObject(JsonDocument &doc) {
   // Copy Bluetooth Settings
   strlcpy(Config.bt_display_name, doc["bt_display_name"] | "Edge-o-Matic 3000", sizeof(Config.bt_display_name));
   Config.bt_on = doc["bt_on"] | false;
+  Config.force_bt_coex = doc["force_bt_coex"] | false;
 
   // Copy Network Settings
   Config.websocket_port = doc["websocket_port"] | 80;
@@ -93,6 +94,7 @@ void loadConfigFromJsonObject(JsonDocument &doc) {
   Config.motor_max_speed = doc["motor_max_speed"] | 128;
   Config.motor_start_speed = doc["motor_start_speed"] | 10;
   Config.edge_delay = doc["edge_delay"] | 10000;
+  Config.max_additional_delay = doc["max_additional_delay"] | 10000;
   Config.minimum_on_time = doc["minimum_on_time"] | 1000;
   Config.pressure_smoothing = doc["pressure_smoothing"] | 5;
   Config.sensitivity_threshold = doc["sensitivity_threshold"] | 600;
@@ -109,7 +111,7 @@ void loadConfigFromJsonObject(JsonDocument &doc) {
    */
 
   // Bluetooth and WiFi cannot operate at the same time.
-  if (Config.wifi_on && Config.bt_on) {
+  if (Config.wifi_on && Config.bt_on && !Config.force_bt_coex) {
     Serial.println("Not enough memory for WiFi and Bluetooth, disabling BT.");
     Config.bt_on = false;
   }
@@ -124,6 +126,7 @@ void dumpConfigToJsonObject(JsonDocument &doc) {
   // Copy Bluetooth Settings
   doc["bt_display_name"] = Config.bt_display_name;
   doc["bt_on"] = Config.bt_on;
+  doc["force_bt_coex"] = Config.force_bt_coex;
 
   // Copy Network Settings
   doc["websocket_port"] = Config.websocket_port;
@@ -140,6 +143,7 @@ void dumpConfigToJsonObject(JsonDocument &doc) {
   doc["motor_max_speed"] = Config.motor_max_speed;
   doc["motor_start_speed"] = Config.motor_start_speed;
   doc["edge_delay"] = Config.edge_delay;
+  doc["max_additional_delay"] = Config.max_additional_delay;
   doc["minimum_on_time"] = Config.minimum_on_time;
   doc["pressure_smoothing"] = Config.pressure_smoothing;
   doc["sensitivity_threshold"] = Config.sensitivity_threshold;
@@ -218,6 +222,8 @@ bool setConfigValue(const char *option, const char *value, bool &require_reboot)
   } else if(!strcmp(option, "bt_on")) {
     Config.bt_on = atob(value);
     require_reboot = true;
+  } else if(!strcmp(option, "force_bt_coex")) {
+    Config.force_bt_coex = atob(value);
   } else if(!strcmp(option, "led_brightness")) {
     Config.led_brightness = atoi(value);
   } else if(!strcmp(option, "websocket_port")) {
@@ -229,6 +235,8 @@ bool setConfigValue(const char *option, const char *value, bool &require_reboot)
     Config.motor_start_speed = atoi(value);
   } else if(!strcmp(option, "edge_delay")) {
     Config.edge_delay = atoi(value);
+  } else if(!strcmp(option, "max_additional_delay")) {
+    Config.max_additional_delay = atoi(value);
   } else if(!strcmp(option, "minimum_on_time")) {
     Config.minimum_on_time = atoi(value);
   } else if(!strcmp(option, "screen_dim_seconds")) {
@@ -279,6 +287,8 @@ bool getConfigValue(const char *option, String &out) {
     out += String(Config.wifi_on) + '\n';
   } else if(!strcmp(option, "bt_on")) {
     out += String(Config.bt_on) + '\n';
+  } else if(!strcmp(option, "force_bt_coex")) {
+    out += String(Config.force_bt_coex) + '\n';
   } else if(!strcmp(option, "led_brightness")) {
     out += String(Config.led_brightness) + '\n';
   } else if(!strcmp(option, "websocket_port")) {
@@ -289,6 +299,8 @@ bool getConfigValue(const char *option, String &out) {
     out += String(Config.motor_start_speed) + '\n';
   } else if(!strcmp(option, "edge_delay")) {
     out += String(Config.edge_delay) + '\n';
+  } else if(!strcmp(option, "max_additional_delay")) {
+    out += String(Config.max_additional_delay) + '\n';
   } else if(!strcmp(option, "minimum_on_time")) {
     out += String(Config.minimum_on_time) + '\n';
   } else if(!strcmp(option, "screen_dim_seconds")) {
