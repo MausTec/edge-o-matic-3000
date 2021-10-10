@@ -3,7 +3,7 @@
 ROOT_PATH = File.absolute_path(File.join(File.dirname(__FILE__), "..")).freeze
 Dir.chdir(ROOT_PATH)
 
-build_root = File.join(ROOT_PATH, "build", "arduino")
+build_root = File.join(ROOT_PATH, ".pio", "build", "esp32dev")
 release_root = File.join(ROOT_PATH, "tmp", "release")
 
 require_relative './lib/esptool.rb'
@@ -14,11 +14,12 @@ require 'yaml'
 
 opts = Optimist::options do
   banner <<-TEXT
-Compile and upload this code to the ESP, using the Arduino environment for now.
+Compile and upload this code to the ESP.
 TEXT
 
   opt :port, "Serial port to upload to", type: :string, default: 'auto'
-  opt :ino_file, "Path to main .ino", type: :string, default: File.join(ROOT_PATH, "nogasm-wifi.ino")
+  opt :pio, "Use the PlatformIO build chain", type: :bool, default: true
+  opt :ino_file, "Path to main .ino", type: :string, default: File.join(ROOT_PATH, "src/main.cpp")
   opt :compile, "Recompile the software before upload", type: :bool, default: false
   opt :upload, "Upload to the device", type: :bool, default: false
   opt :get_version, "Show software version and exit", type: :bool, default: false
@@ -46,7 +47,7 @@ end
 
 def set_version(v)
   data = "#define VERSION \"#{v.to_s}\"\n"
-  File.write(File.join(ROOT_PATH, "VERSION.h"), data)
+  File.write(File.join(ROOT_PATH, "include", "VERSION.h"), data)
   $version = v
   puts "Set version to: #{v.to_s}"
 end
@@ -70,7 +71,9 @@ DUMP
 end
 
 if opts[:get_version]
-  puts get_version.to_s
+  v = get_version
+  puts v.to_s
+  set_version(v)
   exit
 end
 
@@ -87,9 +90,13 @@ else
 end
 
 if opts[:compile]
-  ino_file = opts[:ino_file]
-  builder = Arduino::Builder.new(ino_file)
-  builder.compile
+  if opts[:pio]
+    puts `pio run`
+  else
+    ino_file = opts[:ino_file]
+    builder = Arduino::Builder.new(ino_file)
+    builder.compile
+  end
 end
 
 if opts[:tag]
@@ -102,8 +109,8 @@ if opts[:tag]
 
   FileUtils.rm_rf(release_root)
   FileUtils.mkdir_p(release_root)
-  FileUtils.cp(File.join(build_root, "nogasm-wifi.ino.bin"), File.join(release_root, "eom3k-#{file_friendly_version}.bin"))
-  FileUtils.cp(File.join(build_root, "nogasm-wifi.ino.partitions.bin"), File.join(release_root, "eom3k-#{file_friendly_version}.partitions.bin"))
+  FileUtils.cp(File.join(build_root, "firmware.bin"), File.join(release_root, "eom3k-#{file_friendly_version}.bin"))
+  FileUtils.cp(File.join(build_root, "partitions.bin"), File.join(release_root, "eom3k-#{file_friendly_version}.partitions.bin"))
 
   sh "gh release create v#{file_friendly_version} #{File.join(release_root, "eom3k-#{file_friendly_version}.bin")} #{File.join(release_root, "eom3k-#{file_friendly_version}.partitions.bin")} --notes-file #{File.join(ROOT_PATH, "doc", "ReleaseTemplate.md")}"
 end
@@ -115,7 +122,11 @@ if opts[:port] && (opts[:upload] || opts[:serial] || opts[:console] || opts[:ser
 end
 
 if opts[:upload]
-  esptool&.write_flash
+  if opts[:pio]
+    puts `pio run -t upload`
+  else
+    esptool&.write_flash
+  end
 end
 
 if opts[:serial]

@@ -1,9 +1,9 @@
 #ifndef __pSNAKE_h
 #define __pSNAKE_h
 
-#include "../../include/Page.h"
-#include "../../include/UserInterface.h"
-#include "../../config.h"
+#include "Page.h"
+#include "UserInterface.h"
+#include "config.h"
 
 #define SNAKE_CUBE_SIZE 3
 #define SNAKE_PADDING_SIZE 1

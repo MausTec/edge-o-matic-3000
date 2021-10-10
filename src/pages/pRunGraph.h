@@ -1,12 +1,12 @@
 #ifndef __p_RUN_GRAPH_h
 #define __p_RUN_GRAPH_h
 
-#include "../../include/Page.h"
-#include "../../include/UserInterface.h"
-#include "../../include/OrgasmControl.h"
-#include "../../include/Hardware.h"
-#include "../../include/assets.h"
-#include "../../include/WebSocketHelper.h"
+#include "Page.h"
+#include "UserInterface.h"
+#include "OrgasmControl.h"
+#include "Hardware.h"
+#include "assets.h"
+#include "WebSocketHelper.h"
 
 enum RGView {
   GraphView,
@@ -142,8 +142,6 @@ class pRunGraph : public Page {
   }
 
   void onKeyPress(byte i) {
-    Serial.println("Key Press: " + String(i));
-
     switch (i) {
       case 0:
         if (view == GraphView) {

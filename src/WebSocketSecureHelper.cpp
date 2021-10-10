@@ -1,10 +1,10 @@
-#include "../include/WebSocketSecureHelper.h"
-#include "../include/WebSocketHelper.h"
-#include "../config.h"
+#include "WebSocketSecureHelper.h"
+#include "WebSocketHelper.h"
+#include "config.h"
 
 // Include certificate data
-#include "../include/ssl/cert.h"
-#include "../include/ssl/private_key.h"
+#include "ssl/cert.h"
+#include "ssl/private_key.h"
 
 namespace WebSocketSecureHelper {
   void end() {
@@ -33,7 +33,7 @@ namespace WebSocketSecureHelper {
       // The constructor has some optional parameters like the TCP port that should be used
       // and the max client count. For simplicity, we use a fixed amount of clients that is bound
       // to the max client count.
-      secureServer = new HTTPSServer(cert, 443, MAX_CLIENTS);
+      secureServer = new HTTPSServer(cert, 443, MAX_HTTPS_CLIENTS);
     }
 
     insecureServer = new HTTPServer(80, MAX_HTTP_CLIENTS);
