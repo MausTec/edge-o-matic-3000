@@ -12,6 +12,8 @@ build/
 serials.yml
 VERSION.h
 .vscode/
+
+~*
 .pio
 .vscode/.browse.c_cpp.db*
 .vscode/c_cpp_properties.json
