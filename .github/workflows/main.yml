@@ -7,6 +7,9 @@ jobs:
       matrix:
         os: [ ubuntu-latest ]
 
+    env:
+      BUNDLE_PATH: ~/.cache/bundle
+
     steps:
     - name: Checkout
       uses: actions/checkout@v2
