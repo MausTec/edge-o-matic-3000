@@ -40,8 +40,15 @@ jobs:
       run: |
         echo '#define VERSION "'$(git rev-parse --short HEAD)'"' > include/VERSION.h
 
+    - name: Bundle Install
+      run: |
+        gem install bundler
+        bundle install
+      working-directory: ./bin
+
     - name: Run Static Analysis
-      run: ruby bin/config_lint.rb
+      run: ruby config_lint.rb
+      working-directory: ./bin
 
     - name: Run PlatformIO
       run: pio run
