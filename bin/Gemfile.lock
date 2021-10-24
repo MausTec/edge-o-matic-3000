@@ -1,0 +1,35 @@
+GEM
+  remote: https://rubygems.org/
+  specs:
+    ffi (1.15.4-x64-mingw32)
+    optimist (3.0.1)
+    pastel (0.8.0)
+      tty-color (~> 0.5)
+    rmagick (4.2.3)
+    rubyserial (0.6.0)
+      ffi (~> 1.9, >= 1.9.3)
+    semantic (1.6.1)
+    tty-color (0.6.0)
+    tty-cursor (0.7.1)
+    tty-prompt (0.23.1)
+      pastel (~> 0.8)
+      tty-reader (~> 0.8)
+    tty-reader (0.9.0)
+      tty-cursor (~> 0.7)
+      tty-screen (~> 0.8)
+      wisper (~> 2.0)
+    tty-screen (0.8.1)
+    wisper (2.0.1)
+
+PLATFORMS
+  x64-mingw32
+
+DEPENDENCIES
+  optimist
+  rmagick
+  rubyserial
+  semantic
+  tty-prompt
+
+BUNDLED WITH
+   2.0.2
