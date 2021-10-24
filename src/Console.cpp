@@ -9,7 +9,7 @@
 
 #include <SD.h>
 
-#define cmd_f(args, out) [](char** ##args, String& ##out) -> int
+#define cmd_f [](char** args, String& out) -> int
 
 typedef int (*cmd_func)(char **, String &);
 
@@ -78,19 +78,19 @@ namespace Console {
             .cmd = "restart",
             .alias = "R",
             .help = "Restart the device",
-            .func = cmd_f(args, out) { ESP.restart(); }
+            .func = cmd_f { ESP.restart(); }
         },
         {
             .cmd = "mode",
             .alias = "m",
             .help = "Set mode automatic|manual",
-            .func = cmd_f(args, out) { RunGraphPage.setMode(args[0]); }
+            .func = cmd_f { RunGraphPage.setMode(args[0]); }
         },
         {
             .cmd = ".getser",
             .alias = nullptr,
             .help = nullptr,
-            .func = cmd_f(args, out) {
+            .func = cmd_f {
               out += "Device Serial: ";
               out += Hardware::getDeviceSerial();
             }
@@ -99,7 +99,7 @@ namespace Console {
             .cmd = ".debugsens",
             .alias = nullptr,
             .help = nullptr,
-            .func = cmd_f(args, out) {
+            .func = cmd_f {
               out += "Set: ";
               out += Config.sensor_sensitivity;
               out += ", Actual: ";
@@ -110,7 +110,7 @@ namespace Console {
             .cmd = ".getver",
             .alias = nullptr,
             .help = nullptr,
-            .func = cmd_f(args, out) {
+            .func = cmd_f {
               out += VERSION;
             }
         },
@@ -118,7 +118,7 @@ namespace Console {
             .cmd = "free",
             .alias = "f",
             .help = "Get free heap space",
-            .func = cmd_f(args, out) {
+            .func = cmd_f {
               out += "Heap (caps_alloc): " + String(xPortGetFreeHeapSize()) + '\n';
               out += "Total heap: " + String(ESP.getHeapSize()) + '\n';
               out += "Free heap: " + String(ESP.getFreeHeap()) + '\n';
@@ -130,7 +130,7 @@ namespace Console {
             .cmd = "heapdump",
             .alias = nullptr,
             .help = nullptr,
-            .func = cmd_f(args, out) {
+            .func = cmd_f {
               heap_caps_dump_all();
             },
         },
@@ -138,7 +138,7 @@ namespace Console {
             .cmd = ".versionget",
             .alias = nullptr,
             .help = nullptr,
-            .func = cmd_f(args, out) {
+            .func = cmd_f {
               String v = UpdateHelper::checkWebLatestVersion();
               out += v + '\n';
 
@@ -151,13 +151,13 @@ namespace Console {
             .cmd = "version",
             .alias = "v",
             .help = "Get current firmware version",
-            .func = cmd_f(args, out) { out += String(VERSION) + '\n'; },
+            .func = cmd_f { out += String(VERSION) + '\n'; },
         },
         {
             .cmd = ".verscmp",
             .alias = nullptr,
             .help = nullptr,
-            .func = cmd_f(args, out) {
+            .func = cmd_f {
               out += String(UpdateHelper::compareVersion(args[0], args[1])) + '\n';
             },
         }
