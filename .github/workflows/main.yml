@@ -50,7 +50,8 @@ jobs:
       working-directory: ./bin
 
     - name: Run Static Analysis
-      run: ruby config_lint.rb
+      run: |
+        bundle exec ruby config_lint.rb
       working-directory: ./bin
 
     - name: Run PlatformIO
