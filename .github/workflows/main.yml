@@ -45,7 +45,7 @@ jobs:
 
     - name: Bundle Install
       run: |
-        gem install bundler
+        sudo gem install bundler
         bundle install
       working-directory: ./bin
 
