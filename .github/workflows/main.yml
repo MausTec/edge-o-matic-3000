@@ -40,6 +40,9 @@ jobs:
       run: |
         echo '#define VERSION "'$(git rev-parse --short HEAD)'"' > include/VERSION.h
 
+    - name: Run Static Analysis
+      run: ruby bin/config_lint.rb
+
     - name: Run PlatformIO
       run: pio run
       
