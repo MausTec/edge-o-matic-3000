@@ -9,7 +9,7 @@
 
 #include <SD.h>
 
-#define cmd_f [](char** args, String& out) -> int
+#define cmd_f(args, out) [](char** ##args, String& ##out) -> int
 
 typedef int (*cmd_func)(char **, String &);
 
@@ -30,8 +30,6 @@ namespace Console {
     int sh_set(char **, String &);
 
     int sh_list(char **, String &);
-
-    int sh_external(char **, String &);
 
     int sh_cat(char **, String &);
 
@@ -59,12 +57,6 @@ namespace Console {
             .func = &sh_list
         },
         {
-            .cmd = "external",
-            .alias = "e",
-            .help = "Control the external port",
-            .func = &sh_external
-        },
-        {
             .cmd = "cat",
             .alias = "c",
             .help = "Print a file to the serial console",
@@ -86,27 +78,19 @@ namespace Console {
             .cmd = "restart",
             .alias = "R",
             .help = "Restart the device",
-            .func = cmd_f { ESP.restart(); }
+            .func = cmd_f(args, out) { ESP.restart(); }
         },
         {
             .cmd = "mode",
             .alias = "m",
             .help = "Set mode automatic|manual",
-            .func = cmd_f { RunGraphPage.setMode(args[0]); }
-        },
-        {
-            .cmd = ".setser",
-            .alias = nullptr,
-            .help = nullptr,
-            .func = cmd_f {
-              Hardware::setDeviceSerial(args[0]);
-            }
+            .func = cmd_f(args, out) { RunGraphPage.setMode(args[0]); }
         },
         {
             .cmd = ".getser",
             .alias = nullptr,
             .help = nullptr,
-            .func = cmd_f {
+            .func = cmd_f(args, out) {
               out += "Device Serial: ";
               out += Hardware::getDeviceSerial();
             }
@@ -115,7 +99,7 @@ namespace Console {
             .cmd = ".debugsens",
             .alias = nullptr,
             .help = nullptr,
-            .func = cmd_f {
+            .func = cmd_f(args, out) {
               out += "Set: ";
               out += Config.sensor_sensitivity;
               out += ", Actual: ";
@@ -126,7 +110,7 @@ namespace Console {
             .cmd = ".getver",
             .alias = nullptr,
             .help = nullptr,
-            .func = cmd_f {
+            .func = cmd_f(args, out) {
               out += VERSION;
             }
         },
@@ -134,7 +118,7 @@ namespace Console {
             .cmd = "free",
             .alias = "f",
             .help = "Get free heap space",
-            .func = cmd_f {
+            .func = cmd_f(args, out) {
               out += "Heap (caps_alloc): " + String(xPortGetFreeHeapSize()) + '\n';
               out += "Total heap: " + String(ESP.getHeapSize()) + '\n';
               out += "Free heap: " + String(ESP.getFreeHeap()) + '\n';
@@ -146,7 +130,7 @@ namespace Console {
             .cmd = "heapdump",
             .alias = nullptr,
             .help = nullptr,
-            .func = cmd_f {
+            .func = cmd_f(args, out) {
               heap_caps_dump_all();
             },
         },
@@ -154,7 +138,7 @@ namespace Console {
             .cmd = ".versionget",
             .alias = nullptr,
             .help = nullptr,
-            .func = cmd_f {
+            .func = cmd_f(args, out) {
               String v = UpdateHelper::checkWebLatestVersion();
               out += v + '\n';
 
@@ -167,13 +151,13 @@ namespace Console {
             .cmd = "version",
             .alias = "v",
             .help = "Get current firmware version",
-            .func = cmd_f { out += String(VERSION) + '\n'; },
+            .func = cmd_f(args, out) { out += String(VERSION) + '\n'; },
         },
         {
             .cmd = ".verscmp",
             .alias = nullptr,
             .help = nullptr,
-            .func = cmd_f {
+            .func = cmd_f(args, out) {
               out += String(UpdateHelper::compareVersion(args[0], args[1])) + '\n';
             },
         }
@@ -185,33 +169,6 @@ namespace Console {
         if (c.help == nullptr) continue;
         out += (String(c.cmd) + "\t(" + String(c.alias) + ")\t" + String(c.help)) + '\n';
       }
-    }
-
-    int sh_external(char **args, String &out) {
-#ifdef NG_PLUS
-      out += "Not available on this device.\n";
-      return 1;
-#else
-      if (args[0] == NULL) {
-        out += "Subcommand required!\n";
-        return 1;
-      } else if (!strcmp(args[0], "enable")) {
-        Hardware::enableExternalBus();
-        out += "External bus enabled.\n";
-      } else if (!strcmp(args[0], "disable")) {
-        Hardware::disableExternalBus();
-        out += "External bus disabled.\n";
-      } else if (!strcmp(args[0], "slave")) {
-        Hardware::enableExternalBus();
-        Hardware::joinI2c(I2C_SLAVE_ADDR);
-        out += "Joined external bus as slave.\n";
-      } else {
-        out += "Unknown subcommand!\n";
-        return 1;
-      }
-
-      return 0;
-#endif
     }
 
     int sh_cat(char **args, String &out) {
