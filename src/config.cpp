@@ -106,11 +106,11 @@ void loadConfigFromJsonObject(JsonDocument &doc) {
   // Copy Vibration Settings
   Config.vibration_mode = (VibrationMode)(doc["vibration_mode"] | (int)VibrationMode::RampStop);
   
-  // Clench settings
+  // Post orgasm torture settings
   Config.clench_pressure_sensitivity = doc["clench_pressure_sensitivity"] | 200;
   Config.clench_duration_threshold = doc["clench_duration_threshold"] | 35;
-  Config.autoEdgingDurationMinutes = doc["auto_edging_duration_minutes"] | 30;
-  Config.postOrgasmDurationMinutes = doc["post_Orgasm_Duration_Minutes"] | 1;
+  Config.auto_edging_duration_minutes = doc["auto_edging_duration_minutes"] | 30;
+  Config.post_orgasm_duration_minutes = doc["post_Orgasm_Duration_Minutes"] | 1;
 
   /**
    * Setting Validations
@@ -161,11 +161,11 @@ void dumpConfigToJsonObject(JsonDocument &doc) {
   // Vibration Settings
   doc["vibration_mode"] = (int) Config.vibration_mode;
   
-  // Clench settings
+  // Post orgasm torture settings
   doc["clench_pressure_sensitivity"] = Config.clench_pressure_sensitivity;
   doc["clench_duration_threshold"] = Config.clench_duration_threshold;
-  doc["auto_edging_duration_minutes"] = Config.autoEdgingDurationMinutes;
-  doc["post_Orgasm_Duration_Minutes"] = Config.postOrgasmDurationMinutes;
+  doc["auto_edging_duration_minutes"] = Config.auto_edging_duration_minutes;
+  doc["post_Orgasm_Duration_Minutes"] = Config.post_orgasm_duration_minutes;
 } // dumpConfigToJsonObject
 
 bool dumpConfigToJson(String &str) {
@@ -292,9 +292,9 @@ bool setConfigValue(const char *option, const char *value, bool &require_reboot)
   } else if(!strcmp(option, "clench_duration_threshold")) {
     Config.clench_duration_threshold = atoi(value);
   } else if(!strcmp(option, "auto_edging_duration_minutes")) {
-    Config.autoEdgingDurationMinutes = atoi(value);
+    Config.auto_edging_duration_minutes = atoi(value);
   } else if(!strcmp(option, "post_Orgasm_Duration_Minutes")) {
-    Config.postOrgasmDurationMinutes = atoi(value);
+    Config.post_orgasm_duration_minutes = atoi(value);
   } else {
     return false;
   }
@@ -360,9 +360,9 @@ bool getConfigValue(const char *option, String &out) {
   } else if(!strcmp(option, "clench_duration_threshold")) {
     out += String(Config.clench_duration_threshold) + '\n';
   } else if(!strcmp(option, "auto_edging_duration_minutes")) {
-    out += String(Config.autoEdgingDurationMinutes) + '\n';
+    out += String(Config.auto_edging_duration_minutes) + '\n';
   } else if(!strcmp(option, "post_Orgasm_Duration_Minutes")) {
-    out += String(Config.postOrgasmDurationMinutes) + '\n';
+    out += String(Config.post_orgasm_duration_minutes) + '\n';
   } else {
     return false;
   }
