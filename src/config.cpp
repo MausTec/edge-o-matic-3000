@@ -106,7 +106,7 @@ void loadConfigFromJsonObject(JsonDocument &doc) {
   // Copy Vibration Settings
   Config.vibration_mode = (VibrationMode)(doc["vibration_mode"] | (int)VibrationMode::RampStop);
   
-  // Post orgasm torture settings
+  // Post orgasm torture settings. The clench_pressure_sensitivity might need ajustment on the Edge-o-matic
   Config.clench_pressure_sensitivity = doc["clench_pressure_sensitivity"] | 200;
   Config.clench_duration_threshold = doc["clench_duration_threshold"] | 35;
   Config.auto_edging_duration_minutes = doc["auto_edging_duration_minutes"] | 30;
