@@ -8,18 +8,18 @@ namespace OrgasmControl {
   namespace {
     VibrationModeController* getVibrationMode() {
       switch (Config.vibration_mode) {
-        case VibrationMode::Enhancement:
-          return &VibrationControllers::Enhancement;
+      case VibrationMode::Enhancement:
+        return &VibrationControllers::Enhancement;
 
-        case VibrationMode::Depletion:
-          return &VibrationControllers::Depletion;
+      case VibrationMode::Depletion:
+        return &VibrationControllers::Depletion;
 
-        case VibrationMode::Pattern:
-          return &VibrationControllers::Pattern;
+      case VibrationMode::Pattern:
+        return &VibrationControllers::Pattern;
 
-        default:
-        case VibrationMode::RampStop:
-          return &VibrationControllers::RampStop;
+      default:
+      case VibrationMode::RampStop:
+        return &VibrationControllers::RampStop;
       }
     }
 
