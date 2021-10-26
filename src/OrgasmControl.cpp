@@ -156,7 +156,7 @@ namespace OrgasmControl {
         } 
         if (post_orgasm_start_millis > 0) { // Detect if after orgasm 
           if (Config.post_orgasm_duration_minutes == 0){ // Set the duration of vibrator after orgasm
-            post_orgasm_duration_millis = (5 * 1000); // Set minimum of 5 seconds to not do a ruin orgasm
+            post_orgasm_duration_millis = (10 * 1000); // Set minimum of 10 seconds to not do a ruin orgasm
           } else {
             post_orgasm_duration_millis = (Config.post_orgasm_duration_minutes * 60 * 1000 );
           }
