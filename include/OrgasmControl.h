@@ -33,6 +33,9 @@ namespace OrgasmControl {
   // Twitch Detect (In wrong place for 60hz)
   void twitchDetect();
 
+  // Post orgasm
+  void post_orgasm_mode(bool status = false);
+
   namespace {
     long last_update_ms = 0;
 
@@ -61,14 +64,16 @@ namespace OrgasmControl {
     long recording_start_ms = 0;
     File logfile;
     
-    //  Clench variables
+    //  Post Orgasm Clench variables
+    bool post_orgasm_run = false;
     long clench_pressure_threshold = 500; // setting start clench threshold to be over deflated plug
     int clench_duration = 0;
 
     // Autoedging Time and Post-Orgasm varables
     int original_sensitivity_threshold;
-    long autoEdgingStartMillis;
-    long postOrgasmStartMillis;
+    long auto_edging_start_millis;
+    long post_orgasm_start_millis;
+    long post_orgasm_duration_millis;
     
     void updateArousal();
     void updateMotorSpeed();

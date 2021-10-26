@@ -15,7 +15,8 @@ enum RGView {
 
 enum RGMode {
   Manual,
-  Automatic
+  Automatic,
+  PostOrgasm
 };
 
 class pRunGraph : public Page {
@@ -42,11 +43,14 @@ class pRunGraph : public Page {
     }
 
     if (mode == Automatic) {
-      UI.drawStatus("Automatic");
-      UI.setButton(2, "MANUAL");
-    } else {
+      UI.drawStatus("Auto Edging");
+      UI.setButton(2, "POST");
+    } else if (mode == Manual){
       UI.drawStatus("Manual");
       UI.setButton(2, "AUTO");
+    } else if (mode == PostOrgasm){
+      UI.drawStatus("Edging+Orgasm");
+      UI.setButton(2, "MANUAL");
     }
   }
 
@@ -142,6 +146,8 @@ class pRunGraph : public Page {
   }
 
   void onKeyPress(byte i) {
+    Serial.println("Key Press: " + String(i));
+
     switch (i) {
       case 0:
         if (view == GraphView) {
@@ -154,14 +160,21 @@ class pRunGraph : public Page {
         mode = Manual;
         Hardware::setMotorSpeed(0);
         OrgasmControl::controlMotor(false);
+        OrgasmControl::post_orgasm_mode(false);
         break;
       case 2:
         if (mode == Automatic) {
-          mode = Manual;
-          OrgasmControl::controlMotor(false);
-        } else {
+          mode = PostOrgasm;
+          OrgasmControl::controlMotor(true);
+          OrgasmControl::post_orgasm_mode(true);
+        } else if (mode == Manual) {
           mode = Automatic;
           OrgasmControl::controlMotor(true);
+          OrgasmControl::post_orgasm_mode(false);
+        } else if (mode == PostOrgasm) {
+          mode = Manual;
+          OrgasmControl::controlMotor(false);
+          OrgasmControl::post_orgasm_mode(false);
         }
         break;
     }
@@ -189,9 +202,15 @@ public:
     if (! strcmp(newMode, "automatic")) {
       mode = Automatic;
       OrgasmControl::controlMotor(true);
+      OrgasmControl::post_orgasm_mode(false);
     } else if (! strcmp(newMode, "manual")) {
       mode = Manual;
       OrgasmControl::controlMotor(false);
+      OrgasmControl::post_orgasm_mode(false);
+    } else if (! strcmp(newMode, "postorgasm")) {
+      mode = PostOrgasm;
+      OrgasmControl::controlMotor(true);
+      OrgasmControl::post_orgasm_mode(true);
     }
 
     updateButtons();

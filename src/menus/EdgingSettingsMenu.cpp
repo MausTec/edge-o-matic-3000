@@ -154,9 +154,9 @@ UIInput EdgingDuration("Edge Duration Minutes", [](UIMenu *ip) {
   UIInput *input = (UIInput*) ip;
   input->setMax(300);
   input->setStep(1);
-  input->setValue(Config.autoEdgingDurationMinutes);
+  input->setValue(Config.auto_edging_duration_minutes);
   input->onChange([](int value) {
-    Config.autoEdgingDurationMinutes = value;
+    Config.auto_edging_duration_minutes = value;
   });
   input->onConfirm([](int) {
     saveConfigToSd(0);
@@ -167,9 +167,9 @@ UIInput PostOrgasmDuration("PostOrgasm Minutes", [](UIMenu *ip) {
   UIInput *input = (UIInput*) ip;
   input->setMax(300);
   input->setStep(1);
-  input->setValue(Config.postOrgasmDurationMinutes);
+  input->setValue(Config.post_orgasm_duration_minutes);
   input->onChange([](int value) {
-    Config.postOrgasmDurationMinutes = value;
+    Config.post_orgasm_duration_minutes = value;
   });
   input->onConfirm([](int) {
     saveConfigToSd(0);

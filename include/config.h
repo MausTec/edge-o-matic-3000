@@ -108,12 +108,12 @@ struct ConfigStruct {
   // Vibration Output Mode
   VibrationMode vibration_mode;
   
-  // clench stuff
+  // Post orgasm torure stuff
   int clench_pressure_sensitivity;
   int clench_duration_threshold;
 
-  int autoEdgingDurationMinutes;
-  int postOrgasmDurationMinutes;
+  int auto_edging_duration_minutes;
+  int post_orgasm_duration_minutes;
 };
 
 extern ConfigStruct Config;
