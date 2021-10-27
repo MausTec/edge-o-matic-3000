@@ -113,7 +113,9 @@ struct ConfigStruct {
   int clench_duration_threshold;
 
   int auto_edging_duration_minutes;
-  int post_orgasm_duration_minutes;
+  int post_orgasm_duration_seconds;
+  bool edge_menu_lock;
+  bool post_orgasm_menu_lock;
 };
 
 extern ConfigStruct Config;

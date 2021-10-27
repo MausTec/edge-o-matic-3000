@@ -35,6 +35,7 @@ namespace OrgasmControl {
 
   // Post orgasm
   void post_orgasm_mode(bool status = false);
+  bool isMenuLocked();
 
   namespace {
     long last_update_ms = 0;
@@ -74,6 +75,7 @@ namespace OrgasmControl {
     long auto_edging_start_millis;
     long post_orgasm_start_millis;
     long post_orgasm_duration_millis;
+    bool menu_is_locked = false;
     
     void updateArousal();
     void updateMotorSpeed();

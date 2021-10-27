@@ -163,13 +163,13 @@ UIInput EdgingDuration("Edge Duration Minutes", [](UIMenu *ip) {
   });
 });
 
-UIInput PostOrgasmDuration("PostOrgasm Minutes", [](UIMenu *ip) {
+UIInput PostOrgasmDuration("Post Orgasm Seconds", [](UIMenu *ip) {
   UIInput *input = (UIInput*) ip;
   input->setMax(300);
   input->setStep(1);
-  input->setValue(Config.post_orgasm_duration_minutes);
+  input->setValue(Config.post_orgasm_duration_seconds);
   input->onChange([](int value) {
-    Config.post_orgasm_duration_minutes = value;
+    Config.post_orgasm_duration_seconds = value;
   });
   input->onConfirm([](int) {
     saveConfigToSd(0);
@@ -215,6 +215,39 @@ static void buildVibrationModeMenu(UIMenu *menu) {
   add_vibration_item(menu, "Ramp-Stop", VibrationMode::RampStop);
 }
 
+static void onEdgeMenuUnLock(UIMenu* menu) {
+  UI.toastNow("Edge UnLock", 3000);
+  Config.edge_menu_lock = false;
+  saveConfigToSd(0);
+  menu->initialize();
+  menu->render();
+}
+
+static void onEdgeMenuLock(UIMenu* menu) {
+  UI.toastNow("Edge Lock", 3000);
+  Config.edge_menu_lock = true;
+  saveConfigToSd(0);
+  menu->initialize();
+  menu->render();
+}
+
+static void onPostOrgasmMenuUnLock(UIMenu* menu) {
+  UI.toastNow("Post orgasm UnLock", 3000);
+  Config.post_orgasm_menu_lock = false;
+  saveConfigToSd(0);
+  menu->initialize();
+  menu->render();
+}
+
+static void onPostOrgasmMenuLock(UIMenu* menu) {
+  UI.toastNow("Post orgasm Lock", 3000);
+  Config.post_orgasm_menu_lock = true;
+  saveConfigToSd(0);
+  menu->initialize();
+  menu->render();
+}
+
+
 UIMenu VibrationModeMenu("Vibration Mode", &buildVibrationModeMenu);
 
 static void buildMenu(UIMenu *menu) {
@@ -231,6 +264,16 @@ static void buildMenu(UIMenu *menu) {
   menu->addItem(&ClenchTimeThreshold);       //  Clench Menu
   menu->addItem(&EdgingDuration);            //   Auto Edging
   menu->addItem(&PostOrgasmDuration);        //   Post Orgasm
+  if (Config.edge_menu_lock) {
+    menu->addItem("Edge+Orgasm UnLock", &onEdgeMenuUnLock);
+  } else {
+    menu->addItem("Edge+Orgasm Lock", &onEdgeMenuLock);
+  }
+  if (Config.post_orgasm_menu_lock) {
+    menu->addItem("Post Orgasm UnLock", &onPostOrgasmMenuUnLock);
+  } else {
+    menu->addItem("Post Orgasm Lock", &onPostOrgasmMenuLock);
+  }
 }
 
 UIMenu EdgingSettingsMenu("Edging Settings", &buildMenu);
