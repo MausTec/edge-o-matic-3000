@@ -130,12 +130,19 @@ namespace OrgasmControl {
       if (!post_orgasm_run) {  // keep edging start time to current time as long as system is not in Edge-Orgasm mode
         auto_edging_start_millis = millis();
         post_orgasm_start_millis = 0;
+        menu_is_locked = false;
         return;
       }
 
-      VibrationModeController *controller = getVibrationMode();
+//      VibrationModeController *controller = getVibrationMode();
 
       if (Config.auto_edging_duration_minutes > 0 ) {   // Start Post orgasm routine if the edging timer if not turned off
+        if (Config.edge_menu_lock && !menu_is_locked) { // Lock Menu if turned on
+          if ( millis() > auto_edging_start_millis + (2 * 60 * 1000)) { // Lock only after 2 minutes
+            menu_is_locked = true;
+            RunGraphPage.setMode("postorgasm");
+          }
+        }
         if ( millis() > (auto_edging_start_millis + ( Config.auto_edging_duration_minutes * 60 * 1000 )) && post_orgasm_start_millis == 0) {  // Detect if edging time has passed
           Hardware::setEncoderColor(CRGB::Green);
           if (control_motor) {
@@ -145,6 +152,10 @@ namespace OrgasmControl {
           if (arousal > Config.sensitivity_threshold) { //now detect the orgasm to start post orgasm torture timer
             Hardware::setEncoderColor(CRGB::Red);
             post_orgasm_start_millis = millis();   // Start Post orgasm torture timer
+            if (Config.post_orgasm_menu_lock && !menu_is_locked) { // Lock menu if turned on
+              menu_is_locked = true;
+              RunGraphPage.setMode("postorgasm");
+            }
           }
           if ( motor_speed <= (Config.motor_max_speed - 5) ) { // raise motor speed to max speep. protect not to go higher than max
             motor_speed = motor_speed + 5;
@@ -155,21 +166,17 @@ namespace OrgasmControl {
           }
         } 
         if (post_orgasm_start_millis > 0) { // Detect if after orgasm 
-          if (Config.post_orgasm_duration_minutes == 0){ // Set the duration of vibrator after orgasm
-            post_orgasm_duration_millis = (10 * 1000); // Set minimum of 10 seconds to not do a ruin orgasm
-          } else {
-            post_orgasm_duration_millis = (Config.post_orgasm_duration_minutes * 60 * 1000 );
-          }
-
+          post_orgasm_duration_millis = (Config.post_orgasm_duration_seconds * 1000);
           if ( millis() < (post_orgasm_start_millis + post_orgasm_duration_millis)) { // Detect if within post orgasm session
             motor_speed = Config.motor_max_speed;
             Hardware::setMotorSpeed(motor_speed);
           }
           if ( millis() >= (post_orgasm_start_millis + post_orgasm_duration_millis)) { // torture until timer reached
-            if ( motor_speed >= 5 ) { // Ramp down motor speed to 0 
-              motor_speed = motor_speed - 5;
+            if ( motor_speed >= 10 ) { // Ramp down motor speed to 0 
+              motor_speed = motor_speed - 10;
               Hardware::setMotorSpeed(motor_speed);
             } else {
+              menu_is_locked = false;
               motor_speed = 0;
               Hardware::setMotorSpeed(motor_speed);
               RunGraphPage.setMode("manual");
@@ -323,4 +330,8 @@ namespace OrgasmControl {
   void post_orgasm_mode(bool status) {
     post_orgasm_run = status;
   }
+
+  bool isMenuLocked() {
+    return menu_is_locked;
+  };
 }

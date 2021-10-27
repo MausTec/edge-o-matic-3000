@@ -44,13 +44,20 @@ class pRunGraph : public Page {
 
     if (mode == Automatic) {
       UI.drawStatus("Auto Edging");
+      UI.setButton(1, "STOP");
       UI.setButton(2, "POST");
     } else if (mode == Manual){
       UI.drawStatus("Manual");
+      UI.setButton(1, "STOP");
       UI.setButton(2, "AUTO");
-    } else if (mode == PostOrgasm){
+    } else if (mode == PostOrgasm && !OrgasmControl::isMenuLocked()){
       UI.drawStatus("Edging+Orgasm");
+      UI.setButton(1, "STOP");
       UI.setButton(2, "MANUAL");
+    } else if (mode == PostOrgasm && OrgasmControl::isMenuLocked()){
+      UI.drawStatus("Edging+Orgasm");
+      UI.setButton(1, "LOCK");
+      UI.setButton(2, "LOCK");
     }
   }
 
@@ -157,10 +164,14 @@ class pRunGraph : public Page {
         }
         break;
       case 1:
-        mode = Manual;
-        Hardware::setMotorSpeed(0);
-        OrgasmControl::controlMotor(false);
-        OrgasmControl::post_orgasm_mode(false);
+        if (mode == PostOrgasm && !OrgasmControl::isMenuLocked()) { 
+          mode = Manual;
+          Hardware::setMotorSpeed(0);
+          OrgasmControl::controlMotor(false);
+          OrgasmControl::post_orgasm_mode(false);
+        } else if (mode == PostOrgasm && OrgasmControl::isMenuLocked()) {
+          // Menu is locked, don't change to manual
+        }
         break;
       case 2:
         if (mode == Automatic) {
@@ -171,10 +182,12 @@ class pRunGraph : public Page {
           mode = Automatic;
           OrgasmControl::controlMotor(true);
           OrgasmControl::post_orgasm_mode(false);
-        } else if (mode == PostOrgasm) {
+        } else if (mode == PostOrgasm && !OrgasmControl::isMenuLocked()) {
           mode = Manual;
           OrgasmControl::controlMotor(false);
           OrgasmControl::post_orgasm_mode(false);
+        } else if (mode == PostOrgasm && OrgasmControl::isMenuLocked()) {
+          // do nothing, menu locked
         }
         break;
     }
@@ -186,7 +199,11 @@ class pRunGraph : public Page {
   void onEncoderChange(int diff) override {
     const int step = 255 / 20;
 
+<<<<<<< HEAD
     if (mode == Automatic) {
+=======
+    if (mode == Automatic || (mode == PostOrgasm && !OrgasmControl::isMenuLocked())) {
+>>>>>>> de9833f (Edge+orgasm menu Lock,  Post Orgasm Menu Lock options.  Post Orgasm Seconds can be set to ( 0 for Ruined Orgasm 5-15)
       // TODO this may go out of bounds. Also, change in steps?
       Config.sensitivity_threshold += (diff * step);
       saveConfigToSd(millis() + 300);
