@@ -199,11 +199,7 @@ class pRunGraph : public Page {
   void onEncoderChange(int diff) override {
     const int step = 255 / 20;
 
-<<<<<<< HEAD
-    if (mode == Automatic) {
-=======
     if (mode == Automatic || (mode == PostOrgasm && !OrgasmControl::isMenuLocked())) {
->>>>>>> de9833f (Edge+orgasm menu Lock,  Post Orgasm Menu Lock options.  Post Orgasm Seconds can be set to ( 0 for Ruined Orgasm 5-15)
       // TODO this may go out of bounds. Also, change in steps?
       Config.sensitivity_threshold += (diff * step);
       saveConfigToSd(millis() + 300);
