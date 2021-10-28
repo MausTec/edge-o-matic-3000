@@ -124,61 +124,6 @@ UIInput SensorSensitivityInput("Sensor Sensitivity", [](UIMenu *ip) {
   });
 });
 
-<<<<<<< HEAD
-UIInput ClenchPressureSensitivity("Clench Pressure Sensitivity", [](UIMenu *ip) {
-  UIInput *input = (UIInput*) ip;
-  input->setMax(300);
-  input->setStep(1);
-  input->setValue(Config.clench_pressure_sensitivity);
-  input->onChange([](int value) {
-    Config.clench_pressure_sensitivity = value;
-  });
-  input->onConfirm([](int) {
-    saveConfigToSd(0);
-  });
-});
-
-UIInput ClenchTimeThreshold("Clench Time Threshold", [](UIMenu *ip) {
-  UIInput *input = (UIInput*) ip;
-  input->setMax(300);
-  input->setStep(1);
-  input->setValue(Config.clench_duration_threshold);
-  input->onChange([](int value) {
-    Config.clench_duration_threshold = value;
-  });
-  input->onConfirm([](int) {
-    saveConfigToSd(0);
-  });
-});
-
-UIInput EdgingDuration("Edge Duration Minutes", [](UIMenu *ip) {
-  UIInput *input = (UIInput*) ip;
-  input->setMax(300);
-  input->setStep(1);
-  input->setValue(Config.auto_edging_duration_minutes);
-  input->onChange([](int value) {
-    Config.auto_edging_duration_minutes = value;
-  });
-  input->onConfirm([](int) {
-    saveConfigToSd(0);
-  });
-});
-
-UIInput PostOrgasmDuration("Post Orgasm Seconds", [](UIMenu *ip) {
-  UIInput *input = (UIInput*) ip;
-  input->setMax(300);
-  input->setStep(1);
-  input->setValue(Config.post_orgasm_duration_seconds);
-  input->onChange([](int value) {
-    Config.post_orgasm_duration_seconds = value;
-  });
-  input->onConfirm([](int) {
-    saveConfigToSd(0);
-  });
-});
-
-=======
->>>>>>> my-personnal-not-usable-by-edge-o-matic-3000
 static void setVibrateMode(UIMenu *menu, int m) {
   VibrationMode mode = (VibrationMode) m;
 
@@ -263,23 +208,6 @@ static void buildMenu(UIMenu *menu) {
   menu->addItem(&MinimumOnTimeInput);
   menu->addItem(&ArousalLimitInput);
   menu->addItem(&SensorSensitivityInput);
-<<<<<<< HEAD
-  menu->addItem(&ClenchPressureSensitivity); //  Clench Menu
-  menu->addItem(&ClenchTimeThreshold);       //  Clench Menu
-  menu->addItem(&EdgingDuration);            //   Auto Edging
-  menu->addItem(&PostOrgasmDuration);        //   Post Orgasm
-  if (Config.edge_menu_lock) {
-    menu->addItem("Edge+Orgasm UnLock", &onEdgeMenuUnLock);
-  } else {
-    menu->addItem("Edge+Orgasm Lock", &onEdgeMenuLock);
-  }
-  if (Config.post_orgasm_menu_lock) {
-    menu->addItem("Post Orgasm UnLock", &onPostOrgasmMenuUnLock);
-  } else {
-    menu->addItem("Post Orgasm Lock", &onPostOrgasmMenuLock);
-  }
-=======
->>>>>>> my-personnal-not-usable-by-edge-o-matic-3000
 }
 
 UIMenu EdgingSettingsMenu("Edging Settings", &buildMenu);
