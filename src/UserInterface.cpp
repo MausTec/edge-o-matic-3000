@@ -1,6 +1,7 @@
 #include "UserInterface.h"
 #include "Icons.h"
 #include "WebSocketHelper.h"
+#include "OrgasmControl.h"
 
 #include "Page.h"
 
@@ -241,7 +242,7 @@ void UserInterface::onKeyPress(byte i) {
     }
 
     return;
-  } else if (i == 3) {
+  } else if (i == 3 && !OrgasmControl::isMenuLocked()) {
     UI.openMenu(&MainMenu);
     return;
   }

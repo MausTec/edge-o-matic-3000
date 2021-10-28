@@ -124,6 +124,7 @@ UIInput SensorSensitivityInput("Sensor Sensitivity", [](UIMenu *ip) {
   });
 });
 
+<<<<<<< HEAD
 UIInput ClenchPressureSensitivity("Clench Pressure Sensitivity", [](UIMenu *ip) {
   UIInput *input = (UIInput*) ip;
   input->setMax(300);
@@ -176,6 +177,8 @@ UIInput PostOrgasmDuration("Post Orgasm Seconds", [](UIMenu *ip) {
   });
 });
 
+=======
+>>>>>>> my-personnal-not-usable-by-edge-o-matic-3000
 static void setVibrateMode(UIMenu *menu, int m) {
   VibrationMode mode = (VibrationMode) m;
 
@@ -260,6 +263,7 @@ static void buildMenu(UIMenu *menu) {
   menu->addItem(&MinimumOnTimeInput);
   menu->addItem(&ArousalLimitInput);
   menu->addItem(&SensorSensitivityInput);
+<<<<<<< HEAD
   menu->addItem(&ClenchPressureSensitivity); //  Clench Menu
   menu->addItem(&ClenchTimeThreshold);       //  Clench Menu
   menu->addItem(&EdgingDuration);            //   Auto Edging
@@ -274,6 +278,8 @@ static void buildMenu(UIMenu *menu) {
   } else {
     menu->addItem("Post Orgasm Lock", &onPostOrgasmMenuLock);
   }
+=======
+>>>>>>> my-personnal-not-usable-by-edge-o-matic-3000
 }
 
 UIMenu EdgingSettingsMenu("Edging Settings", &buildMenu);
