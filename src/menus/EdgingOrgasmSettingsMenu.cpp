@@ -87,8 +87,21 @@ static void onPostOrgasmMenuLock(UIMenu* menu) {
   menu->render();
 }
 
+static void onClenchDetectorOn(UIMenu* menu) {
+  UI.toastNow("Edging clench : ON", 3000);
+  Config.clench_Detector_in_Edging = true;
+  saveConfigToSd(0);
+  menu->initialize();
+  menu->render();
+}
 
-//UIMenu VibrationModeMenu("Vibration Mode", &buildVibrationModeMenu);
+static void onClenchDetectorOff(UIMenu* menu) {
+  UI.toastNow("Edging clench : OFF", 3000);
+  Config.clench_Detector_in_Edging = false;
+  saveConfigToSd(0);
+  menu->initialize();
+  menu->render();
+}
 
 static void buildMenu(UIMenu *menu) {
   menu->addItem(&EdgingDuration);            //   Auto Edging
@@ -103,6 +116,10 @@ static void buildMenu(UIMenu *menu) {
   } else {
     menu->addItem("Post Orgasm Lock", &onPostOrgasmMenuLock);
   }
+  if (Config.clench_Detector_in_Edging) {
+    menu->addItem("Edge Clench:Turn Off", &onClenchDetectorOff);
+  } else {
+    menu->addItem("Edge Clench:Turn On", &onClenchDetectorOn);
   menu->addItem(&ClenchPressureSensitivity); //  Clench Menu
   menu->addItem(&ClenchTimeThreshold);       //  Clench Menu
 }
