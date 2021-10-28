@@ -52,7 +52,7 @@ namespace OrgasmControl {
       // detect muscle clenching.  Used in post orgasm torture routine to detect an orgasm
       // Can also be used as an other method to compliment detecting edging 
       //     set (post_orgasmm_torture_on :true , auto_edging_duration_minutes = 0 )
-      if ( post_orgasm_run == true) {
+      if ( isPermitOrgasmReached() || Config.clench_Detector_in_Edging ) {
         if (p_check >= (clench_pressure_threshold + Config.clench_pressure_sensitivity) ) {
           clench_pressure_threshold = (p_check - (Config.clench_pressure_sensitivity/2)); // raise clench threshold to pressure - 1/2 sensitivity
         }
@@ -133,8 +133,6 @@ namespace OrgasmControl {
         menu_is_locked = false;
         return;
       }
-
-//      VibrationModeController *controller = getVibrationMode();
 
       if (Config.auto_edging_duration_minutes > 0 ) {   // Start Post orgasm routine if the edging timer if not turned off
         if (Config.edge_menu_lock && !menu_is_locked) { // Lock Menu if turned on
