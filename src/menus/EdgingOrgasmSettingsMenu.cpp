@@ -120,6 +120,7 @@ static void buildMenu(UIMenu *menu) {
     menu->addItem("Edge Clench:Turn Off", &onClenchDetectorOff);
   } else {
     menu->addItem("Edge Clench:Turn On", &onClenchDetectorOn);
+  }
   menu->addItem(&ClenchPressureSensitivity); //  Clench Menu
   menu->addItem(&ClenchTimeThreshold);       //  Clench Menu
 }
