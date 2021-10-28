@@ -34,8 +34,10 @@ namespace OrgasmControl {
   void twitchDetect();
 
   // Post orgasm
-  void post_orgasm_mode(bool status = false);
+  void EdgeOrgasmMode(bool status = false);
   bool isMenuLocked();
+  bool isPermitOrgasmReached();
+  bool isPostOrgasmReached();
 
   namespace {
     long last_update_ms = 0;

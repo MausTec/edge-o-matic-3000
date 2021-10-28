@@ -143,7 +143,7 @@ namespace OrgasmControl {
             RunGraphPage.setMode("postorgasm");
           }
         }
-        if ( millis() > (auto_edging_start_millis + ( Config.auto_edging_duration_minutes * 60 * 1000 )) && post_orgasm_start_millis == 0) {  // Detect if edging time has passed
+        if ( isPermitOrgasmReached() && !isPostOrgasmReached() ) {  
           Hardware::setEncoderColor(CRGB::Green);
           if (control_motor) {
             arousal = 0;   //make sure arousal is lower then threshold bofore starting to detect an orgasm
@@ -165,7 +165,7 @@ namespace OrgasmControl {
             Hardware::setMotorSpeed(motor_speed);
           }
         } 
-        if (post_orgasm_start_millis > 0) { // Detect if after orgasm 
+        if ( isPostOrgasmReached() ) { 
           post_orgasm_duration_millis = (Config.post_orgasm_duration_seconds * 1000);
           if ( millis() < (post_orgasm_start_millis + post_orgasm_duration_millis)) { // Detect if within post orgasm session
             motor_speed = Config.motor_max_speed;
@@ -327,8 +327,26 @@ namespace OrgasmControl {
     control_motor = prev_control_motor;
   }
 
-  void post_orgasm_mode(bool status) {
+  void EdgeOrgasmMode(bool status) {
     post_orgasm_run = status;
+  }
+
+  bool isPermitOrgasmReached() {
+    // Detect if edging time has passed
+    if ( millis() > (auto_edging_start_millis + ( Config.auto_edging_duration_minutes * 60 * 1000 ))) {  
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  bool isPostOrgasmReached() {
+    // Detect if after orgasm 
+    if (post_orgasm_start_millis > 0) { 
+      return true;
+    } else {
+      return  false;
+    }
   }
 
   bool isMenuLocked() {
