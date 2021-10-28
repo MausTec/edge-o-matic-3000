@@ -50,12 +50,22 @@ class pRunGraph : public Page {
       UI.drawStatus("Manual");
       UI.setButton(1, "STOP");
       UI.setButton(2, "AUTO");
+<<<<<<< HEAD
     } else if (mode == PostOrgasm && !OrgasmControl::isMenuLocked()){
       UI.drawStatus("Edging+Orgasm");
       UI.setButton(1, "STOP");
       UI.setButton(2, "MANUAL");
     } else if (mode == PostOrgasm && OrgasmControl::isMenuLocked()){
       UI.drawStatus("Edging+Orgasm");
+=======
+    } else if (mode == PostOrgasm){
+      UI.drawStatus("Edging+Orgasm");
+      UI.setButton(1, "STOP");
+      UI.setButton(2, "MANUAL");
+    } 
+    
+    if (OrgasmControl::isMenuLocked()){
+>>>>>>> my-personnal-not-usable-by-edge-o-matic-3000
       UI.setButton(1, "LOCK");
       UI.setButton(2, "LOCK");
     }
@@ -164,6 +174,7 @@ class pRunGraph : public Page {
         }
         break;
       case 1:
+<<<<<<< HEAD
         if (mode == PostOrgasm && !OrgasmControl::isMenuLocked()) { 
           mode = Manual;
           Hardware::setMotorSpeed(0);
@@ -172,8 +183,20 @@ class pRunGraph : public Page {
         } else if (mode == PostOrgasm && OrgasmControl::isMenuLocked()) {
           // Menu is locked, don't change to manual
         }
+=======
+        if (OrgasmControl::isMenuLocked()) {
+          break;
+        }
+        mode = Manual;
+        Hardware::setMotorSpeed(0);
+        OrgasmControl::controlMotor(false);
+        OrgasmControl::post_orgasm_mode(false);
+>>>>>>> my-personnal-not-usable-by-edge-o-matic-3000
         break;
       case 2:
+        if (OrgasmControl::isMenuLocked()) {
+          break;
+        }
         if (mode == Automatic) {
           mode = PostOrgasm;
           OrgasmControl::controlMotor(true);
@@ -182,12 +205,19 @@ class pRunGraph : public Page {
           mode = Automatic;
           OrgasmControl::controlMotor(true);
           OrgasmControl::post_orgasm_mode(false);
+<<<<<<< HEAD
         } else if (mode == PostOrgasm && !OrgasmControl::isMenuLocked()) {
           mode = Manual;
           OrgasmControl::controlMotor(false);
           OrgasmControl::post_orgasm_mode(false);
         } else if (mode == PostOrgasm && OrgasmControl::isMenuLocked()) {
           // do nothing, menu locked
+=======
+        } else if (mode == PostOrgasm) {
+          mode = Manual;
+          OrgasmControl::controlMotor(false);
+          OrgasmControl::post_orgasm_mode(false);
+>>>>>>> my-personnal-not-usable-by-edge-o-matic-3000
         }
         break;
     }
@@ -199,7 +229,11 @@ class pRunGraph : public Page {
   void onEncoderChange(int diff) override {
     const int step = 255 / 20;
 
+<<<<<<< HEAD
     if (mode == Automatic || (mode == PostOrgasm && !OrgasmControl::isMenuLocked())) {
+=======
+    if (mode == Automatic || mode == PostOrgasm && !OrgasmControl::isMenuLocked()) {
+>>>>>>> my-personnal-not-usable-by-edge-o-matic-3000
       // TODO this may go out of bounds. Also, change in steps?
       Config.sensitivity_threshold += (diff * step);
       saveConfigToSd(millis() + 300);
