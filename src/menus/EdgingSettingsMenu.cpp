@@ -163,39 +163,6 @@ static void buildVibrationModeMenu(UIMenu *menu) {
   add_vibration_item(menu, "Ramp-Stop", VibrationMode::RampStop);
 }
 
-static void onEdgeMenuUnLock(UIMenu* menu) {
-  UI.toastNow("Edge UnLock", 3000);
-  Config.edge_menu_lock = false;
-  saveConfigToSd(0);
-  menu->initialize();
-  menu->render();
-}
-
-static void onEdgeMenuLock(UIMenu* menu) {
-  UI.toastNow("Edge Lock", 3000);
-  Config.edge_menu_lock = true;
-  saveConfigToSd(0);
-  menu->initialize();
-  menu->render();
-}
-
-static void onPostOrgasmMenuUnLock(UIMenu* menu) {
-  UI.toastNow("Post orgasm UnLock", 3000);
-  Config.post_orgasm_menu_lock = false;
-  saveConfigToSd(0);
-  menu->initialize();
-  menu->render();
-}
-
-static void onPostOrgasmMenuLock(UIMenu* menu) {
-  UI.toastNow("Post orgasm Lock", 3000);
-  Config.post_orgasm_menu_lock = true;
-  saveConfigToSd(0);
-  menu->initialize();
-  menu->render();
-}
-
-
 UIMenu VibrationModeMenu("Vibration Mode", &buildVibrationModeMenu);
 
 static void buildMenu(UIMenu *menu) {
