@@ -52,7 +52,7 @@ namespace OrgasmControl {
       // detect muscle clenching.  Used in post orgasm torture routine to detect an orgasm
       // Can also be used as an other method to compliment detecting edging 
       //     set (post_orgasmm_torture_on :true , auto_edging_duration_minutes = 0 )
-      if ( isPermitOrgasmReached() || Config.clench_Detector_in_Edging ) {
+      if ( isPermitOrgasmReached() || Config.clench_detector_in_edging ) {
         if (p_check >= (clench_pressure_threshold + Config.clench_pressure_sensitivity) ) {
           clench_pressure_threshold = (p_check - (Config.clench_pressure_sensitivity/2)); // raise clench threshold to pressure - 1/2 sensitivity
         }
