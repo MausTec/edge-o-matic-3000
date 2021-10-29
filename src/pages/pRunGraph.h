@@ -171,7 +171,6 @@ class pRunGraph : public Page {
         mode = Manual;
         Hardware::setMotorSpeed(0);
         OrgasmControl::controlMotor(false);
-        OrgasmControl::EdgeOrgasmMode(false);
         break;
       case 2:
         if (OrgasmControl::isMenuLocked()) {
@@ -180,15 +179,12 @@ class pRunGraph : public Page {
         if (mode == Automatic) {
           mode = PostOrgasm;
           OrgasmControl::controlMotor(true);
-          OrgasmControl::EdgeOrgasmMode(true);
         } else if (mode == Manual) {
           mode = Automatic;
           OrgasmControl::controlMotor(true);
-          OrgasmControl::EdgeOrgasmMode(false);
         } else if (mode == PostOrgasm) {
           mode = Manual;
           OrgasmControl::controlMotor(false);
-          OrgasmControl::EdgeOrgasmMode(false);
         }
         break;
     }
@@ -216,18 +212,26 @@ public:
     if (! strcmp(newMode, "automatic")) {
       mode = Automatic;
       OrgasmControl::controlMotor(true);
-      OrgasmControl::EdgeOrgasmMode(false);
     } else if (! strcmp(newMode, "manual")) {
       mode = Manual;
       OrgasmControl::controlMotor(false);
-      OrgasmControl::EdgeOrgasmMode(false);
     } else if (! strcmp(newMode, "postorgasm")) {
       mode = PostOrgasm;
       OrgasmControl::controlMotor(true);
-      OrgasmControl::EdgeOrgasmMode(true);
     }
 
     updateButtons();
+  }
+
+  int getMode() {
+    switch(mode) {
+      case Manual:
+        return 0;
+      case Automatic:
+        return 1;
+      case PostOrgasm:
+        return 2;
+    }
   }
 };
 
