@@ -34,7 +34,6 @@ namespace OrgasmControl {
   void twitchDetect();
 
   // Post orgasm
-  void EdgeOrgasmMode(bool status = false);
   bool isMenuLocked();
   bool isPermitOrgasmReached();
   bool isPostOrgasmReached();
@@ -68,7 +67,6 @@ namespace OrgasmControl {
     File logfile;
     
     //  Post Orgasm Clench variables
-    bool post_orgasm_run = false;
     long clench_pressure_threshold = 500; // setting start clench threshold to be over deflated plug
     int clench_duration = 0;
 
