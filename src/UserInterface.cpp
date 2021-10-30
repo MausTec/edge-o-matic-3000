@@ -234,6 +234,9 @@ void UserInterface::onKeyPress(byte i) {
     return;
   }
 
+  if (OrgasmControl::isMenuLocked()){
+    return;
+  }
   if (UI.isMenuOpen()) {
     if (i == 0) {
       UI.closeMenu();
@@ -242,7 +245,7 @@ void UserInterface::onKeyPress(byte i) {
     }
 
     return;
-  } else if (i == 3 && !OrgasmControl::isMenuLocked()) {
+  } else if (i == 3) {
     UI.openMenu(&MainMenu);
     return;
   }
