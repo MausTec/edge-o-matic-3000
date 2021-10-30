@@ -110,8 +110,10 @@ struct ConfigStruct {
   
   // Post orgasm torure stuff
   int clench_pressure_sensitivity;
-  int clench_duration_threshold;
+  int max_clench_duration = 100; 
+  int clench_threshold_2_orgasm;
   bool clench_detector_in_edging;
+  bool detected_orgasm = false;
 
   int auto_edging_duration_minutes;
   int post_orgasm_duration_seconds;

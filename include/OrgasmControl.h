@@ -67,7 +67,7 @@ namespace OrgasmControl {
     File logfile;
     
     //  Post Orgasm Clench variables
-    long clench_pressure_threshold = 500; // setting start clench threshold to be over deflated plug
+    long clench_pressure_threshold = 4096;
     int clench_duration = 0;
 
     // Autoedging Time and Post-Orgasm varables

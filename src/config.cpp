@@ -108,7 +108,7 @@ void loadConfigFromJsonObject(JsonDocument &doc) {
   
   // Post orgasm torture settings. The clench_pressure_sensitivity might need ajustment on the Edge-o-matic
   Config.clench_pressure_sensitivity = doc["clench_pressure_sensitivity"] | 200;
-  Config.clench_duration_threshold = doc["clench_duration_threshold"] | 35;
+  Config.clench_threshold_2_orgasm = doc["clench_threshold_2_orgasm"] | 35;
   Config.clench_detector_in_edging = doc["clench_detector_in_edging"] | false;
   Config.auto_edging_duration_minutes = doc["auto_edging_duration_minutes"] | 30;
   Config.post_orgasm_duration_seconds = doc["post_orgasm_duration_seconds"] | 10;
@@ -166,7 +166,7 @@ void dumpConfigToJsonObject(JsonDocument &doc) {
   
   // Post orgasm torture settings
   doc["clench_pressure_sensitivity"] = Config.clench_pressure_sensitivity;
-  doc["clench_duration_threshold"] = Config.clench_duration_threshold;
+  doc["clench_threshold_2_orgasm"] = Config.clench_threshold_2_orgasm;
   doc["clench_detector_in_edging"] = Config.clench_detector_in_edging;
   doc["auto_edging_duration_minutes"] = Config.auto_edging_duration_minutes;
   doc["post_orgasm_duration_seconds"] = Config.post_orgasm_duration_seconds;
@@ -295,8 +295,8 @@ bool setConfigValue(const char *option, const char *value, bool &require_reboot)
     Config.vibration_mode = (VibrationMode) atoi(value);
   } else if(!strcmp(option, "clench_pressure_sensitivity")) {
     Config.clench_pressure_sensitivity = atoi(value);
-  } else if(!strcmp(option, "clench_duration_threshold")) {
-    Config.clench_duration_threshold = atoi(value);
+  } else if(!strcmp(option, "clench_threshold_2_orgasm")) {
+    Config.clench_threshold_2_orgasm = atoi(value);
   } else if(!strcmp(option, "clench_detector_in_edging")) {
     Config.clench_detector_in_edging = atob(value);
   } else if(!strcmp(option, "auto_edging_duration_minutes")) {
@@ -369,8 +369,8 @@ bool getConfigValue(const char *option, String &out) {
     out += String((int) Config.vibration_mode) + '\n';
   } else if(!strcmp(option, "clench_pressure_sensitivity")) { 
     out += String(Config.clench_pressure_sensitivity) + '\n';
-  } else if(!strcmp(option, "clench_duration_threshold")) {
-    out += String(Config.clench_duration_threshold) + '\n';
+  } else if(!strcmp(option, "clench_threshold_2_orgasm")) {
+    out += String(Config.clench_threshold_2_orgasm) + '\n';
   } else if(!strcmp(option, "clench_detector_in_edging")) {
     out += String(Config.clench_detector_in_edging) + '\n';
   } else if(!strcmp(option, "auto_edging_duration_minutes")) {
