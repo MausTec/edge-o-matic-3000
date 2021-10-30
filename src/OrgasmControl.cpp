@@ -63,7 +63,7 @@ namespace OrgasmControl {
   
         // Orgasm detected
         if ( clench_duration >= Config.clench_threshold_2_orgasm && isPermitOrgasmReached()) { 
-          Config.detected_orgasm = true;
+          detected_orgasm = true;
           clench_duration = 0;
         }
   
@@ -166,7 +166,7 @@ namespace OrgasmControl {
           pauseControl();  // make sure orgasm is now possible
         }
         //now detect the orgasm to start post orgasm torture timer
-        if (Config.detected_orgasm) {
+        if (detected_orgasm) {
           post_orgasm_start_millis = millis();   // Start Post orgasm torture timer
           // Lock menu if turned on
           if (Config.post_orgasm_menu_lock && !menu_is_locked) {
