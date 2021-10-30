@@ -75,6 +75,7 @@ namespace OrgasmControl {
     long post_orgasm_start_millis;
     long post_orgasm_duration_millis;
     bool menu_is_locked = false;
+    bool detected_orgasm = false;
     
     void updateArousal();
     void updateMotorSpeed();
