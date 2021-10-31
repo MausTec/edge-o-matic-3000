@@ -156,7 +156,7 @@ namespace OrgasmControl {
         // Lock only after 2 minutes
         if ( millis() > auto_edging_start_millis + (2 * 60 * 1000)) {
           menu_is_locked = true;
-          RunGraphPage.setMode("postorgasm");
+          RunGraphPage.menuUpdate();
         }
       }
       if ( isPermitOrgasmReached() && !isPostOrgasmReached() ) {  
@@ -171,7 +171,7 @@ namespace OrgasmControl {
           // Lock menu if turned on
           if (Config.post_orgasm_menu_lock && !menu_is_locked) {
             menu_is_locked = true;
-            RunGraphPage.setMode("postorgasm");
+            RunGraphPage.menuUpdate();
           }
           Hardware::setEncoderColor(CRGB::Red);
         }

@@ -235,6 +235,7 @@ void UserInterface::onKeyPress(byte i) {
   }
 
   if (OrgasmControl::isMenuLocked()){
+    UI.toastNow("Access Denied", 1000);
     return;
   }
   if (UI.isMenuOpen()) {
