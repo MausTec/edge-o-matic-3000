@@ -190,12 +190,16 @@ class pRunGraph : public Page {
     }
 
     updateButtons();
+    if (OrgasmControl::isMenuLocked()) {
+      UI.toastNow("Access Denied", 1000);
+    }
     Rerender();
   }
 
   void onEncoderChange(int diff) override {
     const int step = 255 / 20;
     if (OrgasmControl::isMenuLocked()){
+      UI.toastNow("Access Denied", 1000);
       return;
     }
     if (mode == Automatic || mode == PostOrgasm) {
@@ -234,6 +238,10 @@ public:
       case PostOrgasm:
         return 2;
     }
+  }
+
+  void menuUpdate() {
+    updateButtons();
   }
 };
 
