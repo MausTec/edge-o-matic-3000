@@ -1,0 +1,11 @@
+# frozen_string_literal: true
+
+source "https://rubygems.org"
+
+git_source(:github) {|repo_name| "https://github.com/#{repo_name}" }
+
+gem "optimist"
+gem "semantic"
+gem "rubyserial"
+gem "tty-prompt"
+gem "rmagick"
