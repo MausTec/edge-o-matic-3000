@@ -190,9 +190,6 @@ class pRunGraph : public Page {
     }
 
     updateButtons();
-    if (OrgasmControl::isMenuLocked()) {
-      UI.toastNow("Access Denied", 1000);
-    }
     Rerender();
   }
 
