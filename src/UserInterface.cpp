@@ -234,7 +234,8 @@ void UserInterface::onKeyPress(byte i) {
     return;
   }
 
-  if (OrgasmControl::isMenuLocked()){
+  // don't lock Chart button (i == 0)  
+  if (i != 0 && OrgasmControl::isMenuLocked()){
     UI.toastNow("Access Denied", 1000);
     return;
   }
