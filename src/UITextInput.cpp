@@ -4,7 +4,6 @@
 
 /**
  * TODO: 
- *   2) For some reason it jumps back to V from A
  *   5) Apparently there's a heap smash when reconnecting to wifi.
  */
 
