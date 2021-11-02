@@ -6,10 +6,10 @@
 //#include <NimBLEScan.h>
 //#include <NimBLEAdvertisedDevice.h>
 
-int scanTime = 30; //In seconds
-BLEScan* pBLEScan = nullptr;
-bool scanning = false;
-UIMenu *globalMenuPtr = nullptr;
+static int scanTime = 30; //In seconds
+static BLEScan* pBLEScan = nullptr;
+static bool scanning = false;
+static UIMenu *globalMenuPtr = nullptr;
 
 static void startScan(UIMenu *);
 static void stopScan(UIMenu *);

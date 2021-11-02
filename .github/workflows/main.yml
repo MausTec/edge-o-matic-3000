@@ -7,6 +7,9 @@ jobs:
       matrix:
         os: [ ubuntu-latest ]
 
+    env:
+      BUNDLE_PATH: ~/.cache/bundle
+
     steps:
     - name: Checkout
       uses: actions/checkout@v2
@@ -39,6 +42,17 @@ jobs:
       shell: bash
       run: |
         echo '#define VERSION "'$(git rev-parse --short HEAD)'"' > include/VERSION.h
+
+    - name: Bundle Install
+      run: |
+        sudo gem install bundler
+        bundle install
+      working-directory: ./bin
+
+    - name: Run Static Analysis
+      run: |
+        bundle exec ruby config_lint.rb
+      working-directory: ./bin
 
     - name: Run PlatformIO
       run: pio run
