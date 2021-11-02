@@ -96,6 +96,10 @@ void UIMenu::removeItem(size_t index) {
     ptr->next->prev = ptr->prev;
   }
 
+  if (autoclean && ptr->arg != nullptr) {
+    free(ptr->arg);
+  }
+
   delete ptr;
 }
 
@@ -275,6 +279,18 @@ void UIMenu::selectNext() {
   }
 
   current_item = current_item->next;
+  
+  UI.clearButtons();
+  UI.setButton(0, "BACK");
+
+  if (current_item != nullptr && (
+       current_item->cb != nullptr 
+    || current_item->pcb != nullptr 
+    || current_item->ipcb != nullptr
+  )) {
+    UI.setButton(2, "ENTER");
+  }
+
   render();
 }
 
@@ -290,6 +306,18 @@ void UIMenu::selectPrev() {
   }
 
   current_item = current_item->prev;
+
+  UI.clearButtons();
+  UI.setButton(0, "BACK");
+  
+  if (current_item != nullptr && (
+       current_item->cb != nullptr 
+    || current_item->pcb != nullptr 
+    || current_item->ipcb != nullptr
+  )) {
+    UI.setButton(2, "ENTER");
+  }
+  
   render();
 }
 
@@ -310,6 +338,12 @@ void UIMenu::clearItems() {
   while (item != nullptr) {
     UIMenuItem *tmp = item;
     item = item->next;
+    if (autoclean && tmp->arg != nullptr) {
+      if (autoclean == AUTOCLEAN_FREE)
+        free(tmp->arg);
+      else if (autoclean == AUTOCLEAN_DELETE)
+        delete tmp->arg;
+    }
     free(tmp);
   }
   first_item = nullptr;

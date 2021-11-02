@@ -31,8 +31,6 @@ namespace Console {
 
     int sh_list(char **, String &);
 
-    int sh_external(char **, String &);
-
     int sh_cat(char **, String &);
 
     int sh_dir(char **, String &);
@@ -57,12 +55,6 @@ namespace Console {
             .alias = "l",
             .help = "List all config in JSON format",
             .func = &sh_list
-        },
-        {
-            .cmd = "external",
-            .alias = "e",
-            .help = "Control the external port",
-            .func = &sh_external
         },
         {
             .cmd = "cat",
@@ -93,14 +85,6 @@ namespace Console {
             .alias = "m",
             .help = "Set mode automatic|manual",
             .func = cmd_f { RunGraphPage.setMode(args[0]); }
-        },
-        {
-            .cmd = ".setser",
-            .alias = nullptr,
-            .help = nullptr,
-            .func = cmd_f {
-              Hardware::setDeviceSerial(args[0]);
-            }
         },
         {
             .cmd = ".getser",
@@ -185,33 +169,6 @@ namespace Console {
         if (c.help == nullptr) continue;
         out += (String(c.cmd) + "\t(" + String(c.alias) + ")\t" + String(c.help)) + '\n';
       }
-    }
-
-    int sh_external(char **args, String &out) {
-#ifdef NG_PLUS
-      out += "Not available on this device.\n";
-      return 1;
-#else
-      if (args[0] == NULL) {
-        out += "Subcommand required!\n";
-        return 1;
-      } else if (!strcmp(args[0], "enable")) {
-        Hardware::enableExternalBus();
-        out += "External bus enabled.\n";
-      } else if (!strcmp(args[0], "disable")) {
-        Hardware::disableExternalBus();
-        out += "External bus disabled.\n";
-      } else if (!strcmp(args[0], "slave")) {
-        Hardware::enableExternalBus();
-        Hardware::joinI2c(I2C_SLAVE_ADDR);
-        out += "Joined external bus as slave.\n";
-      } else {
-        out += "Unknown subcommand!\n";
-        return 1;
-      }
-
-      return 0;
-#endif
     }
 
     int sh_cat(char **args, String &out) {
