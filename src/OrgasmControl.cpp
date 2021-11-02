@@ -274,13 +274,13 @@ namespace OrgasmControl {
 
       // Data for logfile or classic log.
       String data =
-          String(getLastPressure()) + "," +
-          String(getAveragePressure()) + "," +
-          String(getArousal()) + "," +
-          String(Hardware::getMotorSpeed()) + "," +
-          String(Config.sensitivity_threshold) + "," +
-          String(clench_pressure_threshold) + "," +
-          String(clench_duration);
+        String(getLastPressure()) + "," +
+        String(getAveragePressure()) + "," +
+        String(getArousal()) + "," +
+        String(Hardware::getMotorSpeed()) + "," +
+        String(Config.sensitivity_threshold) + "," +
+        String(clench_pressure_threshold) + "," +
+        String(clench_duration);
 
       // Write out to logfile, which includes millis:
       if (logfile) {
