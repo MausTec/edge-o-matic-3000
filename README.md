@@ -48,6 +48,13 @@ and is automatically generated. Here is a quick summary of config variables:
 |`sensor_sensitivity`|Byte|128|Analog pressure prescaling. Adjust this until the pressure is ~60-70%|
 |`use_average_values`|Boolean|false|Use average values when calculating arousal. This smooths noisy data.|
 |`vibration_mode`|VibrationMode|RampStop|Vibration Mode for main vibrator control.|
+|`clench_pressure_sensitivity`|Int|200|Threshold over arousal to detect a clench : Lower values increase sensitivity|
+|`clench_threshold_2_orgasm`|Int|35|Threshold variable that is tick counts of clench to detect orgasm|
+|`clench_detector_in_edging`|Boolean|false|Use the clench detector to ajust Arousal|
+|`auto_edging_duration_minutes`|Int|30|How long to edge before permiting an orgasm|
+|`post_orgasm_duration_seconds`|Int|10|How long to stimulate after orgasm detected|
+|`post_orgasm_menu_lock`|Boolean|false|Deny access to menu starting in the edging session|
+|`edge_menu_lock`|Boolean|false|Deny access to menu starting after orgasm detected|
 
 \* AzureFang refers to a common wireless technology that is blue and involves chewing face-rocks. However, the
    trademark holders of this technology require the name to be licensed, so we're totally just using AzureFang.
@@ -64,6 +71,13 @@ and is automatically generated. Here is a quick summary of config variables:
 |2|Depletion|Vibrator speed ramps up from min to max, but is reduced as arousal approaches threshold.|
 |3|Enhancement|Vibrator speed ramps up as arousal increases, holding a peak for ramp_time.|
 |0|Global Sync|When set on secondary vibrators, they will follow the primary vibrator speed.|
+
+### post_orgasm_duration_seconds:
+|Seconds|Description|
+|---|---|
+|0|Turn off stimulation at orgasm dectection - Failed Orgasm|
+|5-15|Turn off stimulation after amount of seconds - Normal orgasm|
+|16-4095|Turn off stimulation after amount of seconds - Post orgasm Torture|
 
 ## Hardware
 
