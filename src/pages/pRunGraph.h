@@ -154,8 +154,7 @@ class pRunGraph : public Page {
   }
 
   void onKeyPress(byte i) {
-    Serial.println("Key Press: " + String(i));
-
+  
     switch (i) {
       case 0:
         if (view == GraphView) {
