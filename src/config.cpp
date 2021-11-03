@@ -1,4 +1,5 @@
 #define ARDUINOJSON_USE_LONG_LONG 1
+#include <Arduino.h>
 #include <ArduinoJson.h>
 
 #include "FS.h"
@@ -60,12 +61,35 @@ void loadConfigFromSd() {
 }
 
 /**
+ * Check and initialize any configuration parameters.
+ */
+static void checkAndInitConfigParams(void)
+{
+  // Check happy ending parameters and generate random number if needed
+  if ((Config.happy_ending_mode == true) && (Config.happy_ending_orgasm_num == 0))
+  {
+    if ((Config.happy_ending_orgasm_min_num > Config.happy_ending_orgasm_max_num) ||
+        (Config.happy_ending_orgasm_max_num == 0))
+    {
+      // Punish the user for their carelessness C:<
+      Config.happy_ending_mode = false;
+    }
+    else
+    {
+      Config.happy_ending_orgasm_num = random(Config.happy_ending_orgasm_min_num,
+                                              Config.happy_ending_orgasm_max_num);
+    }
+  }
+}
+
+/**
  * This code loads default config, which is useful if the SD card was not
  * mounted, as it executes no SD commands.
  */
 void loadDefaultConfig() {
   DynamicJsonDocument doc(1);
   loadConfigFromJsonObject(doc);
+  checkAndInitConfigParams();
 }
 
 void loadConfigFromJsonObject(JsonDocument &doc) {
@@ -102,6 +126,10 @@ void loadConfigFromJsonObject(JsonDocument &doc) {
   Config.update_frequency_hz = doc["update_frequency_hz"] | 50;
   Config.sensor_sensitivity = doc["sensor_sensitivity"] | 128;
   Config.use_average_values = doc["use_average_values"] | false;
+  Config.happy_ending_mode = doc["happy_ending_mode"] | false;
+  Config.happy_ending_orgasm_min_num = doc["happy_ending_orgasm_min_num"] | 10;
+  Config.happy_ending_orgasm_max_num = doc["happy_ending_orgasm_max_num"] | 20;
+  Config.happy_ending_orgasm_num = doc["happy_ending_orgasm_num"] | 0;
 
   // Copy Vibration Settings
   Config.vibration_mode = (VibrationMode)(doc["vibration_mode"] | (int)VibrationMode::RampStop);

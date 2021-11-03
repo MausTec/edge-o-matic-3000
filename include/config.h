@@ -105,6 +105,12 @@ struct ConfigStruct {
   byte sensor_sensitivity;
   bool use_average_values;
 
+  // Happy ending (Eventual orgasm) mode TODO: add menu screen
+  bool happy_ending_mode;
+  int  happy_ending_orgasm_min_num;
+  int  happy_ending_orgasm_max_num;
+  int  happy_ending_orgasm_num;
+
   // Vibration Output Mode
   VibrationMode vibration_mode;
 };

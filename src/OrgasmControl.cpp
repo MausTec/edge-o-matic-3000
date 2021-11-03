@@ -62,11 +62,22 @@ namespace OrgasmControl {
         time_out_over = true;
       }
 
+      // Happy ending mode: Do not deny if our good human has endured enough denials.
+      bool do_not_deny = false;
+      if (Config.happy_ending_mode)
+      {
+        // TODO: Perhaps add a ramp down to stop the vibrator after orgasm?
+        do_not_deny = (denial_count >= Config.happy_ending_orgasm_num) ? true : false;
+      }
+
+
       // Ope, orgasm incoming! Stop it!
       if (!time_out_over) {
         twitchDetect();
-
-      } else if (arousal > Config.sensitivity_threshold && motor_speed > 0 && on_time > Config.minimum_on_time) {
+      } else if (arousal > Config.sensitivity_threshold &&
+                 motor_speed > 0 &&
+                 on_time > Config.minimum_on_time &&
+                 do_not_deny == false) {
         // The motor_speed check above, btw, is so we only hit this once per peak.
         // Set the motor speed to 0, set stop time, and determine the new additional random time.
         motor_speed = controller->stop();
@@ -78,15 +89,16 @@ namespace OrgasmControl {
         if (Config.max_additional_delay != 0) {
           random_additional_delay = random(Config.max_additional_delay);
         }
+      }
 
       // Start from 0
-      } else if (motor_speed == 0 && motor_start_time == 0) {
+      if ((motor_speed == 0) && (motor_start_time == 0) && (time_out_over)) {
         motor_speed = controller->start();
         motor_start_time = millis();
         random_additional_delay = 0;
 
       // Increment or Change
-      } else {
+      } else if (motor_speed != 0) {
         motor_speed = controller->increment();
       }
 
