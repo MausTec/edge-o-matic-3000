@@ -1,4 +1,4 @@
-#include "ButtplugRegistry.h"
+#include "BluetoothRegistry.h"
 #include "UserInterface.h"
 
 #include <NimBLEDevice.h>
@@ -7,7 +7,7 @@
 #include <algorithm>
 
 static void notifyCallback(BLERemoteCharacteristic* pBLERemoteCharacteristic, uint8_t* pData, size_t length, bool isNotify) {
-  ButtplugDevice *device = Buttplug.getDeviceByCharacteristic(pBLERemoteCharacteristic);
+  BluetoothDevice *device = Bluetooth.getDeviceByCharacteristic(pBLERemoteCharacteristic);
 
   if (device != nullptr) {
     device->onNotify(pData, length);
@@ -16,20 +16,20 @@ static void notifyCallback(BLERemoteCharacteristic* pBLERemoteCharacteristic, ui
   }
 }
 
-bool ButtplugDevice::disconnect() {
+bool BluetoothDevice::disconnect() {
   if (this->client != nullptr) {
     this->client->disconnect();
     NimBLEDevice::deleteClient(this->client);
   }
 
-  auto *vec = Buttplug.getDevicesPtr();
+  auto *vec = Bluetooth.getDevicesPtr();
   log_d("Removing device from registry. %d devices known.", vec->size());
   vec->erase(std::remove(vec->begin(), vec->end(), this), vec->end());
   log_d("Removed? device from registry. %d devices known.", vec->size());
   return true;
 }
 
-bool ButtplugDevice::connect(BLEAdvertisedDevice *device) {
+bool BluetoothDevice::connect(BLEAdvertisedDevice *device) {
   log_i("Connecting to: %s", device->getAddress().toString().c_str());
 
   try {
@@ -90,23 +90,23 @@ bool ButtplugDevice::connect(BLEAdvertisedDevice *device) {
   return true;
 }
 
-ButtplugDevice::ButtplugDevice(std::string name) {
+BluetoothDevice::BluetoothDevice(std::string name) {
   this->name = name;
 }
 
-void ButtplugDevice::onNotify(uint8_t *data, size_t length) {
+void BluetoothDevice::onNotify(uint8_t *data, size_t length) {
   log_i("Got %d bytes.", length);
   this->notifyPending = true;
 }
 
-void ButtplugDevice::sendRawCmd(std::string cmd) {
+void BluetoothDevice::sendRawCmd(std::string cmd) {
   if (! this->txChar->writeValue(cmd)) {
     log_i("WRITE FAILED, DISCONNECT??");
     this->disconnect();
   }
 }
 
-std::string ButtplugDevice::readRaw(bool waitForNotify) {
+std::string BluetoothDevice::readRaw(bool waitForNotify) {
   if (waitForNotify) {
     this->waitForNotify();
   }
@@ -114,7 +114,7 @@ std::string ButtplugDevice::readRaw(bool waitForNotify) {
   return this->rxChar->readValue();
 }
 
-bool ButtplugDevice::waitForNotify() {
+bool BluetoothDevice::waitForNotify() {
   long start_ms = millis();
 
   while (millis() - start_ms < WAIT_FOR_NOTIFY_TIMEOUT_MS && !notifyPending) {
@@ -127,7 +127,7 @@ bool ButtplugDevice::waitForNotify() {
   return result;
 }
 
-bool ButtplugDevice::vibrate(uint8_t speed) {
+bool BluetoothDevice::vibrate(uint8_t speed) {
   char cmd[20] = "";
   int cmdArg = max(0, min((int) map(speed, 0, 255, 0, 20), 20));
 
@@ -138,9 +138,9 @@ bool ButtplugDevice::vibrate(uint8_t speed) {
   return this->waitForNotify();
 }
 
-void ButtplugRegistry::connect(BLEAdvertisedDevice *device) {
+void BluetoothRegistry::connect(BLEAdvertisedDevice *device) {
   UI.toastNow("Connecting...", 0, false);
-  ButtplugDevice *d = new ButtplugDevice(device->getName());
+  BluetoothDevice *d = new BluetoothDevice(device->getName());
   log_i("Name was: %s", d->getName().c_str());
 
   if (d->connect(device)) {
@@ -155,7 +155,7 @@ void ButtplugRegistry::connect(BLEAdvertisedDevice *device) {
   }
 }
 
-ButtplugDevice *ButtplugRegistry::getDeviceByCharacteristic(BLERemoteCharacteristic *characteristic) {
+BluetoothDevice *BluetoothRegistry::getDeviceByCharacteristic(BLERemoteCharacteristic *characteristic) {
   uint16_t handle = characteristic->getHandle();
 
   for (auto *d : devices) {
@@ -167,14 +167,14 @@ ButtplugDevice *ButtplugRegistry::getDeviceByCharacteristic(BLERemoteCharacteris
   return nullptr;
 }
 
-bool ButtplugRegistry::connected() {
+bool BluetoothRegistry::connected() {
   return this->devices.size() > 0;
 }
 
-void ButtplugRegistry::vibrateAll(uint8_t speed) {
+void BluetoothRegistry::vibrateAll(uint8_t speed) {
   for (auto *d : devices) {
     d->vibrate(speed);
   }
 }
 
-ButtplugRegistry Buttplug = ButtplugRegistry();
+BluetoothRegistry Bluetooth = BluetoothRegistry();
