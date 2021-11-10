@@ -46,7 +46,7 @@ def get_version
 end
 
 def set_version(v)
-  data = "#define VERSION \"#{v.to_s}\"\n"
+  data = "#ifndef VERSION\n#define VERSION \"#{v.to_s}\"\n#endif\n"
   File.write(File.join(ROOT_PATH, "include", "VERSION.h"), data)
   $version = v
   puts "Set version to: #{v.to_s}"

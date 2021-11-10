@@ -7,12 +7,12 @@
 
 #define WAIT_FOR_NOTIFY_TIMEOUT_MS 10000
 
-class ButtplugRegistry;
+class BluetoothRegistry;
 
-class ButtplugDevice {
+class BluetoothDevice {
 public:
-  friend class ButtplugRegistry;
-  ButtplugDevice(std::string name);
+  friend class BluetoothRegistry;
+  BluetoothDevice(std::string name);
 
   bool connect(NimBLEAdvertisedDevice*);
   bool disconnect();
@@ -38,24 +38,24 @@ private:
   bool notifyPending = false;
 };
 
-class ButtplugRegistry {
+class BluetoothRegistry {
 public:
   void connect(BLEAdvertisedDevice *device);
   void disconnect(BLEAdvertisedDevice *device);
-  void disconnect(ButtplugDevice *device);
+  void disconnect(BluetoothDevice *device);
 
   bool connected();
   size_t deviceCount();
   void vibrateAll(uint8_t speed);
 
-  ButtplugDevice *getDeviceByCharacteristic(BLERemoteCharacteristic* characteristic);
-  std::vector<ButtplugDevice*> getDevices() { return devices; }
-  std::vector<ButtplugDevice*> *getDevicesPtr() { return &devices; }
+  BluetoothDevice *getDeviceByCharacteristic(BLERemoteCharacteristic* characteristic);
+  std::vector<BluetoothDevice*> getDevices() { return devices; }
+  std::vector<BluetoothDevice*> *getDevicesPtr() { return &devices; }
 
 private:
-  std::vector<ButtplugDevice*> devices;
+  std::vector<BluetoothDevice*> devices;
 };
 
-extern ButtplugRegistry Buttplug;
+extern BluetoothRegistry Bluetooth;
 
 #endif

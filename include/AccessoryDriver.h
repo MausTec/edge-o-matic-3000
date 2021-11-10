@@ -23,7 +23,7 @@ namespace AccessoryDriver {
 
         
         Device(const char *name, uint8_t addr, ProtocolFlags flags) {
-            strncpy(display_name, name, 40);
+            strlcpy(display_name, name, 40);
             address = addr;
             protocol_flags = flags;
         };
