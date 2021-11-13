@@ -1,18 +1,26 @@
 import subprocess
 
-revision = (
-    subprocess.check_output(["git", "describe", "--tags", "--abbrev=1"])
-    .strip()
-    .decode("utf-8")
-)
+try:
+    revision = (
+        subprocess.check_output(["git", "describe", "--tags", "--abbrev=1"], stderr=subprocess.STDOUT)
+        .strip()
+        .decode("utf-8")
+    )
+except SubprocessShitException as err:
+    print("Error: " + err.output, file=sys.stderr)
+    pass
 
-branch = (
-    subprocess.check_output(["git", "rev-parse", "--abbrev-ref", "HEAD"])
-    .strip()
-    .decode("utf-8")
-)
+try:
+    branch = (
+        subprocess.check_output(["git", "rev-parse", "--abbrev-ref", "HEAD"], stderr=subprocess.STDOUT)
+        .strip()
+        .decode("utf-8")
+    )
+except SubprocessShitException as err:
+    print("Error: " + err.output, file=sys.stderr)
+    pass
 
 if branch != "main":
-    print("-DVERSION='\"%s/%s\"'" % (branch, revision))
+    print("-DEOM_FW_VERSION='\"%s/%s\"'" % (branch, revision))
 else:
-    print("-DVERSION='\"%s\"'" % revision)
+    print("-DEOM_FW_VERSION='\"%s\"'" % revision)
