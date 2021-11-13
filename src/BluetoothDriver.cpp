@@ -4,6 +4,14 @@
 static const char *TAG = "BluetoothDriver";
 
 namespace BluetoothDriver {
+    /**
+     * When adding device drivers, be sure to update this list with the 
+     * driver's detect routine. Thanks!
+     */
+    static const DeviceDetectionCallback DEVICE_DRIVERS[] = {
+        Lovense::detect,
+    };
+
     void registerDevice(Device *device) {
         unregisterDevice(device);
         DeviceNode *node = new DeviceNode();
@@ -26,6 +34,10 @@ namespace BluetoothDriver {
                 } else {
                     prev->next = node->next;
                 }
+
+                delete device;
+                delete node;
+                return;
             }
 
             prev = node;
@@ -69,7 +81,6 @@ namespace BluetoothDriver {
         return count;
     }
 
-    // Here's your logic to detect what device you just found. GL;HF
     BluetoothDriver::Device *buildDevice(NimBLEAdvertisedDevice *device) {
         NimBLEClient *client = nullptr;
 
@@ -112,32 +123,13 @@ namespace BluetoothDriver {
             return nullptr;
         }
 
-        std::vector<NimBLERemoteCharacteristic*> *chars = service->getCharacteristics(true);
+        Device *detected_device = nullptr;
 
-
-        // Detect Lovense
-        { 
-            NimBLERemoteCharacteristic *rxChar = nullptr;
-            NimBLERemoteCharacteristic *txChar = nullptr;
-
-            for (NimBLERemoteCharacteristic *c : *chars) {
-                if (c->canNotify()) {
-                    rxChar = c;
-                }
-
-                if (c->canWrite()) {
-                    txChar = c;
-                }
-            }
-
-            if (txChar != nullptr && rxChar != nullptr) {
-                // found two chars, tx & rx, and we can write.
-                Lovense *d = new Lovense(device->getName().c_str(), client, rxChar, txChar);
-                return (BluetoothDriver::Device*) d;
-            }
+        for (size_t i = 0; i < sizeof(DEVICE_DRIVERS); i += sizeof(DeviceDetectionCallback)) {
+            detected_device = DEVICE_DRIVERS[i](device, client, service);
+            if (detected_device != nullptr) break;
         }
-        
 
-        return nullptr;
+        return detected_device;
     }
 }
