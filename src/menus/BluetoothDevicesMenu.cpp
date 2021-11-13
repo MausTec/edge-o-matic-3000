@@ -6,18 +6,19 @@
 #include <vector>
 
 static void doDisconnect(UIMenu *menu, void *d) {
-  // ButtplugDevice *device = (ButtplugDevice*) d;
-  // if (device == nullptr) {
-  //   log_i("BLAAAAAH");
-  // } else {
-  //   UI.toastNow("Disconnecting...");
-  //   log_i("Disconnecting from: %s", device->getName().c_str());
+  BluetoothDriver::Device *device = (BluetoothDriver::Device*) d;
+  
+  if (device == nullptr) {
+    log_i("BLAAAAAH");
+  } else {
+    UI.toastNow("Disconnecting...");
+    log_i("Disconnecting from device...");
 
-  //   if (device->disconnect()) {
-  //     UI.toastNow("Disconnected.");
-  //     UI.closeMenu();
-  //   }
-  // }
+    device->disconnect();
+    BluetoothDriver::unregisterDevice(device);
+    UI.toastNow("Disconnected.");
+    UI.closeMenu();
+  }
 }
 
 static void setVibrateMode(UIMenu *menu, int m) {

@@ -8,8 +8,8 @@ void Device::getName(char* buf, size_t len) {
     strlcpy(buf, this->display_name, len);
 }
 
-void Device::setSpeed(uint8_t speed) {
-    // noop
+bool Device::setSpeed(uint8_t speed) {
+    return true;
 }
 
 uint8_t Device::getBatteryLevel(void) {
@@ -21,4 +21,16 @@ void Device::disconnect(void) {
         this->ble_client->disconnect();
         NimBLEDevice::deleteClient(this->ble_client);
     }
+}
+
+Device* Device::detect(NimBLEAdvertisedDevice *device, NimBLEClient *client, NimBLERemoteService *service) {
+    return nullptr;
+}
+
+bool Device::isConnected(void) {
+    return this->ble_client->isConnected();
+}
+
+bool Device::reconnect(void) {
+    return this->ble_client->connect();
 }
