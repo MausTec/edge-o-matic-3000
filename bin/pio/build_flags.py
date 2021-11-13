@@ -6,7 +6,7 @@ try:
         .strip()
         .decode("utf-8")
     )
-except SubprocessShitException as err:
+except subprocess.CalledProcessError as err:
     print("Error: " + err.output, file=sys.stderr)
     pass
 
@@ -16,7 +16,7 @@ try:
         .strip()
         .decode("utf-8")
     )
-except SubprocessShitException as err:
+except subprocess.CalledProcessError as err:
     print("Error: " + err.output, file=sys.stderr)
     pass
 
