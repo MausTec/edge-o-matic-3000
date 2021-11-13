@@ -18,7 +18,9 @@ static void onDisableWiFi(UIMenu *menu) {
 
 static void onEnableWiFi(UIMenu *menu) {
   if (Config.wifi_ssid[0] == '\0' || Config.wifi_key[0] == '\0') {
-    UI.toastNow("No WiFi Config\nEdit config.json\non SD card.", 0);
+    Config.wifi_on = true;
+    saveConfigToSd(0);
+    menu->render();
     return;
   }
 
@@ -84,6 +86,12 @@ static void onDisableBluetooth(UIMenu* menu) {
   UI.toastNow("Disconnected.", 3000);
 }
 
+static void onDisconnect(UIMenu *menu) {
+  WiFiHelper::disconnect();
+  menu->initialize();
+  menu->render();
+}
+
 static void buildMenu(UIMenu *menu) {
   if (Config.bt_on) {
     menu->addItem("Disable Bluetooth", &onDisableBluetooth);
@@ -95,11 +103,24 @@ static void buildMenu(UIMenu *menu) {
   } else if (Config.force_bt_coex || !Config.wifi_on) {
     menu->addItem("Enable Bluetooth", &onEnableBluetooth);
   }
+
+  if (Config.wifi_on) {
+    menu->addItem("Turn WiFi Off", &onDisableWiFi);
+  }
   
   if (WiFiHelper::connected()) {
-    menu->addItem("Disable WiFi", &onDisableWiFi);
+    menu->addItem("Disconnect WiFi", &onDisconnect);
   } else if (Config.force_bt_coex || !Config.bt_on) {
-    menu->addItem("Enable WiFi", &onEnableWiFi);
+    if (Config.wifi_on) {
+      if (strlen(Config.wifi_ssid) > 0) {
+        std::string title = "Connect To ";
+        title.append(Config.wifi_ssid);
+        menu->addItem(title, &onEnableWiFi);
+      }
+      menu->addItem(&WiFiScanMenu);
+    } else {
+      menu->addItem("Enable WiFi", &onEnableWiFi);
+    }
   }
 
   menu->addItem("Connection Status", &onViewStatus);

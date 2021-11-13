@@ -220,17 +220,17 @@ void UserInterface::drawButtons() {
 }
 
 void UserInterface::onKeyPress(byte i) {
-  // FIXME: This segfaults in the menu context on btn3 (encoder)
-//  ButtonCallback cb = buttons[i].fn;
-//  if (cb != nullptr) {
-//    return cb();
-//  }
-
   if (hasToast()) {
     if (toast_allow_clear) {
       UI.toast("", 0);
     }
     return;
+  }
+
+  // FIXME: This segfaults in the menu context on btn3 (encoder)
+  ButtonCallback cb = buttons[i].fn;
+  if (cb != nullptr) {
+    return cb();
   }
 
   if (UI.isMenuOpen()) {
@@ -492,11 +492,13 @@ void UserInterface::drawToast() {
     tok = strtok(NULL, "\n");
   }
 
-  // TODO: This doesn't actually temp override the buttons, but since it's
-  //       only a condition which shows up in the menu, conveniently, "BACK"
-  //       is the only option.
   if (toast_allow_clear) {
-    drawButtons();
+    // render press-any-key message
+    display->fillRect(0, SCREEN_HEIGHT - 9, SCREEN_WIDTH, 9, SSD1306_WHITE);
+    display->setCursor(1, SCREEN_HEIGHT - 8);
+    display->setTextSize(1);
+    display->setTextColor(SSD1306_BLACK);
+    display->print("Press any key...");
   }
 }
 
