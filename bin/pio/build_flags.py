@@ -7,7 +7,7 @@ try:
         .decode("utf-8")
     )
 except subprocess.CalledProcessError as err:
-    print("Error: " + err.output, file=sys.stderr)
+    print("Error: " + err.output.decode("utf-8"), file=sys.stderr)
     pass
 
 try:
@@ -17,7 +17,7 @@ try:
         .decode("utf-8")
     )
 except subprocess.CalledProcessError as err:
-    print("Error: " + err.output, file=sys.stderr)
+    print("Error: " + err.output.decode("utf-8"), file=sys.stderr)
     pass
 
 if branch != "main":
