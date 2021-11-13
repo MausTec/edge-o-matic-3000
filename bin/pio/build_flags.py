@@ -1,6 +1,9 @@
 import subprocess
 import sys
 
+revision = ""
+branch = ""
+
 try:
     revision = (
         subprocess.check_output(["git", "describe", "--tags", "--abbrev=1"], stderr=subprocess.STDOUT)
@@ -9,7 +12,7 @@ try:
     )
 except subprocess.CalledProcessError as err:
     print("Error: " + err.output.decode("utf-8"), file=sys.stderr)
-    pass
+    exit(1)
 
 try:
     branch = (
@@ -19,7 +22,7 @@ try:
     )
 except subprocess.CalledProcessError as err:
     print("Error: " + err.output.decode("utf-8"), file=sys.stderr)
-    pass
+    exit(1)
 
 if branch != "main":
     print("-DEOM_FW_VERSION='\"%s/%s\"'" % (branch, revision))
