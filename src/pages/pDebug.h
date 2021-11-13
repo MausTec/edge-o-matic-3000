@@ -8,7 +8,6 @@
 
 class pDebug : public Page {
   void Enter(bool) override {
-    Serial.println("Debug page entered.");
   }
 
   void Render() override {

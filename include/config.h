@@ -54,15 +54,10 @@
   #define OLED_DC         13
   #define OLED_RESET      14
   #define OLED_CS         12
-
-  // External Bus (NoGasm WiFi)
-  #define BUS_EN_PIN      20
-  #define RJ_LED_1_PIN    17
-  #define RJ_LED_2_PIN    16
-  #define SDA_PIN 21
-  #define SCL_PIN 22
-  #define I2C_SLAVE_ADDR 0x09
 #endif
+
+#define WIFI_SSID_MAX_LEN 64
+#define WIFI_KEY_MAX_LEN 64
 
 union ConfigValue {
   byte v_byte;
@@ -73,8 +68,8 @@ union ConfigValue {
 
 struct ConfigStruct {
   // Networking
-  char wifi_ssid[64];
-  char wifi_key[64];
+  char wifi_ssid[WIFI_SSID_MAX_LEN + 1];
+  char wifi_key[WIFI_KEY_MAX_LEN + 1];
   bool wifi_on;
 
   char bt_display_name[64];
