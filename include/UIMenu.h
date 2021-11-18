@@ -62,6 +62,7 @@ class UIMenu {
 public:
   // Construction
   UIMenu(const char *t, MenuCallback = nullptr);
+  virtual ~UIMenu() {};
   void initialize(bool reinit = false);
   void rerender();
 
@@ -139,5 +140,6 @@ extern UIMenu AccessoryPortMenu;
 extern UIMenu UpdateMenu;
 extern UIMenu BluetoothScanMenu;
 extern UIMenu BluetoothDevicesMenu;
+extern UIMenu WiFiScanMenu;
 
 #endif
