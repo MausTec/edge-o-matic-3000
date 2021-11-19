@@ -77,7 +77,11 @@ def save_screenshot(buffer_data)
 
   folder = File.join(File.dirname(__FILE__), "../..", "tmp")
   FileUtils.mkdir_p(folder)
-  filename = File.join(folder, "screenshot-#{Time.now.to_i}.bmp")
+  filename = File.join(folder, "screenshot-#{Time.now.to_i}.png")
   img.write(filename)
   puts "Screenshot: #{File.absolute_path(filename)}"
+end
+
+if __FILE__ == $0
+  save_screenshot(ARGV[0])
 end
