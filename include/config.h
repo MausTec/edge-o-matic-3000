@@ -59,6 +59,8 @@
 #define WIFI_SSID_MAX_LEN 64
 #define WIFI_KEY_MAX_LEN 64
 
+bool atob(const char *a);
+
 union ConfigValue {
   byte v_byte;
   int  v_int;
