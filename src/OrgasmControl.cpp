@@ -142,27 +142,30 @@ namespace OrgasmControl {
     }
     
     void updateEdgingTime() {  // Edging+Orgasm timer
+      // Make sure menu_is_locked is turned off in Manual mode
+      if ( RunGraphPage.getMode() == 0 ) {  
+        menu_is_locked = false;
+        post_orgasm_duration_seconds = Config.post_orgasm_duration_seconds;
+      }
       // keep edging start time to current time as long as system is not in Edge-Orgasm mode 2
       if ( RunGraphPage.getMode() != 2 ) {  
         auto_edging_start_millis = millis();
         post_orgasm_start_millis = 0;
-        menu_is_locked = false;
-        return;
       }
 
-      // Lock Menu if turned on
-      if (Config.edge_menu_lock && !menu_is_locked) {
-        
+      // Lock Menu if turned on. and in Edging_orgasm mode
+      if (Config.edge_menu_lock && !menu_is_locked) {        
         // Lock only after 2 minutes
         if ( millis() > auto_edging_start_millis + (2 * 60 * 1000)) {
           menu_is_locked = true;
           RunGraphPage.menuUpdate();
         }
       }
+      
+      // Pre-Orgasm loop -- Orgasm is permited
       if ( isPermitOrgasmReached() && !isPostOrgasmReached() ) {  
         Hardware::setEncoderColor(CRGB::Green);
         if (control_motor) {
-          arousal = 0;   //make sure arousal is lower then threshold bofore starting to detect an orgasm
           pauseControl();  // make sure orgasm is now possible
         }
         //now detect the orgasm to start post orgasm torture timer
@@ -184,8 +187,10 @@ namespace OrgasmControl {
           Hardware::setMotorSpeed(motor_speed);
         }
       } 
+      
+      // Post Orgasm loop
       if ( isPostOrgasmReached() ) { 
-        post_orgasm_duration_millis = (Config.post_orgasm_duration_seconds * 1000);
+        post_orgasm_duration_millis = (post_orgasm_duration_seconds * 1000);
 
         // Detect if within post orgasm session
         if ( millis() < (post_orgasm_start_millis + post_orgasm_duration_millis)) { 
@@ -197,6 +202,7 @@ namespace OrgasmControl {
             Hardware::setMotorSpeed(motor_speed);
           } else {
             menu_is_locked = false;
+            detected_orgasm = false;
             motor_speed = 0;
             Hardware::setMotorSpeed(motor_speed);
             RunGraphPage.setMode("manual");
@@ -346,6 +352,13 @@ namespace OrgasmControl {
     control_motor = prev_control_motor;
   }
 
+  void permitOrgasmNow(int seconds) {
+    detected_orgasm = false;
+    RunGraphPage.setMode("postorgasm");
+    auto_edging_start_millis = millis() - (Config.auto_edging_duration_minutes * 60 * 1000);
+    post_orgasm_duration_seconds = seconds;
+  }
+
   bool isPermitOrgasmReached() {
     // Detect if edging time has passed
     if ( millis() > (auto_edging_start_millis + ( Config.auto_edging_duration_minutes * 60 * 1000 ))) {  
@@ -367,4 +380,9 @@ namespace OrgasmControl {
   bool isMenuLocked() {
     return menu_is_locked;
   };
+
+  void lockMenuNow(bool value) {
+    menu_is_locked = value;
+    RunGraphPage.menuUpdate();
+  }
 }

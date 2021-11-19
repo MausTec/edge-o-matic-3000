@@ -4,6 +4,7 @@
 #include "Page.h"
 #include "UpdateHelper.h"
 #include "config.h"
+#include "OrgasmControl.h"
 
 #include "eom_tscode_handler.h"
 
@@ -160,6 +161,22 @@ namespace Console {
             .func = cmd_f {
               out += String(UpdateHelper::compareVersion(args[0], args[1])) + '\n';
             },
+        },
+        {
+            .cmd = "orgasm",
+            .alias = "o",
+            .help = "permit Orgasm : Set Post Orgasm Seconds ( orgasm 10 )",
+            .func = cmd_f { 
+              int seconds = atoi(args[0]);
+              OrgasmControl::permitOrgasmNow(seconds); },
+        },
+        {
+            .cmd = "lock",
+            .alias = "lock",
+            .help = "lockMenu true/false",
+            .func = cmd_f { 
+              bool value = atob(args[0]);
+              OrgasmControl::lockMenuNow(value); },
         }
     };
 

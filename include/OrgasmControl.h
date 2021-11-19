@@ -37,6 +37,8 @@ namespace OrgasmControl {
   bool isMenuLocked();
   bool isPermitOrgasmReached();
   bool isPostOrgasmReached();
+  void permitOrgasmNow(int seconds);
+  void lockMenuNow(bool value);
 
   namespace {
     long last_update_ms = 0;
@@ -76,7 +78,8 @@ namespace OrgasmControl {
     long post_orgasm_duration_millis;
     bool menu_is_locked = false;
     bool detected_orgasm = false;
-    
+    int post_orgasm_duration_seconds = Config.post_orgasm_duration_seconds;
+      
     void updateArousal();
     void updateMotorSpeed();
     void updateEdgingTime();
