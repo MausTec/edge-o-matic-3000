@@ -27,7 +27,7 @@ namespace WiFiHelper {
   }
 
   bool begin() {
-    if (!Config.wifi_on) {
+    if (!Config.wifi_on || Config.wifi_ssid[0] == '\0') {
       return false;
     }
 
@@ -41,7 +41,7 @@ namespace WiFiHelper {
       if (millis() - connection_start_at_ms > CONNECTION_TIMEOUT_S * 1000) {
         Serial.println();
         Serial.print("Connection timed out!");
-        return false;
+        return false; 
       }
       delay(500);
     }

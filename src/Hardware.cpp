@@ -52,7 +52,8 @@ namespace Hardware {
             setEncoderColor(CRGB::Black);
 
             ESP32Encoder::useInternalWeakPullResistors = UP;
-            Encoder.attachSingleEdge(ENCODER_A_PIN, ENCODER_B_PIN);
+            Encoder.attachHalfQuad(ENCODER_A_PIN, ENCODER_B_PIN);
+            
             Encoder.setCount(128);
             encoderCount = 128;
         }
@@ -94,7 +95,7 @@ namespace Hardware {
     }
 
     void tick() {
-        int32_t count = Encoder.getCount();
+        int32_t count = Encoder.getCount() / 2;
         if (count != encoderCount) {
             idle_since_ms = millis();
             UI.onEncoderChange(count - encoderCount);
