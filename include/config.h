@@ -64,6 +64,8 @@
   #define I2C_SLAVE_ADDR 0x09
 #endif
 
+bool atob(const char *a);
+
 union ConfigValue {
   byte v_byte;
   int  v_int;
