@@ -3,8 +3,6 @@
 #include "UserInterface.h"
 #include "OrgasmControl.h"
 
-#include <vector>
-
 static void doDisconnect(UIMenu *menu, void *d) {
   BluetoothDriver::Device *device = (BluetoothDriver::Device*) d;
   
@@ -22,7 +20,6 @@ static void doDisconnect(UIMenu *menu, void *d) {
 }
 
 static void setVibrateMode(UIMenu *menu, int m) {
-  // ButtplugDevice *device = (ButtplugDevice*) menu->getCurrentArg();
   // VibrationMode mode = (VibrationMode) m;
 
   // Serial.print("Setting mode to: ");
@@ -40,8 +37,6 @@ static void setVibrateMode(UIMenu *menu, int m) {
 }
 
 static void buildVibrateModeMenu(UIMenu *menu) {
-  // ButtplugDevice *device = (ButtplugDevice*) menu->getCurrentArg();
-
   menu->addItem("Depletion", &setVibrateMode, (int) VibrationMode::Depletion);
   menu->addItem("Enhancement", &setVibrateMode, (int) VibrationMode::Enhancement);
   menu->addItem("Ramp-Stop", &setVibrateMode, (int) VibrationMode::RampStop);
@@ -56,7 +51,7 @@ static void buildDeviceMenu(UIMenu *menu) {
 
   menu->setTitle(buf);
   menu->addItem("Disconnect", &doDisconnect, device);
-  menu->addItem(&VibrateModeMenu, device);
+  // menu->addItem(&VibrateModeMenu, device);
 }
 
 UIMenu ManageDeviceMenu("Manage Device", &buildDeviceMenu);
