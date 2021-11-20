@@ -24,7 +24,7 @@ except subprocess.CalledProcessError as err:
     print("Error: " + err.output.decode("utf-8"), file=sys.stderr)
     exit(1)
 
-if branch != "main":
-    print("-DEOM_FW_VERSION='\"%s/%s\"'" % (branch, revision))
+if branch != "main" and branch != "master":
+    print("-DEOM_FW_VERSION='\"%s+%s\"'" % (revision, branch))
 else:
     print("-DEOM_FW_VERSION='\"%s\"'" % revision)
