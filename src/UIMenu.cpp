@@ -321,6 +321,19 @@ void UIMenu::selectPrev() {
   render();
 }
 
+int UIMenu::getIndexByArgument(void *arg) {
+  UIMenuItem *p = first_item;
+  size_t idx = 0;
+  
+  while(p != nullptr) {
+    idx++;
+    if (p->arg == arg) return idx;
+    p = p->next;
+  }
+
+  return -1;
+}
+
 void UIMenu::handleClick() {
   if (current_item != nullptr) {
     if (current_item->cb != nullptr) {

@@ -4,3 +4,6 @@
 [submodule "lib/ts-code"]
 	path = lib/ts-code
 	url = https://github.com/MausTec/ts-code.git
+[submodule "lib/mt-accessory-common"]
+	path = lib/mt-accessory-common
+	url = https://github.com/maustec/mt-accessory-common
