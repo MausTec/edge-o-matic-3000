@@ -10,7 +10,7 @@ BluetoothServer::~BluetoothServer() {
 
 void BluetoothServer::disconnect() {
   stopAdvertising();
-  BLEDevice::deinit(true);
+  NimBLEDevice::deinit(true);
 
   this->characteristic = nullptr;
   this->service = nullptr;
@@ -21,7 +21,7 @@ void BluetoothServer::disconnect() {
 
 void BluetoothServer::begin() {
   Serial.println("BLEDevice::init");
-  BLEDevice::init(Config.bt_display_name);
+  NimBLEDevice::init(Config.bt_display_name);
 
   Serial.println("Create server");
   this->server = BLEDevice::createServer();

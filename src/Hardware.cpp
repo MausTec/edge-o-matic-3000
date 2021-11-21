@@ -1,6 +1,6 @@
 #include "Hardware.h"
 #include "OrgasmControl.h"
-#include "ButtplugRegistry.h"
+#include "BluetoothDriver.h"
 #include "AccessoryDriver.h"
 #include "eom-hal.h"
 
@@ -163,8 +163,11 @@ namespace Hardware {
         int new_speed = min(max(speed, 0), 255);
         if (new_speed == motor_speed) return;
         motor_speed = new_speed;
+
         analogWrite(MOT_PWM_PIN, motor_speed);
-        Buttplug.vibrateAll(new_speed);
+        // eom_hal_set_motor_speed(motor_speed);
+        
+        BluetoothDriver::broadcastSpeed(new_speed);
         AccessoryDriver::broadcastSpeed(new_speed);
     }
 

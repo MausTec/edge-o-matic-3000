@@ -2,7 +2,7 @@
 #include "UserInterface.h"
 #include "WiFiHelper.h"
 #include "BluetoothServer.h"
-#include "ButtplugRegistry.h"
+#include "BluetoothDriver.h"
 
 #include <WiFi.h>
 
@@ -97,7 +97,7 @@ static void buildMenu(UIMenu *menu) {
     menu->addItem("Disable Bluetooth", &onDisableBluetooth);
     menu->addItem(&BluetoothScanMenu);
 
-    if (Buttplug.connected()) {
+    if (BluetoothDriver::getDeviceCount() > 0) {
       menu->addItem(&BluetoothDevicesMenu);
     }
   } else if (Config.force_bt_coex || !Config.wifi_on) {
