@@ -36,7 +36,7 @@ File.foreach(config_h) do |line|
     break
   end
 
-  line =~ /\s*(\w+\s*[*&]?)\s*(\w+)(\[\d*\])?/
+  line =~ /\s*(\w+\s*[*&]?)\s*(\w+)(\[.*?\])?/
   option = {
     type: ($1.to_s + $3.to_s),
     name: $2
@@ -88,7 +88,7 @@ File.foreach(config_cpp).with_index do |line, i|
       default_set = $3.gsub(/\s*\|\s*(\(.*?\))?/, '').gsub(/\)?;\s*$/, '')
       json_defaults[key] = default_set.gsub(/#{type}::/, '')
     end
-    if type =~ /String|char\[\d+\]/
+    if type =~ /String|char\[.*?\]/
       error config_cpp, i, "JSON assigns #{$2.inspect} to string type! Use strlcpy!"
     end
   end
@@ -111,7 +111,7 @@ File.foreach(config_cpp).with_index do |line, i|
     else
       json_defaults[$1] = $3.gsub(/\s*\|\s*/, '').gsub(/;\s*$/, '')
     end
-    if type !~ /String|char\[\d+\]/
+    if type !~ /String|char\[.*?\]/
       error config_cpp, i, "JSON assigns #{$2.inspect} as string, but the type should be #{type.inspect}"
     end
   end
@@ -222,7 +222,7 @@ File.foreach(console_cpp).with_index do |line, i|
     if type.nil?
       error console_cpp, i, "Console read #{$1.inspect} to unknown key"
     end
-    if type !~ /String|char\[\d+\]/
+    if type !~ /String|char\[.*?\]/
       error console_cpp, i, "Console assigns #{lval.inspect} as string, but the type should be #{type.inspect}"
     end
   end
