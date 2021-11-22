@@ -79,6 +79,7 @@ public:
   void addItemAt(size_t index, const char *text, MenuCallback cb = nullptr);
   void removeItem(size_t index);
   void clearItems();
+  int getIndexByArgument(void *arg);
 
   // Menu Manipulation
   void setTitle(const char *text);
