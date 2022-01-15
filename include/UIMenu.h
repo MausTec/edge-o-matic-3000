@@ -136,6 +136,7 @@ extern UIMenu GamesMenu;
 extern UIMenu NetworkMenu;
 extern UIMenu UISettingsMenu;
 extern UIMenu EdgingSettingsMenu;
+extern UIMenu EdgingOrgasmSettingsMenu;
 extern UIMenu AccessoryPortMenu;
 extern UIMenu UpdateMenu;
 extern UIMenu BluetoothScanMenu;

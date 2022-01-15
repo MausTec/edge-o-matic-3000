@@ -33,6 +33,13 @@ namespace OrgasmControl {
   // Twitch Detect (In wrong place for 60hz)
   void twitchDetect();
 
+  // Post orgasm
+  bool isMenuLocked();
+  bool isPermitOrgasmReached();
+  bool isPostOrgasmReached();
+  void permitOrgasmNow(int seconds);
+  void lockMenuNow(bool value);
+
   namespace {
     long last_update_ms = 0;
 
@@ -60,9 +67,23 @@ namespace OrgasmControl {
     // File Writer
     long recording_start_ms = 0;
     File logfile;
+    
+    //  Post Orgasm Clench variables
+    long clench_pressure_threshold = 4096;
+    int clench_duration = 0;
+
+    // Autoedging Time and Post-Orgasm varables
+    long auto_edging_start_millis;
+    long post_orgasm_start_millis;
+    long post_orgasm_duration_millis;
+    bool menu_is_locked = false;
+    bool detected_orgasm = false;
+    int post_orgasm_duration_seconds;
+ 
 
     void updateArousal();
     void updateMotorSpeed();
+    void updateEdgingTime();
     VibrationModeController* getVibrationMode();
   }
 }
