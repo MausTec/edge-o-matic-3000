@@ -114,6 +114,7 @@ void loadConfigFromJsonObject(JsonDocument &doc) {
   Config.post_orgasm_duration_seconds = doc["post_orgasm_duration_seconds"] | 10;
   Config.post_orgasm_menu_lock = doc["post_orgasm_menu_lock"] | false;
   Config.edge_menu_lock = doc["edge_menu_lock"] | false;
+  Config.max_clench_duration = doc["max_clench_duration"] | 100;
 
   /**
    * Setting Validations
@@ -172,6 +173,7 @@ void dumpConfigToJsonObject(JsonDocument &doc) {
   doc["post_orgasm_duration_seconds"] = Config.post_orgasm_duration_seconds;
   doc["post_orgasm_menu_lock"] = Config.post_orgasm_menu_lock;
   doc["edge_menu_lock"] = Config.edge_menu_lock;
+  doc["max_clench_duration"] = Config.max_clench_duration;
 } // dumpConfigToJsonObject
 
 bool dumpConfigToJson(String &str) {
@@ -303,6 +305,8 @@ bool setConfigValue(const char *option, const char *value, bool &require_reboot)
     Config.auto_edging_duration_minutes = atoi(value);
   } else if(!strcmp(option, "post_orgasm_duration_seconds")) {
     Config.post_orgasm_duration_seconds = atoi(value);
+  } else if(!strcmp(option, "max_clench_duration")) {
+    Config.max_clench_duration = atoi(value);
   } else if(!strcmp(option, "post_orgasm_menu_lock")) {
     Config.post_orgasm_menu_lock = atob(value);
   } else if(!strcmp(option, "edge_menu_lock")) {
@@ -377,6 +381,8 @@ bool getConfigValue(const char *option, String &out) {
     out += String(Config.auto_edging_duration_minutes) + '\n';
   } else if(!strcmp(option, "post_orgasm_duration_seconds")) {
     out += String(Config.post_orgasm_duration_seconds) + '\n';
+  } else if(!strcmp(option, "max_clench_duration")) {
+    out += String(Config.max_clench_duration) + '\n';
   } else if(!strcmp(option, "post_orgasm_menu_lock")) {
     out += String(Config.post_orgasm_menu_lock) + '\n';
   } else if(!strcmp(option, "edge_menu_lock")) {
