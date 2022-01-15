@@ -59,6 +59,8 @@
 #define WIFI_SSID_MAX_LEN 64
 #define WIFI_KEY_MAX_LEN 64
 
+bool atob(const char *a);
+
 union ConfigValue {
   byte v_byte;
   int  v_int;
@@ -102,9 +104,21 @@ struct ConfigStruct {
 
   // Vibration Output Mode
   VibrationMode vibration_mode;
+  
+  // Post orgasm torure stuff
+  int clench_pressure_sensitivity;
+  int max_clench_duration; 
+  int clench_threshold_2_orgasm;
+  bool clench_detector_in_edging;
+
+  int auto_edging_duration_minutes;
+  int post_orgasm_duration_seconds;
+  bool edge_menu_lock;
+  bool post_orgasm_menu_lock;
 };
 
 extern ConfigStruct Config;
+
 
 extern void loadConfigFromSd();
 extern void loadDefaultConfig();
