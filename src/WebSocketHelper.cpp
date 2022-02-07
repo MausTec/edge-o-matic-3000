@@ -16,7 +16,7 @@
 
 #include "config.h"
 
-static const char *TAG = "WebSocketHelper";
+static const char* TAG = "WebSocketHelper";
 
 namespace WebSocketHelper {
   void begin() {
@@ -161,6 +161,21 @@ namespace WebSocketHelper {
     //    String screenshot;
     //    UI.screenshot(screenshot);
 
+    char mode[12];
+    int scaled_arousal = OrgasmControl::getArousal() * 4;
+
+    switch (RunGraphPage.getMode()) {
+    case 0:
+      strlcpy(mode, "Manual", sizeof(mode));
+      break;
+    case 1:
+      strlcpy(mode, "Automatic", sizeof(mode));
+      break;
+    case 2:
+      strlcpy(mode, "PostOrgasm", sizeof(mode));
+      break;
+    }
+
     // Serialize Data
     DynamicJsonDocument doc(3072);
     doc["pressure"] = OrgasmControl::getLastPressure();
@@ -168,6 +183,11 @@ namespace WebSocketHelper {
     doc["motor"] = Hardware::getMotorSpeed();
     doc["arousal"] = OrgasmControl::getArousal();
     doc["millis"] = millis();
+    doc["scaledArousal"] = scaled_arousal;
+    doc["runMode"] = mode;
+    doc["permitOrgasm"] = OrgasmControl::isPermitOrgasmReached();
+    doc["postOrgrasm"] = OrgasmControl::isPostOrgasmReached();
+    doc["lock"] = OrgasmControl::isMenuLocked();
     //    doc["screenshot"] = screenshot;
 
     send("readings", doc, num);
@@ -269,6 +289,14 @@ namespace WebSocketHelper {
     Hardware::setMotorSpeed(speed);
   }
 
+  void cbOrgasm(int num, JsonVariant seconds) {
+    OrgasmControl::permitOrgasmNow(seconds);
+  }
+
+  void cbLock(int num, JsonVariant value) {
+    OrgasmControl::lockMenuNow(value);
+  }
+
   void onMessage(int num, const char* payload) {
     Serial.printf("[%u] %s", num, payload);
     Serial.println();
@@ -304,6 +332,10 @@ namespace WebSocketHelper {
           cbDir(num, kvp.value());
         } else if (!strcmp(cmd, "mkdir")) {
           cbMkdir(num, kvp.value());
+        } else if (!strcmp(cmd, "orgasm")) {
+          cbOrgasm(num, kvp.value());
+        } else if (!strcmp(cmd, "lock")) {
+          cbLock(num, kvp.value());
         } else {
           send("error", String("Unknown command: ") + String(cmd), num);
         }

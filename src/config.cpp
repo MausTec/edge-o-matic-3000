@@ -105,6 +105,16 @@ void loadConfigFromJsonObject(JsonDocument &doc) {
 
   // Copy Vibration Settings
   Config.vibration_mode = (VibrationMode)(doc["vibration_mode"] | (int)VibrationMode::RampStop);
+  
+  // Post orgasm torture settings. The clench_pressure_sensitivity might need ajustment on the Edge-o-matic
+  Config.clench_pressure_sensitivity = doc["clench_pressure_sensitivity"] | 200;
+  Config.clench_threshold_2_orgasm = doc["clench_threshold_2_orgasm"] | 35;
+  Config.clench_detector_in_edging = doc["clench_detector_in_edging"] | false;
+  Config.auto_edging_duration_minutes = doc["auto_edging_duration_minutes"] | 30;
+  Config.post_orgasm_duration_seconds = doc["post_orgasm_duration_seconds"] | 10;
+  Config.post_orgasm_menu_lock = doc["post_orgasm_menu_lock"] | false;
+  Config.edge_menu_lock = doc["edge_menu_lock"] | false;
+  Config.max_clench_duration = doc["max_clench_duration"] | 100;
 
   /**
    * Setting Validations
@@ -154,6 +164,16 @@ void dumpConfigToJsonObject(JsonDocument &doc) {
 
   // Vibration Settings
   doc["vibration_mode"] = (int) Config.vibration_mode;
+  
+  // Post orgasm torture settings
+  doc["clench_pressure_sensitivity"] = Config.clench_pressure_sensitivity;
+  doc["clench_threshold_2_orgasm"] = Config.clench_threshold_2_orgasm;
+  doc["clench_detector_in_edging"] = Config.clench_detector_in_edging;
+  doc["auto_edging_duration_minutes"] = Config.auto_edging_duration_minutes;
+  doc["post_orgasm_duration_seconds"] = Config.post_orgasm_duration_seconds;
+  doc["post_orgasm_menu_lock"] = Config.post_orgasm_menu_lock;
+  doc["edge_menu_lock"] = Config.edge_menu_lock;
+  doc["max_clench_duration"] = Config.max_clench_duration;
 } // dumpConfigToJsonObject
 
 bool dumpConfigToJson(String &str) {
@@ -275,6 +295,22 @@ bool setConfigValue(const char *option, const char *value, bool &require_reboot)
     require_reboot = true;
   } else if (!strcmp(option, "vibration_mode")) {
     Config.vibration_mode = (VibrationMode) atoi(value);
+  } else if(!strcmp(option, "clench_pressure_sensitivity")) {
+    Config.clench_pressure_sensitivity = atoi(value);
+  } else if(!strcmp(option, "clench_threshold_2_orgasm")) {
+    Config.clench_threshold_2_orgasm = atoi(value);
+  } else if(!strcmp(option, "clench_detector_in_edging")) {
+    Config.clench_detector_in_edging = atob(value);
+  } else if(!strcmp(option, "auto_edging_duration_minutes")) {
+    Config.auto_edging_duration_minutes = atoi(value);
+  } else if(!strcmp(option, "post_orgasm_duration_seconds")) {
+    Config.post_orgasm_duration_seconds = atoi(value);
+  } else if(!strcmp(option, "max_clench_duration")) {
+    Config.max_clench_duration = atoi(value);
+  } else if(!strcmp(option, "post_orgasm_menu_lock")) {
+    Config.post_orgasm_menu_lock = atob(value);
+  } else if(!strcmp(option, "edge_menu_lock")) {
+    Config.edge_menu_lock = atob(value);
   } else {
     return false;
   }
@@ -335,6 +371,22 @@ bool getConfigValue(const char *option, String &out) {
     out += String(Config.hostname) + '\n';
   } else if (!strcmp(option, "vibration_mode")) {
     out += String((int) Config.vibration_mode) + '\n';
+  } else if(!strcmp(option, "clench_pressure_sensitivity")) { 
+    out += String(Config.clench_pressure_sensitivity) + '\n';
+  } else if(!strcmp(option, "clench_threshold_2_orgasm")) {
+    out += String(Config.clench_threshold_2_orgasm) + '\n';
+  } else if(!strcmp(option, "clench_detector_in_edging")) {
+    out += String(Config.clench_detector_in_edging) + '\n';
+  } else if(!strcmp(option, "auto_edging_duration_minutes")) {
+    out += String(Config.auto_edging_duration_minutes) + '\n';
+  } else if(!strcmp(option, "post_orgasm_duration_seconds")) {
+    out += String(Config.post_orgasm_duration_seconds) + '\n';
+  } else if(!strcmp(option, "max_clench_duration")) {
+    out += String(Config.max_clench_duration) + '\n';
+  } else if(!strcmp(option, "post_orgasm_menu_lock")) {
+    out += String(Config.post_orgasm_menu_lock) + '\n';
+  } else if(!strcmp(option, "edge_menu_lock")) {
+    out += String(Config.edge_menu_lock) + '\n';
   } else {
     return false;
   }

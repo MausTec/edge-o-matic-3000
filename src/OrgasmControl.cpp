@@ -2,6 +2,7 @@
 #include "Hardware.h"
 #include "WiFiHelper.h"
 #include "config.h"
+#include "Page.h"
 
 namespace OrgasmControl {
   namespace {
@@ -47,6 +48,50 @@ namespace OrgasmControl {
       }
 
       last_value = p_check;
+
+      // detect muscle clenching.  Used in Edging+orgasm routine to detect an orgasm
+      // Can also be used as an other method to compliment detecting edging 
+
+      // raise clench threshold to pressure - 1/2 sensitivity
+      if (p_check >= (clench_pressure_threshold + Config.clench_pressure_sensitivity) ) {
+        clench_pressure_threshold = (p_check - (Config.clench_pressure_sensitivity/2));
+      }
+
+      // Start counting clench time if pressure over threshold
+      if (p_check >= clench_pressure_threshold) {
+        clench_duration += 1;
+  
+        // Orgasm detected
+        if ( clench_duration >= Config.clench_threshold_2_orgasm && isPermitOrgasmReached()) { 
+          detected_orgasm = true;
+          clench_duration = 0;
+        }
+  
+        // ajust arousal if Clench_detector in Edge is turned on
+        if ( Config.clench_detector_in_edging ) {
+          if ( clench_duration > (Config.clench_threshold_2_orgasm/2) ) {
+            arousal += 5;     // boost arousal  because clench duration exceeded
+          }
+        }
+
+        // desensitize clench threshold when clench too long. this is to stop arousal from going up
+        if ( clench_duration >= Config.max_clench_duration ) { 
+          clench_pressure_threshold += 10;
+          clench_duration = Config.max_clench_duration;
+        }
+
+      // when not clenching lower clench time and decay clench threshold
+      } else {
+        clench_duration -= 5;
+        if ( clench_duration <=0 ) {
+          clench_duration = 0;
+          // clench pressure threshold value decays over time to a min of pressure + 1/2 sensitivity
+          if ( (p_check + (Config.clench_pressure_sensitivity/2)) < clench_pressure_threshold ){  
+            clench_pressure_threshold *= 0.99;
+          }
+        }
+      } // END of clench detector
+
     }
 
     void updateMotorSpeed() {
@@ -95,6 +140,77 @@ namespace OrgasmControl {
         Hardware::setMotorSpeed(motor_speed);
       }
     }
+    
+    void updateEdgingTime() {  // Edging+Orgasm timer
+      // Make sure menu_is_locked is turned off in Manual mode
+      if ( RunGraphPage.getMode() == 0 ) {  
+        menu_is_locked = false;
+        post_orgasm_duration_seconds = Config.post_orgasm_duration_seconds;
+      }
+      // keep edging start time to current time as long as system is not in Edge-Orgasm mode 2
+      if ( RunGraphPage.getMode() != 2 ) {  
+        auto_edging_start_millis = millis();
+        post_orgasm_start_millis = 0;
+      }
+
+      // Lock Menu if turned on. and in Edging_orgasm mode
+      if (Config.edge_menu_lock && !menu_is_locked) {        
+        // Lock only after 2 minutes
+        if ( millis() > auto_edging_start_millis + (2 * 60 * 1000)) {
+          menu_is_locked = true;
+          RunGraphPage.menuUpdate();
+        }
+      }
+      
+      // Pre-Orgasm loop -- Orgasm is permited
+      if ( isPermitOrgasmReached() && !isPostOrgasmReached() ) {  
+        Hardware::setEncoderColor(CRGB::Green);
+        if (control_motor) {
+          pauseControl();  // make sure orgasm is now possible
+        }
+        //now detect the orgasm to start post orgasm torture timer
+        if (detected_orgasm) {
+          post_orgasm_start_millis = millis();   // Start Post orgasm torture timer
+          // Lock menu if turned on
+          if (Config.post_orgasm_menu_lock && !menu_is_locked) {
+            menu_is_locked = true;
+            RunGraphPage.menuUpdate();
+          }
+          Hardware::setEncoderColor(CRGB::Red);
+        }
+        // raise motor speed to max speep. protect not to go higher than max
+        if ( motor_speed <= (Config.motor_max_speed - 5) ) {
+          motor_speed = motor_speed + 5;
+          Hardware::setMotorSpeed(motor_speed);
+        } else {
+          motor_speed = Config.motor_max_speed;
+          Hardware::setMotorSpeed(motor_speed);
+        }
+      } 
+      
+      // Post Orgasm loop
+      if ( isPostOrgasmReached() ) { 
+        post_orgasm_duration_millis = (post_orgasm_duration_seconds * 1000);
+
+        // Detect if within post orgasm session
+        if ( millis() < (post_orgasm_start_millis + post_orgasm_duration_millis)) { 
+          motor_speed = Config.motor_max_speed;
+          Hardware::setMotorSpeed(motor_speed);
+        } else { // Post_orgasm timer reached
+          if ( motor_speed >= 10 ) { // Ramp down motor speed to 0 
+            motor_speed = motor_speed - 10;
+            Hardware::setMotorSpeed(motor_speed);
+          } else {
+            menu_is_locked = false;
+            detected_orgasm = false;
+            motor_speed = 0;
+            Hardware::setMotorSpeed(motor_speed);
+            RunGraphPage.setMode("manual");
+          }
+        }
+      }
+    }
+
   }
 
   void twitchDetect() {
@@ -157,6 +273,7 @@ namespace OrgasmControl {
 
     if (millis() - last_update_ms > update_frequency_ms) {
       updateArousal();
+      updateEdgingTime();
       updateMotorSpeed();
       update_flag = true;
       last_update_ms = millis();
@@ -167,7 +284,9 @@ namespace OrgasmControl {
         String(getAveragePressure()) + "," +
         String(getArousal()) + "," +
         String(Hardware::getMotorSpeed()) + "," +
-        String(Config.sensitivity_threshold);
+        String(Config.sensitivity_threshold) + "," +
+        String(clench_pressure_threshold) + "," +
+        String(clench_duration);
 
       // Write out to logfile, which includes millis:
       if (logfile) {
@@ -231,5 +350,39 @@ namespace OrgasmControl {
 
   void resumeControl() {
     control_motor = prev_control_motor;
+  }
+
+  void permitOrgasmNow(int seconds) {
+    detected_orgasm = false;
+    RunGraphPage.setMode("postorgasm");
+    auto_edging_start_millis = millis() - (Config.auto_edging_duration_minutes * 60 * 1000);
+    post_orgasm_duration_seconds = seconds;
+  }
+
+  bool isPermitOrgasmReached() {
+    // Detect if edging time has passed
+    if ( millis() > (auto_edging_start_millis + ( Config.auto_edging_duration_minutes * 60 * 1000 ))) {  
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  bool isPostOrgasmReached() {
+    // Detect if after orgasm 
+    if (post_orgasm_start_millis > 0) { 
+      return true;
+    } else {
+      return  false;
+    }
+  }
+
+  bool isMenuLocked() {
+    return menu_is_locked;
+  };
+
+  void lockMenuNow(bool value) {
+    menu_is_locked = value;
+    RunGraphPage.menuUpdate();
   }
 }
