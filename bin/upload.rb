@@ -49,12 +49,13 @@ def set_version(v)
   # data = "#ifndef EOM_FW_VERSION\n#define VERSION \"#{v.to_s}\"\n#else\n#define VERSION EOM_FW_VERSION\n#endif\n"
   # File.write(File.join(ROOT_PATH, "include", "VERSION.h"), data)
   $version = v
+  sh "git tag v#{v.to_s}"
   puts "Set version to: #{v.to_s}"
 end
 
 def sh(cmd)
   puts "$ #{cmd}"
-  puts `#{cmd}`
+  system(cmd)
 end
 
 if opts[:exception]
@@ -89,7 +90,8 @@ else
   set_version(v)
 end
 
-if opts[:compile]
+# Always compile on tag.
+if opts[:compile] || opts[:tag]
   if opts[:pio]
     puts `pio run`
   else
@@ -101,7 +103,6 @@ end
 
 if opts[:tag]
   v = get_version
-  sh "git tag v#{v.to_s}"
   sh "git push"
   sh "git push --tags"
 
