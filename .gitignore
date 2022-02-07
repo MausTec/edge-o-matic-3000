@@ -22,3 +22,6 @@ VERSION.h
 vendor/
 tmp/
 *.code-workspace
+__pycache__/
+
+*.old

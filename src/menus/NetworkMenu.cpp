@@ -3,6 +3,7 @@
 #include "WiFiHelper.h"
 #include "BluetoothServer.h"
 #include "BluetoothDriver.h"
+#include "WebSocketHelper.h"
 
 #include <WiFi.h>
 
@@ -92,6 +93,10 @@ static void onDisconnect(UIMenu *menu) {
   menu->render();
 }
 
+static void onMausLink(UIMenu *menu) {
+  WebSocketHelper::connectToBridge("192.168.1.3", 8080);
+}
+
 static void buildMenu(UIMenu *menu) {
   if (Config.bt_on) {
     menu->addItem("Disable Bluetooth", &onDisableBluetooth);
@@ -110,6 +115,8 @@ static void buildMenu(UIMenu *menu) {
   
   if (WiFiHelper::connected()) {
     menu->addItem("Disconnect WiFi", &onDisconnect);
+
+    menu->addItem("Maus-Link Connect", &onMausLink);
   } else if (Config.force_bt_coex || !Config.bt_on) {
     if (Config.wifi_on) {
       if (strlen(Config.wifi_ssid) > 0) {

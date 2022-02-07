@@ -16,6 +16,8 @@
 #include <HTTPResponse.hpp>
 #include <WebsocketHandler.hpp>
 
+#include "esp_websocket_client.h"
+
 
 // The HTTPS Server comes in a separate namespace. For easier use, include it here.
 using namespace httpsserver;
@@ -25,6 +27,8 @@ namespace WebSocketSecureHelper {
   void end();
   void loop();
 
+  void registerRemote(esp_websocket_client_handle_t client);
+
   // Send message to a specific client or all clients.
   void send(int num, String msg);
 
@@ -32,19 +36,19 @@ namespace WebSocketSecureHelper {
   // The signature is always the same for those functions. They get two parameters,
   // which are pointers to the request data (read request body, headers, ...) and
   // to the response data (write response, set status code, ...)
-  void handleRoot(HTTPRequest *req, HTTPResponse *res);
-  void handle404(HTTPRequest *req, HTTPResponse *res);
-  void handleCors(HTTPRequest *req, HTTPResponse *res);
+  void handleRoot(HTTPRequest* req, HTTPResponse* res);
+  void handle404(HTTPRequest* req, HTTPResponse* res);
+  void handleCors(HTTPRequest* req, HTTPResponse* res);
 
   // As websockets are more complex, they need a custom class that is derived from WebsocketHandler
   class RemoteHandler : public WebsocketHandler {
   public:
     // This method is called by the webserver to instantiate a new handler for each
     // client that connects to the websocket endpoint
-    static WebsocketHandler *create();
+    static WebsocketHandler* create();
 
     // This method is called when a message arrives
-    void onMessage(WebsocketInputStreambuf *input);
+    void onMessage(WebsocketInputStreambuf* input);
 
     // Handler function on connection close
     void onClose();
@@ -53,16 +57,34 @@ namespace WebSocketSecureHelper {
     int getIndex();
 
     // Sends text
+    virtual void sendText(String payload);
+
+
+    bool isBridge() { return is_bridge; };
+
+  protected:
+    bool is_bridge = false;
+  };
+
+  class BridgeHandler : public RemoteHandler {
+  public:
+    BridgeHandler(esp_websocket_client_handle_t client);
+
+    static WebsocketHandler* create(esp_websocket_client_handle_t client);
+
     void sendText(String payload);
+
+  private:
+    esp_websocket_client_handle_t ws_client;
   };
 
 
   namespace {
-    SSLCert *cert = nullptr;
-    HTTPSServer *secureServer = nullptr;
-    HTTPServer *insecureServer = nullptr;
+    SSLCert* cert = nullptr;
+    HTTPSServer* secureServer = nullptr;
+    HTTPServer* insecureServer = nullptr;
 
     // Simple array to store the active clients:
-    WebsocketHandler *activeClients[MAX_CLIENTS];
+    WebsocketHandler* activeClients[MAX_CLIENTS];
   }
 }

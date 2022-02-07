@@ -17,6 +17,8 @@ namespace WebSocketHelper {
   void sendSdStatus(int num = -1);
   void sendReadings(int num = -1);
 
+  void connectToBridge(const char *hostname, int port);
+
   void onMessage(int num, const char * payload);
 
   namespace {

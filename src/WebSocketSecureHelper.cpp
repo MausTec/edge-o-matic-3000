@@ -6,6 +6,8 @@
 #include "ssl/cert.h"
 #include "ssl/private_key.h"
 
+static const char *TAG = "WebSocketSecureHelper";
+
 namespace WebSocketSecureHelper {
   void end() {
     if (secureServer != nullptr) {
@@ -88,6 +90,11 @@ namespace WebSocketSecureHelper {
     if (insecureServer != nullptr) insecureServer->loop();
   }
 
+  void registerRemote(esp_websocket_client_handle_t client) {
+    WebsocketHandler *bridge = BridgeHandler::create(client);
+    ESP_LOGE(TAG, "Registered Bridge.");
+  }
+
   void send(int num, String payload) {
     if (num >= 0) {
       RemoteHandler *c = (RemoteHandler*) activeClients[num];
@@ -143,10 +150,26 @@ namespace WebSocketSecureHelper {
   }
 
 
+  BridgeHandler::BridgeHandler(esp_websocket_client_handle_t client) : RemoteHandler() {
+    this->ws_client = client;
+    this->is_bridge = true;
+  }
+
   // In the create function of the handler, we create a new Handler and keep track
   // of it using the activeClients array
   WebsocketHandler *RemoteHandler::create() {
     WebsocketHandler *handler = new RemoteHandler();
+    for (int i = 0; i < MAX_CLIENTS; i++) {
+      if (activeClients[i] == nullptr) {
+        activeClients[i] = handler;
+        break;
+      }
+    }
+    return handler;
+  }
+
+  WebsocketHandler *BridgeHandler::create(esp_websocket_client_handle_t client) {
+    WebsocketHandler *handler = new BridgeHandler(client);
     for (int i = 0; i < MAX_CLIENTS; i++) {
       if (activeClients[i] == nullptr) {
         activeClients[i] = handler;
@@ -193,5 +216,16 @@ namespace WebSocketSecureHelper {
     }
 
     this->send(payload.c_str(), SEND_TYPE_TEXT);
+  }
+
+  void BridgeHandler::sendText(String payload) {
+    if (!esp_websocket_client_is_connected(this->ws_client)) {
+      this->onClose();
+      return;
+    }
+
+    const char *str = payload.c_str();
+    const size_t len = payload.length();
+    esp_websocket_client_send_text(this->ws_client, str, len, 100);
   }
 }
