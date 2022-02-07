@@ -12,7 +12,11 @@
 #include "Page.h"
 #include "SDHelper.h"
 
+#include "esp_websocket_client.h"
+
 #include "config.h"
+
+static const char *TAG = "WebSocketHelper";
 
 namespace WebSocketHelper {
   void begin() {
@@ -28,7 +32,7 @@ namespace WebSocketHelper {
     WebSocketSecureHelper::end();
   }
 
-  void send(const char *cmd, JsonDocument &doc, int num) {
+  void send(const char* cmd, JsonDocument& doc, int num) {
     DynamicJsonDocument envelope(1024);
     envelope[cmd] = doc;
 
@@ -38,10 +42,62 @@ namespace WebSocketHelper {
     WebSocketSecureHelper::send(num, payload);
   }
 
-  void send(const char *cmd, String text, int num) {
+  void send(const char* cmd, String text, int num) {
     DynamicJsonDocument doc(1024);
     doc["text"] = text;
     send(cmd, doc, num);
+  }
+
+  static void _ws_client_evt_handler(void* handler_args, esp_event_base_t base, int32_t event_id, void* event_data) {
+    esp_websocket_event_data_t* data = (esp_websocket_event_data_t*) event_data;
+    switch (event_id) {
+    case WEBSOCKET_EVENT_CONNECTED:
+      ESP_LOGE(TAG, "WEBSOCKET_EVENT_CONNECTED");
+      break;
+    case WEBSOCKET_EVENT_DISCONNECTED:
+      ESP_LOGE(TAG, "WEBSOCKET_EVENT_DISCONNECTED");
+      break;
+    case WEBSOCKET_EVENT_DATA:
+      ESP_LOGE(TAG, "WEBSOCKET_EVENT_DATA");
+      ESP_LOGE(TAG, "Received opcode=%d", data->op_code);
+      if (data->op_code == 0x08 && data->data_len == 2) {
+        ESP_LOGW(TAG, "Received closed message with code=%d", 256 * data->data_ptr[0] + data->data_ptr[1]);
+      } else {
+        ESP_LOGW(TAG, "Received=%.*s", data->data_len, (char*) data->data_ptr);
+      }
+      ESP_LOGW(TAG, "Total payload length=%d, data_len=%d, current payload offset=%d\r\n", data->payload_len, data->data_len, data->payload_offset);
+      break;
+    case WEBSOCKET_EVENT_ERROR:
+      ESP_LOGE(TAG, "WEBSOCKET_EVENT_ERROR");
+      break;
+    }
+  }
+
+  void connectToBridge(const char* hostname, int port) {
+    char uri[101] = "";
+    const char* token = "TEST123";
+    snprintf(uri, 100, "ws://%s:%d/device/%s", hostname, port, token);
+    ESP_LOGE(TAG, "Connecting to Maus-Link Bridge at %s\n", uri);
+
+    esp_websocket_client_config_t ws_cfg;
+    ws_cfg.uri = uri;
+    ws_cfg.port = port;
+
+    ESP_LOGE(TAG, "init start");
+    esp_websocket_client_handle_t ws_client = esp_websocket_client_init(&ws_cfg);
+    ESP_LOGE(TAG, "init END");
+
+    if (ws_client == NULL) {
+      ESP_LOGE(TAG, "Failed to get ws_client.");
+      return;
+    }
+
+    esp_websocket_register_events(ws_client, WEBSOCKET_EVENT_ANY, _ws_client_evt_handler, (void*) ws_client);
+    esp_err_t err = esp_websocket_client_start(ws_client);
+
+    if (err == ESP_OK) {
+      WebSocketSecureHelper::registerRemote(ws_client);
+    }
   }
 
   /*
@@ -83,27 +139,27 @@ namespace WebSocketHelper {
     DynamicJsonDocument doc(200);
     doc["size"] = cardSize;
 
-    switch(cardType) {
-      case CARD_MMC:
-        doc["type"] = "MMC";
-        break;
-      case CARD_SD:
-        doc["type"] = "SD";
-        break;
-      case CARD_SDHC:
-        doc["type"] = "SDHC";
-        break;
-      default:
-        doc["type"] = "UNKNOWN";
-        break;
+    switch (cardType) {
+    case CARD_MMC:
+      doc["type"] = "MMC";
+      break;
+    case CARD_SD:
+      doc["type"] = "SD";
+      break;
+    case CARD_SDHC:
+      doc["type"] = "SDHC";
+      break;
+    default:
+      doc["type"] = "UNKNOWN";
+      break;
     }
 
     send("sdStatus", doc, num);
   }
 
   void sendReadings(int num) {
-//    String screenshot;
-//    UI.screenshot(screenshot);
+    //    String screenshot;
+    //    UI.screenshot(screenshot);
 
     // Serialize Data
     DynamicJsonDocument doc(3072);
@@ -112,7 +168,7 @@ namespace WebSocketHelper {
     doc["motor"] = Hardware::getMotorSpeed();
     doc["arousal"] = OrgasmControl::getArousal();
     doc["millis"] = millis();
-//    doc["screenshot"] = screenshot;
+    //    doc["screenshot"] = screenshot;
 
     send("readings", doc, num);
   }
@@ -155,14 +211,14 @@ namespace WebSocketHelper {
     } else {
       while (true) {
         File entry = f.openNextFile();
-        if (! entry) {
+        if (!entry) {
           break;
         }
 
         JsonObject file = files.createNestedObject();
         file["name"] = String(entry.name());
         file["size"] = entry.size();
-        file["dir"]  = entry.isDirectory();
+        file["dir"] = entry.isDirectory();
 
         entry.close();
       }
@@ -213,7 +269,7 @@ namespace WebSocketHelper {
     Hardware::setMotorSpeed(speed);
   }
 
-  void onMessage(int num, const char * payload) {
+  void onMessage(int num, const char* payload) {
     Serial.printf("[%u] %s", num, payload);
     Serial.println();
 
@@ -226,27 +282,27 @@ namespace WebSocketHelper {
       for (auto kvp : doc.as<JsonObject>()) {
         auto cmd = kvp.key().c_str();
 
-        if (! strcmp(cmd, "configSet")) {
+        if (!strcmp(cmd, "configSet")) {
           cbConfigSet(num, kvp.value());
-        } else if (! strcmp(cmd, "info")) {
+        } else if (!strcmp(cmd, "info")) {
           sendSystemInfo(num);
-        } else if (! strcmp(cmd, "configList")) {
+        } else if (!strcmp(cmd, "configList")) {
           sendSettings(num);
-        } else if (! strcmp(cmd, "serialCmd")) {
+        } else if (!strcmp(cmd, "serialCmd")) {
           cbSerialCmd(num, kvp.value());
-        } else if (! strcmp(cmd, "getWiFiStatus")) {
+        } else if (!strcmp(cmd, "getWiFiStatus")) {
           sendWxStatus(num);
-        } else if (! strcmp(cmd, "getSDStatus")) {
+        } else if (!strcmp(cmd, "getSDStatus")) {
           sendSdStatus(num);
-        } else if (! strcmp(cmd, "setMode")) {
+        } else if (!strcmp(cmd, "setMode")) {
           cbSetMode(num, kvp.value());
-        } else if (! strcmp(cmd, "setMotor")) {
+        } else if (!strcmp(cmd, "setMotor")) {
           cbSetMotor(num, kvp.value());
-        } else if (! strcmp(cmd, "streamReadings")) {
+        } else if (!strcmp(cmd, "streamReadings")) {
           send("error", "E_DEPRECATED");
-        } else if (! strcmp(cmd, "dir")) {
+        } else if (!strcmp(cmd, "dir")) {
           cbDir(num, kvp.value());
-        } else if (! strcmp(cmd, "mkdir")) {
+        } else if (!strcmp(cmd, "mkdir")) {
           cbMkdir(num, kvp.value());
         } else {
           send("error", String("Unknown command: ") + String(cmd), num);

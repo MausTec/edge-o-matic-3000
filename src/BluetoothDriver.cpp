@@ -84,9 +84,9 @@ namespace BluetoothDriver {
     BluetoothDriver::Device *buildDevice(NimBLEAdvertisedDevice *device) {
         NimBLEClient *client = nullptr;
 
-        try {
-            client = NimBLEDevice::createClient();
-        } catch (...) {
+        client = NimBLEDevice::createClient();
+        
+        if (client == nullptr) {
             ESP_LOGE(TAG, "Failed to create client.");
             
             if (client != nullptr) {
