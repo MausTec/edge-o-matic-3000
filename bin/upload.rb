@@ -46,8 +46,8 @@ def get_version
 end
 
 def set_version(v)
-  data = "#ifndef EOM_FW_VERSION\n#define VERSION \"#{v.to_s}\"\n#else\n#define VERSION EOM_FW_VERSION\n#endif\n"
-  File.write(File.join(ROOT_PATH, "include", "VERSION.h"), data)
+  # data = "#ifndef EOM_FW_VERSION\n#define VERSION \"#{v.to_s}\"\n#else\n#define VERSION EOM_FW_VERSION\n#endif\n"
+  # File.write(File.join(ROOT_PATH, "include", "VERSION.h"), data)
   $version = v
   puts "Set version to: #{v.to_s}"
 end
