@@ -15,7 +15,8 @@ enum RGView {
 
 enum RGMode {
   Manual,
-  Automatic
+  Automatic,
+  PostOrgasm
 };
 
 class pRunGraph : public Page {
@@ -42,11 +43,22 @@ class pRunGraph : public Page {
     }
 
     if (mode == Automatic) {
-      UI.drawStatus("Automatic");
-      UI.setButton(2, "MANUAL");
-    } else {
+      UI.drawStatus("Auto Edging");
+      UI.setButton(1, "STOP");
+      UI.setButton(2, "POST");
+    } else if (mode == Manual){
       UI.drawStatus("Manual");
+      UI.setButton(1, "STOP");
       UI.setButton(2, "AUTO");
+    } else if (mode == PostOrgasm){
+      UI.drawStatus("Edging+Orgasm");
+      UI.setButton(1, "STOP");
+      UI.setButton(2, "MANUAL");
+    } 
+    
+    if (OrgasmControl::isMenuLocked()){
+      UI.setButton(1, "LOCK");
+      UI.setButton(2, "LOCK");
     }
   }
 
@@ -142,6 +154,7 @@ class pRunGraph : public Page {
   }
 
   void onKeyPress(byte i) {
+  
     switch (i) {
       case 0:
         if (view == GraphView) {
@@ -151,17 +164,26 @@ class pRunGraph : public Page {
         }
         break;
       case 1:
+        if (OrgasmControl::isMenuLocked()) {
+          break;
+        }
         mode = Manual;
         Hardware::setMotorSpeed(0);
         OrgasmControl::controlMotor(false);
         break;
       case 2:
+        if (OrgasmControl::isMenuLocked()) {
+          break;
+        }
         if (mode == Automatic) {
-          mode = Manual;
-          OrgasmControl::controlMotor(false);
-        } else {
+          mode = PostOrgasm;
+          OrgasmControl::controlMotor(true);
+        } else if (mode == Manual) {
           mode = Automatic;
           OrgasmControl::controlMotor(true);
+        } else if (mode == PostOrgasm) {
+          mode = Manual;
+          OrgasmControl::controlMotor(false);
         }
         break;
     }
@@ -172,8 +194,11 @@ class pRunGraph : public Page {
 
   void onEncoderChange(int diff) override {
     const int step = 255 / 20;
-
-    if (mode == Automatic) {
+    if (OrgasmControl::isMenuLocked()){
+      UI.toastNow("Access Denied", 1000);
+      return;
+    }
+    if (mode == Automatic || mode == PostOrgasm) {
       // TODO this may go out of bounds. Also, change in steps?
       Config.sensitivity_threshold += (diff * step);
       saveConfigToSd(millis() + 300);
@@ -192,8 +217,26 @@ public:
     } else if (! strcmp(newMode, "manual")) {
       mode = Manual;
       OrgasmControl::controlMotor(false);
+    } else if (! strcmp(newMode, "postorgasm")) {
+      mode = PostOrgasm;
+      OrgasmControl::controlMotor(true);
     }
 
+    updateButtons();
+  }
+
+  int getMode() {
+    switch(mode) {
+      case Manual:
+        return 0;
+      case Automatic:
+        return 1;
+      case PostOrgasm:
+        return 2;
+    }
+  }
+
+  void menuUpdate() {
     updateButtons();
   }
 };

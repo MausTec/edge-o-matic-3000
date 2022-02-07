@@ -7,6 +7,7 @@ static void buildMenu(UIMenu *menu) {
   menu->addItem("Automatic Edging", &RunGraphPage);
 
   menu->addItem(&EdgingSettingsMenu);
+  menu->addItem(&EdgingOrgasmSettingsMenu);
   menu->addItem(&UISettingsMenu);
   menu->addItem(&NetworkMenu);
   menu->addItem(&GamesMenu);

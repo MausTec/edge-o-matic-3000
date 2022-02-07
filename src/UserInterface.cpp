@@ -1,6 +1,7 @@
 #include "UserInterface.h"
 #include "Icons.h"
 #include "WebSocketHelper.h"
+#include "OrgasmControl.h"
 
 #include "Page.h"
 
@@ -224,6 +225,12 @@ void UserInterface::onKeyPress(byte i) {
     if (toast_allow_clear) {
       UI.toast("", 0);
     }
+    return;
+  }
+
+  // don't lock Chart button (i == 0)  
+  if (i != 0 && OrgasmControl::isMenuLocked()){
+    UI.toastNow("Access Denied", 1000);
     return;
   }
 
