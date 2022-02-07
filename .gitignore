@@ -10,7 +10,6 @@ cmake-build-release/
 build/
 
 serials.yml
-VERSION.h
 .vscode/
 
 ~*
