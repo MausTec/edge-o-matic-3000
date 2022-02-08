@@ -5,9 +5,25 @@
 
 #include "UserInterface.h"
 
-#include <FastLED.h>
 #include <ESP32Encoder.h>
 #include <analogWrite.h>
+
+struct CRGB {
+  uint8_t r;
+  uint8_t g;
+  uint8_t b;
+
+  CRGB(uint16_t hex) : r((hex & 0xFF0000) >> 16), g((hex & 0x00FF00) >> 8), b((hex & 0x0000FF) >> 0) {};
+  CRGB(uint8_t r, uint8_t g, uint8_t b) : r(r), g(g), b(b) {};
+
+  enum HTMLColorCode {
+    Black = 0x000000,
+    Red = 0xFF0000,
+    Green = 0x00FF00,
+    Blue = 0x0000FF,
+    White = 0xFFFFFF,
+  };
+};
 
 namespace Hardware {
   bool initialize();
@@ -43,10 +59,6 @@ namespace Hardware {
     long idle_since_ms = 0;
 
     int motor_speed = 0;
-
-#ifdef LED_PIN
-    CRGB leds[LED_COUNT];
-#endif
     CRGB encoderColor = CRGB::Black;
 
     int32_t encoderCount;

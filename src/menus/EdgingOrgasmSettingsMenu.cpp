@@ -12,7 +12,7 @@ UIInput ClenchPressureSensitivity("Clench Pressure Sensitivity", [](UIMenu *ip) 
     Config.clench_pressure_sensitivity = value;
   });
   input->onConfirm([](int) {
-    saveConfigToSd(0);
+    save_config_to_sd(0);
   });
 });
 
@@ -25,7 +25,7 @@ UIInput ClenchOrgasmTimeThreshold("Clench time to Orgasm", [](UIMenu *ip) {
     Config.clench_threshold_2_orgasm = value;
   });
   input->onConfirm([](int) {
-    saveConfigToSd(0);
+    save_config_to_sd(0);
   });
 });
 
@@ -38,7 +38,7 @@ UIInput EdgingDuration("Edge Duration Minutes", [](UIMenu *ip) {
     Config.auto_edging_duration_minutes = value;
   });
   input->onConfirm([](int) {
-    saveConfigToSd(0);
+    save_config_to_sd(0);
   });
 });
 
@@ -51,14 +51,14 @@ UIInput PostOrgasmDuration("Post Orgasm Seconds", [](UIMenu *ip) {
     Config.post_orgasm_duration_seconds = value;
   });
   input->onConfirm([](int) {
-    saveConfigToSd(0);
+    save_config_to_sd(0);
   });
 });
 
 static void onEdgeMenuUnLock(UIMenu* menu) {
   UI.toastNow("Edge Menu UnLock", 3000);
   Config.edge_menu_lock = false;
-  saveConfigToSd(0);
+  save_config_to_sd(0);
   menu->initialize();
   menu->render();
 }
@@ -66,7 +66,7 @@ static void onEdgeMenuUnLock(UIMenu* menu) {
 static void onEdgeMenuLock(UIMenu* menu) {
   UI.toastNow("Edge Menu Lock", 3000);
   Config.edge_menu_lock = true;
-  saveConfigToSd(0);
+  save_config_to_sd(0);
   menu->initialize();
   menu->render();
 }
@@ -74,7 +74,7 @@ static void onEdgeMenuLock(UIMenu* menu) {
 static void onPostOrgasmMenuUnLock(UIMenu* menu) {
   UI.toastNow(" Post orgasm\n Menu UnLock", 3000);
   Config.post_orgasm_menu_lock = false;
-  saveConfigToSd(0);
+  save_config_to_sd(0);
   menu->initialize();
   menu->render();
 }
@@ -82,7 +82,7 @@ static void onPostOrgasmMenuUnLock(UIMenu* menu) {
 static void onPostOrgasmMenuLock(UIMenu* menu) {
   UI.toastNow(" Post orgasm\n Menu Lock", 3000);
   Config.post_orgasm_menu_lock = true;
-  saveConfigToSd(0);
+  save_config_to_sd(0);
   menu->initialize();
   menu->render();
 }
@@ -90,7 +90,7 @@ static void onPostOrgasmMenuLock(UIMenu* menu) {
 static void onClenchDetectorOn(UIMenu* menu) {
   UI.toastNow(" Using Clench\n in Edging", 3000);
   Config.clench_detector_in_edging = true;
-  saveConfigToSd(0);
+  save_config_to_sd(0);
   menu->initialize();
   menu->render();
 }
@@ -98,7 +98,7 @@ static void onClenchDetectorOn(UIMenu* menu) {
 static void onClenchDetectorOff(UIMenu* menu) {
   UI.toastNow(" Not Using Clench\n in Edging", 3000);
   Config.clench_detector_in_edging = false;
-  saveConfigToSd(0);
+  save_config_to_sd(0);
   menu->initialize();
   menu->render();
 }

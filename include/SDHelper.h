@@ -2,13 +2,13 @@
 #define __SDHelper_h
 
 #include <Arduino.h>
-#include <SD.h>
 #include <ArduinoJson.h>
+#include <stdio.h>
 
 namespace SDHelper {
-  void printDirectory(File dir, int numTabs, String &out);
-  void printDirectoryJson(File dir, JsonVariant files);
-  void printFile(File file, String &out);
+  void printDirectory(FILE *dir, int numTabs, String &out);
+  void printDirectoryJson(FILE *dir, JsonVariant files);
+  void printFile(FILE *file, String &out);
 }
 
 #endif

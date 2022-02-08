@@ -2,9 +2,7 @@
 #include "WebSocketSecureHelper.h"
 #include "VERSION.h"
 
-#include <FS.h>
-#include <SD.h>
-#include <SPI.h>
+#include "eom-hal.h"
 
 #include "Console.h"
 #include "OrgasmControl.h"
@@ -118,7 +116,7 @@ namespace WebSocketHelper {
 
   void sendSettings(int num) {
     DynamicJsonDocument doc(4096);
-    dumpConfigToJsonObject(doc);
+    // dumpConfigToJsonObject(doc);
 
     send("configList", doc, num);
   }
@@ -133,26 +131,9 @@ namespace WebSocketHelper {
   }
 
   void sendSdStatus(int num) {
-    uint8_t cardType = SD.cardType();
-    uint64_t cardSize = SD.cardSize() / (1024 * 1024);
-
     DynamicJsonDocument doc(200);
-    doc["size"] = cardSize;
-
-    switch (cardType) {
-    case CARD_MMC:
-      doc["type"] = "MMC";
-      break;
-    case CARD_SD:
-      doc["type"] = "SD";
-      break;
-    case CARD_SDHC:
-      doc["type"] = "SDHC";
-      break;
-    default:
-      doc["type"] = "UNKNOWN";
-      break;
-    }
+    doc["size"] = eom_hal_get_sd_size_bytes();
+    doc["type"] = "???";
 
     send("sdStatus", doc, num);
   }
@@ -225,25 +206,25 @@ namespace WebSocketHelper {
     resp["nonce"] = nonce;
     JsonArray files = resp.createNestedArray("files");
 
-    File f = SD.open(path);
-    if (!f) {
-      resp["error"] = "Invalid directory.";
-    } else {
-      while (true) {
-        File entry = f.openNextFile();
-        if (!entry) {
-          break;
-        }
+    // File f = SD.open(path);
+    // if (!f) {
+    //   resp["error"] = "Invalid directory.";
+    // } else {
+    //   while (true) {
+    //     File entry = f.openNextFile();
+    //     if (!entry) {
+    //       break;
+    //     }
 
-        JsonObject file = files.createNestedObject();
-        file["name"] = String(entry.name());
-        file["size"] = entry.size();
-        file["dir"] = entry.isDirectory();
+    //     JsonObject file = files.createNestedObject();
+    //     file["name"] = String(entry.name());
+    //     file["size"] = entry.size();
+    //     file["dir"] = entry.isDirectory();
 
-        entry.close();
-      }
-      f.close();
-    }
+    //     entry.close();
+    //   }
+    //   f.close();
+    // }
 
     send("dir", resp, num);
   }
@@ -252,19 +233,14 @@ namespace WebSocketHelper {
     int nonce = args["nonce"];
     String path = args["path"];
 
-    // Clean up Path:
-    if (path[0] != '/') {
-      path = String("/") + path;
-    }
-
     DynamicJsonDocument resp(1024);
     resp["nonce"] = nonce;
     resp["path"] = path;
 
-    bool success = SD.mkdir(path);
-    if (!success) {
-      resp["error"] = "Failed to create directory.";
-    }
+
+    // if (!success) {
+    //   resp["error"] = "Failed to create directory.";
+    // }
 
     send("mkdir", resp, num);
   }
@@ -274,11 +250,11 @@ namespace WebSocketHelper {
     bool restart_required = false;
 
     for (auto kvp : config) {
-      setConfigValue(kvp.key().c_str(), kvp.value().as<String>().c_str(), restart_required);
+      set_config_value(kvp.key().c_str(), kvp.value().as<String>().c_str(), &restart_required);
     }
 
     // Send new settings to client:
-    saveConfigToSd(millis() + 300);
+    save_config_to_sd(millis() + 300);
   }
 
   void cbSetMode(int num, JsonVariant mode) {

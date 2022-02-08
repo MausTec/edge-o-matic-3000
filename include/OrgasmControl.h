@@ -5,7 +5,8 @@
 #include "config.h"
 #include "RunningAverage.h"
 #include "VibrationModeController.h"
-#include <SD.h>
+#include <stdio.h>
+// #include <SD.h>
 
 namespace OrgasmControl {
   void tick();
@@ -66,7 +67,7 @@ namespace OrgasmControl {
 
     // File Writer
     long recording_start_ms = 0;
-    File logfile;
+    FILE *logfile;
     
     //  Post Orgasm Clench variables
     long clench_pressure_threshold = 4096;

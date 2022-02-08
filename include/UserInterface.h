@@ -113,6 +113,7 @@ public:
 
 private:
   bool display_on = true;
+  bool initialized = false;
 
   // Chart Data:
   int chartReadings[2][CHART_WIDTH] = {{0}, {0}};

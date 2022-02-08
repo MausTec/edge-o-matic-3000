@@ -20,6 +20,7 @@ bool UserInterface::begin() {
     display->clearDisplay();
     display->setTextSize(1);
     display->setTextColor(SSD1306_WHITE, SSD1306_BLACK);
+    this->initialized = true;
   }
 }
 
@@ -32,10 +33,10 @@ void UserInterface::drawStatus(const char *s) {
       sum += (int)status[i];
     }
 
-    Hardware::setEncoderColor(CHSV(
-        sum % 255,
-        255,
-        128
+    Hardware::setEncoderColor(CRGB(
+        sum % 255 >> 2,
+        sum % 255 >> 1,
+        sum % 255 >> 0
     ));
   }
 
@@ -391,9 +392,11 @@ void UserInterface::drawIcon(byte icon_idx, byte icon_graphic[][8], byte status,
     }
   }
 
-  this->display->fillRect(icon_y(icon_idx), 0, 8, 8, SSD1306_BLACK);
-  if (icon_frame_idx > 0 && icon->show)
-    this->display->drawBitmap(icon_y(icon_idx), 0, icon_graphic[icon_frame_idx - 1], 8, 8, SSD1306_WHITE);
+  if (this->initialized) {
+    this->display->fillRect(icon_y(icon_idx), 0, 8, 8, SSD1306_BLACK);
+    if (icon_frame_idx > 0 && icon->show)
+      this->display->drawBitmap(icon_y(icon_idx), 0, icon_graphic[icon_frame_idx - 1], 8, 8, SSD1306_WHITE);
+  }
 }
 
 void UserInterface::drawWifiIcon(byte status, long flash_ms) {

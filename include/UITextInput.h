@@ -1,4 +1,5 @@
 #include "UIMenu.h"
+#include <cstdlib>
 
 class UIInput;
 

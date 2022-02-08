@@ -1,18 +1,13 @@
 #include <WiFi.h>
-#include <ArduinoJson.h>
 #include <time.h>
 
 #include "EEPROM.h"
 
 #include "eom-hal.h"
 #include "config.h"
+#include "config_defs.h"
 #include "VERSION.h"
 
-#include "FS.h"
-#include "SD.h"
-#include "SPI.h"
-
-#include <FastLED.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 #include <ESP32Encoder.h>
@@ -32,58 +27,50 @@
 uint8_t LED_Brightness = 13;
 
 // Declare LCD
-#ifdef NG_PLUS
-  Adafruit_SSD1306 display(128, 64);
-#else
-  Adafruit_SSD1306 display(128, 64, &SPI, OLED_DC, OLED_RESET, OLED_CS);
-  //Adafruit_SSD1306 display = eom_hal_get_display();
-#endif
+SPIClass DisplaySafeSPI(VSPI);
+Adafruit_SSD1306 display(128, 64, &DisplaySafeSPI, OLED_DC, OLED_RESET, OLED_CS);
+//Adafruit_SSD1306 display = eom_hal_get_display();
 
 UserInterface UI(&display);
 
 void resetSD() {
-  // SD
-  if(!SD.begin()) {
+  long long int cardSize = eom_hal_get_sd_size_bytes();
+
+  if (cardSize == -1) {
     UI.drawSdIcon(0);
-    Serial.println("Card Mount Failed");
-    loadDefaultConfig();
+    printf("Card Mount Failed\n");
+    config_load_default(&Config);
     return;
   }
 
-  uint8_t cardType = SD.cardType();
-
-  Serial.print("SD Card Type: ");
-  if(cardType == CARD_MMC){
-      Serial.println("MMC");
-      UI.drawSdIcon(1);
-  } else if(cardType == CARD_SD){
-      Serial.println("SDSC");
-      UI.drawSdIcon(1);
-  } else if(cardType == CARD_SDHC){
-      Serial.println("SDHC");
-      UI.drawSdIcon(1);
-  } else {
-      Serial.println("UNKNOWN");
-  }
-
-  uint64_t cardSize = SD.cardSize() / (1024 * 1024);
-  Serial.printf("SD Card Size: %lluMB\n", cardSize);
-
-  loadConfigFromSd();
+  UI.drawSdIcon(1);
+  printf("SD Card Size: %lluMB\n", cardSize);
+  config_load_from_sd(CONFIG_FILENAME, &Config);
+  printf("Config loaded, testing save...\n");
+  config_save_to_sd(CONFIG_FILENAME, &Config);
+  printf("Save completed.\n");
 }
 
 void setupHardware() {
   pinMode(MOT_PWM_PIN, OUTPUT);
 
-  if(!Hardware::initialize()) {
-    Serial.println("Hardware initialization failed!");
-    for(;;){}
+  if (!Hardware::initialize()) {
+    printf("Hardware initialization failed!\n");
+    for (;;) {}
   }
+  
+  printf("Hardware initialized, testing save...\n");
+  config_save_to_sd(CONFIG_FILENAME, &Config);
+  printf("Save completed.\n");
 
-  if(!UI.begin()) {
-    Serial.println("SSD1306 allocation failed");
-    for(;;){}
+  if (!UI.begin()) {
+    printf("SSD1306 allocation failed\n");
+    for (;;) {}
   }
+  
+  printf("Display initialized, testing save...\n");
+  config_save_to_sd(CONFIG_FILENAME, &Config);
+  printf("Save completed.\n");
 }
 
 TaskHandle_t BackgroundLoopTask;
@@ -96,28 +83,20 @@ void backgroundLoop(void*) {
 }
 
 void setup() {
-  // Start Serial port
-  Serial.begin(115200);
   eom_hal_init();
 
-#ifdef NG_PLUS
-  Serial.println("Maus-Tec presents: NoGasm Plus");
-#else
-  Serial.println("Maus-Tec presents: Edge-o-Matic 3000");
-#endif
-  Serial.println("Version: " VERSION);
-  Serial.print("EOM-HAL Version: ");
-  Serial.println(eom_hal_get_version());
+  printf("Maus-Tec presents: Edge-o-Matic 3000\n");
+  printf("Version: " VERSION "\n");
+  printf("EOM-HAL Version: %s\n", eom_hal_get_version());
 
   // Setup Hardware
+  resetSD();
   setupHardware();
+  
 
   // Go to the splash page:
   Page::Go(&DebugPage, false);
   Hardware::setEncoderColor(CRGB::Red);
-
-  // Setup SD, which loads our config
-  resetSD();
 
   UI.drawWifiIcon(1);
   UI.render();
@@ -129,24 +108,24 @@ void setup() {
 
   // Initialize Bluetooth
   if (Config.bt_on) {
-    Serial.println("Starting up Bluetooth...");
+    printf("Starting up Bluetooth...\n");
     BT.begin();
-    Serial.println("Now Discoverable!");
+    printf("Now Discoverable!\n");
     BT.advertise();
   }
 
 
   // Start background worker:
   xTaskCreatePinnedToCore(
-      backgroundLoop, /* Task function. */
-      "backgroundLoop",   /* name of task. */
-      10000,     /* Stack size of task */
-      NULL,      /* parameter of the task */
-      1,         /* priority of the task */
-      &BackgroundLoopTask,    /* Task handle to keep track of created task */
-      0);        /* pin task to core 0 */
+    backgroundLoop, /* Task function. */
+    "backgroundLoop",   /* name of task. */
+    10000,     /* Stack size of task */
+    NULL,      /* parameter of the task */
+    1,         /* priority of the task */
+    &BackgroundLoopTask,    /* Task handle to keep track of created task */
+    0);        /* pin task to core 0 */
 
-  // I'm always one for the dramatics:
+// I'm always one for the dramatics:
   delay(500);
   Hardware::setEncoderColor(CRGB::Green);
   delay(500);
@@ -157,7 +136,7 @@ void setup() {
   UI.fadeTo();
 
   Page::Go(&RunGraphPage);
-  Serial.println("READY");
+  printf("READY\n");
 }
 
 void loop() {
@@ -176,8 +155,8 @@ void loop() {
     lastStatusTick = millis();
     WebSocketHelper::sendWxStatus();
   }
-  
-  if (millis() - lastTick > 1000/15) {
+
+  if (millis() - lastTick > 1000 / 15) {
     lastTick = millis();
 
     // Update LEDs
@@ -187,7 +166,7 @@ void loop() {
     for (uint8_t i = 0; i < LED_COUNT; i++) {
       if (i < bar) {
         Hardware::setLedColor(i, CRGB(map(i, 0, LED_COUNT - 1, 0, LED_Brightness),
-                                      map(i, 0, LED_COUNT - 1, LED_Brightness, 0), 0));
+          map(i, 0, LED_COUNT - 1, LED_Brightness, 0), 0));
       } else {
         Hardware::setLedColor(i);
       }
@@ -205,5 +184,5 @@ void loop() {
   Page::DoLoop();
 
   // Tick and see if we need to save config:
-  saveConfigToSd(-1);
+  save_config_to_sd(-1);
 }

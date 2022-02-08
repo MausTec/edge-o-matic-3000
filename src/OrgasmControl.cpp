@@ -240,25 +240,24 @@ namespace OrgasmControl {
 
     String logfile_name = "/log-" + String(filename_date) + ".csv";
     Serial.println("Opening logfile: " + logfile_name);
-    logfile = SD.open(logfile_name, FILE_WRITE);
+    // logfile = SD.open(logfile_name, FILE_WRITE);
 
-    if (!logfile) {
-      Serial.println("Couldn't open logfile to save!" + String(logfile));
-      UI.toast("Error opening\nlogfile!");
-    } else {
-      recording_start_ms = millis();
-      logfile.println("millis,pressure,avg_pressure,arousal,motor_speed,sensitivity_threshold");
-      UI.drawRecordIcon(1, 1500);
-      UI.toast(String("Recording started:\n" + logfile_name).c_str());
-    }
+    // if (!logfile) {
+    //   Serial.println("Couldn't open logfile to save!" + String(logfile));
+    //   UI.toast("Error opening\nlogfile!");
+    // } else {
+    //   recording_start_ms = millis();
+    //   logfile.println("millis,pressure,avg_pressure,arousal,motor_speed,sensitivity_threshold");
+    //   UI.drawRecordIcon(1, 1500);
+    //   UI.toast(String("Recording started:\n" + logfile_name).c_str());
+    // }
   }
 
   void stopRecording() {
-    if (logfile) {
+    if (logfile != NULL) {
       UI.toastNow("Stopping...", 0);
       Serial.println("Closing logfile.");
-      logfile.close();
-      logfile = File();
+      fclose(logfile);
       UI.drawRecordIcon(0);
       UI.toast("Recording stopped.");
     }
@@ -289,13 +288,13 @@ namespace OrgasmControl {
         String(clench_duration);
 
       // Write out to logfile, which includes millis:
-      if (logfile) {
-        logfile.println(String(last_update_ms - recording_start_ms) + "," + data);
+      if (logfile != NULL) {
+        fprintf(logfile, "%ld,%s\n", last_update_ms - recording_start_ms, data.c_str());
       }
 
       // Write to console for classic log mode:
       if (Config.classic_serial) {
-        Serial.println(data);
+        printf("%s\n", data.c_str());
       }
     } else {
       update_flag = false;

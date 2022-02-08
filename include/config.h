@@ -1,74 +1,43 @@
 #ifndef __config_h
 #define __config_h
 
-#include "errors.h"
-#include "VibrationModeController.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-#include <ArduinoJson.h>
-
-// External Library Config
-#define FASTLED_INTERNAL
+#include <stddef.h>
+#include <stdint.h>
+#include <stdbool.h>
 
 // SD card files:
 #define CONFIG_FILENAME "/config.json"
 #define UPDATE_FILENAME "/update.bin"
 
-// Uncomment to enable debug logging and functions.
-//#define DEBUG
-
-// Uncomment if compiling for NoGasm+
-//#define NG_PLUS
-
-// Butt Pin
-#define MOT_PWM_PIN     15
-
-// SD Connections
-#define SD_CS_PIN       5
-
-// Encoder Connection
-#define ENCODER_B_PIN   32
-#define ENCODER_A_PIN   33
-#define ENCODER_RD_PIN  2
-#define ENCODER_BL_PIN  27
-#define ENCODER_GR_PIN  4
-
-#ifdef NG_PLUS
-  // LCD Definitions
-  #define SCREEN_WIDTH 128
-  #define SCREEN_HEIGHT 32
-
-  // LED Ring (NoGasm+)
-  #define LED_PIN 17
-  #define LED_COUNT 13
-
-  #define SDA_PIN 21
-  #define SCL_PIN 22
-
-  // Encoders are swapped
-  #define ENCODER_GR_PIN 27
-  #define ENCODER_BL_PIN 4
-#else
-  // LCD Definitions
-  #define SCREEN_WIDTH    128
-  #define SCREEN_HEIGHT   64
-  #define OLED_DC         13
-  #define OLED_RESET      14
-  #define OLED_CS         12
-#endif
-
+// String Lengths
 #define WIFI_SSID_MAX_LEN 64
 #define WIFI_KEY_MAX_LEN 64
 
-bool atob(const char *a);
+// Vibration Modes
+// See VibrationModeController.h for more.
 
-union ConfigValue {
-  byte v_byte;
-  int  v_int;
-  char *v_char;
-  bool v_bool;
+enum vibration_mode {
+  RampStop = 1,
+  Depletion = 2,
+  Enhancement = 3,
+  Pattern = 4,
+  GlobalSync = 0
 };
 
-struct ConfigStruct {
+typedef enum vibration_mode vibration_mode_t;
+
+/**
+ * Main Configuration Struct!
+ * 
+ * Place all presistent runtime config variables in here, and be sure to add the appropriate def
+ * in config.c!
+ */
+
+struct config {
   // Networking
   char wifi_ssid[WIFI_SSID_MAX_LEN + 1];
   char wifi_key[WIFI_KEY_MAX_LEN + 1];
@@ -79,7 +48,7 @@ struct ConfigStruct {
   bool force_bt_coex;
 
   // UI And Stuff
-  byte led_brightness;
+  uint8_t led_brightness;
   int screen_dim_seconds;
   int screen_timeout_seconds;
 
@@ -90,20 +59,20 @@ struct ConfigStruct {
   char hostname[64];
 
   // Orgasms and Stuff
-  byte motor_max_speed;
-  byte motor_start_speed;
+  uint8_t motor_max_speed;
+  uint8_t motor_start_speed;
   int edge_delay;
   int max_additional_delay;
   int minimum_on_time;
-  byte pressure_smoothing;
+  uint8_t pressure_smoothing;
   int sensitivity_threshold;
   int motor_ramp_time_s;
   int update_frequency_hz;
-  byte sensor_sensitivity;
+  uint8_t sensor_sensitivity;
   bool use_average_values;
 
   // Vibration Output Mode
-  VibrationMode vibration_mode;
+  vibration_mode_t vibration_mode;
   
   // Post orgasm torure stuff
   int clench_pressure_sensitivity;
@@ -117,15 +86,36 @@ struct ConfigStruct {
   bool post_orgasm_menu_lock;
 };
 
-extern ConfigStruct Config;
+typedef struct config config_t;
 
+extern config_t Config;
 
-extern void loadConfigFromSd();
-extern void loadDefaultConfig();
-extern void loadConfigFromJsonObject(JsonDocument &doc);
-extern void saveConfigToSd(long save_at_ms = -1);
-extern bool setConfigValue(const char *key, const char *value, bool &require_reboot);
-extern bool getConfigValue(const char *key, String &out);
-extern void dumpConfigToJsonObject(JsonDocument &doc);
-extern bool dumpConfigToJson(String &str);
+// Ping this after you change a config thing.
+void save_config_to_sd(long save_at_ms);
+bool get_config_value(const char *option, char *buffer, size_t len);
+bool set_config_value(const char *option, const char *value, bool *require_reboot);
+
+// This is hardware specific and is going away soon:
+
+// Butt Pin
+#define MOT_PWM_PIN     15
+
+// Encoder Connection
+#define ENCODER_B_PIN   32
+#define ENCODER_A_PIN   33
+#define ENCODER_RD_PIN  2
+#define ENCODER_BL_PIN  27
+#define ENCODER_GR_PIN  4
+
+// LCD Definitions
+#define SCREEN_WIDTH    128
+#define SCREEN_HEIGHT   64
+#define OLED_DC         13
+#define OLED_RESET      14
+#define OLED_CS         12
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif
