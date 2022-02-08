@@ -9,7 +9,7 @@ UIInput ScreenDim("Screen Dim (s)", [](UIMenu *ip) {
   input->setValue(Config.screen_dim_seconds);
   input->onConfirm([](int value) {
     Config.screen_dim_seconds = value;
-    saveConfigToSd(0);
+    save_config_to_sd(0);
   });
 });
 
@@ -20,7 +20,7 @@ UIInput ScreenTimeout("Screen Timeout", [](UIMenu *ip) {
   input->setValue(Config.screen_timeout_seconds);
   input->onConfirm([](int value) {
     Config.screen_timeout_seconds = value;
-    saveConfigToSd(0);
+    save_config_to_sd(0);
   });
 });
 

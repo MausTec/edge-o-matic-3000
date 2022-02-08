@@ -1,4 +1,7 @@
 #include "BluetoothServer.h"
+#include "esp_log.h"
+
+static const char *TAG = "BluetoothServer";
 
 BluetoothServer::BluetoothServer() {
 
@@ -16,29 +19,29 @@ void BluetoothServer::disconnect() {
   this->service = nullptr;
   this->server = nullptr;
 
-  Serial.println("BLE Disconnected.");
+  ESP_LOGI(TAG, "BLE Disconnected.");
 }
 
 void BluetoothServer::begin() {
-  Serial.println("BLEDevice::init");
+  ESP_LOGI(TAG, "BLEDevice::init");
   NimBLEDevice::init(Config.bt_display_name);
 
-  Serial.println("Create server");
+  ESP_LOGI(TAG, "Create server");
   this->server = BLEDevice::createServer();
 
-  Serial.println("Create service");
+  ESP_LOGI(TAG, "Create service");
   this->service = this->server->createService(SERVICE_UUID);
 
-  Serial.println("Create Characteristic");
+  ESP_LOGI(TAG, "Create Characteristic");
   this->characteristic = this->service->createCharacteristic(
       CHARACTERISTIC_UUID,
       NIMBLE_PROPERTY::READ |
       NIMBLE_PROPERTY::WRITE
   );
 
-  Serial.println("Set Characteristic");
+  ESP_LOGI(TAG, "Set Characteristic");
   this->characteristic->setValue("What?");
-  Serial.println("BLE Running.");
+  ESP_LOGI(TAG, "BLE Running.");
 }
 
 void BluetoothServer::advertise() {

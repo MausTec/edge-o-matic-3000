@@ -2,7 +2,7 @@
 #include "UpdateHelper.h"
 #include "UserInterface.h"
 
-#include <SD.h>
+// #include <SD.h>
 
 static void onCheckForUpdates(UIMenu *menu) {
   UI.toastNow("Checking...", 0, false);
@@ -25,7 +25,7 @@ static void onWebUpdate(UIMenu *menu) {
 
 static void onLocalUpdate(UIMenu *menu) {
   UI.toastNow("Preparing...", 0, false);
-  UpdateHelper::updateFromFS(SD);
+  // UpdateHelper::updateFromFS(SD);
 }
 
 static void buildMenu(UIMenu *menu) {

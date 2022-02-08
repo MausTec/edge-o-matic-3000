@@ -11,7 +11,7 @@ static void onDisableWiFi(UIMenu *menu) {
   UI.toastNow("Disconnecting...", 0, false);
   Config.wifi_on = false;
   WiFiHelper::disconnect();
-  saveConfigToSd(0);
+  save_config_to_sd(0);
   UI.toast("Disconnected.", 3000);
   menu->initialize();
   menu->render();
@@ -20,7 +20,7 @@ static void onDisableWiFi(UIMenu *menu) {
 static void onEnableWiFi(UIMenu *menu) {
   if (Config.wifi_ssid[0] == '\0' || Config.wifi_key[0] == '\0') {
     Config.wifi_on = true;
-    saveConfigToSd(0);
+    save_config_to_sd(0);
     menu->render();
     return;
   }
@@ -29,7 +29,7 @@ static void onEnableWiFi(UIMenu *menu) {
   Config.wifi_on = true;
   if (WiFiHelper::begin()) {
     UI.toastNow("WiFi Connected!", 3000);
-    saveConfigToSd(0);
+    save_config_to_sd(0);
     menu->initialize();
   } else {
     UI.toastNow("Failed to connect.", 3000);
@@ -69,7 +69,7 @@ static void onEnableBluetooth(UIMenu* menu) {
     }
   }
 
-  saveConfigToSd(0);
+  save_config_to_sd(0);
   BT.begin();
 
   menu->initialize();
@@ -80,7 +80,7 @@ static void onEnableBluetooth(UIMenu* menu) {
 static void onDisableBluetooth(UIMenu* menu) {
   UI.toastNow("Disconnecting...", 0, false);
   Config.bt_on = false;
-  saveConfigToSd(0);
+  save_config_to_sd(0);
   BT.disconnect();
   menu->initialize();
   menu->render();

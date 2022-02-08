@@ -59,16 +59,7 @@ namespace Hardware {
         }
 
         void initializeLEDs() {
-#ifdef LED_PIN
-            pinMode(LED_PIN, OUTPUT);
-            Serial.println("Setting up FastLED on pin " + String(LED_PIN));
-
-            FastLED.addLeds<WS2812B, LED_PIN>(leds, LED_COUNT);
-            for (int i = 0; i < LED_COUNT; i++) {
-                leds[i] = CRGB::Green;
-            }
-            FastLED.show();
-#endif
+            // noop
         }
     }
 
@@ -185,9 +176,7 @@ namespace Hardware {
     }
 
     void ledShow() {
-#ifdef LED_PIN
-        FastLED.show();
-#endif
+        // noop
     }
 
     [[deprecated("Use eom_hal_get_pressure_reading()")]]

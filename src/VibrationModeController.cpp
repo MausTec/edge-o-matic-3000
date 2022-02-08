@@ -1,5 +1,9 @@
 #include "VibrationModeController.h"
 #include "config.h"
+#include "esp_log.h"
+
+static const char *TAG = "VibrationModeController";
+
 float VibrationModeController::rampToIncrement(int start, int target, float time_s) {
   if (time_s == 0) {
     return target;
@@ -139,7 +143,7 @@ VibrationPattern PatternController::nextStep() {
 
 template <int N>
 void PatternController::setPattern(VibrationPattern (&pattern)[N]) {
-  log_i("Setting a pattern of %d steps.", sizeof(pattern) / sizeof(pattern[0]));
+  ESP_LOGI(TAG, "Setting a pattern of %d steps.", sizeof(pattern) / sizeof(pattern[0]));
   this->pattern = pattern;
   this->pattern_length = sizeof(pattern) / sizeof(pattern[0]);
 }

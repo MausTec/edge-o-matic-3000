@@ -4,6 +4,7 @@
 #include "config.h"
 #include <functional>
 #include <string>
+#include "esp_log.h"
 
 #define TITLE_SIZE 20
 
@@ -103,10 +104,7 @@ public:
   // Misc Queries
   UIMenuItem *firstItem() { return first_item; }
   bool isPreviousMenu(UIMenu *m) { return prev == m; }
-  void *getCurrentArg() {
-    log_i("Getting current arg: %x", this->current_arg);
-    return this->current_arg;
-  }
+  void *getCurrentArg() { return this->current_arg; }
 
   void enableAutoCleanup(AutocleanMethod m) { autoclean = m; };
 

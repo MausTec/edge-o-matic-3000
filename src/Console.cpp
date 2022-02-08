@@ -5,10 +5,11 @@
 #include "UpdateHelper.h"
 #include "config.h"
 #include "OrgasmControl.h"
+#include "config_defs.h"
 
 #include "eom_tscode_handler.h"
 
-#include <SD.h>
+// #include <SD.h>
 
 #define cmd_f [](char** args, String& out) -> int
 
@@ -194,24 +195,24 @@ namespace Console {
         return 1;
       }
 
-      File file = SD.open(cwd + String("/") + String(args[0]));
-      if (!file) {
-        out += "File not found!\n";
-        return 1;
-      }
+      // File file = SD.open(cwd + String("/") + String(args[0]));
+      // if (!file) {
+      //   out += "File not found!\n";
+      //   return 1;
+      // }
 
-      SDHelper::printFile(file, out);
-      return 0;
+      // SDHelper::printFile(file, out);
+      // return 0;
     }
 
     int sh_dir(char **args, String &out) {
-      File f = SD.open(cwd);
-      if (!f) {
-        out += "Invalid directory.\n";
-        return 1;
-      }
-      SDHelper::printDirectory(f, 1, out);
-      return 0;
+      // File f = SD.open(cwd);
+      // if (!f) {
+      //   out += "Invalid directory.\n";
+      //   return 1;
+      // }
+      // SDHelper::printDirectory(f, 1, out);
+      // return 0;
     }
 
     int sh_cd(char **args, String &out) {
@@ -227,13 +228,13 @@ namespace Console {
         newDir = cwd + String("/") + String(args[0]);
       }
 
-      File f = SD.open(newDir);
-      if (!f || !f.isDirectory()) {
-        out += "Invalid directory.\n";
-        return 1;
-      }
-      cwd = newDir;
-      f.close();
+      // File f = SD.open(newDir);
+      // if (!f || !f.isDirectory()) {
+      //   out += "Invalid directory.\n";
+      //   return 1;
+      // }
+      // cwd = newDir;
+      // f.close();
     }
 
     int sh_set(char **args, String &out) {
@@ -246,12 +247,13 @@ namespace Console {
       }
 
       if (args[1] == NULL) {
-        if (!getConfigValue(args[0], out)) {
+        char buffer[120];
+        if (!get_config_value(args[0], buffer, 120)) {
           out += "Unknown config key!\n";
         }
       } else {
-        if (setConfigValue(args[0], args[1], require_reboot)) {
-          saveConfigToSd(0);
+        if (set_config_value(args[0], args[1], &require_reboot)) {
+          save_config_to_sd(0);
 
           if (require_reboot) {
             out += ("A device reset will be required for the new settings to "
@@ -264,7 +266,7 @@ namespace Console {
     }
 
     int sh_list(char **args, String &out) {
-      dumpConfigToJson(out);
+      // dumpConfigToJson(out);
     }
   }
 

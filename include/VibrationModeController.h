@@ -1,19 +1,16 @@
 #ifndef __VibrationModeController_h
 #define __VibrationModeController_h
 
-enum class VibrationMode {
-  RampStop = 1,
-  Depletion = 2,
-  Enhancement = 3,
-  Pattern = 4,
-  GlobalSync = 0
-};
+#include "config.h"
 
 struct VibrationPattern {
   int motor_speed;
   float hold_ticks;
   bool ramp_to;
 };
+
+// For backwards compatibility with older C++ defs
+typedef vibration_mode_t VibrationMode;
 
 class VibrationModeController {
 public:

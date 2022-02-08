@@ -3,7 +3,7 @@
 #include "WiFiHelper.h"
 #include "VERSION.h"
 
-#include <SD.h>
+// #include <SD.h>
 #include <HTTPClient.h>
 
 #define UPDATE_BUFFER_SIZE (1024 * 1)
@@ -118,7 +118,7 @@ namespace UpdateHelper {
   UpdateSource checkForUpdates() {
     UpdateSource source = NoUpdate;
     // Check SD first:
-    bool updateBin = SD.exists(UPDATE_FILENAME);
+    bool updateBin = false;
     if (updateBin) {
       Serial.println("Found: update.bin on SD card.");
       pendingLocalUpdate = true;
