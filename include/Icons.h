@@ -1,9 +1,9 @@
 #ifndef __Icons_h
 #define __Icons_h
 
-#include <pgmspace.h>
+#include <stdint.h>
 
-byte WIFI_ICON[6][8] PROGMEM = {
+uint8_t WIFI_ICON[6][8] = {
     {
         0b01000010,
         0b00100100,
@@ -69,7 +69,7 @@ byte WIFI_ICON[6][8] PROGMEM = {
 // SD_ICON
 //  0 : SD_PRESENT
 //  1 : SD_IN_USE
-byte SD_ICON[2][8] PROGMEM = {
+uint8_t SD_ICON[2][8] = {
     {
         0b00011100,
         0b00101010,
@@ -92,7 +92,7 @@ byte SD_ICON[2][8] PROGMEM = {
     }
 };
 
-byte UPDATE_ICON[1][8] PROGMEM = {
+uint8_t UPDATE_ICON[1][8] = {
     {
       0b00010000,
       0b00111000,
@@ -105,7 +105,7 @@ byte UPDATE_ICON[1][8] PROGMEM = {
     }
 };
 
-byte RECORD_ICON[1][8] PROGMEM = {
+uint8_t RECORD_ICON[1][8] = {
     {
       0b00000000,
       0b00011111,

@@ -4,24 +4,21 @@
 #include "OrgasmControl.h"
 
 #include "Page.h"
+#include "polyfill.h"
+#include <cstring>
+#include <math.h>
+#include "esp_log.h"
+#include <algorithm>
+
+static const char *TAG = "UserInterface";
 
 #define icon_y(idx) (SCREEN_WIDTH - (10 * (idx + 1)) + 2)
 
-UserInterface::UserInterface(Adafruit_SSD1306 *display) {
-  this->display = display;
-}
-
-bool UserInterface::begin() {
-  if (!this->display->begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
-    return false;
-  } else {
-    display->setRotation(2);
-    display->cp437(true);
-    display->clearDisplay();
-    display->setTextSize(1);
-    display->setTextColor(SSD1306_WHITE, SSD1306_BLACK);
-    this->initialized = true;
-  }
+bool UserInterface::begin(u8g2_t *d) {
+  this->display_ptr = d;
+  this->display = new DisplayPolyfill(d);
+  this->initialized = true;
+  return true;
 }
 
 void UserInterface::drawStatus(const char *s) {
@@ -41,9 +38,9 @@ void UserInterface::drawStatus(const char *s) {
   }
 
   // actually calculate ---------------\/
-  this->display->fillRect(0, 0, SCREEN_WIDTH - icon_y(3), 10, SSD1306_BLACK);
+  this->display->fillRect(0, 0, SCREEN_WIDTH - icon_y(3), 10, 0);
   this->display->setCursor(0,0);
-  this->display->setTextColor(SSD1306_WHITE, SSD1306_BLACK);
+  this->display->setTextColor(1, 0);
   this->display->print(status);
 }
 
@@ -68,34 +65,34 @@ void UserInterface::drawCompactBar(int x, int y, int width, int value, int maxim
 
   // Calculate Markers
   const int bar_height = 3;
-  int marker_1_x = max(x + 2, min((int) map(value, 0, maximum, x + 2, x + width - 2), x + width - 2));
-  int marker_2_x = max(x + 2, min((int) map(lowerValue, 0, lowerMaximum, x + 2, x + width - 2), x + width - 2));
+  int marker_1_x = std::max(x + 2, std::min((int) map(value, 0, maximum, x + 2, x + width - 2), x + width - 2));
+  int marker_2_x = std::max(x + 2, std::min((int) map(lowerValue, 0, lowerMaximum, x + 2, x + width - 2), x + width - 2));
 
   // Center line + End
-  UI.display->drawLine(x, y, max(x, marker_1_x - 3), y, SSD1306_WHITE); // left half
-  UI.display->drawLine(min(x + width, marker_1_x + 3), y, x + width, y, SSD1306_WHITE); // right half
-  UI.display->drawLine(x, y - bar_height, x, y + bar_height, SSD1306_WHITE); // left bar
-  UI.display->drawLine(x + width, y - bar_height, x + width, y + bar_height, SSD1306_WHITE); // right bar
+  UI.display->drawLine(x, y, std::max(x, marker_1_x - 3), y, 1); // left half
+  UI.display->drawLine(std::min(x + width, marker_1_x + 3), y, x + width, y, 1); // right half
+  UI.display->drawLine(x, y - bar_height, x, y + bar_height, 1); // left bar
+  UI.display->drawLine(x + width, y - bar_height, x + width, y + bar_height, 1); // right bar
 
   // Markers
   UI.display->fillTriangle(marker_1_x - 2, y - bar_height, marker_1_x + 2, y - bar_height, marker_1_x, y - 1,
-                           SSD1306_WHITE);
+                           1);
   UI.display->fillTriangle(marker_2_x - 1, y + bar_height, marker_2_x + 1, y + bar_height, marker_2_x, y + 2,
-                           SSD1306_WHITE);
+                           1);
 }
 
 void UserInterface::drawBar(int y, char label, int value, int maximum, int limit, int peak) {
   int box_left = 8;
   int box_right = SCREEN_WIDTH - (6 * 3) - 3;
   int box_width = box_right - box_left;
-  float pct = max(0.0f, min((float) value / (float) maximum, 1.0f));
+  float pct = std::max(0.0f, std::min((float) value / (float) maximum, 1.0f));
   int pct_width = floor((float) (box_width - 2) * pct);
 
   // Calculate a Limit bar
   int limit_left, limit_width;
 
   if (limit > 0) {
-    float limit_pct = max(0.0f, min((float) limit / (float) maximum, 1.0f));
+    float limit_pct = std::max(0.0f, std::min((float) limit / (float) maximum, 1.0f));
     int limit_pct_width = floor((float) (box_width - 2) * (1.0f - limit_pct));
     limit_left = box_right - limit_pct_width - 1;
     limit_width = box_right - limit_left - 2;
@@ -105,14 +102,14 @@ void UserInterface::drawBar(int y, char label, int value, int maximum, int limit
   int peak_left;
 
   if (peak > 0) {
-    float peak_pct = max(0.0f, min((float) peak / (float) maximum, 1.0f));
+    float peak_pct = std::max(0.0f, std::min((float) peak / (float) maximum, 1.0f));
     peak_left = box_left + floor((float) (box_width - 2) * peak_pct);
   }
 
   // Render Stuff
-  UI.display->setTextColor(SSD1306_WHITE, SSD1306_BLACK);
-  UI.display->drawRect(box_left, y, box_width, 7, SSD1306_WHITE);
-  UI.display->fillRect(box_left + 1, y + 1, pct_width, 5, SSD1306_WHITE);
+  UI.display->setTextColor(1, 0);
+  UI.display->drawRect(box_left, y, box_width, 7, 1);
+  UI.display->fillRect(box_left + 1, y + 1, pct_width, 5, 1);
 
   // Draw Limit
   if (limit > 0) {
@@ -120,14 +117,14 @@ void UserInterface::drawBar(int y, char label, int value, int maximum, int limit
       for (int j = 0; j < 3; j++) {
         if ((i + j) % 2 != 0)
           continue;
-        UI.display->drawPixel(i, y + 2 + j, SSD1306_WHITE);
+        UI.display->drawPixel(i, y + 2 + j, 1);
       }
     }
   }
 
   // Draw Peak
   if (peak > 0) {
-    UI.display->drawLine(peak_left, y, peak_left, y + 5, SSD1306_WHITE);
+    UI.display->drawLine(peak_left, y, peak_left, y + 5, 1);
   }
 
   // Print Labels
@@ -151,22 +148,22 @@ void UserInterface::drawChartAxes() {
   int yInterval = chartHeight / 13 + 1;
 
   // Speed Meter
-//  this->display->drawRect(0, 10, 4, SCREEN_HEIGHT - 10, SSD1306_WHITE);
+ this->display->drawRect(0, 10, 4, SCREEN_HEIGHT - 10, 1);
 
   // Y-axis
-  this->display->drawLine(CHART_START_X - 1, CHART_START_Y, CHART_START_X - 1, CHART_END_Y, SSD1306_WHITE);
+  this->display->drawLine(CHART_START_X - 1, CHART_START_Y, CHART_START_X - 1, CHART_END_Y, 1);
   for (int i = CHART_END_Y - yInterval; i >= CHART_START_Y; i -= yInterval) {
-    this->display->drawLine(CHART_START_X - 2, i, CHART_START_X - 1, i, SSD1306_WHITE);
+    this->display->drawLine(CHART_START_X - 2, i, CHART_START_X - 1, i, 1);
   }
 
   // X-axis
-  this->display->drawLine(CHART_START_X - 1, CHART_END_Y, CHART_END_X, CHART_END_Y, SSD1306_WHITE);
+  this->display->drawLine(CHART_START_X - 1, CHART_END_Y, CHART_END_X, CHART_END_Y, 1);
   for (int i = 0; i < CHART_WIDTH; i += 5) {
-    this->display->drawLine(i + CHART_START_X, CHART_END_Y, i + CHART_START_X, CHART_END_Y + 1, SSD1306_WHITE);
+    this->display->drawLine(i + CHART_START_X, CHART_END_Y, i + CHART_START_X, CHART_END_Y + 1, 1);
   }
 }
 
-void UserInterface::clearButton(byte i) {
+void UserInterface::clearButton(uint8_t i) {
   buttons[i].show = false;
   buttons[i].text[0] = 0;
   buttons[i].fn = nullptr;
@@ -178,7 +175,7 @@ void UserInterface::clearButtons() {
   }
 }
 
-void UserInterface::setButton(byte i, char *text, ButtonCallback fn) {
+void UserInterface::setButton(uint8_t i, char *text, ButtonCallback fn) {
   strcpy(buttons[i].text, text);
   if (fn != nullptr)
     buttons[i].fn = fn;
@@ -196,7 +193,7 @@ void UserInterface::drawPattern(int start_x, int start_y, int width, int height,
 }
 
 void UserInterface::drawButtons() {
-  this->display->drawLine(0, BUTTON_START_Y-1, SCREEN_WIDTH, BUTTON_START_Y-1, SSD1306_BLACK);
+  this->display->drawLine(0, BUTTON_START_Y-1, SCREEN_WIDTH, BUTTON_START_Y-1, 0);
 
   for (int i = 0; i < 3; i++) {
     UIButton b = buttons[i];
@@ -211,17 +208,17 @@ void UserInterface::drawButtons() {
     }
 
     if (b.show) {
-      this->display->fillRect(button_start_l, BUTTON_START_Y, BUTTON_WIDTH, BUTTON_HEIGHT, SSD1306_WHITE);
-      this->display->setTextColor(SSD1306_BLACK, SSD1306_WHITE);
+      this->display->fillRect(button_start_l, BUTTON_START_Y, BUTTON_WIDTH, BUTTON_HEIGHT, 1);
+      this->display->setTextColor(0, 1);
       this->display->setCursor(button_start_l + offset_left, BUTTON_START_Y + 1);
       this->display->print(b.text);
     } else {
-      this->drawPattern(button_start_l, BUTTON_START_Y, BUTTON_WIDTH, BUTTON_HEIGHT, 3, SSD1306_WHITE);
+      this->drawPattern(button_start_l, BUTTON_START_Y, BUTTON_WIDTH, BUTTON_HEIGHT, 3, 1);
     }
   }
 }
 
-void UserInterface::onKeyPress(byte i) {
+void UserInterface::onKeyPress(uint8_t i) {
   if (hasToast()) {
     if (toast_allow_clear) {
       UI.toast("", 0);
@@ -282,7 +279,7 @@ void UserInterface::drawChart(int peakLimit = 600) {
       CHART_START_Y,
       CHART_WIDTH,
       CHART_HEIGHT,
-      SSD1306_BLACK
+      0
   );
 
   int previousValue;
@@ -317,13 +314,13 @@ void UserInterface::drawChart(int peakLimit = 600) {
       }
 
       // Constrain to window:
-      y1 = min(max(CHART_START_Y, y1), CHART_END_Y);
-      y2 = min(max(CHART_START_Y, y2), CHART_END_Y);
+      y1 = std::min(std::max(CHART_START_Y, y1), CHART_END_Y);
+      y2 = std::min(std::max(CHART_START_Y, y2), CHART_END_Y);
 
       if (activeRow == r) {
-        this->display->drawLine(i + CHART_START_X, y1, i + CHART_START_X, y2, SSD1306_WHITE);
+        this->display->drawLine(i + CHART_START_X, y1, i + CHART_START_X, y2, 1);
       } else if (i % 2 == 0) {
-        this->display->drawPixel(i + CHART_START_X, y2, SSD1306_WHITE);
+        this->display->drawPixel(i + CHART_START_X, y2, 1);
       }
 
       previousValue = value;
@@ -333,8 +330,8 @@ void UserInterface::drawChart(int peakLimit = 600) {
 
 void UserInterface::setMotorSpeed(uint8_t perc) {
   int barTopY = map(perc, 0, 100, SCREEN_HEIGHT - 1, 10 + 1);
-  this->display->drawRect(1, 10 + 1, 2, barTopY, SSD1306_BLACK);
-  this->display->drawRect(1, barTopY, 2, SCREEN_HEIGHT, SSD1306_WHITE);
+  this->display->drawRect(1, 10 + 1, 2, barTopY, 0);
+  this->display->drawRect(1, barTopY, 2, SCREEN_HEIGHT, 1);
 }
 
 void UserInterface::addChartReading(int index, int value) {
@@ -343,13 +340,13 @@ void UserInterface::addChartReading(int index, int value) {
   this->chartReadings[index][this->chartCursor[index]] = value;
 }
 
-void UserInterface::fadeTo(byte color, bool half) {
+void UserInterface::fadeTo(uint8_t color, bool half) {
   // TODO: This should fade a,b,i=[2,2,4],[0,2,4],[2,0,4],[1,1,2],[0,1,2],[1,0,2]
-  for (byte a = 0; a < 2; a++) {
-    for (byte b = 0; b < 2; b++) {
-      byte increment = (a == 1 || b == 1) ? 2 : 4;
-      for (byte i = a; i < SCREEN_WIDTH; i += increment) {
-        for (byte j = b; j < SCREEN_HEIGHT; j += increment) {
+  for (uint8_t a = 0; a < 2; a++) {
+    for (uint8_t b = 0; b < 2; b++) {
+      uint8_t increment = (a == 1 || b == 1) ? 2 : 4;
+      for (uint8_t i = a; i < SCREEN_WIDTH; i += increment) {
+        for (uint8_t j = b; j < SCREEN_HEIGHT; j += increment) {
           this->display->drawPixel(i, j, color);
         }
       }
@@ -363,9 +360,9 @@ void UserInterface::fadeTo(byte color, bool half) {
 
 void UserInterface::clear(bool render) {
   if (render)
-    this->display->fillScreen(SSD1306_BLACK);
+    this->display->fillScreen(0);
   else
-    this->display->fillRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, SSD1306_BLACK);
+    this->display->fillRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0);
 }
 
 void UserInterface::render() {
@@ -374,9 +371,9 @@ void UserInterface::render() {
   }
 }
 
-void UserInterface::drawIcon(byte icon_idx, byte icon_graphic[][8], byte status, long flash_ms) {
+void UserInterface::drawIcon(uint8_t icon_idx, uint8_t icon_graphic[][8], uint8_t status, long flash_ms) {
   UIIcon *icon = &icons[icon_idx];
-  byte icon_frame_idx;
+  uint8_t icon_frame_idx;
 
   if (status != 255) {
     icon->status = status;
@@ -393,25 +390,25 @@ void UserInterface::drawIcon(byte icon_idx, byte icon_graphic[][8], byte status,
   }
 
   if (this->initialized) {
-    this->display->fillRect(icon_y(icon_idx), 0, 8, 8, SSD1306_BLACK);
+    this->display->fillRect(icon_y(icon_idx), 0, 8, 8, 0);
     if (icon_frame_idx > 0 && icon->show)
-      this->display->drawBitmap(icon_y(icon_idx), 0, icon_graphic[icon_frame_idx - 1], 8, 8, SSD1306_WHITE);
+      this->display->drawBitmap(icon_y(icon_idx), 0, icon_graphic[icon_frame_idx - 1], 8, 8, 1);
   }
 }
 
-void UserInterface::drawWifiIcon(byte status, long flash_ms) {
+void UserInterface::drawWifiIcon(uint8_t status, long flash_ms) {
   drawIcon(WIFI_ICON_IDX, WIFI_ICON, status, flash_ms);
 }
 
-void UserInterface::drawSdIcon(byte status, long flash_ms) {
+void UserInterface::drawSdIcon(uint8_t status, long flash_ms) {
   drawIcon(SD_ICON_IDX, SD_ICON, status, flash_ms);
 }
 
-void UserInterface::drawRecordIcon(byte status, long flash_ms) {
+void UserInterface::drawRecordIcon(uint8_t status, long flash_ms) {
   drawIcon(RECORD_ICON_IDX, RECORD_ICON, status, flash_ms);
 }
 
-void UserInterface::drawUpdateIcon(byte status, long flash_ms) {
+void UserInterface::drawUpdateIcon(uint8_t status, long flash_ms) {
   drawIcon(UPDATE_ICON_IDX, UPDATE_ICON, status, flash_ms);
 }
 
@@ -425,24 +422,25 @@ void UserInterface::drawIcons() {
   drawUpdateIcon();
 }
 
-void UserInterface::screenshot(String &out_data) {
+void UserInterface::screenshot(std::string &out_data) {
   int buffer_size = SCREEN_WIDTH * ((SCREEN_HEIGHT + 7) / 8);
-  uint8_t *buffer = display->getBuffer();
-  String data = "";
+  // uint8_t *buffer = display->getBuffer();
+  // String data = "";
 
   for (int i = 0; i < buffer_size; i++) {
-    data += String((buffer[i] & 0xF0) >> 4, HEX);
-    data += String(buffer[i] & 0x0F, HEX);
+    // data += String((buffer[i] & 0xF0) >> 4, HEX);
+    // data += String(buffer[i] & 0x0F, HEX);
   }
 
-  out_data = data;
+  // out_data = data;
+  out_data = "";
 }
 
 void UserInterface::screenshot() {
-  String buffer;
-  screenshot(buffer);
-  Serial.println(buffer);
-  toast("Screenshot Saved", 3000);
+  // String buffer;
+  // screenshot(buffer);
+  // Serial.println(buffer);
+  // toast("Screenshot Saved", 3000);
 }
 
 void UserInterface::drawToast() {
@@ -482,14 +480,14 @@ void UserInterface::drawToast() {
   for (int y = 0; y < SCREEN_HEIGHT; y++) {
     for (int x = 0; x < SCREEN_WIDTH; x++) {
       if((x+y) % 2 == 0) {
-        display->drawPixel(x, y, SSD1306_BLACK);
+        display->drawPixel(x, y, 0);
       }
     }
   }
 
-  display->fillRect(start_x, start_y, SCREEN_WIDTH - (start_x * 2), SCREEN_HEIGHT - (start_y * 2), SSD1306_BLACK);
-  display->drawRect(start_x + margin, start_y + margin, SCREEN_WIDTH - (start_x * 2) - (margin * 2), SCREEN_HEIGHT - (start_y * 2) - (margin * 2), SSD1306_WHITE);
-  display->setTextColor(SSD1306_WHITE, SSD1306_BLACK);
+  display->fillRect(start_x, start_y, SCREEN_WIDTH - (start_x * 2), SCREEN_HEIGHT - (start_y * 2), 0);
+  display->drawRect(start_x + margin, start_y + margin, SCREEN_WIDTH - (start_x * 2) - (margin * 2), SCREEN_HEIGHT - (start_y * 2) - (margin * 2), 1);
+  display->setTextColor(1, 0);
 
   char tmp[19*4] = "";
   strcpy(tmp, toast_message);
@@ -504,10 +502,10 @@ void UserInterface::drawToast() {
 
   if (toast_allow_clear) {
     // render press-any-key message
-    display->fillRect(0, SCREEN_HEIGHT - 9, SCREEN_WIDTH, 9, SSD1306_WHITE);
+    display->fillRect(0, SCREEN_HEIGHT - 9, SCREEN_WIDTH, 9, 1);
     display->setCursor(1, SCREEN_HEIGHT - 8);
     display->setTextSize(1);
-    display->setTextColor(SSD1306_BLACK);
+    display->setTextColor(0);
     display->print("Press any key...");
   }
 }
@@ -519,7 +517,7 @@ void UserInterface::toast(const char *message, long duration, bool allow_clear) 
   toast_allow_clear = allow_clear;
 }
 
-void UserInterface::toast(String &message, long duration, bool allow_clear) {
+void UserInterface::toast(std::string message, long duration, bool allow_clear) {
   toast(message.c_str(), duration, allow_clear);
 }
 
@@ -529,13 +527,13 @@ void UserInterface::toastNow(const char *message, long duration, bool allow_clea
   render();
 }
 
-void UserInterface::toastNow(String &message, long duration, bool allow_clear) {
+void UserInterface::toastNow(std::string message, long duration, bool allow_clear) {
   toastNow(message.c_str(), duration, allow_clear);
 }
 
 void UserInterface::toastProgress(const char *message, float progress) {
   static int lastPerc = 0;
-  int perc = max(0.0, min(progress * 100.0, 100.0));
+  int perc = std::max(0.0, std::min(progress * 100.0, 100.0));
 
   // Don't redraw if the percent didn't actually change.
   if (perc == lastPerc) {
@@ -560,12 +558,12 @@ void UserInterface::toastProgress(const char *message, float progress) {
   strcpy(finalToast, message);
   strcat(finalToast, "\n");
   strcat(finalToast, progressBar);
-  log_d("%s", progressBar);
+  ESP_LOGD(TAG, "%s", progressBar);
 
   toastNow(finalToast, 0, false);
 }
 
-void UserInterface::toastProgress(String &message, float progress) {
+void UserInterface::toastProgress(std::string message, float progress) {
   toastProgress(message.c_str(), progress);
 }
 

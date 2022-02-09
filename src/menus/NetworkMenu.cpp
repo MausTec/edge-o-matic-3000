@@ -4,8 +4,9 @@
 #include "BluetoothServer.h"
 #include "BluetoothDriver.h"
 #include "WebSocketHelper.h"
+#include <string>
 
-#include <WiFi.h>
+// #include <WiFi.h>
 
 static void onDisableWiFi(UIMenu *menu) {
   UI.toastNow("Disconnecting...", 0, false);
@@ -40,11 +41,12 @@ static void onEnableWiFi(UIMenu *menu) {
 }
 
 static void onViewStatus(UIMenu*) {
-  String status = "";
+  std::string status = "";
 
   if (Config.bt_on) {
     status += "Bluetooth On\n";
-    status += String(Config.bt_display_name) + '\n';
+    status += Config.bt_display_name;
+    status += "\n";
   } 
   
   if (WiFiHelper::connected()) {

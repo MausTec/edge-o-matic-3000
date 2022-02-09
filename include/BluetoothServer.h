@@ -3,9 +3,7 @@
 
 #include "config.h"
 
-#include <NimBLEDevice.h>
-//#include <NimBLEUtils.h>
-//#include <NimBLEServer.h>
+#include "NimBLEDevice.h"
 
 #define SERVICE_UUID "52ecdfe9-590c-4226-8529-dd6bf4d817a6"
 #define CHARACTERISTIC_UUID "9f13cb96-7739-4558-8bd7-53654909962d"

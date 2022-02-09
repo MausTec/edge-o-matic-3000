@@ -25,18 +25,20 @@
 
 #include "UIMenu.h"
 #include <functional>
+#include "DisplayPolyfill.hpp"
 
-#include <Adafruit_SSD1306.h>
+#include "eom-hal.h"
+#include <string>
 
 typedef std::function<void(void)> ButtonCallback;
 typedef std::function<void(int)> RotaryCallback;
 
 typedef struct {
-  byte status = 0;
+  uint8_t status = 0;
   long flash_delay = 0;
   long last_flash = 0;
   bool show = false;
-  // byte *icon = nullptr;
+  // uint8_t *icon = nullptr;
 } UIIcon;
 
 typedef struct {
@@ -47,50 +49,49 @@ typedef struct {
 
 class UserInterface {
 public:
-  UserInterface(Adafruit_SSD1306* display);
-  bool begin();
+  bool begin(u8g2_t *display);
   void tick();
 
   // Common Element Drawing Functions
   void drawChartAxes();
   void drawChart(int peakLimit);
   void drawStatus(const char* status = nullptr);
-  void drawPattern(int start_x, int start_y, int width, int height, int pattern = 2, int color = SSD1306_WHITE);
+  void drawPattern(int start_x, int start_y, int width, int height, int pattern = 2, int color = 1);
 
   // Chart Data
   void addChartReading(int index, int value);
   void setMotorSpeed(uint8_t perc);
 
   // Render Controls
-  void fadeTo(byte color = SSD1306_BLACK, bool half = false);
+  void fadeTo(uint8_t color = 0, bool half = false);
   void clear(bool render = true);
   void render();
   void displayOff() { display_on = false; }
   void displayOn() { display_on = true; }
 
   // Icons
-  void drawWifiIcon(byte strength = 255, long flash_ms = 0);
-  void drawSdIcon(byte status = 255, long flash_ms = 0);
-  void drawRecordIcon(byte status = 255, long flash_ms = 0);
-  void drawUpdateIcon(byte status = 255, long flash_ms = 0);
-  void drawIcon(byte icon_idx, byte icon[][8], byte status, long flash_ms);
+  void drawWifiIcon(uint8_t strength = 255, long flash_ms = 0);
+  void drawSdIcon(uint8_t status = 255, long flash_ms = 0);
+  void drawRecordIcon(uint8_t status = 255, long flash_ms = 0);
+  void drawUpdateIcon(uint8_t status = 255, long flash_ms = 0);
+  void drawIcon(uint8_t icon_idx, uint8_t icon[][8], uint8_t status, long flash_ms);
   void drawIcons();
 
   // Buttons
   void clearButtons();
-  void clearButton(byte i);
-  void setButton(byte i, char* text, ButtonCallback fn = nullptr);
+  void clearButton(uint8_t i);
+  void setButton(uint8_t i, char* text, ButtonCallback fn = nullptr);
   void drawButtons();
-  void onKeyPress(byte i);
+  void onKeyPress(uint8_t i);
   void onEncoderChange(int value);
 
   // Toast
   void toast(const char *message, long duration = 3000, bool allow_clear = true);
-  void toast(String &message, long duration = 3000, bool allow_clear = true);
+  void toast(std::string message, long duration = 3000, bool allow_clear = true);
   void toastNow(const char *message, long duration = 3000, bool allow_clear = true);
-  void toastNow(String &message, long duration = 3000, bool allow_clear = true);
+  void toastNow(std::string message, long duration = 3000, bool allow_clear = true);
   void toastProgress(const char *message, float progress);
-  void toastProgress(String &message, float progress);
+  void toastProgress(std::string message, float progress);
   void drawToast();
   bool toastRenderPending();
   bool hasToast();
@@ -106,10 +107,11 @@ public:
   bool isPreviousMenu(UIMenu *m) { return current_menu != nullptr && current_menu->isPreviousMenu(m); }
 
   // Debug
-  void screenshot(String &buffer);
+  void screenshot(std::string &buffer);
   void screenshot(void);
 
-  Adafruit_SSD1306* display;
+  u8g2_t* display_ptr;
+  DisplayPolyfill* display;
 
 private:
   bool display_on = true;

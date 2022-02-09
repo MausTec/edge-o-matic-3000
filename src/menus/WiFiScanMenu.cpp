@@ -1,8 +1,9 @@
 #include "UIMenu.h"
 #include "UITextInput.h"
 #include "WiFiHelper.h"
-#include <WiFi.h>
 #include "UserInterface.h"
+
+#include <cstring>
 
 static bool scanning = false;
 
@@ -17,7 +18,7 @@ UITextInput WiFiKeyInput("WiFi Key", 64, [](UIMenu *ip) {
         UITextInput *inp = (UITextInput*) menu;
         int *idx_ptr = (int*) inp->getCurrentArg();
 
-        const char *ssid = WiFi.SSID(*idx_ptr).c_str();
+        const char *ssid = ""; //WiFi.SSID(*idx_ptr).c_str();
         printf("Connect to: SSID=%s, Key=%s\n", ssid, key);
         UI.toastNow("Connecting...", 0, false);
 
@@ -52,9 +53,9 @@ static void startScan(UIMenu* menu) {
     menu->initialize();
     menu->render();
 
-    int count = WiFi.scanNetworks();
+    int count = 0; //WiFi.scanNetworks();
     for (int i = 0; i < count; i++) {
-        menu->addItem(WiFi.SSID(i).c_str(), &selectNetwork, i);
+        // menu->addItem(WiFi.SSID(i).c_str(), &selectNetwork, i);
     }
 
     scanning = false;

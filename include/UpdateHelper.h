@@ -1,9 +1,9 @@
 #ifndef __UPDATEHELPER_H
 #define __UPDATEHELPER_H
 
-#include <Update.h>
-#include <FS.h>
-#include <SD_MMC.h>
+#include <string>
+#include <stdio.h>
+#include <stddef.h>
 
 #define REMOTE_UPDATE_URL "http://us-central1-maustec-io.cloudfunctions.net/gh-release-embedded-bridge"
 #define UPDATE_FILENAME "/update.bin"
@@ -16,10 +16,10 @@ enum UpdateSource {
 
 namespace UpdateHelper {
   // perform the actual update from a given stream
-  bool performUpdate(Stream &updateSource, size_t updateSize);
+  bool performUpdate(FILE *updateSource, size_t updateSize);
 
   // check given FS for valid update.bin and perform update if available
-  void updateFromFS(fs::FS &fs);
+  void updateFromFS(FILE *fs);
   void updateFromWeb();
 
   /**
@@ -35,7 +35,7 @@ namespace UpdateHelper {
    */
   int compareVersion(const char *a, const char *b);
 
-  String checkWebLatestVersion();
+  std::string checkWebLatestVersion();
 
   // Update Available
   UpdateSource checkForUpdates();

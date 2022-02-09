@@ -2,8 +2,7 @@
 #include "UserInterface.h"
 #include "WebSocketHelper.h"
 
-#include <WiFi.h>
-#include <ESPmDNS.h>
+#include "polyfill.h"
 
 namespace WiFiHelper {
   void drawSignalIcon() {
@@ -15,12 +14,13 @@ namespace WiFiHelper {
   }
 
   bool connected() {
-    return WiFi.status() == WL_CONNECTED;
+    // return WiFi.status() == WL_CONNECTED;
+    return false;
   }
 
-  String ip() {
+  const char* ip() {
     if (connected()) {
-      return WiFi.localIP().toString();
+      return "?.?.?.?";
     } else {
       return "";
     }
@@ -32,53 +32,53 @@ namespace WiFiHelper {
     }
 
     // Connect to access point
-    Serial.print("Connecting..");
-    WiFi.begin(Config.wifi_ssid, Config.wifi_key);
-    int count = 0;
-    long connection_start_at_ms = millis();
-    while ( WiFi.status() != WL_CONNECTED) {
-      Serial.print(".");
-      if (millis() - connection_start_at_ms > CONNECTION_TIMEOUT_S * 1000) {
-        Serial.println();
-        Serial.print("Connection timed out!");
-        return false; 
-      }
-      delay(500);
-    }
+    // Serial.print("Connecting..");
+    // WiFi.begin(Config.wifi_ssid, Config.wifi_key);
+    // int count = 0;
+    // long connection_start_at_ms = millis();
+    // while ( WiFi.status() != WL_CONNECTED) {
+    //   Serial.print(".");
+    //   if (millis() - connection_start_at_ms > CONNECTION_TIMEOUT_S * 1000) {
+    //     Serial.println();
+    //     Serial.print("Connection timed out!");
+    //     return false; 
+    //   }
+    //   delay(500);
+    // }
 
-    // Print our IP address
-    Serial.println(" Connected!");
-    Serial.print("My IP address: ");
-    Serial.println(WiFi.localIP());
+    // // Print our IP address
+    // Serial.println(" Connected!");
+    // Serial.print("My IP address: ");
+    // Serial.println(WiFi.localIP());
 
-    // Configure Hostname
-    if (strlen(Config.hostname) > 0) {
-      if(!MDNS.begin(Config.hostname)) {
-        Serial.println("Error starting mDNS! The hostname option will be ignored.");
-      }
-    }
+    // // Configure Hostname
+    // if (strlen(Config.hostname) > 0) {
+    //   if(!MDNS.begin(Config.hostname)) {
+    //     Serial.println("Error starting mDNS! The hostname option will be ignored.");
+    //   }
+    // }
 
-    // Synchronize Local Clock
-    const char* ntpServer = "pool.ntp.org";
-    const long  gmtOffset_sec = 0;
-    const int   daylightOffset_sec = 3600;
-    configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
+    // // Synchronize Local Clock
+    // const char* ntpServer = "pool.ntp.org";
+    // const long  gmtOffset_sec = 0;
+    // const int   daylightOffset_sec = 3600;
+    // configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
 
-    // Time Example TODO-Remove
-    struct tm timeinfo;
-    if(!getLocalTime(&timeinfo)){
-      Serial.println("Failed to obtain time");
-      return false;
-    }
+    // // Time Example TODO-Remove
+    // struct tm timeinfo;
+    // if(!getLocalTime(&timeinfo)){
+    //   Serial.println("Failed to obtain time");
+    //   return false;
+    // }
 
-    Serial.println(&timeinfo, "%A, %B %d %Y %H:%M:%S");
+    // Serial.println(&timeinfo, "%A, %B %d %Y %H:%M:%S");
 
-    // Connect to Websocket Servers
-    WebSocketHelper::begin();
-    return true;
+    // // Connect to Websocket Servers
+    // WebSocketHelper::begin();
+    // return true;
   }
 
-  String signalStrengthStr() {
+  const char* signalStrengthStr() {
     switch(getWiFiStrength()) {
       case 0:
         return "No Signal";
@@ -99,15 +99,15 @@ namespace WiFiHelper {
    *       crash. I need an exception decoder that's easier to use.
    */
   void disconnect() {
-    MDNS.end();
-    WebSocketHelper::end();
-    WiFi.disconnect(true);
+    // MDNS.end();
+    // WebSocketHelper::end();
+    // WiFi.disconnect(true);
   }
 
   namespace {
-    byte getWiFiStrength() {
-      byte wifiStrength;
-      int rssi = WiFi.RSSI();
+    uint8_t getWiFiStrength() {
+      uint8_t wifiStrength;
+      int rssi = -1;//WiFi.RSSI();
 
       if (rssi < -90) {
         wifiStrength = 0;

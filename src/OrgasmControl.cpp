@@ -3,6 +3,14 @@
 #include "WiFiHelper.h"
 #include "config.h"
 #include "Page.h"
+#include <string>
+#include <math.h>
+#include "esp_log.h"
+
+#include <algorithm>
+#include "polyfill.h"
+
+static const char *TAG = "OrgasmControl";
 
 namespace OrgasmControl {
   namespace {
@@ -121,7 +129,7 @@ namespace OrgasmControl {
 
         // If Max Additional Delay is not disabled, caculate a new delay every time the motor is stopped.
         if (Config.max_additional_delay != 0) {
-          random_additional_delay = random(Config.max_additional_delay);
+          random_additional_delay = random() % Config.max_additional_delay;
         }
 
       // Start from 0
@@ -231,32 +239,34 @@ namespace OrgasmControl {
 
     struct tm timeinfo;
     char filename_date[16];
-    if (!WiFiHelper::connected() || !getLocalTime(&timeinfo)) {
-      Serial.println("Failed to obtain time");
-      sprintf(filename_date, "%d", millis());
-    } else {
-      strftime(filename_date, 16, "%Y%m%d-%H%M%S", &timeinfo);
-    }
+    // if (!WiFiHelper::connected() || !getLocalTime(&timeinfo)) {
+    //   Serial.println("Failed to obtain time");
+    //   sprintf(filename_date, "%d", millis());
+    // } else {
+    //   strftime(filename_date, 16, "%Y%m%d-%H%M%S", &timeinfo);
+    // }
 
-    String logfile_name = "/log-" + String(filename_date) + ".csv";
-    Serial.println("Opening logfile: " + logfile_name);
+    std::string logfile_name = "/log-";
+    logfile_name += filename_date;
+    logfile_name += ".csv";
+    ESP_LOGI(TAG, "Opening logfile: %s", logfile_name);
     // logfile = SD.open(logfile_name, FILE_WRITE);
 
     // if (!logfile) {
-    //   Serial.println("Couldn't open logfile to save!" + String(logfile));
+    //   Serial.println("Couldn't open logfile to save!" + std::to_string(logfile));
     //   UI.toast("Error opening\nlogfile!");
     // } else {
     //   recording_start_ms = millis();
     //   logfile.println("millis,pressure,avg_pressure,arousal,motor_speed,sensitivity_threshold");
     //   UI.drawRecordIcon(1, 1500);
-    //   UI.toast(String("Recording started:\n" + logfile_name).c_str());
+    //   UI.toast(std::to_string("Recording started:\n" + logfile_name).c_str());
     // }
   }
 
   void stopRecording() {
     if (logfile != NULL) {
       UI.toastNow("Stopping...", 0);
-      Serial.println("Closing logfile.");
+      ESP_LOGI(TAG, "Closing logfile.");
       fclose(logfile);
       UI.drawRecordIcon(0);
       UI.toast("Recording stopped.");
@@ -278,14 +288,14 @@ namespace OrgasmControl {
       last_update_ms = millis();
 
       // Data for logfile or classic log.
-      String data =
-        String(getLastPressure()) + "," +
-        String(getAveragePressure()) + "," +
-        String(getArousal()) + "," +
-        String(Hardware::getMotorSpeed()) + "," +
-        String(Config.sensitivity_threshold) + "," +
-        String(clench_pressure_threshold) + "," +
-        String(clench_duration);
+      std::string data =
+        std::to_string(getLastPressure()) + "," +
+        std::to_string(getAveragePressure()) + "," +
+        std::to_string(getArousal()) + "," +
+        std::to_string(Hardware::getMotorSpeed()) + "," +
+        std::to_string(Config.sensitivity_threshold) + "," +
+        std::to_string(clench_pressure_threshold) + "," +
+        std::to_string(clench_duration);
 
       // Write out to logfile, which includes millis:
       if (logfile != NULL) {
@@ -314,7 +324,7 @@ namespace OrgasmControl {
    * @return normalized motor speed byte
    */
   byte getMotorSpeed() {
-    return min((float) floor(max(motor_speed, 0.0f)), 255.0f);
+    return std::min((float) floor(std::max(motor_speed, 0.0f)), 255.0f);
   }
 
   float getMotorSpeedPercent() {

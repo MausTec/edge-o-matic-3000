@@ -7,9 +7,6 @@
 [submodule "lib/mt-accessory-common"]
 	path = lib/mt-accessory-common
 	url = https://github.com/maustec/mt-accessory-common
-[submodule "components/arduino"]
-	path = components/arduino
-	url = https://github.com/espressif/arduino-esp32.git
 [submodule "components/u8g2"]
 	path = components/u8g2
 	url = https://github.com/olikraus/u8g2

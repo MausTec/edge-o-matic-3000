@@ -1,6 +1,11 @@
 #include "UIInput.h"
 #include "UserInterface.h"
 
+#include "polyfill.h"
+#include <cstring>
+#include <math.h>
+#include <algorithm>
+
 void UIInput::render() {
     UI.clear(false);
 
@@ -19,7 +24,7 @@ void UIInput::render() {
     // More
     UI.display->setTextSize(2);
     int digits = floor(log10(current_value)) + 1;
-    UI.display->setCursor((SCREEN_WIDTH / 2) - (max(digits, 1) * 6), 14);
+    UI.display->setCursor((SCREEN_WIDTH / 2) - (std::max(digits, 1) * 6), 14);
     UI.display->print(current_value);
     UI.display->setTextSize(1);
 
@@ -101,5 +106,5 @@ void UIInput::tick() {
 }
 
 void UIInput::set_current(int v) {
-    current_value = min(max_value, max(min_value, v));
+    current_value = std::min(max_value, std::max(min_value, v));
 }

@@ -1,7 +1,7 @@
 #ifndef __OrgasmControl_h
 #define __OrgasmControl_h
 
-#include <Arduino.h>
+#include <stddef.h>
 #include "config.h"
 #include "RunningAverage.h"
 #include "VibrationModeController.h"
@@ -14,7 +14,7 @@ namespace OrgasmControl {
   // Fetch Data
   long getArousal();
   float getArousalPercent();
-  byte getMotorSpeed();
+  uint8_t getMotorSpeed();
   float getMotorSpeedPercent();
   long getLastPressure();
   long getAveragePressure();

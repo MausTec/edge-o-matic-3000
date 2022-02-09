@@ -13,6 +13,7 @@
 #include "esp_websocket_client.h"
 
 #include "config.h"
+#include "polyfill.h"
 
 static const char* TAG = "WebSocketHelper";
 
@@ -30,20 +31,20 @@ namespace WebSocketHelper {
     WebSocketSecureHelper::end();
   }
 
-  void send(const char* cmd, JsonDocument& doc, int num) {
-    DynamicJsonDocument envelope(1024);
-    envelope[cmd] = doc;
+  void send(const char* cmd, cJSON* doc, int num) {
+    // DynamicJsonDocument envelope(1024);
+    // envelope[cmd] = doc;
 
-    String payload;
-    serializeJson(envelope, payload);
+    // String payload;
+    // serializeJson(envelope, payload);
 
-    WebSocketSecureHelper::send(num, payload);
+    // WebSocketSecureHelper::send(num, payload);
   }
 
-  void send(const char* cmd, String text, int num) {
-    DynamicJsonDocument doc(1024);
-    doc["text"] = text;
-    send(cmd, doc, num);
+  void send(const char* cmd, const char* text, int num) {
+    // DynamicJsonDocument doc(1024);
+    // doc["text"] = text;
+    // send(cmd, doc, num);
   }
 
   static void _ws_client_evt_handler(void* handler_args, esp_event_base_t base, int32_t event_id, void* event_data) {
@@ -105,37 +106,37 @@ namespace WebSocketHelper {
    */
 
   void sendSystemInfo(int num) {
-    DynamicJsonDocument doc(200);
-    doc["device"] = "Edge-o-Matic 3000";
-    doc["serial"] = String(Hardware::getDeviceSerial());
-    doc["hwVersion"] = "";
-    doc["fwVersion"] = VERSION;
+    // DynamicJsonDocument doc(200);
+    // doc["device"] = "Edge-o-Matic 3000";
+    // doc["serial"] = String(Hardware::getDeviceSerial());
+    // doc["hwVersion"] = "";
+    // doc["fwVersion"] = VERSION;
 
-    send("info", doc, num);
+    // send("info", doc, num);
   }
 
   void sendSettings(int num) {
-    DynamicJsonDocument doc(4096);
+    // DynamicJsonDocument doc(4096);
     // dumpConfigToJsonObject(doc);
 
-    send("configList", doc, num);
+    // send("configList", doc, num);
   }
 
   void sendWxStatus(int num) {
-    DynamicJsonDocument doc(200);
-    doc["ssid"] = Config.wifi_ssid;
-    doc["ip"] = WiFi.localIP().toString();
-    doc["rssi"] = WiFi.RSSI();
+    // DynamicJsonDocument doc(200);
+    // doc["ssid"] = Config.wifi_ssid;
+    // doc["ip"] = WiFi.localIP().toString();
+    // doc["rssi"] = WiFi.RSSI();
 
-    send("wifiStatus", doc, num);
+    // send("wifiStatus", doc, num);
   }
 
   void sendSdStatus(int num) {
-    DynamicJsonDocument doc(200);
-    doc["size"] = eom_hal_get_sd_size_bytes();
-    doc["type"] = "???";
+    // DynamicJsonDocument doc(200);
+    // doc["size"] = eom_hal_get_sd_size_bytes();
+    // doc["type"] = "???";
 
-    send("sdStatus", doc, num);
+    // send("sdStatus", doc, num);
   }
 
   void sendReadings(int num) {
@@ -158,20 +159,20 @@ namespace WebSocketHelper {
     }
 
     // Serialize Data
-    DynamicJsonDocument doc(3072);
-    doc["pressure"] = OrgasmControl::getLastPressure();
-    doc["pavg"] = OrgasmControl::getAveragePressure();
-    doc["motor"] = Hardware::getMotorSpeed();
-    doc["arousal"] = OrgasmControl::getArousal();
-    doc["millis"] = millis();
-    doc["scaledArousal"] = scaled_arousal;
-    doc["runMode"] = mode;
-    doc["permitOrgasm"] = OrgasmControl::isPermitOrgasmReached();
-    doc["postOrgrasm"] = OrgasmControl::isPostOrgasmReached();
-    doc["lock"] = OrgasmControl::isMenuLocked();
+    // DynamicJsonDocument doc(3072);
+    // doc["pressure"] = OrgasmControl::getLastPressure();
+    // doc["pavg"] = OrgasmControl::getAveragePressure();
+    // doc["motor"] = Hardware::getMotorSpeed();
+    // doc["arousal"] = OrgasmControl::getArousal();
+    // doc["millis"] = millis();
+    // doc["scaledArousal"] = scaled_arousal;
+    // doc["runMode"] = mode;
+    // doc["permitOrgasm"] = OrgasmControl::isPermitOrgasmReached();
+    // doc["postOrgrasm"] = OrgasmControl::isPostOrgasmReached();
+    // doc["lock"] = OrgasmControl::isMenuLocked();
     //    doc["screenshot"] = screenshot;
 
-    send("readings", doc, num);
+    // send("readings", doc, num);
   }
 
   /*
@@ -179,32 +180,32 @@ namespace WebSocketHelper {
    * by the client. First parameter should also be int num.
    */
 
-  void cbSerialCmd(int num, JsonVariant args) {
-    int nonce = args["nonce"];
-    String text;
+  void cbSerialCmd(int num, cJSON* args) {
+    // int nonce = args["nonce"];
+    // String text;
 
-    char line[SERIAL_BUFFER_LEN];
-    strlcpy(line, args["cmd"], SERIAL_BUFFER_LEN - 1);
-    Console::handleMessage(line, text);
+    // char line[SERIAL_BUFFER_LEN];
+    // strlcpy(line, args["cmd"], SERIAL_BUFFER_LEN - 1);
+    // Console::handleMessage(line, text);
 
-    DynamicJsonDocument resp(1024);
-    resp["nonce"] = nonce;
-    resp["text"] = text;
+    // DynamicJsonDocument resp(1024);
+    // resp["nonce"] = nonce;
+    // resp["text"] = text;
 
-    send("serialCmd", resp, num);
+    // send("serialCmd", resp, num);
   }
 
-  void cbDir(int num, JsonVariant args) {
-    int nonce = args["nonce"];
-    String path = args["path"];
+  void cbDir(int num, cJSON* args) {
+    // int nonce = args["nonce"];
+    // String path = args["path"];
 
-    if (path[0] != '/') {
-      path = String("/") + path;
-    }
+    // if (path[0] != '/') {
+    //   path = String("/") + path;
+    // }
 
-    DynamicJsonDocument resp(1024);
-    resp["nonce"] = nonce;
-    JsonArray files = resp.createNestedArray("files");
+    // DynamicJsonDocument resp(1024);
+    // resp["nonce"] = nonce;
+    // JsonArray files = resp.createNestedArray("files");
 
     // File f = SD.open(path);
     // if (!f) {
@@ -226,96 +227,93 @@ namespace WebSocketHelper {
     //   f.close();
     // }
 
-    send("dir", resp, num);
+    // send("dir", resp, num);
   }
 
-  void cbMkdir(int num, JsonVariant args) {
-    int nonce = args["nonce"];
-    String path = args["path"];
+  void cbMkdir(int num, cJSON* args) {
+    // int nonce = args["nonce"];
+    // String path = args["path"];
 
-    DynamicJsonDocument resp(1024);
-    resp["nonce"] = nonce;
-    resp["path"] = path;
+    // DynamicJsonDocument resp(1024);
+    // resp["nonce"] = nonce;
+    // resp["path"] = path;
 
 
     // if (!success) {
     //   resp["error"] = "Failed to create directory.";
     // }
 
-    send("mkdir", resp, num);
+    // send("mkdir", resp, num);
   }
 
-  void cbConfigSet(int num, JsonVariant args) {
-    auto config = args.as<JsonObject>();
-    bool restart_required = false;
+  void cbConfigSet(int num, cJSON* args) {
+    // auto config = args.as<JsonObject>();
+    // bool restart_required = false;
 
-    for (auto kvp : config) {
-      set_config_value(kvp.key().c_str(), kvp.value().as<String>().c_str(), &restart_required);
-    }
+    // for (auto kvp : config) {
+    //   set_config_value(kvp.key().c_str(), kvp.value().as<String>().c_str(), &restart_required);
+    // }
 
-    // Send new settings to client:
-    save_config_to_sd(millis() + 300);
+    // // Send new settings to client:
+    // save_config_to_sd(millis() + 300);
   }
 
-  void cbSetMode(int num, JsonVariant mode) {
-    RunGraphPage.setMode(mode);
+  void cbSetMode(int num, cJSON* mode) {
+    // RunGraphPage.setMode(mode);
   }
 
-  void cbSetMotor(int num, JsonVariant speed) {
-    Hardware::setMotorSpeed(speed);
+  void cbSetMotor(int num, cJSON* speed) {
+    // Hardware::setMotorSpeed(speed);
   }
 
-  void cbOrgasm(int num, JsonVariant seconds) {
-    OrgasmControl::permitOrgasmNow(seconds);
+  void cbOrgasm(int num, cJSON* seconds) {
+    // OrgasmControl::permitOrgasmNow(seconds);
   }
 
-  void cbLock(int num, JsonVariant value) {
+  void cbLock(int num, cJSON* value) {
     OrgasmControl::lockMenuNow(value);
   }
 
   void onMessage(int num, const char* payload) {
-    Serial.printf("[%u] %s", num, payload);
-    Serial.println();
+    // DynamicJsonDocument doc(1024);
+    // DeserializationError err = deserializeJson(doc, payload);
 
-    DynamicJsonDocument doc(1024);
-    DeserializationError err = deserializeJson(doc, payload);
+    // if (err) {
+    //   Serial.println("Deserialization Error!");
+    // } else {
+    //   for (auto kvp : doc.as<JsonObject>()) {
+    //     auto cmd = kvp.key().c_str();
 
-    if (err) {
-      Serial.println("Deserialization Error!");
-    } else {
-      for (auto kvp : doc.as<JsonObject>()) {
-        auto cmd = kvp.key().c_str();
-
-        if (!strcmp(cmd, "configSet")) {
-          cbConfigSet(num, kvp.value());
-        } else if (!strcmp(cmd, "info")) {
-          sendSystemInfo(num);
-        } else if (!strcmp(cmd, "configList")) {
-          sendSettings(num);
-        } else if (!strcmp(cmd, "serialCmd")) {
-          cbSerialCmd(num, kvp.value());
-        } else if (!strcmp(cmd, "getWiFiStatus")) {
-          sendWxStatus(num);
-        } else if (!strcmp(cmd, "getSDStatus")) {
-          sendSdStatus(num);
-        } else if (!strcmp(cmd, "setMode")) {
-          cbSetMode(num, kvp.value());
-        } else if (!strcmp(cmd, "setMotor")) {
-          cbSetMotor(num, kvp.value());
-        } else if (!strcmp(cmd, "streamReadings")) {
-          send("error", "E_DEPRECATED");
-        } else if (!strcmp(cmd, "dir")) {
-          cbDir(num, kvp.value());
-        } else if (!strcmp(cmd, "mkdir")) {
-          cbMkdir(num, kvp.value());
-        } else if (!strcmp(cmd, "orgasm")) {
-          cbOrgasm(num, kvp.value());
-        } else if (!strcmp(cmd, "lock")) {
-          cbLock(num, kvp.value());
-        } else {
-          send("error", String("Unknown command: ") + String(cmd), num);
-        }
-      }
-    }
+    //     if (!strcmp(cmd, "configSet")) {
+    //       cbConfigSet(num, kvp.value());
+    //     } else if (!strcmp(cmd, "info")) {
+    //       sendSystemInfo(num);
+    //     } else if (!strcmp(cmd, "configList")) {
+    //       sendSettings(num);
+    //     } else if (!strcmp(cmd, "serialCmd")) {
+    //       cbSerialCmd(num, kvp.value());
+    //     } else if (!strcmp(cmd, "getWiFiStatus")) {
+    //       sendWxStatus(num);
+    //     } else if (!strcmp(cmd, "getSDStatus")) {
+    //       sendSdStatus(num);
+    //     } else if (!strcmp(cmd, "setMode")) {
+    //       cbSetMode(num, kvp.value());
+    //     } else if (!strcmp(cmd, "setMotor")) {
+    //       cbSetMotor(num, kvp.value());
+    //     } else if (!strcmp(cmd, "streamReadings")) {
+    //       send("error", "E_DEPRECATED");
+    //     } else if (!strcmp(cmd, "dir")) {
+    //       cbDir(num, kvp.value());
+    //     } else if (!strcmp(cmd, "mkdir")) {
+    //       cbMkdir(num, kvp.value());
+    //     } else if (!strcmp(cmd, "orgasm")) {
+    //       cbOrgasm(num, kvp.value());
+    //     } else if (!strcmp(cmd, "lock")) {
+    //       cbLock(num, kvp.value());
+    //     } else {
+    //       send("error", String("Unknown command: ") + String(cmd), num);
+    //     }
+    //   }
+    // }
   }
 }
