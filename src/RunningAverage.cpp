@@ -1,7 +1,10 @@
 #include "RunningAverage.h"
+#include "polyfill.h"
+
+#include <algorithm>
 
 void RunningAverage::addValue(long value) {
-  size_t ra_window = min(Config.pressure_smoothing, (byte)RA_BUFFER_SIZE);
+  size_t ra_window = std::min(Config.pressure_smoothing, (uint8_t)RA_BUFFER_SIZE);
 
   ra_sum = ra_sum - ra_readings[ra_index];
   ra_readings[ra_index] = value;

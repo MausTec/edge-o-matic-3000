@@ -5,9 +5,6 @@
 
 #include "UserInterface.h"
 
-#include <ESP32Encoder.h>
-#include <analogWrite.h>
-
 struct CRGB {
   uint8_t r;
   uint8_t g;
@@ -30,7 +27,7 @@ namespace Hardware {
   void tick();
 
   void setEncoderColor(CRGB color);
-  void setLedColor(byte i, CRGB color = CRGB::Black);
+  void setLedColor(uint8_t i, CRGB color = CRGB::Black);
   void ledShow();
 
   void setMotorSpeed(int speed);
@@ -39,13 +36,13 @@ namespace Hardware {
   float getMotorSpeedPercent();
 
   long getPressure();
-  void setPressureSensitivity(byte value);
+  void setPressureSensitivity(uint8_t value);
   /**
    * Gets the pressure sensitivity setting from the digitpot.
    * @return current digipot wiper position (1-127)
    */
-  byte getPressureSensitivity();
-  String getDeviceSerial();
+  uint8_t getPressureSensitivity();
+  std::string getDeviceSerial();
 
   namespace {
     void initializeEncoder();
@@ -60,9 +57,6 @@ namespace Hardware {
 
     int motor_speed = 0;
     CRGB encoderColor = CRGB::Black;
-
-    int32_t encoderCount;
-    ESP32Encoder Encoder;
   }
 }
 

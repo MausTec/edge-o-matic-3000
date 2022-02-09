@@ -1,6 +1,6 @@
 #include "assets.h"
 
-unsigned char PLUG_ICON[][24*3] PROGMEM = {
+unsigned char PLUG_ICON[][24*3] = {
     // BP_PRES_0
     {
         0b00000000, 0b00000000, 0b00000000,

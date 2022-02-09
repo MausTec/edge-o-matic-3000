@@ -1,6 +1,9 @@
 #include "UITextInput.h"
 #include "UserInterface.h"
 #include <esp_log.h>
+#include "polyfill.h"
+#include <cstring>
+#include <algorithm>
 
 /**
  * TODO: 
@@ -91,8 +94,8 @@ void UITextInput::render() {
     char left[context_char_len + 1];
     char right[context_char_len + 1];
 
-    int left_length = min(context_char_len, cursor);
-    size_t left_start_index = max(cursor - context_char_len, 0);
+    int left_length = std::min(context_char_len, cursor);
+    size_t left_start_index = std::max(cursor - context_char_len, 0);
 
     strlcpy(left, current_value + left_start_index, left_length + 1);
     strlcpy(right, current_value + cursor + 1, context_char_len + 1);
@@ -168,7 +171,7 @@ void UITextInput::advance_character(int steps) {
 void UITextInput::advance_cursor(int steps) {
     char current_char = current_value[cursor];
 
-    int next_cursor = max(0, min(cursor + steps, (int) strlen(current_value)));
+    int next_cursor = std::max(0, std::min(cursor + steps, (int) strlen(current_value)));
     char c = current_value[next_cursor];
 
     if (!this->char_edit_mode && current_value[cursor] == '\0' && steps > 0) {
@@ -305,7 +308,7 @@ void UITextInput::insert_new_character(void) {
         return;
     }
 
-    size_t len = min(strlen(this->current_value) - this->cursor, (size_t)this->maxlen - this->cursor);
+    size_t len = std::min(strlen(this->current_value) - this->cursor, (size_t)this->maxlen - this->cursor);
 
     printf("insert: src=\"%s\", dest=\"%s\", len=%d, cursor=%d\n", src, dest, len, this->cursor);
     memmove(dest, src, len);

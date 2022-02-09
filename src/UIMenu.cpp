@@ -2,7 +2,13 @@
 #include "UserInterface.h"
 #include "Page.h"
 
-#include <esp32-hal-log.h>
+#include "polyfill.h"
+
+#include <esp_log.h>
+#include <cstring>
+#include <math.h>
+
+static const char *TAG = "UIMenu";
 
 UIMenu::UIMenu(const char *t, MenuCallback fn) {
   strlcpy(title, t, TITLE_SIZE);
@@ -142,7 +148,7 @@ void UIMenu::addItem(UIMenu *submenu, void *arg) {
 
 void UIMenu::addItem(std::string text, UIMenu *submenu, void *arg) {
   addItem(text.c_str(), [=](UIMenu*, void *argv) {
-    log_i("Item added with argv=%x", argv);
+    ESP_LOGI(TAG, "Item added with argv=%x", argv);
     UI.openMenu(submenu, true, true, argv);
   }, arg);
 }
@@ -165,7 +171,8 @@ void UIMenu::render() {
   }
 
   UI.drawIcons();
-  UI.display->drawLine(0, 9, SCREEN_WIDTH, 9, SSD1306_WHITE);
+  u8g2_SetDrawColor(UI.display_ptr, 1);
+  u8g2_DrawLine(UI.display_ptr, 0, 9, SCREEN_WIDTH, 9);
 
   // Step back 2 items or to start
   UIMenuItem *item = current_item;
@@ -180,7 +187,6 @@ void UIMenu::render() {
   if (item != nullptr) {
     for (int count = 0; count < 5; count++) {
       int menu_item_y = 10 + (10 * count);
-      UI.display->setCursor(2, menu_item_y + 1);
       if (current_item == item) {
         UI.display->fillRect(0, menu_item_y, SCREEN_WIDTH, 9, SSD1306_WHITE);
         UI.display->setTextColor(SSD1306_BLACK, SSD1306_WHITE);
@@ -188,6 +194,7 @@ void UIMenu::render() {
         UI.display->setTextColor(SSD1306_WHITE, SSD1306_BLACK);
       }
 
+      UI.display->setCursor(2, menu_item_y + 1);
       UI.display->print(item->text);
 
       item = item->next;
@@ -205,7 +212,8 @@ void UIMenu::render() {
       const int scroll_track_start_y = 11;
       const int scroll_track_end_y = SCREEN_HEIGHT - 10;
       const int scroll_track_height = scroll_track_end_y - scroll_track_start_y;
-      int scroll_height = max((int) floor((float) scroll_track_height / ((float) menu_item_count / 4)), 4);
+      const int count = floor((float) scroll_track_height / ((float) menu_item_count / 4));
+      int scroll_height = std::max(count, 4);
       int scroll_start_y;
       if (menu_item_count >= 1) {
         scroll_start_y = floor((float) (scroll_track_height - scroll_height) *
@@ -238,7 +246,7 @@ void UIMenu::tick() {
 
 void UIMenu::open(UIMenu *previous, bool save_history, void *arg) {
   this->current_arg = arg;
-  log_i("Menu open with arg=%x", arg);
+  ESP_LOGI(TAG, "Menu open with arg=%x", arg);
   initialize();
 
   if (on_open != nullptr) {

@@ -1,16 +1,13 @@
-#include <WiFi.h>
-#include <time.h>
 
-#include "EEPROM.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+
+#include <time.h>
 
 #include "eom-hal.h"
 #include "config.h"
 #include "config_defs.h"
 #include "VERSION.h"
-
-#include <Adafruit_GFX.h>
-#include <Adafruit_SSD1306.h>
-#include <ESP32Encoder.h>
 
 #include "Hardware.h"
 #include "UserInterface.h"
@@ -24,14 +21,11 @@
 #include "WebSocketHelper.h"
 #include "WebSocketSecureHelper.h"
 
-uint8_t LED_Brightness = 13;
+#include "polyfill.h"
 
-// Declare LCD
-SPIClass DisplaySafeSPI(VSPI);
-Adafruit_SSD1306 display(128, 64, &DisplaySafeSPI, OLED_DC, OLED_RESET, OLED_CS);
-//Adafruit_SSD1306 display = eom_hal_get_display();
+void loop(void);
 
-UserInterface UI(&display);
+UserInterface UI;
 
 void resetSD() {
   long long int cardSize = eom_hal_get_sd_size_bytes();
@@ -52,7 +46,7 @@ void resetSD() {
 }
 
 void setupHardware() {
-  pinMode(MOT_PWM_PIN, OUTPUT);
+  // pinMode(MOT_PWM_PIN, OUTPUT);
 
   if (!Hardware::initialize()) {
     printf("Hardware initialization failed!\n");
@@ -63,7 +57,7 @@ void setupHardware() {
   config_save_to_sd(CONFIG_FILENAME, &Config);
   printf("Save completed.\n");
 
-  if (!UI.begin()) {
+  if (!UI.begin(eom_hal_get_display_ptr())) {
     printf("SSD1306 allocation failed\n");
     for (;;) {}
   }
@@ -78,11 +72,11 @@ TaskHandle_t BackgroundLoopTask;
 void backgroundLoop(void*) {
   for (;;) {
     WebSocketHelper::tick();
-    delay(1);
+    vTaskDelay(1);
   }
 }
 
-void setup() {
+extern "C" void app_main() {
   eom_hal_init();
 
   printf("Maus-Tec presents: Edge-o-Matic 3000\n");
@@ -137,6 +131,11 @@ void setup() {
 
   Page::Go(&RunGraphPage);
   printf("READY\n");
+
+  for (;;) {
+    loop();
+    vTaskDelay(1);
+  }
 }
 
 void loop() {

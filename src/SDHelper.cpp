@@ -1,8 +1,10 @@
 #include "SDHelper.h"
+#include <string>
+#include "cJSON.h"
 
 namespace SDHelper {
   // FIXME: Apparently this fails to link. I think it's something weird with my setup.
-  void printDirectoryJson(FILE *dir, JsonVariant files) {
+  void printDirectoryJson(FILE *dir, cJSON* files) {
     // while (true) {
     //   File entry = dir.openNextFile();
     //   if (! entry) {
@@ -19,7 +21,7 @@ namespace SDHelper {
     // }
   }
 
-  void printDirectory(FILE *dir, int numTabs, String &out) {
+  void printDirectory(FILE *dir, int numTabs, std::string &out) {
     // while (true) {
     //   File entry =  dir.openNextFile();
     //   if (! entry) {
@@ -29,22 +31,22 @@ namespace SDHelper {
     //   for (uint8_t i = 0; i < numTabs; i++) {
     //     out += "\t";
     //   }
-    //   out += String(entry.name());
+    //   out += std::to_string(entry.name());
     //   if (entry.isDirectory()) {
     //     out += "/\n";
     //     printDirectory(entry, numTabs + 1, out);
     //   } else {
     //     // files have sizes, directories do not
     //     out += "\t\t";
-    //     out += String(entry.size()) + "\n";
+    //     out += std::to_string(entry.size()) + "\n";
     //   }
     //   entry.close();
     // }
   }
 
-  void printFile(FILE *file, String &out) {
+  void printFile(FILE *file, std::string &out) {
     // while (file->available()) {
-    //   out += String((char)file.read());
+    //   out += std::to_string((char)file.read());
     // }
     // file.close();
   }

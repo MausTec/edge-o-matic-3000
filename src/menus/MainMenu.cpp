@@ -1,6 +1,7 @@
 #include "UIMenu.h"
 #include "UserInterface.h"
 #include "Page.h"
+#include <string>
 #include "UpdateHelper.h"
 
 static void buildMenu(UIMenu *menu) {
@@ -14,7 +15,7 @@ static void buildMenu(UIMenu *menu) {
   menu->addItem(&UpdateMenu);
 
   menu->addItem("System Info", [](UIMenu*) {
-    UI.toastNow(String("S/N: ") + Hardware::getDeviceSerial() + "\n" + "Version: " VERSION);
+    UI.toastNow(std::string("S/N: ") + Hardware::getDeviceSerial() + "\n" + "Version: " VERSION);
   });
 }
 

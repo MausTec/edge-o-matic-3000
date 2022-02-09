@@ -5,22 +5,8 @@
 #define MAX_HTTP_CLIENTS 5
 #define MAX_CLIENTS (MAX_HTTP_CLIENTS + MAX_HTTPS_CLIENTS)
 
-// We will use wifi
-#include <WiFi.h>
-
-// Includes for the server
-#include <HTTPSServer.hpp>
-#include <HTTPServer.hpp>
-#include <SSLCert.hpp>
-#include <HTTPRequest.hpp>
-#include <HTTPResponse.hpp>
-#include <WebsocketHandler.hpp>
-
 #include "esp_websocket_client.h"
-
-
-// The HTTPS Server comes in a separate namespace. For easier use, include it here.
-using namespace httpsserver;
+#include "esp_https_server.h"
 
 namespace WebSocketSecureHelper {
   void setup();
@@ -30,25 +16,25 @@ namespace WebSocketSecureHelper {
   void registerRemote(esp_websocket_client_handle_t client);
 
   // Send message to a specific client or all clients.
-  void send(int num, String msg);
+  void send(int num, const char *msg);
 
   // Declare some handler functions for the various URLs on the server
   // The signature is always the same for those functions. They get two parameters,
   // which are pointers to the request data (read request body, headers, ...) and
   // to the response data (write response, set status code, ...)
-  void handleRoot(HTTPRequest* req, HTTPResponse* res);
-  void handle404(HTTPRequest* req, HTTPResponse* res);
-  void handleCors(HTTPRequest* req, HTTPResponse* res);
+  void handleRoot(httpd_req_t* req);
+  void handle404(httpd_req_t* req);
+  void handleCors(httpd_req_t* req);
 
   // As websockets are more complex, they need a custom class that is derived from WebsocketHandler
-  class RemoteHandler : public WebsocketHandler {
+  class RemoteHandler {
   public:
     // This method is called by the webserver to instantiate a new handler for each
     // client that connects to the websocket endpoint
-    static WebsocketHandler* create();
+    static RemoteHandler* create();
 
     // This method is called when a message arrives
-    void onMessage(WebsocketInputStreambuf* input);
+    void onMessage(void* input);
 
     // Handler function on connection close
     void onClose();
@@ -57,7 +43,7 @@ namespace WebSocketSecureHelper {
     int getIndex();
 
     // Sends text
-    virtual void sendText(String payload);
+    virtual void sendText(const char* payload);
 
 
     bool isBridge() { return is_bridge; };
@@ -70,9 +56,9 @@ namespace WebSocketSecureHelper {
   public:
     BridgeHandler(esp_websocket_client_handle_t client);
 
-    static WebsocketHandler* create(esp_websocket_client_handle_t client);
+    static BridgeHandler* create(esp_websocket_client_handle_t client);
 
-    void sendText(String payload);
+    void sendText(const char* payload);
 
   private:
     esp_websocket_client_handle_t ws_client;
@@ -80,11 +66,11 @@ namespace WebSocketSecureHelper {
 
 
   namespace {
-    SSLCert* cert = nullptr;
-    HTTPSServer* secureServer = nullptr;
-    HTTPServer* insecureServer = nullptr;
+    // SSLCert* cert = nullptr;
+    // HTTPSServer* secureServer = nullptr;
+    // HTTPServer* insecureServer = nullptr;
 
     // Simple array to store the active clients:
-    WebsocketHandler* activeClients[MAX_CLIENTS];
+    RemoteHandler* activeClients[MAX_CLIENTS];
   }
 }

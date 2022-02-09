@@ -4,6 +4,8 @@
 #include "Page.h"
 #include "UserInterface.h"
 #include "config.h"
+#include "esp_log.h"
+#include "polyfill.h"
 
 #define SNAKE_CUBE_SIZE 3
 #define SNAKE_PADDING_SIZE 1
@@ -127,27 +129,27 @@ class pSnake : public Page {
     SnakeNode *n = first_node;
 
     // Draw Score
-    UI.display->setCursor(0, 0);
-    UI.display->setTextColor(SSD1306_WHITE, SSD1306_BLACK);
-    UI.display->print("Score: " + String(length - 3));
+    // UI.display->setCursor(0, 0);
+    // UI.display->setTextColor(SSD1306_WHITE, SSD1306_BLACK);
+    // UI.display->print("Score: " + String(length - 3));
 
     // Draw Snake
     while (n != nullptr) {
-      UI.display->fillRect(
-          n->p.x * (SNAKE_CUBE_SIZE + SNAKE_PADDING_SIZE),
-          n->p.y * (SNAKE_CUBE_SIZE + SNAKE_PADDING_SIZE),
-          SNAKE_CUBE_SIZE, SNAKE_CUBE_SIZE, SSD1306_WHITE
-      );
+      // UI.display->fillRect(
+      //     n->p.x * (SNAKE_CUBE_SIZE + SNAKE_PADDING_SIZE),
+      //     n->p.y * (SNAKE_CUBE_SIZE + SNAKE_PADDING_SIZE),
+      //     SNAKE_CUBE_SIZE, SNAKE_CUBE_SIZE, SSD1306_WHITE
+      // );
 
       n = n->next;
     }
 
     // Draw Food Chunk
-    UI.display->drawRect(
-        food_point.x * (SNAKE_CUBE_SIZE + SNAKE_PADDING_SIZE),
-        food_point.y * (SNAKE_CUBE_SIZE + SNAKE_PADDING_SIZE),
-        SNAKE_CUBE_SIZE, SNAKE_CUBE_SIZE, SSD1306_WHITE
-    );
+    // UI.display->drawRect(
+    //     food_point.x * (SNAKE_CUBE_SIZE + SNAKE_PADDING_SIZE),
+    //     food_point.y * (SNAKE_CUBE_SIZE + SNAKE_PADDING_SIZE),
+    //     SNAKE_CUBE_SIZE, SNAKE_CUBE_SIZE, SSD1306_WHITE
+    // );
   }
 
   void Loop() override {
@@ -178,7 +180,7 @@ class pSnake : public Page {
             direction = turn == Right ? Up : Down;
             break;
         }
-        Serial.println("Direction: " + String(direction));
+        ESP_LOGI("snek", "Direction: %d", (direction));
         turn = Up;
       }
 
@@ -187,7 +189,7 @@ class pSnake : public Page {
 
       if (snake_intersects()) {
         UI.toast("You have died.", 3000);
-        Serial.println("DED DANGER NOODUL! D:");
+        ESP_LOGI("snek", "DED DANGER NOODUL! D:");
         Hardware::setMotorSpeed(255);
         game_over = true;
       }
@@ -198,7 +200,7 @@ class pSnake : public Page {
         food_point.x = rand() % SNAKE_GRID_WIDTH;
         food_point.y = rand() % SNAKE_GRID_HEIGHT;
 
-        Serial.println("Snek go chomp.");
+        ESP_LOGI("snek", "Snek go chomp.");
         Hardware::setMotorSpeed(128);
       }
 

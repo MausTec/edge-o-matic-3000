@@ -1,7 +1,8 @@
 #ifndef __PAGE_h
 #define __PAGE_h
 
-#include "Arduino.h"
+#include <stddef.h>
+#include <stdint.h>
 
 #define HISTORY_LENGTH 5
 
@@ -23,7 +24,7 @@ public:
   virtual void Exit();
 
   // Event Hooks
-  virtual void onKeyPress(byte i);
+  virtual void onKeyPress(uint8_t i);
   virtual void onEncoderChange(int diff);
 
   static Page* currentPage;

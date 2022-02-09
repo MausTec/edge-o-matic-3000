@@ -1,20 +1,21 @@
 #ifndef __WiFiHelper_h
 #define __WiFiHelper_h
 
-#include "Arduino.h"
+#include <stddef.h>
+#include <stdint.h>
 
 #define CONNECTION_TIMEOUT_S 5
 
 namespace WiFiHelper {
   namespace {
-    byte getWiFiStrength();
+    uint8_t getWiFiStrength();
   }
 
   bool begin();
   bool connected();
   void disconnect();
-  String ip();
-  String signalStrengthStr();
+  const char* ip();
+  const char* signalStrengthStr();
   void drawSignalIcon();
 }
 

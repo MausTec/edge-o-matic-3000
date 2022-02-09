@@ -3,6 +3,10 @@
 #include "Hardware.h"
 #include "OrgasmControl.h"
 
+#include "esp_log.h"
+
+static const char *TAG = "EdgingSettingsMenu";
+
 UIInput MotorMaxSpeedInput("Motor Max Speed", [](UIMenu *ip) {
   UIInput *input = (UIInput*) ip;
   input->setMax(255);
@@ -127,16 +131,16 @@ UIInput SensorSensitivityInput("Sensor Sensitivity", [](UIMenu *ip) {
 static void setVibrateMode(UIMenu *menu, int m) {
   VibrationMode mode = (VibrationMode) m;
 
-  Serial.print("Setting mode to: ");
+  ESP_LOGI(TAG, "Setting mode to: ");
   switch(mode) {
     case VibrationMode::Depletion:
-      Serial.println("Depletion");
+      ESP_LOGI(TAG, "Depletion");
       break;
     case VibrationMode::Enhancement:
-      Serial.println("Enhancement");
+      ESP_LOGI(TAG, "Enhancement");
       break;
     case VibrationMode::RampStop:
-      Serial.println("RampStop");
+      ESP_LOGI(TAG, "RampStop");
       break;
   }
 

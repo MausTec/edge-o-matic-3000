@@ -7,6 +7,8 @@
 #include "Hardware.h"
 #include "assets.h"
 #include "WebSocketHelper.h"
+#include "polyfill.h"
+#include <cstring>
 
 enum RGView {
   GraphView,
@@ -65,8 +67,8 @@ class pRunGraph : public Page {
   void renderChart() {
     // Update Counts
     char status[7] = "";
-    byte motor = Hardware::getMotorSpeedPercent() * 100;
-    byte stat_a = OrgasmControl::getArousalPercent() * 100;
+    uint8_t motor = Hardware::getMotorSpeedPercent() * 100;
+    uint8_t stat_a = OrgasmControl::getArousalPercent() * 100;
 
     UI.display->setTextColor(SSD1306_WHITE, SSD1306_BLACK);
     UI.display->setCursor(0, 10);
@@ -153,7 +155,7 @@ class pRunGraph : public Page {
     }
   }
 
-  void onKeyPress(byte i) {
+  void onKeyPress(uint8_t i) {
   
     switch (i) {
       case 0:

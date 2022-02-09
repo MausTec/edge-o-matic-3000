@@ -3,6 +3,16 @@
 #include "BluetoothDriver.h"
 #include "AccessoryDriver.h"
 #include "eom-hal.h"
+#include "esp_log.h"
+#include "esp_timer.h"
+
+#include "polyfill.h"
+
+#define min(a,b) ((a) < (b) ? (a) : (b))
+#define max(a,b) ((a) > (b) ? (a) : (b))
+
+
+static const char *TAG = "Hardware";
 
 namespace Hardware {
     namespace {
@@ -44,30 +54,14 @@ namespace Hardware {
             }
         }
 
-        void initializeEncoder() {
-            pinMode(ENCODER_RD_PIN, OUTPUT);
-            pinMode(ENCODER_GR_PIN, OUTPUT);
-            pinMode(ENCODER_BL_PIN, OUTPUT);
-
-            setEncoderColor(CRGB::Black);
-
-            ESP32Encoder::useInternalWeakPullResistors = UP;
-            Encoder.attachHalfQuad(ENCODER_A_PIN, ENCODER_B_PIN);
-            
-            Encoder.setCount(128);
-            encoderCount = 128;
-        }
-
-        void initializeLEDs() {
-            // noop
+        void handle_encoder_change(int diff) {
+            UI.onEncoderChange(diff);
+            idle_since_ms = millis();
         }
     }
 
 
     bool initialize() {
-        initializeEncoder();
-        initializeLEDs();
-
         setPressureSensitivity(Config.sensor_sensitivity);
 
         // Alright so, when I made the interface for the HAL I thought it'd be great to
@@ -81,18 +75,12 @@ namespace Hardware {
         eom_hal_register_button_press(EOM_HAL_BUTTON_MID, handle_key_press);
         eom_hal_register_button_press(EOM_HAL_BUTTON_OK, handle_key_press);
         eom_hal_register_button_press(EOM_HAL_BUTTON_MENU, handle_key_press);
+        // eom_hal_register_encoder_change(handle_encoder_change);
 
         return true;
     }
 
     void tick() {
-        int32_t count = Encoder.getCount() / 2;
-        if (count != encoderCount) {
-            idle_since_ms = millis();
-            UI.onEncoderChange(count - encoderCount);
-            encoderCount = count;
-        }
-
         if ((Config.screen_dim_seconds + Config.screen_timeout_seconds) > 0 || idle || standby) {
             long idle_time_ms = millis() - idle_since_ms;
             bool do_dim = Config.screen_dim_seconds > 0 && idle_time_ms > Config.screen_dim_seconds * 1000;
@@ -100,7 +88,7 @@ namespace Hardware {
 
             if (do_dim || do_off) {
                 if ((!idle && do_dim) || (!standby && do_off)) {
-                    UI.display->dim(true);
+                    u8g2_SetPowerSave(UI.display_ptr, true);
 
                     if (do_off) {
                         UI.fadeTo();
@@ -108,7 +96,7 @@ namespace Hardware {
                         UI.clear(false);
                         // This calls display instead of render because here
                         // render is disabled.
-                        UI.display->display();
+                        u8g2_SendBuffer(UI.display_ptr);
                         standby = true;
                     }
 
@@ -116,7 +104,7 @@ namespace Hardware {
                 }
             } else {
                 if (idle || standby) {
-                    UI.display->dim(false);
+                    u8g2_SetPowerSave(UI.display_ptr, false);
                     UI.displayOn();
                     UI.render();
                     idle = false;
@@ -126,28 +114,26 @@ namespace Hardware {
         }
     }
 
-    void setLedColor(byte i, CRGB color) {
-#ifdef LED_PIN
-        leds[i] = color;
-#endif
-    }
-
+    /**
+     * @deprecated - Go forth and use the HAL
+     */
+    [[deprecated("Use eom_hal_set_encoder_color(r, g, b)")]]
     void setEncoderColor(CRGB color) {
         encoderColor = color;
-        analogWrite(ENCODER_RD_PIN, color.r);
-        analogWrite(ENCODER_GR_PIN, color.g);
-        analogWrite(ENCODER_BL_PIN, color.b);
+        // analogWrite(ENCODER_RD_PIN, color.r);
+        // analogWrite(ENCODER_GR_PIN, color.g);
+        // analogWrite(ENCODER_BL_PIN, color.b);
     }
 
     [[deprecated("Use eom_hal_get_device_serial()")]]
-    String getDeviceSerial() {
+    std::string getDeviceSerial() {
         char serial[40] = "";
         auto err = eom_hal_get_device_serial(serial, 40);
-        return String(serial);
+        return std::string(serial);
     }
 
     void setDeviceSerial(const char* serial) {
-        Serial.println("E_DEPRECATED");
+        ESP_LOGI(TAG, "E_DEPRECATED");
     }
 
     void setMotorSpeed(int speed) {
@@ -155,7 +141,7 @@ namespace Hardware {
         if (new_speed == motor_speed) return;
         motor_speed = new_speed;
 
-        analogWrite(MOT_PWM_PIN, motor_speed);
+        // analogWrite(MOT_PWM_PIN, motor_speed);
         // eom_hal_set_motor_speed(motor_speed);
         
         BluetoothDriver::broadcastSpeed(new_speed);
@@ -175,22 +161,18 @@ namespace Hardware {
         return (float) motor_speed / 255.0;
     }
 
-    void ledShow() {
-        // noop
-    }
-
     [[deprecated("Use eom_hal_get_pressure_reading()")]]
     long getPressure() {
         return eom_hal_get_pressure_reading();
     }
 
     [[deprecated("Use eom_hal_set_sensor_sensitivity()")]]
-    void setPressureSensitivity(byte value) {
+    void setPressureSensitivity(uint8_t value) {
         eom_hal_set_sensor_sensitivity(value);
     }
 
     [[deprecated("Use eom_hal_get_sensor_sensitivity()")]]
-    byte getPressureSensitivity() {
+    uint8_t getPressureSensitivity() {
         return eom_hal_get_sensor_sensitivity();
     }
 }

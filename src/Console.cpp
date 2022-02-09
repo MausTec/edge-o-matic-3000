@@ -6,14 +6,16 @@
 #include "config.h"
 #include "OrgasmControl.h"
 #include "config_defs.h"
+#include <string>
+#include <sys/stat.h>
 
 #include "eom_tscode_handler.h"
 
 // #include <SD.h>
 
-#define cmd_f [](char** args, String& out) -> int
+#define cmd_f [](char** args, std::string& out) -> int
 
-typedef int (*cmd_func)(char **, String &);
+typedef int (*cmd_func)(char **, std::string &);
 
 typedef struct Command {
   char *cmd;
@@ -27,17 +29,17 @@ static bool tscode_mode = false;
 
 namespace Console {
   namespace {
-    int sh_help(char **, String &);
+    int sh_help(char **, std::string &);
 
-    int sh_set(char **, String &);
+    int sh_set(char **, std::string &);
 
-    int sh_list(char **, String &);
+    int sh_list(char **, std::string &);
 
-    int sh_cat(char **, String &);
+    int sh_cat(char **, std::string &);
 
-    int sh_dir(char **, String &);
+    int sh_dir(char **, std::string &);
 
-    int sh_cd(char **, String &);
+    int sh_cd(char **, std::string &);
 
     Command commands[] = {
         {
@@ -80,7 +82,7 @@ namespace Console {
             .cmd = "restart",
             .alias = "R",
             .help = "Restart the device",
-            .func = cmd_f { ESP.restart(); }
+            .func = cmd_f { out += "temporarily broken"; }
         },
         {
             .cmd = "mode",
@@ -121,19 +123,12 @@ namespace Console {
             .alias = "f",
             .help = "Get free heap space",
             .func = cmd_f {
-              out += "Heap (caps_alloc): " + String(xPortGetFreeHeapSize()) + '\n';
-              out += "Total heap: " + String(ESP.getHeapSize()) + '\n';
-              out += "Free heap: " + String(ESP.getFreeHeap()) + '\n';
-              out += "Total PSRAM: " + String(ESP.getPsramSize()) + '\n';
-              out += "Free PSRAM: " + String(ESP.getFreePsram()) + '\n';
-            },
-        },
-        {
-            .cmd = "heapdump",
-            .alias = nullptr,
-            .help = nullptr,
-            .func = cmd_f {
-              heap_caps_dump_all();
+              // out += "Heap (caps_alloc): " + std::to_string(xPortGetFreeHeapSize()) + '\n';
+              // out += "Total heap: " + std::to_string(ESP.getHeapSize()) + '\n';
+              // out += "Free heap: " + std::to_string(ESP.getFreeHeap()) + '\n';
+              // out += "Total PSRAM: " + std::to_string(ESP.getPsramSize()) + '\n';
+              // out += "Free PSRAM: " + std::to_string(ESP.getFreePsram()) + '\n';
+              out += "temporarily not supported";
             },
         },
         {
@@ -141,7 +136,7 @@ namespace Console {
             .alias = nullptr,
             .help = nullptr,
             .func = cmd_f {
-              String v = UpdateHelper::checkWebLatestVersion();
+              std::string v = UpdateHelper::checkWebLatestVersion();
               out += v + '\n';
 
               if (UpdateHelper::compareVersion(v.c_str(), VERSION) > 0) {
@@ -153,14 +148,14 @@ namespace Console {
             .cmd = "version",
             .alias = "v",
             .help = "Get current firmware version",
-            .func = cmd_f { out += String(VERSION) + '\n'; },
+            .func = cmd_f { out += VERSION "\n"; },
         },
         {
             .cmd = ".verscmp",
             .alias = nullptr,
             .help = nullptr,
             .func = cmd_f {
-              out += String(UpdateHelper::compareVersion(args[0], args[1])) + '\n';
+              out += std::to_string(UpdateHelper::compareVersion(args[0], args[1])) + '\n';
             },
         },
         {
@@ -181,63 +176,70 @@ namespace Console {
         }
     };
 
-    int sh_help(char **args, String &out) {
+    int sh_help(char **args, std::string &out) {
       for (int i = 0; i < sizeof(commands) / sizeof(Command); i++) {
         Command c = commands[i];
         if (c.help == nullptr) continue;
-        out += (String(c.cmd) + "\t(" + String(c.alias) + ")\t" + String(c.help)) + '\n';
+        out = out + c.cmd + "\t(" + c.alias + ")\t" + c.help + "\n";
       }
     }
 
-    int sh_cat(char **args, String &out) {
+    int sh_cat(char **args, std::string &out) {
       if (args[0] == NULL) {
         out += "Please specify a filename!\n";
         return 1;
       }
 
-      // File file = SD.open(cwd + String("/") + String(args[0]));
-      // if (!file) {
-      //   out += "File not found!\n";
-      //   return 1;
-      // }
+      struct stat st;
+      char path[MAX_DIR_LENGTH] = "";
+      if (stat(path, &st) != 0 || S_ISDIR(st.st_mode)) {
+        out += "Invalid file.\n";
+        return 1;
+      }
 
       // SDHelper::printFile(file, out);
       // return 0;
     }
 
-    int sh_dir(char **args, String &out) {
-      // File f = SD.open(cwd);
-      // if (!f) {
-      //   out += "Invalid directory.\n";
-      //   return 1;
-      // }
+    int sh_dir(char **args, std::string &out) {
+      struct stat st;
+      if (stat(cwd, &st) != 0 || !S_ISDIR(st.st_mode)) {
+        out += "Invalid directory.\n";
+        return 1;
+      }
+
       // SDHelper::printDirectory(f, 1, out);
-      // return 0;
+      return 0;
     }
 
-    int sh_cd(char **args, String &out) {
+    int sh_cd(char **args, std::string &out) {
       if (args[0] == NULL) {
         out += "Directory required.";
         return 1;
       }
 
-      String newDir;
+      char newDir[MAX_DIR_LENGTH] = "";
       if (!strcmp(args[0], "..")) {
-        newDir = cwd.substring(0, cwd.lastIndexOf("/"));
+        char *last = strrchr(cwd, '/');
+        if (last != NULL) {
+          strncpy(newDir, cwd, strrchr(cwd, '/') - cwd);
+        }
       } else {
-        newDir = cwd + String("/") + String(args[0]);
+        strlcpy(newDir, cwd, MAX_DIR_LENGTH);
+        strlcat(newDir, "/", MAX_DIR_LENGTH);
+        strlcat(newDir, args[0], MAX_DIR_LENGTH);
       }
 
-      // File f = SD.open(newDir);
-      // if (!f || !f.isDirectory()) {
-      //   out += "Invalid directory.\n";
-      //   return 1;
-      // }
-      // cwd = newDir;
-      // f.close();
+      struct stat st;
+      if (stat(newDir, &st) != 0 || !S_ISDIR(st.st_mode)) {
+        out += "Invalid directory.\n";
+        return 1;
+      }
+
+      strlcpy(cwd, newDir, MAX_DIR_LENGTH);
     }
 
-    int sh_set(char **args, String &out) {
+    int sh_set(char **args, std::string &out) {
       char *option = args[0];
       bool require_reboot = false;
 
@@ -265,7 +267,7 @@ namespace Console {
       }
     }
 
-    int sh_list(char **args, String &out) {
+    int sh_list(char **args, std::string &out) {
       // dumpConfigToJson(out);
     }
   }
@@ -273,7 +275,7 @@ namespace Console {
   /**
    * Handles the message currently in the buffer.
    */
-  void handleMessage(char *line, String &out) {
+  void handleMessage(char *line, std::string &out) {
     const int TOK_BUFSIZE = 64;
     const char *TOK_DELIM = " \t\r\n\a";
 
@@ -332,10 +334,10 @@ namespace Console {
   }
 
   void handleMessage(char *line) {
-    String response;
-    Serial.println("> " + String(line));
+    std::string response;
+    printf("> %s\n", line);
     handleMessage(line, response);
-    Serial.println(response);
+    puts(response.c_str());
   }
 
   /**
@@ -355,10 +357,8 @@ namespace Console {
    * we have a newline.
    */
   void loop() {
-    while (Serial.available() > 0) {
-      // read the incoming byte:
-      char incoming = Serial.read();
-
+    char incoming = fgetc(stdin);
+    while (incoming != 0xFF) {
       if (incoming == '\r') {
         continue;
       } else if (incoming == '\n') {
@@ -371,7 +371,7 @@ namespace Console {
         } else {
           char response[121] = "";
           tscode_process_buffer(buffer, tscode_handler, response, 120);
-          Serial.println(response);
+          puts(response);
         }
 
         buffer_i = 0;
@@ -381,6 +381,8 @@ namespace Console {
         buffer_i++;
         buffer[buffer_i] = 0;
       }
+
+      incoming = fgetc(stdin);
     }
   }
 }

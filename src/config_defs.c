@@ -9,6 +9,8 @@
 #include "esp_err.h"
 #include "esp_log.h"
 
+#include "polyfill.h"
+
 #define MAX_FILE_PATH_LEN 120
 
 static const char* TAG = "config_defs";

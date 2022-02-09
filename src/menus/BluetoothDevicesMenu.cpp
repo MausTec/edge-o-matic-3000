@@ -2,15 +2,18 @@
 #include "BluetoothDriver.h"
 #include "UserInterface.h"
 #include "OrgasmControl.h"
+#include "esp_log.h"
+
+static const char *TAG = "BluetoothDevicesMenu";
 
 static void doDisconnect(UIMenu *menu, void *d) {
   BluetoothDriver::Device *device = (BluetoothDriver::Device*) d;
   
   if (device == nullptr) {
-    log_i("BLAAAAAH");
+    ESP_LOGI(TAG, "BLAAAAAH");
   } else {
     UI.toastNow("Disconnecting...");
-    log_i("Disconnecting from device...");
+    ESP_LOGI(TAG, "Disconnecting from device...");
 
     device->disconnect();
     BluetoothDriver::unregisterDevice(device);
