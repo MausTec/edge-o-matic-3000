@@ -32,11 +32,11 @@ void config_deserialize(config_t* cfg, const char* buf) {
 
 
 void config_to_json(cJSON* root, config_t* cfg) {
-  _config_defs(true, root, cfg, NULL, NULL, NULL, NULL, NULL);
+  _config_defs(false, root, cfg, NULL, NULL, NULL, NULL, NULL);
 }
 
 void json_to_config(cJSON* root, config_t* cfg) {
-  _config_defs(false, root, cfg, NULL, NULL, NULL, NULL, NULL);
+  _config_defs(true, root, cfg, NULL, NULL, NULL, NULL, NULL);
 
   // Bluetooth and WiFi cannot operate at the same time.
   if (cfg->wifi_on && cfg->bt_on && !cfg->force_bt_coex) {
@@ -263,13 +263,20 @@ static void _pjoin(char *buf, size_t len, const char* path) {
 
 esp_err_t config_load_from_sd(const char* filename, config_t* cfg) {
     char path[MAX_FILE_PATH_LEN + 1] = "";
-    struct stat st;
 
     _pjoin(path, MAX_FILE_PATH_LEN, eom_hal_get_sd_mount_point());
     _pjoin(path, MAX_FILE_PATH_LEN, filename);
 
-    if (stat(path, &st) == 0) {
-        FILE* f = fopen(path, "r");
+    FILE* f = fopen(path, "r");
+
+    // Sometimes the first load fails after initialization. Until I can fix this,
+    // we'll retry opening. This may correct later issues, since config is often
+    // the first file opened.
+    if (!f) {
+      f = fopen(path, "r");
+    }
+    
+    if (f) {
         long fsize;
         char* buffer;
         size_t result;
