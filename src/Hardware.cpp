@@ -75,7 +75,7 @@ namespace Hardware {
         eom_hal_register_button_press(EOM_HAL_BUTTON_MID, handle_key_press);
         eom_hal_register_button_press(EOM_HAL_BUTTON_OK, handle_key_press);
         eom_hal_register_button_press(EOM_HAL_BUTTON_MENU, handle_key_press);
-        // eom_hal_register_encoder_change(handle_encoder_change);
+        eom_hal_register_encoder_change(handle_encoder_change);
 
         return true;
     }

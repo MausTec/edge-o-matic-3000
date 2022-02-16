@@ -52,6 +52,9 @@ struct config {
   int screen_dim_seconds;
   int screen_timeout_seconds;
 
+  // Console
+  bool store_command_history;
+
   // Server
   int websocket_port;
   bool classic_serial;
@@ -95,24 +98,11 @@ void save_config_to_sd(long save_at_ms);
 bool get_config_value(const char *option, char *buffer, size_t len);
 bool set_config_value(const char *option, const char *value, bool *require_reboot);
 
-// This is hardware specific and is going away soon:
-
-// Butt Pin
-#define MOT_PWM_PIN     15
-
-// Encoder Connection
-#define ENCODER_B_PIN   32
-#define ENCODER_A_PIN   33
-#define ENCODER_RD_PIN  2
-#define ENCODER_BL_PIN  27
-#define ENCODER_GR_PIN  4
-
-// LCD Definitions
-#define SCREEN_WIDTH    128
-#define SCREEN_HEIGHT   64
-#define OLED_DC         13
-#define OLED_RESET      14
-#define OLED_CS         12
+// TODO: These should be calculated values based on HAL, which works everywhere *BUT*
+//       on chart rendering, where we're statically initializing our data array. That
+//       should be dynamic initialization, thank yoooou. (Can be classified?)
+#define SCREEN_WIDTH  128
+#define SCREEN_HEIGHT 64
 
 #ifdef __cplusplus
 }

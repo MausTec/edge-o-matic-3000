@@ -38,11 +38,8 @@ void resetSD() {
   }
 
   UI.drawSdIcon(1);
-  printf("SD Card Size: %lluMB\n", cardSize);
+  printf("SD Card Size: %llu MB\n", cardSize / 1000000ULL);
   config_load_from_sd(CONFIG_FILENAME, &Config);
-  printf("Config loaded, testing save...\n");
-  config_save_to_sd(CONFIG_FILENAME, &Config);
-  printf("Save completed.\n");
 }
 
 void setupHardware() {
@@ -52,19 +49,11 @@ void setupHardware() {
     printf("Hardware initialization failed!\n");
     for (;;) {}
   }
-  
-  printf("Hardware initialized, testing save...\n");
-  config_save_to_sd(CONFIG_FILENAME, &Config);
-  printf("Save completed.\n");
 
   if (!UI.begin(eom_hal_get_display_ptr())) {
     printf("SSD1306 allocation failed\n");
     for (;;) {}
   }
-  
-  printf("Display initialized, testing save...\n");
-  config_save_to_sd(CONFIG_FILENAME, &Config);
-  printf("Save completed.\n");
 }
 
 TaskHandle_t BackgroundLoopTask;
@@ -78,15 +67,15 @@ void backgroundLoop(void*) {
 
 extern "C" void app_main() {
   eom_hal_init();
+  console_init();
 
   printf("Maus-Tec presents: Edge-o-Matic 3000\n");
   printf("Version: " VERSION "\n");
   printf("EOM-HAL Version: %s\n", eom_hal_get_version());
 
   // Setup Hardware
-  resetSD();
   setupHardware();
-  
+  resetSD();
 
   // Go to the splash page:
   Page::Go(&DebugPage, false);
@@ -130,7 +119,7 @@ extern "C" void app_main() {
   UI.fadeTo();
 
   Page::Go(&RunGraphPage);
-  printf("READY\n");
+  console_ready();
 
   for (;;) {
     loop();
@@ -140,7 +129,6 @@ extern "C" void app_main() {
 
 void loop() {
   eom_hal_tick();
-  Console::loop(); // <- TODO rename to tick
   Hardware::tick();
   OrgasmControl::tick();
   UI.tick();

@@ -14,6 +14,9 @@ CONFIG_DEFS {
   CFG_BOOL(bt_on, false);
   CFG_BOOL(force_bt_coex, false);
 
+  // Console Settings
+  CFG_BOOL(store_command_history, true);
+
   // Network Settings
   CFG_NUMBER(websocket_port, 80);
   CFG_BOOL(classic_serial, false);
