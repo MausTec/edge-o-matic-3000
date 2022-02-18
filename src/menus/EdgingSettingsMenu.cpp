@@ -28,7 +28,7 @@ UIInput MotorMaxSpeedInput("Motor Max Speed", [](UIMenu *ip) {
 
   input->onConfirm([](int value) {
     Config.motor_max_speed = value;
-    save_config_to_sd(0);
+    config_enqueue_save(0);
   });
 });
 
@@ -41,7 +41,7 @@ UIInput MotorStartSpeedInput("Motor Start Speed", [](UIMenu *ip) {
     Config.motor_start_speed = value;
   });
   input->onConfirm([](int) {
-    save_config_to_sd(0);
+    config_enqueue_save(0);
   });
 });
 
@@ -54,7 +54,7 @@ UIInput MotorRampTimeInput("Motor Ramp Time", [](UIMenu *ip) {
     Config.motor_ramp_time_s = value;
   });
   input->onConfirm([](int) {
-    save_config_to_sd(0);
+    config_enqueue_save(0);
   });
 });
 
@@ -67,7 +67,7 @@ UIInput EdgeDelayInput("Edge Delay", [](UIMenu *ip) {
     Config.edge_delay = value * 1000;
   });
   input->onConfirm([](int) {
-    save_config_to_sd(0);
+    config_enqueue_save(0);
   });
 });
 
@@ -80,7 +80,7 @@ UIInput MaxAdditionalDelayInput("Maximum Additional Delay", [](UIMenu *ip) {
     Config.max_additional_delay = value * 1000;
   });
   input->onConfirm([](int) {
-    save_config_to_sd(0);
+    config_enqueue_save(0);
   });
 });
 
@@ -93,7 +93,7 @@ UIInput MinimumOnTimeInput("Minimum On Time", [](UIMenu *ip) {
     Config.minimum_on_time = value;
   });
   input->onConfirm([](int) {
-    save_config_to_sd(0);
+    config_enqueue_save(0);
   });
 });
 
@@ -106,7 +106,7 @@ UIInput ArousalLimitInput("Arousal Limit", [](UIMenu *ip) {
     Config.sensitivity_threshold = value;
   });
   input->onConfirm([](int) {
-    save_config_to_sd(0);
+    config_enqueue_save(0);
   });
 });
 
@@ -124,7 +124,7 @@ UIInput SensorSensitivityInput("Sensor Sensitivity", [](UIMenu *ip) {
     Hardware::setPressureSensitivity(value);
   });
   input->onConfirm([](int) {
-    save_config_to_sd(0);
+    config_enqueue_save(0);
   });
 });
 
@@ -145,7 +145,7 @@ static void setVibrateMode(UIMenu *menu, int m) {
   }
 
   Config.vibration_mode = mode;
-  save_config_to_sd(0);
+  config_enqueue_save(0);
   menu->rerender();
 }
 

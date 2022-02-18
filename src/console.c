@@ -18,6 +18,9 @@
 #include "esp_console.h"
 #include "esp_vfs_dev.h"
 #include "eom-hal.h"
+#include "tscode.h"
+#include "eom_tscode_handler.h"
+#include "VERSION.h"
 
 #define PROMPT "eom:%s> "
 #define ARGV_MAX 16
@@ -25,40 +28,110 @@
 
 static const char* TAG = "console";
 static esp_console_repl_t* _repl = NULL;
-
-char _history_file[SD_MAX_DIR_LENGTH + 1] = { 0 };
+static char _history_file[SD_MAX_DIR_LENGTH + 1] = { 0 };
+static bool _tscode_mode = false;
 
 static struct cmd_node {
-    command_t command;
+    command_t* command;
     struct cmd_node* next;
 } *_first = NULL;
 
-static command_err_t cmd_help(int argc, char **argv, console_t *console) {
-    struct cmd_node *ptr = _first;
-    fprintf(console->out, "Available commands:\n\n");
+static command_err_t cmd_help(int argc, char** argv, console_t* console) {
+    struct cmd_node* ptr = _first;
+
+    if (argc == 0) {
+        fprintf(console->out, "Edge-o-Matic 3000, " VERSION "\n\nCOMMANDS\n");
+    }
+
     while (ptr != NULL) {
-        fprintf(console->out, "    %-10s  %s\n", ptr->command.command, ptr->command.help);
+        if (argc == 0) {
+            fprintf(console->out, "    %-10s  %s\n", ptr->command->command, ptr->command->help);
+        } else if (!strcasecmp(argv[0], ptr->command->command)) {
+            fprintf(console->out, "%s\n", ptr->command->help);
+
+            if (ptr->command->subcommands[0] != NULL) {
+                fprintf(console->out, "\nSUBCOMMANDS\n");
+                size_t idx = 0;
+                command_t* sub = NULL;
+
+                while ((sub = ptr->command->subcommands[idx++]) != NULL) {
+                    fprintf(console->out, "  %-10s  %s\n", sub->command, sub->help);
+                }
+
+            }
+            return CMD_OK;
+        }
+
         ptr = ptr->next;
     }
+
+    if (argc != 0) {
+        fprintf(console->out, "Cannot find help for command: %s\n", argv[0]);
+        return CMD_FAIL;
+    }
+
     return CMD_OK;
 }
 
-static void register_help(void) {
-    const command_t cmd = {
-        .command = "help",
-        .help = "Get help about all or a specific command.",
-        .alias = '?',
-        .func = &cmd_help,
-    };
+static const command_t cmd_help_s = {
+    .command = "help",
+    .help = "Get help about all or a specific command.",
+    .alias = '?',
+    .func = &cmd_help,
+    .subcommands = { NULL },
+};
 
-    console_register_command(&cmd);
+static void register_help(void) {
+    console_register_command(&cmd_help_s);
 }
 
-static void console_task(void *args) {
+static void reinitialize_console(void) {
+    if (_tscode_mode) {
+        linenoiseSetDumbMode(true);
+        linenoiseAllowEmpty(false);
+        linenoiseSetMultiLine(false);
+        linenoiseHistorySetMaxLen(0);
+    } else {    
+        linenoiseAllowEmpty(true);
+        linenoiseSetMultiLine(true);
+        linenoiseHistorySetMaxLen(100);
+        linenoiseSetDumbMode(false);
+
+        if (Config.store_command_history) {
+            SDHelper_getAbsolutePath(_history_file, SD_MAX_DIR_LENGTH, "history.txt");
+            linenoiseHistoryLoad(_history_file);
+        }
+
+        if (linenoiseProbe()) {
+            printf("Your terminal does not support escape sequences. This experience may\n"
+                "not be as pretty as on other consoles.\n");
+            linenoiseSetDumbMode(true);
+        }
+    }
+}
+
+/**
+ * Intercept TS-code commands to see if we're changing modes, otherwise pass to global handler.
+ */
+static tscode_command_response_t tscode_handler(tscode_command_t* cmd, char* response, size_t resp_len) {
+    if (cmd->type == TSCODE_EXIT_TSCODE_MODE) {
+        _tscode_mode = false;
+        reinitialize_console();
+        return TSCODE_RESPONSE_OK;
+    } else {
+        return eom_tscode_handler(cmd, response, resp_len);
+    }
+}
+
+/**
+ * Dedicated system task for handling the console initialization and looping.
+ */
+static void console_task(void* args) {
     char prompt[80] = { 0 };
 
     console_t uart_console = {
         .out = stdout,
+        .err = -1,
     };
 
     strncpy(uart_console.cwd, eom_hal_get_sd_mount_point(), PATH_MAX);
@@ -69,31 +142,42 @@ static void console_task(void *args) {
         vTaskDelay(1);
     }
 
-    if (Config.store_command_history) {
-        SDHelper_getAbsolutePath(_history_file, SD_MAX_DIR_LENGTH, "history.txt");
-        linenoiseHistoryLoad(_history_file);
-    }
-
-    if (linenoiseProbe()) {
-        printf("Your terminal does not support escape sequences. This experience may\n"
-               "not be as pretty as on other consoles.\n");
-        linenoiseSetDumbMode(true);
-    }
+    reinitialize_console();
 
     for (;;) {
-        snprintf(prompt, 79, PROMPT, uart_console.cwd);
-        char *line = linenoise(prompt);
+        char *line = NULL;
+
+        // TScode does not use a prompt:
+        if (_tscode_mode) {
+            line = linenoise("");
+        } else {
+            snprintf(prompt, 79, PROMPT, uart_console.cwd);
+            line = linenoise(prompt);
+        }
+
+        if (!line) { continue; }
+        
+        if (strcasecmp(line, "tscode") == 0) {
+            _tscode_mode = true;
+            reinitialize_console();
+        }
 
         if (line[0] != '\0') {
-            linenoiseHistoryAdd(line);
-            
-            if (_history_file[0] != '\0') {
-                linenoiseHistorySave(_history_file);
-            }
+            if (_tscode_mode) {
+                char out[1025] = { 0 };
+                tscode_process_buffer(line, &tscode_handler, out, 1024);
+                printf("%s\n", out);
+            } else {
+                linenoiseHistoryAdd(line);
 
-            char *argv[ARGV_MAX] = { 0 };
-            int argc = esp_console_split_argv(line, argv, ARGV_MAX);
-            console_run_command(argc, argv, &uart_console);
+                if (_history_file[0] != '\0') {
+                    linenoiseHistorySave(_history_file);
+                }
+
+                char* argv[ARGV_MAX] = { 0 };
+                int argc = esp_console_split_argv(line, argv, ARGV_MAX);
+                console_run_command(argc, argv, &uart_console);
+            }
         }
 
         linenoiseFree(line);
@@ -105,6 +189,7 @@ static void console_task(void *args) {
 void console_init(void) {
     register_help();
     commands_register_all();
+    eom_tscode_install();
 
     // Set UART up:
     fflush(stdout);
@@ -133,22 +218,17 @@ void console_init(void) {
     };
 
     ESP_ERROR_CHECK(esp_console_init(&console_config));
-
-    linenoiseAllowEmpty(true);
-    linenoiseSetMultiLine(true);
-    linenoiseHistorySetMaxLen(100);
-    linenoiseAllowEmpty(true);
 }
 
 void console_register_command(command_t* command) {
-    struct cmd_node *n = (struct cmd_node*) malloc(sizeof(struct cmd_node));
-    memcpy(&n->command, command, sizeof(command_t));
+    struct cmd_node* n = (struct cmd_node*) malloc(sizeof(struct cmd_node));
+    n->command = command;
     n->next = NULL;
 
     if (_first == NULL) {
         _first = n;
     } else {
-        struct cmd_node *ptr = _first;
+        struct cmd_node* ptr = _first;
         while (ptr->next != NULL) ptr = ptr->next;
         ptr->next = n;
     }
@@ -197,439 +277,62 @@ void console_send_file(const char* filename, console_t* console) {
     fprintf(console->out, "<<<EOF\n");
 }
 
-void console_run_command(int argc, char **argv, console_t *console) {
+static command_err_t _console_run_subcommands(command_t* command, int argc, char** argv, console_t* console) {
+    command_err_t err = CMD_SUBCOMMAND_NOT_FOUND;
+
+    if (argc == 0) {
+        return CMD_SUBCOMMAND_REQUIRED;
+    }
+
+    bool sc_aliased = strlen(argv[0]) == 1;
+    size_t sci = 0;
+    command_t* sc = NULL;
+
+    while ((sc = command->subcommands[sci++]) != NULL) {
+
+        if ((sc_aliased && argv[1] == sc->alias) || !strcasecmp(argv[0], sc->command)) {
+            if (sc->func != NULL) {
+                err = sc->func(argc - 1, argv + 1, console);
+            }
+            break;
+        }
+    }
+
+    return err;
+}
+
+void console_run_command(int argc, char** argv, console_t* console) {
+    command_err_t err = CMD_NOT_FOUND;
+
     if (argc == 0)
         return;
 
-    char *cmdstr = argv[0];
-    for (int i = 0; i < strlen(cmdstr); i++) {
-        cmdstr[i] = tolower(cmdstr[i]);
-    }
-
-    struct cmd_node *ptr = _first;
+    struct cmd_node* ptr = _first;
     bool aliased = strlen(argv[0]) == 1;
 
     while (ptr != NULL) {
-        if ((aliased && cmdstr[0] == ptr->command.alias) || !strcmp(cmdstr, ptr->command.command)) {
-            command_err_t err = ptr->command.func(argc-1, argv+1, console);
-            
-            if (err == CMD_ARG_ERR) {
-                fprintf(console->out, "Invalid arguments.\n");
+        if ((aliased && argv[0][0] == ptr->command->alias) || !strcasecmp(argv[0], ptr->command->command)) {
+            if (ptr->command->subcommands[0] != NULL) {
+                err = _console_run_subcommands(ptr->command, argc - 1, argv + 1, console);
+            } else if (ptr->command->func != NULL) {
+                err = ptr->command->func(argc - 1, argv + 1, console);
             }
 
-            return;
+            break;
         }
 
         ptr = ptr->next;
     }
 
-    fprintf(console->out, "Unknown command: %s\n", cmdstr);
+    if (err == CMD_ARG_ERR) {
+        fprintf(console->out, "Invalid arguments.\n");
+    } else if (err == CMD_NOT_FOUND) {
+        fprintf(console->out, "Unknown command: %s\n", argv[0]);
+    } else if (err == CMD_SUBCOMMAND_NOT_FOUND) {
+        fprintf(console->out, "Unknown subcommand: %s\n", argv[1]);
+    } else if (err == CMD_SUBCOMMAND_REQUIRED) {
+        fprintf(console->out, "Command requires a subcommand.\n");
+    }
+
+    console->err = err;
 }
-
-// #include "Hardware.h"
-// #include "SDHelper.h"
-// #include "Page.h"
-// #include "UpdateHelper.h"
-// #include "OrgasmControl.h"
-
-// #include "eom_tscode_handler.h"
-
-// // #include <SD.h>
-
-// #define cmd_f [](char** argv, size_t argc, std::string &out) -> int
-
-// typedef int (*cmd_func)(char **argv, size_t argc, std::string &out);
-
-
-// typedef struct Command {
-//   char *cmd;
-//   char *alias;
-//   char *help;
-//   cmd_func func;
-// } Command;
-
-// static bool tscode_mode = false;
-
-// namespace Console {
-//   namespace {
-//     int sh_help(char **argv, size_t argc, std::string &out);
-//     int sh_set(char **argv, size_t argc, std::string &out);
-//     int sh_list(char **argv, size_t argc, std::string &out);
-//     int sh_cat(char **argv, size_t argc, std::string &out);
-//     int sh_dir(char **argv, size_t argc, std::string &out);
-//     int sh_cd(char **argv, size_t argc, std::string &out);
-
-//     Command commands[] = {
-//         {
-//             .cmd = "help",
-//             .alias = "?",
-//             .help = "Get help, if you need it.",
-//             .func = &sh_help
-//         },
-//         {
-//             .cmd = "set",
-//             .alias = "s",
-//             .help = "Set a config value",
-//             .func = &sh_set
-//         },
-//         {
-//             .cmd = "list",
-//             .alias = "l",
-//             .help = "List all config in JSON format",
-//             .func = &sh_list
-//         },
-//         {
-//             .cmd = "cat",
-//             .alias = "c",
-//             .help = "Print a file to the serial console",
-//             .func = &sh_cat
-//         },
-//         {
-//             .cmd = "dir",
-//             .alias = "d",
-//             .help = "List current directory",
-//             .func = &sh_dir
-//         },
-//         {
-//             .cmd = "cd",
-//             .alias = ".",
-//             .help = "Change directory",
-//             .func = &sh_cd
-//         },
-//         {
-//             .cmd = "restart",
-//             .alias = "R",
-//             .help = "Restart the device",
-//             .func = cmd_f { out += "temporarily broken"; }
-//         },
-//         {
-//             .cmd = "mode",
-//             .alias = "m",
-//             .help = "Set mode automatic|manual",
-//             .func = cmd_f { RunGraphPage.setMode(argv[0]); }
-//         },
-//         {
-//             .cmd = ".getser",
-//             .alias = nullptr,
-//             .help = nullptr,
-//             .func = cmd_f {
-//               out += "Device Serial: ";
-//               out += Hardware::getDeviceSerial();
-//             }
-//         },
-//         {
-//             .cmd = ".debugsens",
-//             .alias = nullptr,
-//             .help = nullptr,
-//             .func = cmd_f {
-//               out += "Set: ";
-//               out += Config.sensor_sensitivity;
-//               out += ", Actual: ";
-//               out += Hardware::getPressureSensitivity();
-//             },
-//         },
-//         {
-//             .cmd = ".getver",
-//             .alias = nullptr,
-//             .help = nullptr,
-//             .func = cmd_f {
-//               out += VERSION;
-//             }
-//         },
-//         {
-//             .cmd = "free",
-//             .alias = "f",
-//             .help = "Get free heap space",
-//             .func = cmd_f {
-//               // out += "Heap (caps_alloc): " + std::to_string(xPortGetFreeHeapSize()) + '\n';
-//               // out += "Total heap: " + std::to_string(ESP.getHeapSize()) + '\n';
-//               // out += "Free heap: " + std::to_string(ESP.getFreeHeap()) + '\n';
-//               // out += "Total PSRAM: " + std::to_string(ESP.getPsramSize()) + '\n';
-//               // out += "Free PSRAM: " + std::to_string(ESP.getFreePsram()) + '\n';
-//               out += "temporarily not supported";
-//             },
-//         },
-//         {
-//             .cmd = ".versionget",
-//             .alias = nullptr,
-//             .help = nullptr,
-//             .func = cmd_f {
-//               std::string v = UpdateHelper::checkWebLatestVersion();
-//               out += v + '\n';
-
-//               if (UpdateHelper::compareVersion(v.c_str(), VERSION) > 0) {
-//                 out += "An update is available!\n";
-//               }
-//             },
-//         },
-//         {
-//             .cmd = "version",
-//             .alias = "v",
-//             .help = "Get current firmware version",
-//             .func = cmd_f { out += VERSION "\n"; },
-//         },
-//         {
-//             .cmd = ".verscmp",
-//             .alias = nullptr,
-//             .help = nullptr,
-//             .func = cmd_f {
-//               out += std::to_string(UpdateHelper::compareVersion(argv[0], argv[1])) + '\n';
-//             },
-//         },
-//         {
-//             .cmd = "orgasm",
-//             .alias = "o",
-//             .help = "permit Orgasm : Set Post Orgasm Seconds ( orgasm 10 )",
-//             .func = cmd_f { 
-//               int seconds = atoi(argv[0]);
-//               OrgasmControl::permitOrgasmNow(seconds); },
-//         },
-//         {
-//             .cmd = "lock",
-//             .alias = "lock",
-//             .help = "lockMenu true/false",
-//             .func = cmd_f { 
-//               bool value = atob(argv[0]);
-//               OrgasmControl::lockMenuNow(value); },
-//         }
-//     };
-
-//     int sh_help(char **args, size_t argc, std::string &out) {
-//       for (int i = 0; i < sizeof(commands) / sizeof(Command); i++) {
-//         Command c = commands[i];
-//         if (c.help == nullptr) continue;
-//         out = out + c.cmd + "\t(" + c.alias + ")\t" + c.help + "\n";
-//       }
-
-//       return 0;
-//     }
-
-//     int sh_cat(char **args, size_t argc, std::string &out) {
-//       if (args[0] == NULL) {
-//         out += "Please specify a filename!\n";
-//         return 1;
-//       }
-
-//       struct stat st;
-//       char path[MAX_DIR_LENGTH] = "";
-//       strlcpy(path, cwd, MAX_DIR_LENGTH);
-//       SDHelper_join(path, MAX_DIR_LENGTH, args[0]);
-
-//       if (stat(path, &st) != 0 || S_ISDIR(st.st_mode)) {
-//         out += "Invalid file: ";
-//         out += path;
-//         return 1;
-//       }
-
-//       puts("");
-//       SDHelper_logFile(path);
-//       return 0;
-//     }
-
-//     int sh_dir(char **args, size_t argc, std::string &out) {
-//       // struct stat st;
-//       // if (stat(cwd, &st) != 0 || !S_ISDIR(st.st_mode)) {
-//       //   out += "Invalid directory.\n";
-//       //   return 1;
-//       // }
-
-//       puts(""); // hacking for now.
-//       if (argc > 0) {
-//         SDHelper_logDirectory(args[0]);
-//       } else {
-//         SDHelper_logDirectory(cwd);
-//       }
-
-//       return 0;
-//     }
-
-//     int sh_cd(char **args, size_t argc, std::string &out) {
-//       if (args[0] == NULL) {
-//         out += "Directory required.";
-//         return 1;
-//       }
-
-//       char newDir[MAX_DIR_LENGTH] = "";
-//       if (!strcmp(args[0], "..")) {
-//         char *last = strrchr(cwd, '/');
-//         if (last != NULL) {
-//           strncpy(newDir, cwd, strrchr(cwd, '/') - cwd);
-//         }
-//       } else {
-//         strlcpy(newDir, cwd, MAX_DIR_LENGTH);
-//         SDHelper_join(newDir, MAX_DIR_LENGTH, args[0]);
-//       }
-
-//       struct stat st;
-//       if (stat(newDir, &st) != 0 || !S_ISDIR(st.st_mode)) {
-//         out += "Invalid directory: ";
-//         out += newDir;
-//         out += "\n";
-//         return 1;
-//       }
-
-//       strlcpy(cwd, newDir, MAX_DIR_LENGTH);
-//       out += cwd;
-//       return 0;
-//     }
-
-//     int sh_set(char **args, size_t argc, std::string &out) {
-//       char *option = args[0];
-//       bool require_reboot = false;
-
-//       if (option == NULL) {
-//         out += "An option is required.\n";
-//         return 1;
-//       }
-
-//       if (args[1] == NULL) {
-//         char buffer[120];
-//         if (!get_config_value(args[0], buffer, 120)) {
-//           out += "Unknown config key!\n";
-//         }
-//       } else {
-//         if (set_config_value(args[0], args[1], &require_reboot)) {
-//           save_config_to_sd(0);
-
-//           if (require_reboot) {
-//             out += ("A device reset will be required for the new settings to "
-//                     "take effect.\n");
-//           }
-//         } else {
-//           out += "Unknown config key!\n";
-//         }
-//       }
-
-//       return 0;
-//     }
-
-//     int sh_list(char **args, size_t argc, std::string &out) {
-//       // dumpConfigToJson(out);
-//     }
-//   }
-
-//   /**
-//    * Handles the message currently in the buffer.
-//    */
-//   void handleMessage(char *line, std::string &out) {
-//     const int TOK_BUFSIZE = 64;
-//     const char *TOK_DELIM = " \t\r\n\a";
-
-//     int bufsize = TOK_BUFSIZE;
-//     int position = 0;
-
-//     char *tokens[bufsize] = {0};
-//     char *token;
-
-//     if (!tokens) {
-//       out += "allocation error :(";
-//       return;
-//     }
-
-//     token = strtok(line, TOK_DELIM);
-//     while (token != NULL) {
-//       tokens[position] = token;
-//       position++;
-
-//       if (position > bufsize) {
-//         // buffer overflow, extend?
-//       }
-
-//       token = strtok(NULL, TOK_DELIM);
-//     }
-
-//     tokens[position] = 0;
-
-//     // Empty command!
-//     if (position == 0) {
-//       return;
-//     }
-
-//     // Find Cmd
-//     char *cmd = tokens[0];
-//     bool handled = false;
-
-//     for (int i = 0; cmd[i]; i++) {
-//       // Command to lower
-//       cmd[i] = tolower(cmd[i]);
-//     }
-
-//     for (int i = 0; i < sizeof(commands) / sizeof(Command); i++) {
-//       Command c = commands[i];
-
-//       if (strcmp(c.cmd, cmd) == 0 || (c.alias != nullptr && strcmp(c.alias, cmd) == 0)) {
-//         c.func(tokens + 1, position - 1, out);
-//         handled = true;
-//         break;
-//       }
-//     }
-
-//     if (!handled) {
-//       out += "Unknown command.";
-//     }
-//   }
-
-//   /**
-//    * Intercept TS-code commands to see if we're changing modes, otherwise pass to global handler.
-//    */
-//   tscode_command_response_t tscode_handler(tscode_command_t* cmd, char* response, size_t resp_len) {
-//       if (cmd->type == TSCODE_EXIT_TSCODE_MODE) {
-//         tscode_mode = 0;
-//         return TSCODE_RESPONSE_OK;
-//       } else {
-//         return eom_tscode_handler(cmd, response, resp_len);
-//       }
-//   }
-
-//   void ready() {
-//     printf("\n" PROMPT, cwd);
-//   }
-
-//   /**
-//    * Reads and stores incoming bytes onto the buffer until
-//    * we have a newline.
-//    */
-//   void loop() {
-//     char incoming = fgetc(stdin);
-//     while (incoming != 0xFF) {
-//       if (incoming == '\r') {
-//       } else if (incoming == '\n') {
-//         if (!tscode_mode) {
-//           if (!strcmp(buffer, "TSCODE")) {
-//             tscode_mode = true;
-//           } else {
-//             std::string response;
-//             handleMessage(buffer, response);
-//             const char *str = response.c_str();
-//             puts("");
-//             if (str[0] != '\0') {
-//               puts(str);
-//               if (str[strlen(str)-1] != '\n') printf("\n");
-//             }
-//             printf(PROMPT, cwd);
-//           }
-//         } else {
-//           char response[121] = "";
-//           tscode_process_buffer(buffer, tscode_handler, response, 120);
-//           puts(response);
-//         }
-
-//         buffer_i = 0;
-//         buffer[buffer_i] = 0;
-//       } else if (incoming == '\b') {
-//         buffer_i--;
-//         buffer[buffer_i] = 0;
-//         printf("\b \b");
-//       } else if (!isprint(incoming)) {
-//         printf("?0x%02x\b\b\b\b\b", incoming);
-//       } else {
-//         fputc(incoming, stdout);
-//         buffer[buffer_i] = incoming;
-//         buffer_i++;
-//         buffer[buffer_i] = 0;
-//       }
-
-//       incoming = fgetc(stdin);
-//     }
-//   }
-// }

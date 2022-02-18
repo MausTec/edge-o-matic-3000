@@ -39,7 +39,8 @@ void resetSD() {
 
   UI.drawSdIcon(1);
   printf("SD Card Size: %llu MB\n", cardSize / 1000000ULL);
-  config_load_from_sd(CONFIG_FILENAME, &Config);
+  
+  config_init();
 }
 
 void setupHardware() {
@@ -135,7 +136,6 @@ void loop() {
 
   static long lastStatusTick = 0;
   static long lastTick = 0;
-  static int led_i = 0;
 
   // Periodically send out WiFi status:
   if (millis() - lastStatusTick > 1000 * 10) {
@@ -146,23 +146,6 @@ void loop() {
   if (millis() - lastTick > 1000 / 15) {
     lastTick = millis();
 
-    // Update LEDs
-#ifdef LED_PIN
-    uint8_t bar = map(OrgasmControl::getArousal(), 0, Config.sensitivity_threshold, 0, LED_COUNT - 1);
-    uint8_t dot = map(OrgasmControl::getAveragePressure(), 0, 4096, 0, LED_COUNT - 1);
-    for (uint8_t i = 0; i < LED_COUNT; i++) {
-      if (i < bar) {
-        Hardware::setLedColor(i, CRGB(map(i, 0, LED_COUNT - 1, 0, LED_Brightness),
-          map(i, 0, LED_COUNT - 1, LED_Brightness, 0), 0));
-      } else {
-        Hardware::setLedColor(i);
-      }
-    }
-
-    Hardware::setLedColor(dot, CRGB(LED_Brightness, 0, LED_Brightness));
-    Hardware::ledShow();
-#endif
-
     // Update Icons
     WiFiHelper::drawSignalIcon();
     WebSocketHelper::sendReadings();
@@ -171,5 +154,5 @@ void loop() {
   Page::DoLoop();
 
   // Tick and see if we need to save config:
-  save_config_to_sd(-1);
+  config_enqueue_save(-1);
 }

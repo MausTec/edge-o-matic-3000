@@ -125,3 +125,26 @@ size_t SDHelper_getAbsolutePath(char* out, size_t len, const char* path) {
         return SDHelper_join(out, len, path);
     }
 }
+
+static bool _isfile(const char* path) {
+    struct stat st;
+    return stat(path, &st) == 0 && S_ISREG(st.st_mode);
+}
+
+static bool _isdir(const char* path) {
+    struct stat st;
+    return stat(path, &st) == 0 && S_ISDIR(st.st_mode);
+}
+
+size_t SDHelper_getRelativePath(char *path, size_t len, const char *argv, console_t *console) {
+    if (argv != NULL) {
+        if (argv[0] == '/') {
+            SDHelper_getAbsolutePath(path, len, argv);
+        } else {
+            SDHelper_join(path, len, console->cwd);
+            SDHelper_join(path, len, argv);
+        }
+    } else {
+        SDHelper_join(path, len, console->cwd);
+    }
+}

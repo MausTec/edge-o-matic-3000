@@ -9,6 +9,7 @@ extern "C" {
 #include <stdio.h>
 #include "cJSON.h"
 #include "esp_vfs.h"
+#include "console.h"
 
 /**
  *  @deprecated Use PATH_MAX
@@ -23,6 +24,11 @@ extern "C" {
  *          calculated but no assignments made.
  */
 size_t SDHelper_getAbsolutePath(char *buf, size_t len, const char *path);
+
+/**
+ * 
+ */
+size_t SDHelper_getRelativePath(char *path, size_t len, const char *argv, console_t *console);
 
 /**
  * Joins a path suffix *path to the path in *buf, up to len characters.

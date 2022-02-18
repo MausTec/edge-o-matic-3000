@@ -29,7 +29,7 @@ extern "C" {
         } else { \
             cJSON_AddStringToObject(root, #name, cfg->name); \
         } \
-    } else if (key != NULL && !strcmp(key, #name)) { \
+    } else if (key != NULL && !strcasecmp(key, #name)) { \
         if (get) { \
             if (out_val != NULL) strlcpy(out_val, cfg->name, len); \
             return true; \
@@ -44,11 +44,11 @@ extern "C" {
     if (root != NULL) { \
         if (get) { \
             cJSON* item = cJSON_GetObjectItem(root, #name); \
-            cfg->name, item == NULL ? default : item->valueint; \
+            cfg->name = item == NULL ? default : item->valueint; \
         } else { \
             cJSON_AddNumberToObject(root, #name, cfg->name); \
         } \
-    } else if (key != NULL && !strcmp(key, #name)) { \
+    } else if (key != NULL && !strcasecmp(key, #name)) { \
         if (get) { \
             if (out_val != NULL) snprintf(out_val, len, "%d", cfg->name); \
             return true; \
@@ -63,11 +63,11 @@ extern "C" {
     if (root != NULL) { \
         if (get) { \
             cJSON* item = cJSON_GetObjectItem(root, #name); \
-            cfg->name, item == NULL ? default : (type) item->valueint; \
+            cfg->name = item == NULL ? default : (type) item->valueint; \
         } else { \
             cJSON_AddNumberToObject(root, #name, (int) cfg->name); \
         } \
-    } else if (key != NULL && !strcmp(key, #name)) { \
+    } else if (key != NULL && !strcasecmp(key, #name)) { \
         if (get) { \
             if (out_val != NULL) snprintf(out_val, len, "%d", (int) cfg->name); \
             return true; \
@@ -82,11 +82,11 @@ extern "C" {
     if (root != NULL) { \
         if (get) { \
             cJSON* item = cJSON_GetObjectItem(root, #name); \
-            cfg->name, item == NULL ? default : item->valueint; \
+            cfg->name = item == NULL ? default : item->valueint; \
         } else { \
-            cJSON_AddNumberToObject(root, #name, cfg->name); \
+            cJSON_AddBoolToObject(root, #name, cfg->name); \
         } \
-    } else if (key != NULL && !strcmp(key, #name)) { \
+    } else if (key != NULL && !strcasecmp(key, #name)) { \
         if (get) { \
             if (out_val != NULL) strlcat(out_val, cfg->name ? "true" : "false", len); \
             return true; \
@@ -98,7 +98,7 @@ extern "C" {
 }
 
 bool atob(const char *a);
-
+esp_err_t config_init(void);
 void config_serialize(config_t* cfg, char* buf, size_t buflen);
 void config_deserialize(config_t* cfg, const char* buf);
 esp_err_t config_load_from_sd(const char* filename, config_t* cfg);

@@ -10,6 +10,9 @@ extern "C" {
 #include <stdbool.h>
 
 // SD card files:
+#define CONFIG_PATH_MAX 255
+
+// This is just a default, others can be loaded after boot.
 #define CONFIG_FILENAME "/config.json"
 #define UPDATE_FILENAME "/update.bin"
 
@@ -38,6 +41,9 @@ typedef enum vibration_mode vibration_mode_t;
  */
 
 struct config {
+  // Private Things, do not erase!
+  char _filename[CONFIG_PATH_MAX + 1];
+
   // Networking
   char wifi_ssid[WIFI_SSID_MAX_LEN + 1];
   char wifi_key[WIFI_KEY_MAX_LEN + 1];
@@ -93,8 +99,9 @@ typedef struct config config_t;
 
 extern config_t Config;
 
-// Ping this after you change a config thing.
-void save_config_to_sd(long save_at_ms);
+// These operations work on the global Config struct. For more lower-level access, check out
+// the ones presented on config_defs.h
+void config_enqueue_save(long save_at_ms);
 bool get_config_value(const char *option, char *buffer, size_t len);
 bool set_config_value(const char *option, const char *value, bool *require_reboot);
 

@@ -13,6 +13,9 @@ enum command_err {
     CMD_FAIL = -1,
     CMD_OK = 0,
     CMD_ARG_ERR = 1,
+    CMD_SUBCOMMAND_NOT_FOUND = 253,
+    CMD_SUBCOMMAND_REQUIRED = 254,
+    CMD_NOT_FOUND = 255,
 };
 
 typedef enum command_err command_err_t;
@@ -20,6 +23,7 @@ typedef enum command_err command_err_t;
 struct console {
     char cwd[PATH_MAX + 1];
     FILE *out;
+    command_err_t err;
 };
 
 typedef struct console console_t;
@@ -31,6 +35,7 @@ struct command {
     const char *help;
     const char alias;
     command_func_t func;
+    struct command *subcommands[];
 };
 
 typedef struct command command_t;
