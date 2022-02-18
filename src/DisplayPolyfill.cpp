@@ -97,8 +97,28 @@ void DisplayPolyfill::printf(const char* format, ...) {
     }
 }
 
+/**
+ * Mersenne prime hash calculation to quickly detect if the buffer ever changed.
+ */
+static size_t calculate_hash(const uint8_t *buf, size_t len) {
+    size_t hash = 2166136261U;
+    for (int i = 0; i < len; i++) {
+        hash = (127 * hash) + buf[i];
+    }
+    return hash;
+}
 
 // Output
 void DisplayPolyfill::display() {
-    u8g2_SendBuffer(this->display_ptr);
+    static const size_t bufsz = 8 * u8g2_GetBufferTileHeight(this->display_ptr) * u8g2_GetBufferTileWidth(this->display_ptr);
+    static const uint8_t* bufptr = u8g2_GetBufferPtr(this->display_ptr);
+    static size_t last_hash = 0;
+
+    size_t hash = calculate_hash(bufptr, bufsz);
+
+    if (hash != last_hash) {
+        ESP_LOGD(TAG, "Comparing buffer hash: %u <=> %u (buffer at %p, %u bytes)", hash, last_hash, bufptr, bufsz);
+        u8g2_SendBuffer(this->display_ptr);
+        last_hash = hash;
+    }
 }

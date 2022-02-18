@@ -255,7 +255,7 @@ namespace WebSocketHelper {
     // }
 
     // // Send new settings to client:
-    // save_config_to_sd(millis() + 300);
+    // config_enqueue_save(millis() + 300);
   }
 
   void cbSetMode(int num, cJSON* mode) {

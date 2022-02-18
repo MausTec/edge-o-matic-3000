@@ -1,7 +1,10 @@
 #include "config.h"
 #include "config_defs.h"
 
-config_t Config;
+// Initialize the global Config struct with its private members:
+config_t Config = {
+  ._filename = "",
+};
 
 CONFIG_DEFS {
   // WiFi Settings

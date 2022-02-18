@@ -28,7 +28,7 @@ UITextInput WiFiKeyInput("WiFi Key", 64, [](UIMenu *ip) {
         
         if (WiFiHelper::begin()) {
             UI.toastNow("WiFi Connected!", 3000);
-            save_config_to_sd(0);
+            config_enqueue_save(0);
             menu->close();
         } else {
             UI.toastNow("Failed to connect.", 3000);

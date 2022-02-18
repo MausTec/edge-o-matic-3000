@@ -203,7 +203,7 @@ class pRunGraph : public Page {
     if (mode == Automatic || mode == PostOrgasm) {
       // TODO this may go out of bounds. Also, change in steps?
       Config.sensitivity_threshold += (diff * step);
-      save_config_to_sd(millis() + 300);
+      config_enqueue_save(millis() + 300);
     } else {
       Hardware::changeMotorSpeed(diff * step);
     }
