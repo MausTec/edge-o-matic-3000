@@ -60,6 +60,7 @@ struct config {
 
   // Console
   bool store_command_history;
+  bool console_basic_mode;
 
   // Server
   int websocket_port;

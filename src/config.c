@@ -19,6 +19,7 @@ CONFIG_DEFS {
 
   // Console Settings
   CFG_BOOL(store_command_history, true);
+  CFG_BOOL(console_basic_mode, false);
 
   // Network Settings
   CFG_NUMBER(websocket_port, 80);

@@ -58,14 +58,20 @@ static const command_t cmd_config_load_s = {
 };
 
 static command_err_t cmd_config_save(int argc, char** argv, console_t* console) {
-    if (argc == 0) {
+    if (argc >= 2) {
         return CMD_ARG_ERR;
     }
 
-    char path[PATH_MAX + 1] = { 0 };
-    SDHelper_getRelativePath(path, PATH_MAX, argv[0], console);
+    esp_err_t err;
 
-    esp_err_t err = config_save_to_sd(path, &Config);
+    if (argc == 0) {
+        err = config_save_to_sd(Config._filename, &Config);
+    } else {
+        char path[PATH_MAX + 1] = { 0 };
+        SDHelper_getRelativePath(path, PATH_MAX, argv[0], console);
+        err = config_save_to_sd(path, &Config);
+    }
+
     if (err != ESP_OK) {
         fprintf(console->out, "Failed to store config: %d\n", err);
         return CMD_FAIL;

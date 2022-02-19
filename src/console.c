@@ -102,9 +102,14 @@ static void reinitialize_console(void) {
             linenoiseHistoryLoad(_history_file);
         }
 
-        if (linenoiseProbe()) {
+        // For some reason, this broke. I dunno. It's returning -2 all the time when
+        // compiler optimizations are turned on???
+        //
+        // int resp = linenoiseProbe();
+        int resp = 99;
+        if (Config.console_basic_mode) {
             printf("Your terminal does not support escape sequences. This experience may\n"
-                "not be as pretty as on other consoles.\n");
+                "not be as pretty as on other consoles: %d\n", resp);
             linenoiseSetDumbMode(true);
         }
     }

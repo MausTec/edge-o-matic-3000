@@ -41,6 +41,7 @@ class Page;
 typedef std::function<void(UIMenu*)> MenuCallback;
 typedef std::function<void(UIMenu*, void*)> ParameterizedMenuCallback;
 typedef std::function<void(UIMenu*, int)> IParameterizedMenuCallback;
+typedef std::function<void(UIMenu*, void*, int)> PIParameterizedMenuCallback;
 
 enum AutocleanMethod {
   AUTOCLEAN_OFF,
@@ -53,6 +54,7 @@ typedef struct UIMenuItem {
   MenuCallback cb;
   ParameterizedMenuCallback pcb;
   IParameterizedMenuCallback ipcb;
+  PIParameterizedMenuCallback pipcb;
   void *arg = nullptr;
   int iarg = NULL;
   UIMenuItem *next = nullptr;
@@ -76,6 +78,7 @@ public:
   void addItem(UIMenu *submenu, void *arg = nullptr);
   void addItem(std::string text, UIMenu *submenu, void *arg = nullptr);
   void addItem(const char *text, IParameterizedMenuCallback pcb = nullptr, int arg = NULL);
+  void addItem(const char *text, PIParameterizedMenuCallback pcb = nullptr, void *parg = NULL, int arg = NULL);
   void addItem(std::string text, IParameterizedMenuCallback pcb = nullptr, int arg = NULL) { addItem(text.c_str(), pcb, arg); };
   void addItemAt(size_t index, const char *text, MenuCallback cb = nullptr);
   void removeItem(size_t index);
