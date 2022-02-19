@@ -86,7 +86,7 @@ static void register_help(void) {
 }
 
 static void reinitialize_console(void) {
-    if (_tscode_mode) {
+    if (_tscode_mode || Config.console_basic_mode) {
         linenoiseSetDumbMode(true);
         linenoiseAllowEmpty(false);
         linenoiseSetMultiLine(false);
@@ -95,19 +95,14 @@ static void reinitialize_console(void) {
         linenoiseAllowEmpty(true);
         linenoiseSetMultiLine(true);
         linenoiseHistorySetMaxLen(100);
-        linenoiseSetDumbMode(false);
 
         if (Config.store_command_history) {
             SDHelper_getAbsolutePath(_history_file, SD_MAX_DIR_LENGTH, "history.txt");
             linenoiseHistoryLoad(_history_file);
         }
 
-        // For some reason, this broke. I dunno. It's returning -2 all the time when
-        // compiler optimizations are turned on???
-        //
-        // int resp = linenoiseProbe();
-        int resp = 99;
-        if (Config.console_basic_mode) {
+        int resp = linenoiseProbe();
+        if (resp != 0) {
             printf("Your terminal does not support escape sequences. This experience may\n"
                 "not be as pretty as on other consoles: %d\n", resp);
             linenoiseSetDumbMode(true);
@@ -141,10 +136,13 @@ static void console_task(void* args) {
 
     strncpy(uart_console.cwd, eom_hal_get_sd_mount_point(), PATH_MAX);
 
-    printf("Press any key to initialize the terminal.\n");
-    for (;;) {
-        if (getc(stdin) != EOF) break;
-        vTaskDelay(1);
+    // Delay here on console initialization to allow the user to connect a terminal first.
+    if (!Config.console_basic_mode) {
+        printf("Press any key to initialize the terminal.\n");
+        for (;;) {
+            if (getc(stdin) != EOF) break;
+            vTaskDelay(1);
+        }
     }
 
     reinitialize_console();
