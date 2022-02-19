@@ -1,12 +1,13 @@
 #include "UIMenu.h"
 #include "UITextInput.h"
-#include "WiFiHelper.h"
+#include "wifi_manager.h"
 #include "UserInterface.h"
 
 #include <cstring>
 
-static bool scanning = false;
+#define MAX_SCAN_NETWORKS CONFIG_WIFI_PROV_SCAN_MAX_ENTRIES
 
+static bool scanning = false;
 static void addScanItem(UIMenu* menu);
 
 UITextInput WiFiKeyInput("WiFi Key", 64, [](UIMenu *ip) {
@@ -16,17 +17,15 @@ UITextInput WiFiKeyInput("WiFi Key", 64, [](UIMenu *ip) {
 
     input->onConfirm([](const char *key, UIMenu *menu) {
         UITextInput *inp = (UITextInput*) menu;
-        int *idx_ptr = (int*) inp->getCurrentArg();
+        char *ssid = (char*) inp->getCurrentArg();
 
-        const char *ssid = ""; //WiFi.SSID(*idx_ptr).c_str();
-        printf("Connect to: SSID=%s, Key=%s\n", ssid, key);
         UI.toastNow("Connecting...", 0, false);
 
         Config.wifi_on = true;
         strlcpy(Config.wifi_ssid, ssid, WIFI_SSID_MAX_LEN);
         strlcpy(Config.wifi_key, key, WIFI_KEY_MAX_LEN);
         
-        if (WiFiHelper::begin()) {
+        if (wifi_manager_connect_to_ap(Config.wifi_ssid, Config.wifi_key) == ESP_OK) {
             UI.toastNow("WiFi Connected!", 3000);
             config_enqueue_save(0);
             menu->close();
@@ -36,10 +35,8 @@ UITextInput WiFiKeyInput("WiFi Key", 64, [](UIMenu *ip) {
     });
 });
 
-static void selectNetwork(UIMenu *menu, int idx) {
-    int *idx_ptr = (int*) malloc(sizeof(int));
-    *idx_ptr = idx;
-    UI.openMenu(&WiFiKeyInput, true, true, idx_ptr);
+static void selectNetwork(UIMenu *menu, void *ssid) {
+    UI.openMenu(&WiFiKeyInput, true, true, ssid);
 }
 
 static void stopScan(UIMenu* menu) {
@@ -53,9 +50,19 @@ static void startScan(UIMenu* menu) {
     menu->initialize();
     menu->render();
 
-    int count = 0; //WiFi.scanNetworks();
+    wifi_ap_record_t ap_info[MAX_SCAN_NETWORKS];
+    size_t count = MAX_SCAN_NETWORKS;
+
+    esp_err_t err = wifi_manager_scan(ap_info, &count);
+
+    if (err != ESP_OK) {
+        UI.toastNow("Error scanning for\nWiFi networks.");
+    }
+
     for (int i = 0; i < count; i++) {
-        // menu->addItem(WiFi.SSID(i).c_str(), &selectNetwork, i);
+        wifi_ap_record_t network = ap_info[i];
+        char *ssid = (char*) malloc(sizeof(char) * (strlen((char*)network.ssid) + 1));
+        menu->addItem((char*)network.ssid, &selectNetwork, (void*) ssid);
     }
 
     scanning = false;
@@ -76,6 +83,7 @@ static void addScanItem(UIMenu* menu) {
 static void buildMenu(UIMenu* menu) {
     if (Config.wifi_on) {
         addScanItem(menu);
+        menu->enableAutoCleanup(AutocleanMethod::AUTOCLEAN_FREE);
     } else {
         menu->addItem("WiFi Is Off", nullptr);
     }

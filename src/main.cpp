@@ -16,7 +16,7 @@
 #include "RunningAverage.h"
 #include "Console.h"
 #include "OrgasmControl.h"
-#include "WiFiHelper.h"
+#include "wifi_manager.h"
 #include "UpdateHelper.h"
 #include "WebSocketHelper.h"
 #include "WebSocketSecureHelper.h"
@@ -69,6 +69,7 @@ void backgroundLoop(void*) {
 extern "C" void app_main() {
   eom_hal_init();
   console_init();
+  wifi_manager_init();
 
   printf("Maus-Tec presents: Edge-o-Matic 3000\n");
   printf("Version: " VERSION "\n");
@@ -87,7 +88,7 @@ extern "C" void app_main() {
 
   // Initialize WiFi
   if (Config.wifi_on) {
-    WiFiHelper::begin();
+    wifi_manager_connect_to_ap(Config.wifi_ssid, Config.wifi_key);
   }
 
   // Initialize Bluetooth
@@ -147,7 +148,12 @@ void loop() {
     lastTick = millis();
 
     // Update Icons
-    WiFiHelper::drawSignalIcon();
+    if (wifi_manager_get_status() == WIFI_MANAGER_CONNECTED) {
+      UI.drawWifiIcon(1);
+    } else {
+      UI.drawWifiIcon(0);
+    }
+    
     WebSocketHelper::sendReadings();
   }
 

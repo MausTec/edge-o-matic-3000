@@ -10,7 +10,7 @@ void commands_register_config(void);
 void commands_register_system(void);
 void commands_register_edging(void);
 
-inline void commands_register_all(void) {
+static inline void commands_register_all(void) {
     commands_register_fsutils();
     commands_register_config();
     commands_register_system();

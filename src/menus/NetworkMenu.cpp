@@ -1,43 +1,39 @@
 #include "UIMenu.h"
 #include "UserInterface.h"
-#include "WiFiHelper.h"
+#include "wifi_manager.h"
 #include "BluetoothServer.h"
 #include "BluetoothDriver.h"
 #include "WebSocketHelper.h"
 #include <string>
 
-// #include <WiFi.h>
-
 static void onDisableWiFi(UIMenu *menu) {
   UI.toastNow("Disconnecting...", 0, false);
   Config.wifi_on = false;
-  WiFiHelper::disconnect();
+  wifi_manager_disconnect();
   config_enqueue_save(0);
   UI.toast("Disconnected.", 3000);
   menu->initialize();
-  menu->render();
+  menu->rerender();
 }
 
 static void onEnableWiFi(UIMenu *menu) {
+  Config.wifi_on = true;
+
   if (Config.wifi_ssid[0] == '\0' || Config.wifi_key[0] == '\0') {
-    Config.wifi_on = true;
-    config_enqueue_save(0);
-    menu->render();
+    menu->rerender();
     return;
   }
 
   UI.toastNow("Connecting...", 0, false);
-  Config.wifi_on = true;
-  if (WiFiHelper::begin()) {
+  if (wifi_manager_connect_to_ap(Config.wifi_ssid, Config.wifi_key) == ESP_OK) {
     UI.toastNow("WiFi Connected!", 3000);
     config_enqueue_save(0);
     menu->initialize();
   } else {
     UI.toastNow("Failed to connect.", 3000);
-    Config.wifi_on = false;
   }
 
-  menu->render();
+  menu->rerender();
 }
 
 static void onViewStatus(UIMenu*) {
@@ -49,9 +45,9 @@ static void onViewStatus(UIMenu*) {
     status += "\n";
   } 
   
-  if (WiFiHelper::connected()) {
+  if (wifi_manager_get_status() == WIFI_MANAGER_CONNECTED) {
     status += "Connected\n";
-    status += WiFiHelper::ip() + '\n';
+    status += wifi_manager_get_local_ip() + '\n';
   } else if (!Config.bt_on) {
     status += "Disconnected";
   }
@@ -66,8 +62,8 @@ static void onEnableBluetooth(UIMenu* menu) {
   if (!Config.force_bt_coex) {
     Config.wifi_on = false;
 
-    if (WiFiHelper::connected()) {
-      WiFiHelper::disconnect();
+    if (wifi_manager_get_status() == WIFI_MANAGER_CONNECTED) {
+      wifi_manager_disconnect();
     }
   }
 
@@ -90,7 +86,7 @@ static void onDisableBluetooth(UIMenu* menu) {
 }
 
 static void onDisconnect(UIMenu *menu) {
-  WiFiHelper::disconnect();
+  wifi_manager_disconnect();
   menu->initialize();
   menu->render();
 }
@@ -115,10 +111,10 @@ static void buildMenu(UIMenu *menu) {
     menu->addItem("Turn WiFi Off", &onDisableWiFi);
   }
   
-  if (WiFiHelper::connected()) {
+  if (wifi_manager_get_status() == WIFI_MANAGER_CONNECTED) {
     menu->addItem("Disconnect WiFi", &onDisconnect);
-
     menu->addItem("Maus-Link Connect", &onMausLink);
+
   } else if (Config.force_bt_coex || !Config.bt_on) {
     if (Config.wifi_on) {
       if (strlen(Config.wifi_ssid) > 0) {
@@ -126,6 +122,7 @@ static void buildMenu(UIMenu *menu) {
         title.append(Config.wifi_ssid);
         menu->addItem(title, &onEnableWiFi);
       }
+
       menu->addItem(&WiFiScanMenu);
     } else {
       menu->addItem("Enable WiFi", &onEnableWiFi);

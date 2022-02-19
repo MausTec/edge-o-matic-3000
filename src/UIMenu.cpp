@@ -75,6 +75,27 @@ void UIMenu::addItem(const char *text, ParameterizedMenuCallback pcb, void *arg)
   }
 }
 
+void UIMenu::addItem(const char *text, PIParameterizedMenuCallback pcb, void *arg, int iarg) {
+  UIMenuItem *item = new UIMenuItem();
+  strncpy(item->text, text, 20);
+  item->next = nullptr;
+  item->cb = nullptr;
+  item->pipcb = pcb;
+  item->prev = last_item;
+  item->arg = arg;
+  item->iarg = iarg;
+
+  if (last_item != nullptr) {
+    last_item->next = item;
+  }
+
+  last_item = item;
+
+  if (first_item == nullptr) {
+    first_item = item;
+  }
+}
+
 void UIMenu::removeItem(size_t index) {
   UIMenuItem *ptr = this->first_item;
 
