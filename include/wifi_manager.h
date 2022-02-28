@@ -11,6 +11,8 @@ extern "C" {
 enum wifi_manager_status {
     WIFI_MANAGER_DISCONNECTED,
     WIFI_MANAGER_CONNECTED,
+    WIFI_MANAGER_DISCONNECTING,
+    WIFI_MANAGER_RECONNECTING,
 };
 
 typedef enum wifi_manager_status wifi_manager_status_t;

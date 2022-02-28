@@ -16,6 +16,19 @@ static const command_t cmd_system_restart_s = {
     .subcommands = {NULL},
 };
 
+static command_err_t cmd_system_time(int argc, char** argv, console_t* console) {
+    if (argc == 0) { return CMD_ARG_ERR; }
+    return CMD_OK;
+}
+
+static const command_t cmd_system_time_s = {
+    .command = "time",
+    .help = "Get system time.",
+    .alias = NULL,
+    .func = &cmd_system_time,
+    .subcommands = {NULL},
+};
+
 static const command_t cmd_system_s = {
     .command = "system",
     .help = "System control",
