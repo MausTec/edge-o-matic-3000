@@ -11,6 +11,9 @@
 #include "esp_log.h"
 #include "esp_tls.h"
 #include "nvs_flash.h"
+#include "sntp.h"
+#include "config.h"
+#include "mdns.h"
 
 #include "lwip/err.h"
 #include "lwip/sys.h"
@@ -32,13 +35,16 @@ static void event_handler(void* arg, esp_event_base_t event_base, int32_t event_
         if (event_id == WIFI_EVENT_STA_START) {
             esp_wifi_connect();
         } else if (event_id == WIFI_EVENT_STA_DISCONNECTED) {
-            s_wifi_status = WIFI_MANAGER_DISCONNECTED;
-
-            if (s_retry_num < WIFI_MAX_CONNECTION_RETRY) {
+            if (s_wifi_status == WIFI_MANAGER_DISCONNECTING) {
+                s_wifi_status = WIFI_MANAGER_DISCONNECTED;
+                return;
+            } else if (s_retry_num < WIFI_MAX_CONNECTION_RETRY) {
+                s_wifi_status = WIFI_MANAGER_RECONNECTING;
                 esp_wifi_connect();
                 s_retry_num++;
                 ESP_LOGI(TAG, "WiFi Disconnected, Retrying (attempt %d)", s_retry_num);
             } else {
+                s_wifi_status = WIFI_MANAGER_DISCONNECTED;
                 xEventGroupSetBits(s_wifi_event_group, WIFI_FAIL_BIT);
                 ESP_LOGW(TAG, "WiFi Disconnected, exceeded retry limit.");
             }
@@ -76,9 +82,19 @@ void wifi_manager_init(void) {
     ESP_ERROR_CHECK(
         esp_event_handler_instance_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &event_handler, NULL, &instance_got_ip)
     );
+
+    // Use Internet Time
+    sntp_setoperatingmode(SNTP_OPMODE_POLL);
+    sntp_setservername(0, "pool.ntp.org");
+    sntp_init();
 }
 
 esp_err_t wifi_manager_connect_to_ap(const char* ssid, const char* key) {
+    if (ssid[0] == '\0') {
+        ESP_LOGW(TAG, "Connecting to AP requires SSID. Aborting.");
+        return;
+    }
+
     wifi_config_t wifi_config = {
         .sta = {
             .threshold.authmode = WIFI_AUTH_WPA2_PSK,
@@ -107,6 +123,13 @@ esp_err_t wifi_manager_connect_to_ap(const char* ssid, const char* key) {
     );
 
     if (bits & WIFI_CONNECTED_BIT) {
+        // Set mDNS hostname
+        if (Config.hostname[0] != '\0') {
+            ESP_ERROR_CHECK(mdns_init());
+            mdns_hostname_set(Config.hostname);
+            mdns_instance_name_set(Config.bt_display_name);
+        }
+
         return ESP_OK;
     } else if (bits & WIFI_FAIL_BIT) {
         return ESP_FAIL;
@@ -139,6 +162,7 @@ esp_err_t wifi_manager_scan(wifi_ap_record_t* ap_info, size_t *count) {
 }
 
 void wifi_manager_disconnect(void) {
+    s_wifi_status = WIFI_MANAGER_DISCONNECTING;
     esp_wifi_disconnect();
 }
 
