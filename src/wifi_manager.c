@@ -1,5 +1,7 @@
 #include "wifi_manager.h"
 
+#include "system/http_server.h"
+
 #include <string.h>
 
 #include "freertos/FreeRTOS.h"
@@ -130,6 +132,10 @@ esp_err_t wifi_manager_connect_to_ap(const char* ssid, const char* key) {
             mdns_instance_name_set(Config.bt_display_name);
         }
 
+        if (Config.websocket_port > 0) {
+            ESP_ERROR_CHECK(http_server_connect());
+        }
+
         return ESP_OK;
     } else if (bits & WIFI_FAIL_BIT) {
         return ESP_FAIL;
@@ -163,6 +169,7 @@ esp_err_t wifi_manager_scan(wifi_ap_record_t* ap_info, size_t *count) {
 
 void wifi_manager_disconnect(void) {
     s_wifi_status = WIFI_MANAGER_DISCONNECTING;
+    http_server_disconnect();
     esp_wifi_disconnect();
 }
 

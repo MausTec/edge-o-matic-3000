@@ -9,6 +9,8 @@
 #include "config_defs.h"
 #include "VERSION.h"
 
+#include "system/http_server.h"
+
 #include "Hardware.h"
 #include "UserInterface.h"
 #include "BluetoothServer.h"
@@ -69,6 +71,7 @@ void backgroundLoop(void*) {
 extern "C" void app_main() {
   eom_hal_init();
   console_init();
+  http_server_init();
   wifi_manager_init();
 
   printf("Maus-Tec presents: Edge-o-Matic 3000\n");
