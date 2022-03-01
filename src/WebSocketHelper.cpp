@@ -1,5 +1,4 @@
 #include "WebSocketHelper.h"
-#include "WebSocketSecureHelper.h"
 #include "VERSION.h"
 
 #include "eom-hal.h"
@@ -18,35 +17,6 @@
 static const char* TAG = "WebSocketHelper";
 
 namespace WebSocketHelper {
-  void begin() {
-    // Start WebSocket server and assign callback
-    WebSocketSecureHelper::setup();
-  }
-
-  void tick() {
-    WebSocketSecureHelper::loop();
-  }
-
-  void end() {
-    WebSocketSecureHelper::end();
-  }
-
-  void send(const char* cmd, cJSON* doc, int num) {
-    // DynamicJsonDocument envelope(1024);
-    // envelope[cmd] = doc;
-
-    // String payload;
-    // serializeJson(envelope, payload);
-
-    // WebSocketSecureHelper::send(num, payload);
-  }
-
-  void send(const char* cmd, const char* text, int num) {
-    // DynamicJsonDocument doc(1024);
-    // doc["text"] = text;
-    // send(cmd, doc, num);
-  }
-
   static void _ws_client_evt_handler(void* handler_args, esp_event_base_t base, int32_t event_id, void* event_data) {
     esp_websocket_event_data_t* data = (esp_websocket_event_data_t*) event_data;
     switch (event_id) {
@@ -95,84 +65,8 @@ namespace WebSocketHelper {
     esp_err_t err = esp_websocket_client_start(ws_client);
 
     if (err == ESP_OK) {
-      WebSocketSecureHelper::registerRemote(ws_client);
+      // WebSocketSecureHelper::registerRemote(ws_client);
     }
-  }
-
-  /*
-   * Helpers here which handle sending all server responses.
-   * The first parameter should be int num, followed by any additional
-   * parameters needed for this request (int nonce, ...)
-   */
-
-  void sendSystemInfo(int num) {
-    // DynamicJsonDocument doc(200);
-    // doc["device"] = "Edge-o-Matic 3000";
-    // doc["serial"] = String(Hardware::getDeviceSerial());
-    // doc["hwVersion"] = "";
-    // doc["fwVersion"] = VERSION;
-
-    // send("info", doc, num);
-  }
-
-  void sendSettings(int num) {
-    // DynamicJsonDocument doc(4096);
-    // dumpConfigToJsonObject(doc);
-
-    // send("configList", doc, num);
-  }
-
-  void sendWxStatus(int num) {
-    // DynamicJsonDocument doc(200);
-    // doc["ssid"] = Config.wifi_ssid;
-    // doc["ip"] = WiFi.localIP().toString();
-    // doc["rssi"] = WiFi.RSSI();
-
-    // send("wifiStatus", doc, num);
-  }
-
-  void sendSdStatus(int num) {
-    // DynamicJsonDocument doc(200);
-    // doc["size"] = eom_hal_get_sd_size_bytes();
-    // doc["type"] = "???";
-
-    // send("sdStatus", doc, num);
-  }
-
-  void sendReadings(int num) {
-    //    String screenshot;
-    //    UI.screenshot(screenshot);
-
-    char mode[12];
-    int scaled_arousal = OrgasmControl::getArousal() * 4;
-
-    switch (RunGraphPage.getMode()) {
-    case 0:
-      strlcpy(mode, "Manual", sizeof(mode));
-      break;
-    case 1:
-      strlcpy(mode, "Automatic", sizeof(mode));
-      break;
-    case 2:
-      strlcpy(mode, "PostOrgasm", sizeof(mode));
-      break;
-    }
-
-    // Serialize Data
-    // DynamicJsonDocument doc(3072);
-    // doc["pressure"] = OrgasmControl::getLastPressure();
-    // doc["pavg"] = OrgasmControl::getAveragePressure();
-    // doc["motor"] = Hardware::getMotorSpeed();
-    // doc["arousal"] = OrgasmControl::getArousal();
-    // doc["millis"] = millis();
-    // doc["scaledArousal"] = scaled_arousal;
-    // doc["runMode"] = mode;
-    // doc["permitOrgasm"] = OrgasmControl::isPermitOrgasmReached();
-    // doc["postOrgrasm"] = OrgasmControl::isPostOrgasmReached();
-    // doc["lock"] = OrgasmControl::isMenuLocked();
-    //    doc["screenshot"] = screenshot;
-
-    // send("readings", doc, num);
   }
 
   /*

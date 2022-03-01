@@ -248,7 +248,7 @@ namespace OrgasmControl {
     std::string logfile_name = "/log-";
     logfile_name += filename_date;
     logfile_name += ".csv";
-    ESP_LOGI(TAG, "Opening logfile: %s", logfile_name);
+    ESP_LOGI(TAG, "Opening logfile: %s", logfile_name.c_str());
     // logfile = SD.open(logfile_name, FILE_WRITE);
 
     // if (!logfile) {

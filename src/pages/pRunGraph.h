@@ -6,7 +6,6 @@
 #include "OrgasmControl.h"
 #include "Hardware.h"
 #include "assets.h"
-#include "WebSocketHelper.h"
 #include "polyfill.h"
 #include <cstring>
 
@@ -76,7 +75,7 @@ class pRunGraph : public Page {
     UI.display->print(status);
 
     UI.display->setCursor(SCREEN_WIDTH / 3 + 3, 10);
-    sprintf(status, "P:%04d", OrgasmControl::getAveragePressure());
+    sprintf(status, "P:%04ld", OrgasmControl::getAveragePressure());
     UI.display->print(status);
 
     UI.display->setCursor(SCREEN_WIDTH / 3 * 2 + 7, 10);
@@ -236,6 +235,8 @@ public:
       case PostOrgasm:
         return 2;
     }
+
+    return -1;
   }
 
   void menuUpdate() {

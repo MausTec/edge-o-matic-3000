@@ -85,7 +85,7 @@ void DisplayPolyfill::setTextSize(uint8_t size) {
 }
 
 void DisplayPolyfill::printf(const char* format, ...) {
-    va_list(args);
+    va_list args;
     va_start(args, format);
     size_t len = vsnprintf(NULL, 0, format, args);
     char *buf = (char*) malloc(sizeof(char)*len);

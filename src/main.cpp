@@ -20,8 +20,7 @@
 #include "OrgasmControl.h"
 #include "wifi_manager.h"
 #include "UpdateHelper.h"
-#include "WebSocketHelper.h"
-#include "WebSocketSecureHelper.h"
+#include "api/broadcast.h"
 
 #include "polyfill.h"
 
@@ -59,15 +58,6 @@ void setupHardware() {
   }
 }
 
-TaskHandle_t BackgroundLoopTask;
-
-void backgroundLoop(void*) {
-  for (;;) {
-    WebSocketHelper::tick();
-    vTaskDelay(1);
-  }
-}
-
 extern "C" void app_main() {
   eom_hal_init();
   console_init();
@@ -102,18 +92,7 @@ extern "C" void app_main() {
     BT.advertise();
   }
 
-
-  // Start background worker:
-  xTaskCreatePinnedToCore(
-    backgroundLoop, /* Task function. */
-    "backgroundLoop",   /* name of task. */
-    10000,     /* Stack size of task */
-    NULL,      /* parameter of the task */
-    1,         /* priority of the task */
-    &BackgroundLoopTask,    /* Task handle to keep track of created task */
-    0);        /* pin task to core 0 */
-
-// I'm always one for the dramatics:
+  // I'm always one for the dramatics:
   delay(500);
   Hardware::setEncoderColor(CRGB::Green);
   delay(500);
@@ -144,7 +123,7 @@ void loop() {
   // Periodically send out WiFi status:
   if (millis() - lastStatusTick > 1000 * 10) {
     lastStatusTick = millis();
-    WebSocketHelper::sendWxStatus();
+    api_broadcast_network_status();
   }
 
   if (millis() - lastTick > 1000 / 15) {
@@ -157,7 +136,7 @@ void loop() {
       UI.drawWifiIcon(0);
     }
     
-    WebSocketHelper::sendReadings();
+    api_broadcast_readings();
   }
 
   Page::DoLoop();

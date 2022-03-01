@@ -169,7 +169,7 @@ void UIMenu::addItem(UIMenu *submenu, void *arg) {
 
 void UIMenu::addItem(std::string text, UIMenu *submenu, void *arg) {
   addItem(text.c_str(), [=](UIMenu*, void *argv) {
-    ESP_LOGI(TAG, "Item added with argv=%x", argv);
+    ESP_LOGI(TAG, "Item added with argv=%p", argv);
     UI.openMenu(submenu, true, true, argv);
   }, arg);
 }
@@ -267,7 +267,7 @@ void UIMenu::tick() {
 
 void UIMenu::open(UIMenu *previous, bool save_history, void *arg) {
   this->current_arg = arg;
-  ESP_LOGI(TAG, "Menu open with arg=%x", arg);
+  ESP_LOGI(TAG, "Menu open with arg=%p", arg);
   initialize();
 
   if (on_open != nullptr) {

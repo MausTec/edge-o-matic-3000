@@ -127,7 +127,7 @@ static tscode_command_response_t tscode_handler(tscode_command_t* cmd, char* res
  * Dedicated system task for handling the console initialization and looping.
  */
 static void console_task(void* args) {
-    char prompt[80] = { 0 };
+    char prompt[1033] = { 0 };
 
     console_t uart_console = {
         .out = stdout,
@@ -154,7 +154,7 @@ static void console_task(void* args) {
         if (_tscode_mode) {
             line = linenoise("");
         } else {
-            snprintf(prompt, 79, PROMPT, uart_console.cwd);
+            snprintf(prompt, 1032, PROMPT, uart_console.cwd);
             line = linenoise(prompt);
         }
 
@@ -258,7 +258,7 @@ void console_send_file(const char* filename, console_t* console) {
         rewind(file);
     }
 
-    fprintf(console->out, ">>>HEXFILE:%d;%s\n", size, filename);
+    fprintf(console->out, ">>>HEXFILE:%ld;%s\n", size, filename);
 
     if (file) {
         int c = 0xFF;
@@ -293,7 +293,7 @@ static command_err_t _console_run_subcommands(command_t* command, int argc, char
 
     while ((sc = command->subcommands[sci++]) != NULL) {
 
-        if ((sc_aliased && argv[1] == sc->alias) || !strcasecmp(argv[0], sc->command)) {
+        if ((sc_aliased && argv[0][0] == sc->alias) || !strcasecmp(argv[0], sc->command)) {
             if (sc->func != NULL) {
                 err = sc->func(argc - 1, argv + 1, console);
             }

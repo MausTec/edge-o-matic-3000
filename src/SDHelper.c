@@ -139,12 +139,12 @@ static bool _isdir(const char* path) {
 size_t SDHelper_getRelativePath(char *path, size_t len, const char *argv, console_t *console) {
     if (argv != NULL) {
         if (argv[0] == '/') {
-            SDHelper_getAbsolutePath(path, len, argv);
+            return SDHelper_getAbsolutePath(path, len, argv);
         } else {
             SDHelper_join(path, len, console->cwd);
-            SDHelper_join(path, len, argv);
+            return SDHelper_join(path, len, argv);
         }
     } else {
-        SDHelper_join(path, len, console->cwd);
+        return SDHelper_join(path, len, console->cwd);
     }
 }

@@ -1,5 +1,6 @@
 #include "config.h"
 #include "config_defs.h"
+#include <string.h>
 
 // Initialize the global Config struct with its private members:
 config_t Config = {

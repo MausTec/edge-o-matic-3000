@@ -56,7 +56,7 @@ typedef struct UIMenuItem {
   IParameterizedMenuCallback ipcb;
   PIParameterizedMenuCallback pipcb;
   void *arg = nullptr;
-  int iarg = NULL;
+  int iarg = 0;
   UIMenuItem *next = nullptr;
   UIMenuItem *prev = nullptr;
 } UIMenuItem;
