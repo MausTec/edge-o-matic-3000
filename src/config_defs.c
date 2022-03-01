@@ -132,6 +132,7 @@ void json_to_config_merge(cJSON* root, config_t* cfg) {
 
 bool set_config_value(const char* option, const char* value, bool* require_reboot) {
     if (_config_defs(CFG_SET, NULL, &Config, option, value, NULL, NULL, require_reboot)) {
+        _validate_config(&Config);
         return true;
     }
 

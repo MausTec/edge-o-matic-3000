@@ -140,25 +140,7 @@ namespace WebSocketHelper {
     // send("mkdir", resp, num);
   }
 
-  void cbConfigSet(int num, cJSON* args) {
-    // auto config = args.as<JsonObject>();
-    // bool restart_required = false;
 
-    // for (auto kvp : config) {
-    //   set_config_value(kvp.key().c_str(), kvp.value().as<String>().c_str(), &restart_required);
-    // }
-
-    // // Send new settings to client:
-    // config_enqueue_save(millis() + 300);
-  }
-
-  void cbSetMode(int num, cJSON* mode) {
-    // RunGraphPage.setMode(mode);
-  }
-
-  void cbSetMotor(int num, cJSON* speed) {
-    // Hardware::setMotorSpeed(speed);
-  }
 
   void cbOrgasm(int num, cJSON* seconds) {
     // OrgasmControl::permitOrgasmNow(seconds);

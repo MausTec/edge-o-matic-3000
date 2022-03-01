@@ -30,7 +30,10 @@ esp_err_t websocket_send_to_client(websocket_client_t* client, const char* msg) 
 
 esp_err_t websocket_broadcast(cJSON* root) { 
     char *str = cJSON_PrintUnformatted(root);
-    ESP_LOGD(TAG, "Broadcasting: %s", str);
+    
+    if (!cJSON_HasObjectItem(root, "readings")) {
+        ESP_LOGI(TAG, "Broadcasting: %s", str);
+    }
 
     websocket_client_t *client = NULL;
     list_foreach(_client_list, client) {
@@ -65,7 +68,7 @@ static void _json_add_error(cJSON* root, const char* error) {
     cJSON_AddItemToArray(err_obj, err_item);
 }
 
-void websocket_register_command(websocket_command_t* command) {
+void websocket_register_command(const websocket_command_t* command) {
     list_node_t* node = list_add(&_cmd_list, command);
     if (node == NULL) {
         ESP_LOGE(TAG, "Command registration failed, NO MEM!");

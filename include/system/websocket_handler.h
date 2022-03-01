@@ -31,7 +31,7 @@ esp_err_t websocket_handler(httpd_req_t* req);
 esp_err_t websocket_open_fd(httpd_handle_t hd, int sockfd);
 void websocket_close_fd(httpd_handle_t hd, int sockfd);
 
-void websocket_register_command(websocket_command_t* command);
+void websocket_register_command(const websocket_command_t* command);
 void websocket_run_command(const char* command, cJSON* data, cJSON* response);
 void websocket_run_commands(cJSON* commands, cJSON* response);
 
