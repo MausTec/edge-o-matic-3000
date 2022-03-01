@@ -142,6 +142,8 @@ static void setVibrateMode(UIMenu *menu, int m) {
     case VibrationMode::RampStop:
       ESP_LOGI(TAG, "RampStop");
       break;
+    default:
+      break;
   }
 
   Config.vibration_mode = mode;

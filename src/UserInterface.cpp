@@ -1,6 +1,5 @@
 #include "UserInterface.h"
 #include "Icons.h"
-#include "WebSocketHelper.h"
 #include "OrgasmControl.h"
 
 #include "Page.h"
@@ -9,6 +8,7 @@
 #include <math.h>
 #include "esp_log.h"
 #include <algorithm>
+#include "system/websocket_handler.h"
 
 static const char *TAG = "UserInterface";
 
@@ -23,7 +23,11 @@ bool UserInterface::begin(u8g2_t *d) {
 
 void UserInterface::drawStatus(const char *s) {
   if (s != nullptr) {
-    WebSocketHelper::send("mode", s);
+    cJSON* root = cJSON_CreateObject();
+    cJSON_AddStringToObject(root, "mode", s);
+    websocket_broadcast(root);
+    cJSON_Delete(root);
+
     strlcpy(status, s, STATUS_SIZE);
     int sum = 0;
     for (int i = 0; i < strlen(status); i++) {

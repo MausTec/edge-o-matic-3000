@@ -13,6 +13,8 @@ namespace BluetoothDriver {
             this->ble_client = client;
         };
 
+        virtual ~Device() {};
+
         static Device* detect(NimBLEAdvertisedDevice* device, NimBLEClient* client, NimBLERemoteService* service);
 
         // Override these:

@@ -50,6 +50,7 @@ size_t Lovense::read(char* buf, size_t len, bool waitForNotify) {
 
     std::string val = this->rxChar->readValue();
     strncpy(buf, val.c_str(), len);
+    return strlen(buf);
 }
 
 bool Lovense::waitForNotify() {
@@ -89,4 +90,6 @@ Device* Lovense::detect(NimBLEAdvertisedDevice* device, NimBLEClient* client, Ni
         Lovense* d = new Lovense(device->getName().c_str(), client, rxChar, txChar);
         return (BluetoothDriver::Device*) d;
     }
+
+    return nullptr;
 }

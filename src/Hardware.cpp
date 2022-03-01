@@ -32,6 +32,10 @@ namespace Hardware {
                 case EOM_HAL_BUTTON_MENU:
                     UI.screenshot();
                     break;
+
+                default:
+                    // noop;
+                    break;
                 }
             } else {
                 switch (button) {

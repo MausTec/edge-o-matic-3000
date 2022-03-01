@@ -3,7 +3,7 @@
 #include "wifi_manager.h"
 #include "BluetoothServer.h"
 #include "BluetoothDriver.h"
-#include "WebSocketHelper.h"
+#include "system/websocket_handler.h"
 #include <string>
 
 static void onDisableWiFi(UIMenu *menu) {
@@ -92,7 +92,7 @@ static void onDisconnect(UIMenu *menu) {
 }
 
 static void onMausLink(UIMenu *menu) {
-  WebSocketHelper::connectToBridge("192.168.1.3", 8080);
+  // websocket_connect_to_bridge("192.168.1.3", 8080);
 }
 
 static void buildMenu(UIMenu *menu) {

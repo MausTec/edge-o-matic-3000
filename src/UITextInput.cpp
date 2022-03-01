@@ -225,11 +225,13 @@ void UITextInput::handleClick() {
 }
 
 int UITextInput::getItemCount() {
-
+    // TODO: Were these supposed to be populated?
+    return 0;
 }
 
 int UITextInput::getCurrentPosition() {
-
+    // TODO: Were these supposed to be populated?
+    return 0;
 }
 
 void UITextInput::save() {
