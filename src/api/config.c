@@ -3,6 +3,7 @@
 #include "config.h"
 #include "config_defs.h"
 #include "SDHelper.h"
+#include "eom-hal.h"
 
 static command_err_t cmd_config_list(cJSON* command, cJSON* response) {
     cJSON_AddStringToObject(response, "_filename", Config._filename);
@@ -69,7 +70,14 @@ static const websocket_command_t cmd_config_save_s = {
 
 static command_err_t cmd_config_set(cJSON* command, cJSON* response) {
     json_to_config_merge(command, &Config);
-    config_enqueue_save(0);
+    config_enqueue_save(1);
+
+    // Propagate changes to hardware:
+    cJSON* sensor_sensitivity = cJSON_GetObjectItem(command, "sensor_sensitivity");
+    if (sensor_sensitivity != NULL) {
+        eom_hal_set_sensor_sensitivity(sensor_sensitivity->valueint);
+    }
+
     return CMD_OK;
 }
 

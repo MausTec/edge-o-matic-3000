@@ -24,7 +24,7 @@ bool UserInterface::begin(u8g2_t *d) {
 void UserInterface::drawStatus(const char *s) {
   if (s != nullptr) {
     cJSON* root = cJSON_CreateObject();
-    cJSON_AddStringToObject(root, "mode", s);
+    cJSON_AddStringToObject(root, "page", s);
     websocket_broadcast(root);
     cJSON_Delete(root);
 

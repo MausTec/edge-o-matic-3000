@@ -7,6 +7,7 @@
 #include "Hardware.h"
 #include "assets.h"
 #include "polyfill.h"
+#include "system/websocket_handler.h"
 #include <cstring>
 
 enum RGView {
@@ -47,17 +48,17 @@ class pRunGraph : public Page {
       UI.drawStatus("Auto Edging");
       UI.setButton(1, "STOP");
       UI.setButton(2, "POST");
-    } else if (mode == Manual){
+    } else if (mode == Manual) {
       UI.drawStatus("Manual");
       UI.setButton(1, "STOP");
       UI.setButton(2, "AUTO");
-    } else if (mode == PostOrgasm){
+    } else if (mode == PostOrgasm) {
       UI.drawStatus("Edging+Orgasm");
       UI.setButton(1, "STOP");
       UI.setButton(2, "MANUAL");
-    } 
-    
-    if (OrgasmControl::isMenuLocked()){
+    }
+
+    if (OrgasmControl::isMenuLocked()) {
       UI.setButton(1, "LOCK");
       UI.setButton(2, "LOCK");
     }
@@ -116,7 +117,7 @@ class pRunGraph : public Page {
     const int press_x = 24 + 2;  // icon_x + icon_width + 2
     const int press_y = 19 + 12; // icon_y + (icon_height / 2)
     UI.drawCompactBar(press_x, press_y, horiz_split_x - press_x - 9, OrgasmControl::getAveragePressure(), 4095,
-                   Config.sensor_sensitivity, 255);
+      Config.sensor_sensitivity, 255);
 
     // Draw a Border!
     UI.display->drawLine(horiz_split_x - 3, 19, horiz_split_x - 3, SCREEN_HEIGHT - 21, SSD1306_WHITE);
@@ -155,38 +156,38 @@ class pRunGraph : public Page {
   }
 
   void onKeyPress(uint8_t i) {
-  
+
     switch (i) {
-      case 0:
-        if (view == GraphView) {
-          view = StatsView;
-        } else {
-          view = GraphView;
-        }
+    case 0:
+      if (view == GraphView) {
+        view = StatsView;
+      } else {
+        view = GraphView;
+      }
+      break;
+    case 1:
+      if (OrgasmControl::isMenuLocked()) {
         break;
-      case 1:
-        if (OrgasmControl::isMenuLocked()) {
-          break;
-        }
+      }
+      mode = Manual;
+      Hardware::setMotorSpeed(0);
+      OrgasmControl::controlMotor(false);
+      break;
+    case 2:
+      if (OrgasmControl::isMenuLocked()) {
+        break;
+      }
+      if (mode == Automatic) {
+        mode = PostOrgasm;
+        OrgasmControl::controlMotor(true);
+      } else if (mode == Manual) {
+        mode = Automatic;
+        OrgasmControl::controlMotor(true);
+      } else if (mode == PostOrgasm) {
         mode = Manual;
-        Hardware::setMotorSpeed(0);
         OrgasmControl::controlMotor(false);
-        break;
-      case 2:
-        if (OrgasmControl::isMenuLocked()) {
-          break;
-        }
-        if (mode == Automatic) {
-          mode = PostOrgasm;
-          OrgasmControl::controlMotor(true);
-        } else if (mode == Manual) {
-          mode = Automatic;
-          OrgasmControl::controlMotor(true);
-        } else if (mode == PostOrgasm) {
-          mode = Manual;
-          OrgasmControl::controlMotor(false);
-        }
-        break;
+      }
+      break;
     }
 
     updateButtons();
@@ -194,49 +195,74 @@ class pRunGraph : public Page {
   }
 
   void onEncoderChange(int diff) override {
-    const int step = 255 / 20;
-    if (OrgasmControl::isMenuLocked()){
+    if (OrgasmControl::isMenuLocked()) {
       UI.toastNow("Access Denied", 1000);
       return;
     }
+
     if (mode == Automatic || mode == PostOrgasm) {
-      // TODO this may go out of bounds. Also, change in steps?
-      Config.sensitivity_threshold += (diff * step);
+      Config.sensitivity_threshold += (diff);
+      if (Config.sensitivity_threshold < 1) Config.sensitivity_threshold = 1;
       config_enqueue_save(millis() + 300);
     } else {
-      Hardware::changeMotorSpeed(diff * step);
+      Hardware::changeMotorSpeed(diff);
     }
 
     Rerender();
   }
 
 public:
+  const char* getModeStr() {
+    switch (mode) {
+    case Automatic:
+      return "Automatic";
+    case PostOrgasm:
+      return "PostOrgasm";
+    case Manual:
+    default:
+      return "Manual";
+    }
+  }
+
   void setMode(const char* newMode) {
-    if (! strcmp(newMode, "automatic")) {
+    if (!strcmp(newMode, "automatic")) {
       mode = Automatic;
       OrgasmControl::controlMotor(true);
-    } else if (! strcmp(newMode, "manual")) {
+    } else if (!strcmp(newMode, "manual")) {
       mode = Manual;
       OrgasmControl::controlMotor(false);
-    } else if (! strcmp(newMode, "postorgasm")) {
+    } else if (!strcmp(newMode, "postorgasm")) {
       mode = PostOrgasm;
       OrgasmControl::controlMotor(true);
+    } else {
+      return;
     }
 
     updateButtons();
+
+    // Broadcast mode:
+    cJSON* root = cJSON_CreateObject();
+    cJSON* mode = cJSON_AddObjectToObject(root, "mode");
+
+    // In the modern API, primitive types live under the _ key:
+    cJSON_AddStringToObject(mode, "_", getModeStr());
+    // But historically, this was called "text":
+    cJSON_AddStringToObject(mode, "text", getModeStr());
+    
+    websocket_broadcast(root);
+    cJSON_Delete(root);
   }
 
   int getMode() {
-    switch(mode) {
-      case Manual:
-        return 0;
-      case Automatic:
-        return 1;
-      case PostOrgasm:
-        return 2;
+    switch (mode) {
+    case Automatic:
+      return 1;
+    case PostOrgasm:
+      return 2;
+    case Manual:
+    default:
+      return 0;
     }
-
-    return -1;
   }
 
   void menuUpdate() {

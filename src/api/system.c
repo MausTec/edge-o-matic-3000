@@ -3,7 +3,6 @@
 #include "eom-hal.h"
 #include "system/websocket_handler.h"
 
-
 static command_err_t cmd_system_restart(cJSON* command, cJSON* response) {
     // if (argc != 0) { return CMD_ARG_ERR; }
     // fprintf(console->out, "Device going down for restart, like, NOW!\n");
