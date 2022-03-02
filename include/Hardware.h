@@ -10,7 +10,7 @@ struct CRGB {
   uint8_t g;
   uint8_t b;
 
-  CRGB(uint16_t hex) : r((hex & 0xFF0000) >> 16), g((hex & 0x00FF00) >> 8), b((hex & 0x0000FF) >> 0) {};
+  CRGB(uint32_t hex) : r((hex & 0xFF0000) >> 16), g((hex & 0x00FF00) >> 8), b((hex & 0x0000FF) >> 0) {};
   CRGB(uint8_t r, uint8_t g, uint8_t b) : r(r), g(g), b(b) {};
 
   enum HTMLColorCode {

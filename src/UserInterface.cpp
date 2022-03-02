@@ -29,14 +29,14 @@ void UserInterface::drawStatus(const char *s) {
     cJSON_Delete(root);
 
     strlcpy(status, s, STATUS_SIZE);
-    int sum = 0;
+    uint32_t sum = 0;
     for (int i = 0; i < strlen(status); i++) {
-      sum += (int)status[i];
+      sum += (uint8_t)status[i];
     }
 
     Hardware::setEncoderColor(CRGB(
-        sum % 255 >> 2,
-        sum % 255 >> 1,
+        sum % 255 >> 16,
+        sum % 255 >> 8,
         sum % 255 >> 0
     ));
   }
