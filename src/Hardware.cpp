@@ -124,9 +124,12 @@ namespace Hardware {
     [[deprecated("Use eom_hal_set_encoder_color(r, g, b)")]]
     void setEncoderColor(CRGB color) {
         encoderColor = color;
-        // analogWrite(ENCODER_RD_PIN, color.r);
-        // analogWrite(ENCODER_GR_PIN, color.g);
-        // analogWrite(ENCODER_BL_PIN, color.b);
+        eom_hal_color_t hal_color = {
+            .r = color.r,
+            .g = color.g,
+            .b = color.b,
+        };
+        eom_hal_set_encoder_color(hal_color);
     }
 
     [[deprecated("Use eom_hal_get_device_serial()")]]
@@ -145,8 +148,7 @@ namespace Hardware {
         if (new_speed == motor_speed) return;
         motor_speed = new_speed;
 
-        // analogWrite(MOT_PWM_PIN, motor_speed);
-        // eom_hal_set_motor_speed(motor_speed);
+        eom_hal_set_motor_speed(motor_speed);
         
         BluetoothDriver::broadcastSpeed(new_speed);
         AccessoryDriver::broadcastSpeed(new_speed);

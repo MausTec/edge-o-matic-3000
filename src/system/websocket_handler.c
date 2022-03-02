@@ -3,6 +3,7 @@
 #include "cJSON.h"
 #include "esp_log.h"
 #include "util/list.h"
+#include <sys/socket.h>
 
 static const char* TAG = "websocket_handler";
 
@@ -30,9 +31,9 @@ esp_err_t websocket_send_to_client(websocket_client_t* client, const char* msg) 
 
 esp_err_t websocket_broadcast(cJSON* root) { 
     char *str = cJSON_PrintUnformatted(root);
-    
+
     if (!cJSON_HasObjectItem(root, "readings")) {
-        ESP_LOGI(TAG, "Broadcasting: %s", str);
+        ESP_LOGD(TAG, "Broadcasting: %s", str);
     }
 
     websocket_client_t *client = NULL;
@@ -111,7 +112,16 @@ void websocket_run_commands(cJSON* commands, cJSON* response) {
 }
 
 esp_err_t websocket_open_fd(httpd_handle_t hd, int sockfd) {
-    ESP_LOGI(TAG, "websocket_open_fd(hd: %p, sockfd: %d)", hd, sockfd);
+    char ipstr[INET6_ADDRSTRLEN];
+    struct sockaddr_in6 addr;
+    socklen_t addr_size = sizeof(addr);
+    if (getpeername(sockfd, (struct sockaddr *)&addr, &addr_size) < 0) {
+        ipstr[0] = '\0';
+    } else {
+        inet_ntop(AF_INET6, &addr.sin6_addr, ipstr, sizeof(ipstr));
+    }
+
+    ESP_LOGI(TAG, "websocket_open_fd(hd: %p, sockfd: %d) => IP: %s", hd, sockfd, ipstr);
     websocket_client_t *client = malloc(sizeof(websocket_client_t));
     client->fd = sockfd;
     client->server = hd;
