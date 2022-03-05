@@ -99,9 +99,17 @@ void websocket_run_commands(cJSON* commands, cJSON* response) {
 
     cJSON_ArrayForEach(el, commands) {
         key = el->string;
+        
         if (key != NULL) {
+            cJSON* nonce = cJSON_GetObjectItem(el, "nonce");
             cJSON* cmd_rsp = cJSON_CreateObject();
+
+            if (nonce != NULL) {
+                cJSON_AddNumberToObject(cmd_rsp, "nonce", nonce->valueint);
+            }
+
             websocket_run_command(key, el, cmd_rsp);
+
             if (cJSON_GetArraySize(cmd_rsp) > 0) {
                 cJSON_AddItemToObject(response, key, cmd_rsp);
             } else {
