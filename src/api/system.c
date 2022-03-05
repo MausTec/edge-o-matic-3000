@@ -3,9 +3,10 @@
 #include "eom-hal.h"
 #include "system/websocket_handler.h"
 
-static command_err_t cmd_system_restart(cJSON* command, cJSON* response) {
-    // if (argc != 0) { return CMD_ARG_ERR; }
-    // fprintf(console->out, "Device going down for restart, like, NOW!\n");
+static command_err_t cmd_system_restart(cJSON* command, cJSON* response,
+                                        websocket_client_t* client) {
+    fflush(stdout);
+    esp_restart();
     return CMD_NOT_FOUND;
 }
 
@@ -21,7 +22,7 @@ static const websocket_command_t cmd_system_time_s = {
     .func = &cmd_system_time,
 };
 
-static command_err_t cmd_system_info(cJSON* command, cJSON* response) {
+static command_err_t cmd_system_info(cJSON* command, cJSON* response, websocket_client_t* client) {
     char buf[64] = {0};
     eom_hal_get_device_serial(buf, 64);
 
@@ -37,8 +38,25 @@ static const websocket_command_t cmd_system_info_s = {
     .func = &cmd_system_info,
 };
 
+static command_err_t cmd_system_stream_readings(cJSON* command, cJSON* response,
+                                                websocket_client_t* client) {
+    if (client != NULL) {
+        client->broadcast_flags |= WS_BROADCAST_READINGS;
+        client->broadcast_flags |= WS_BROADCAST_SYSTEM;
+        return CMD_OK;
+    } else {
+        return CMD_NOT_FOUND;
+    }
+}
+
+static const websocket_command_t cmd_system_stream_readings_s = {
+    .command = "streamReadings",
+    .func = &cmd_system_stream_readings,
+};
+
 void api_register_system(void) {
     websocket_register_command(&cmd_system_restart_s);
     websocket_register_command(&cmd_system_time_s);
     websocket_register_command(&cmd_system_info_s);
+    websocket_register_command(&cmd_system_stream_readings_s);
 }

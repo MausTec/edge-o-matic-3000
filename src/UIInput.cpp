@@ -2,9 +2,10 @@
 #include "UserInterface.h"
 
 #include "polyfill.h"
+#include <algorithm>
 #include <cstring>
 #include <math.h>
-#include <algorithm>
+
 
 void UIInput::render() {
     UI.clear(false);
@@ -39,50 +40,34 @@ void UIInput::render() {
     UI.render();
 }
 
-void UIInput::getSecondaryValue(GetValueCallback cb) {
-    get_secondary_value = cb;
-}
+void UIInput::getSecondaryValue(GetValueCallback cb) { get_secondary_value = cb; }
 
-void UIInput::setMax(int n) {
-    max_value = n;
-}
-void UIInput::setStep(int n) {
-    increment = n;
-}
+void UIInput::setMax(int n) { max_value = n; }
+void UIInput::setStep(int n) { increment = n; }
 void UIInput::setValue(int n) {
     current_value = n;
     default_value = n;
 }
-void UIInput::onChange(InputCallback fn) {
-    on_change = fn;
-}
-void UIInput::onConfirm(InputCallback fn) {
-    on_confirm = fn;
-}
+void UIInput::onChange(InputCallback fn) { on_change = fn; }
+void UIInput::onConfirm(InputCallback fn) { on_confirm = fn; }
 
-int UIInput::getItemCount() {
-    return max_value;
-}
-int UIInput::getCurrentPosition() {
-    return current_value;
-}
-void UIInput::selectNext() {
-    set_current(current_value + increment);
+int UIInput::getItemCount() { return max_value; }
+int UIInput::getCurrentPosition() { return current_value; }
+void UIInput::selectNext(int steps) {
+    set_current(current_value + (steps * increment));
     if (on_change != nullptr) {
         on_change(current_value);
     }
     render();
 }
-void UIInput::selectPrev() {
-    set_current(current_value - increment);
+void UIInput::selectPrev(int steps) {
+    set_current(current_value - (steps * increment));
     if (on_change != nullptr) {
         on_change(current_value);
     }
     render();
 }
-void UIInput::setPollPeriod(int p_ms) {
-    poll_period = p_ms;
-}
+void UIInput::setPollPeriod(int p_ms) { poll_period = p_ms; }
 void UIInput::handleClick() {
     default_value = current_value;
     if (on_confirm != nullptr) {
@@ -105,6 +90,4 @@ void UIInput::tick() {
     UIMenu::tick();
 }
 
-void UIInput::set_current(int v) {
-    current_value = std::min(max_value, std::max(min_value, v));
-}
+void UIInput::set_current(int v) { current_value = std::min(max_value, std::max(min_value, v)); }

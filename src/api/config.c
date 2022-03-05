@@ -1,11 +1,12 @@
-#include "system/websocket_handler.h"
-#include "api/index.h"
 #include "config.h"
-#include "config_defs.h"
 #include "SDHelper.h"
+#include "api/index.h"
+#include "config_defs.h"
 #include "eom-hal.h"
+#include "system/websocket_handler.h"
 
-static command_err_t cmd_config_list(cJSON* command, cJSON* response) {
+
+static command_err_t cmd_config_list(cJSON* command, cJSON* response, websocket_client_t* client) {
     cJSON_AddStringToObject(response, "_filename", Config._filename);
     config_to_json(response, &Config);
     return CMD_OK;
@@ -16,7 +17,7 @@ static const websocket_command_t cmd_config_list_s = {
     .func = &cmd_config_list,
 };
 
-static command_err_t cmd_config_load(cJSON* command, cJSON* response) {
+static command_err_t cmd_config_load(cJSON* command, cJSON* response, websocket_client_t* client) {
     // if (argc == 0) {
     //     return CMD_ARG_ERR;
     // }
@@ -39,7 +40,7 @@ static const websocket_command_t cmd_config_load_s = {
     .func = &cmd_config_load,
 };
 
-static command_err_t cmd_config_save(cJSON* command, cJSON* response) {
+static command_err_t cmd_config_save(cJSON* command, cJSON* response, websocket_client_t* client) {
     // if (argc >= 2) {
     //     return CMD_ARG_ERR;
     // }
@@ -68,7 +69,7 @@ static const websocket_command_t cmd_config_save_s = {
     .func = &cmd_config_save,
 };
 
-static command_err_t cmd_config_set(cJSON* command, cJSON* response) {
+static command_err_t cmd_config_set(cJSON* command, cJSON* response, websocket_client_t* client) {
     json_to_config_merge(command, &Config);
     config_enqueue_save(1);
 

@@ -7,8 +7,8 @@ typedef std::function<int(int)> GetValueCallback;
 typedef std::function<void(const char*)> TextInputCallback;
 
 class UIInput : public UIMenu {
-public:
-    UIInput(char* t, MenuCallback cb = nullptr) : UIMenu(t, cb) {};
+  public:
+    UIInput(char* t, MenuCallback cb = nullptr) : UIMenu(t, cb){};
 
     void render() override;
     void setMax(int);
@@ -20,8 +20,8 @@ public:
     void getSecondaryValue(GetValueCallback);
 
     // Navigation (which now changes value)
-    void selectNext() override;
-    void selectPrev() override;
+    void selectNext(int steps) override;
+    void selectPrev(int steps) override;
     void handleClick() override;
     int getItemCount() override;
     int getCurrentPosition() override;
@@ -29,7 +29,7 @@ public:
     UIMenu* close() override;
     void tick() override;
 
-private:
+  private:
     int current_value = 0;
     int min_value = 0;
     int max_value = 255;

@@ -6,11 +6,11 @@ class UIInput;
 typedef std::function<void(const char*, UIMenu*)> TextInputCallback;
 
 class UITextInput : public UIMenu {
-public:
+  public:
     UITextInput(char* t, int len, MenuCallback cb = nullptr) : UIMenu(t, cb) {
         maxlen = len;
-        current_value = (char*) malloc(len + 1);
-        default_value = (char*) malloc(len + 1);
+        current_value = (char*)malloc(len + 1);
+        default_value = (char*)malloc(len + 1);
 
         current_value[0] = '\0';
         default_value[0] = '\0';
@@ -23,8 +23,8 @@ public:
     void onChange(TextInputCallback cb);
     void onConfirm(TextInputCallback cb);
 
-    void selectNext() override;
-    void selectPrev() override;
+    void selectNext(int step) override;
+    void selectPrev(int step) override;
     void handleClick() override;
     int getItemCount() override;
     int getCurrentPosition() override;
@@ -32,9 +32,9 @@ public:
     UIMenu* close() override;
     void tick() override;
 
-private:
-    char *current_value = nullptr;
-    char *default_value = nullptr;
+  private:
+    char* current_value = nullptr;
+    char* default_value = nullptr;
 
     int current_char_index = 0;
     int current_charset_index = 0;

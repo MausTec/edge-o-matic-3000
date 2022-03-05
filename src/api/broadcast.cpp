@@ -1,7 +1,7 @@
 #include "api/broadcast.h"
-#include "system/websocket_handler.h"
 #include "cJSON.h"
 #include "config_defs.h"
+#include "system/websocket_handler.h"
 
 // Evil CPP deps
 #include "page.h"
@@ -12,7 +12,7 @@ void api_broadcast_config(void) {
 
     config_to_json(root, &Config);
 
-    websocket_broadcast(payload);
+    websocket_broadcast(payload, WS_BROADCAST_SYSTEM);
     cJSON_Delete(payload);
 }
 
@@ -20,19 +20,19 @@ void api_broadcast_readings(void) {
     cJSON* payload = cJSON_CreateObject();
     cJSON* root = cJSON_AddObjectToObject(payload, "readings");
 
-    char *mode = NULL;
+    char* mode = NULL;
     switch (RunGraphPage.getMode()) {
-        case RGMode::Automatic:
-            mode = "Automatic";
-            break;
-        case RGMode::Manual:
-            mode = "Manual";
-            break;
-        case RGMode::PostOrgasm:
-            mode = "PostOrgasm";
-            break;
-        default:
-            mode = "";
+    case RGMode::Automatic:
+        mode = "Automatic";
+        break;
+    case RGMode::Manual:
+        mode = "Manual";
+        break;
+    case RGMode::PostOrgasm:
+        mode = "PostOrgasm";
+        break;
+    default:
+        mode = "";
     }
 
     cJSON_AddNumberToObject(root, "pressure", OrgasmControl::getLastPressure());
@@ -47,7 +47,7 @@ void api_broadcast_readings(void) {
     cJSON_AddBoolToObject(root, "postOrgasm", OrgasmControl::isPostOrgasmReached());
     cJSON_AddBoolToObject(root, "lock", OrgasmControl::isMenuLocked());
 
-    websocket_broadcast(payload);
+    websocket_broadcast(payload, WS_BROADCAST_READINGS);
     cJSON_Delete(payload);
 }
 
@@ -61,7 +61,7 @@ void api_broadcast_storage_status(void) {
     // Deprecated for now???
     cJSON_AddStringToObject(root, "type", "");
 
-    websocket_broadcast(payload);
+    websocket_broadcast(payload, WS_BROADCAST_SYSTEM);
     cJSON_Delete(payload);
 }
 
@@ -74,6 +74,6 @@ void api_broadcast_network_status(void) {
     cJSON_AddStringToObject(root, "ip", "");
     cJSON_AddNumberToObject(root, "rssi", -1);
 
-    websocket_broadcast(payload);
+    websocket_broadcast(payload, WS_BROADCAST_SYSTEM);
     cJSON_Delete(payload);
 }
