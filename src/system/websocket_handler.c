@@ -29,20 +29,22 @@ esp_err_t websocket_send_to_client(websocket_client_t* client, const char* msg) 
     return httpd_ws_send_frame_async(client->server, client->fd, &ws_pkt);
 }
 
-esp_err_t websocket_broadcast(cJSON* root) { 
-    char *str = cJSON_PrintUnformatted(root);
+esp_err_t websocket_broadcast(cJSON* root, int broadcast_flags) {
+    char* str = cJSON_PrintUnformatted(root);
 
     if (!cJSON_HasObjectItem(root, "readings")) {
         ESP_LOGD(TAG, "Broadcasting: %s", str);
     }
 
-    websocket_client_t *client = NULL;
+    websocket_client_t* client = NULL;
     list_foreach(_client_list, client) {
-        websocket_send_to_client(client, str);
+        if (client->broadcast_flags & broadcast_flags) {
+            websocket_send_to_client(client, str);
+        }
     }
 
     cJSON_free(str);
-    return ESP_OK; 
+    return ESP_OK;
 }
 
 static void _json_add_error(cJSON* root, const char* error) {
@@ -78,14 +80,18 @@ void websocket_register_command(const websocket_command_t* command) {
     }
 }
 
-void websocket_run_command(const char* command, cJSON* data, cJSON* response) {
+void websocket_run_command(const char* command, cJSON* data, cJSON* response,
+                           websocket_client_t* client) {
     ESP_LOGD(TAG, "Running command: %s", command);
 
     websocket_command_t* cmd = NULL;
     list_foreach(_cmd_list, cmd) {
         ESP_LOGD(TAG, "Checking %s", cmd->command);
         if (!strcmp(command, cmd->command)) {
-            cmd->func(data, response);
+            command_err_t err = cmd->func(data, response, client);
+            if (err != CMD_OK) {
+                cJSON_AddNumberToObject(response, "errno", err);
+            }
             return;
         }
     }
@@ -93,13 +99,13 @@ void websocket_run_command(const char* command, cJSON* data, cJSON* response) {
     _json_add_error(response, "NOT IMPLEMENTED");
 }
 
-void websocket_run_commands(cJSON* commands, cJSON* response) {
+void websocket_run_commands(cJSON* commands, cJSON* response, websocket_client_t* client) {
     cJSON* el = NULL;
     char* key = NULL;
 
     cJSON_ArrayForEach(el, commands) {
         key = el->string;
-        
+
         if (key != NULL) {
             cJSON* nonce = cJSON_GetObjectItem(el, "nonce");
             cJSON* cmd_rsp = cJSON_CreateObject();
@@ -108,7 +114,7 @@ void websocket_run_commands(cJSON* commands, cJSON* response) {
                 cJSON_AddNumberToObject(cmd_rsp, "nonce", nonce->valueint);
             }
 
-            websocket_run_command(key, el, cmd_rsp);
+            websocket_run_command(key, el, cmd_rsp, client);
 
             if (cJSON_GetArraySize(cmd_rsp) > 0) {
                 cJSON_AddItemToObject(response, key, cmd_rsp);
@@ -123,23 +129,25 @@ esp_err_t websocket_open_fd(httpd_handle_t hd, int sockfd) {
     char ipstr[INET6_ADDRSTRLEN];
     struct sockaddr_in6 addr;
     socklen_t addr_size = sizeof(addr);
-    if (getpeername(sockfd, (struct sockaddr *)&addr, &addr_size) < 0) {
+    if (getpeername(sockfd, (struct sockaddr*)&addr, &addr_size) < 0) {
         ipstr[0] = '\0';
     } else {
         inet_ntop(AF_INET6, &addr.sin6_addr, ipstr, sizeof(ipstr));
     }
 
     ESP_LOGI(TAG, "websocket_open_fd(hd: %p, sockfd: %d) => IP: %s", hd, sockfd, ipstr);
-    websocket_client_t *client = malloc(sizeof(websocket_client_t));
+    websocket_client_t* client = malloc(sizeof(websocket_client_t));
     client->fd = sockfd;
     client->server = hd;
+    client->broadcast_flags = 0;
     list_add(&_client_list, client);
+    httpd_sess_set_ctx(hd, sockfd, client, NULL);
     return ESP_OK;
 }
 
 void websocket_close_fd(httpd_handle_t hd, int sockfd) {
     ESP_LOGI(TAG, "websocket_close_fd(hd: %p, sockfd: %d)", hd, sockfd);
-    websocket_client_t *client = NULL;
+    websocket_client_t* client = NULL;
     list_foreach(_client_list, client) {
         if (client->fd == sockfd) {
             list_remove(&_client_list, client);
@@ -193,18 +201,22 @@ esp_err_t websocket_handler(httpd_req_t* req) {
         resp_pkt.type = HTTPD_WS_TYPE_TEXT;
         resp_pkt.final = true;
 
-        cJSON* command = cJSON_Parse((char*) ws_pkt.payload);
+        cJSON* command = cJSON_Parse((char*)ws_pkt.payload);
         cJSON* response = cJSON_CreateObject();
 
         if (command == NULL) {
             _json_add_error(response, cJSON_GetErrorPtr());
         } else {
-            websocket_run_commands(command, response);
+            if (req->sess_ctx == NULL) {
+                ESP_LOGE(TAG, "Request session context was NULL!");
+            } else {
+                websocket_run_commands(command, response, (websocket_client_t*)req->sess_ctx);
+            }
         }
 
         if (cJSON_GetArraySize(response) > 0) {
-            resp_pkt.payload = (uint8_t*) cJSON_PrintUnformatted(response);
-            resp_pkt.len = strlen((char*) resp_pkt.payload);
+            resp_pkt.payload = (uint8_t*)cJSON_PrintUnformatted(response);
+            resp_pkt.len = strlen((char*)resp_pkt.payload);
 
             ESP_LOGI(TAG, "Transmitting response: %s", resp_pkt.payload);
             ret = httpd_ws_send_frame(req, &resp_pkt);

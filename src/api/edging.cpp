@@ -5,7 +5,7 @@
 
 static const char *TAG = "api/edging";
 
-static command_err_t cmd_edging_set_mode(cJSON* command, cJSON* response) {
+static command_err_t cmd_edging_set_mode(cJSON* command, cJSON* response, websocket_client_t* client) {
     const char* mode = command->valuestring;
     RunGraphPage.setMode(mode);
     return CMD_OK;
@@ -16,7 +16,7 @@ static const websocket_command_t cmd_edging_set_mode_s = {
     .func = &cmd_edging_set_mode,
 };
 
-static command_err_t cmd_edging_set_motor(cJSON* command, cJSON* response) {
+static command_err_t cmd_edging_set_motor(cJSON* command, cJSON* response, websocket_client_t* client) {
     int speed = command->valueint;
     Hardware::setMotorSpeed(speed);
     return CMD_OK;

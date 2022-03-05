@@ -1,12 +1,12 @@
 #include "UITextInput.h"
 #include "UserInterface.h"
-#include <esp_log.h>
 #include "polyfill.h"
-#include <cstring>
 #include <algorithm>
+#include <cstring>
+#include <esp_log.h>
 
 /**
- * TODO: 
+ * TODO:
  *   5) Apparently there's a heap smash when reconnecting to wifi.
  */
 
@@ -44,13 +44,9 @@ void UITextInput::setValue(const char* value) {
     select_character(value[0]);
 }
 
-void UITextInput::onConfirm(TextInputCallback cb) {
-    on_confirm = cb;
-}
+void UITextInput::onConfirm(TextInputCallback cb) { on_confirm = cb; }
 
-void UITextInput::onChange(TextInputCallback cb) {
-    on_change = cb;
-}
+void UITextInput::onChange(TextInputCallback cb) { on_change = cb; }
 
 void UITextInput::render() {
     UI.clear(false);
@@ -69,7 +65,7 @@ void UITextInput::render() {
 
     if (this->char_edit_mode) {
         UI.setButton(0, "BACK", [&]() { this->exit_character_edit_mode(); });
-        
+
         char charsetbtn[4] = "";
         strlcpy(charsetbtn, CHARSETS[this->current_charset_index], 4);
         UI.setButton(1, charsetbtn, [&]() { this->select_next_charset(); });
@@ -130,16 +126,20 @@ void UITextInput::render() {
     // Up / Down
     if (char_edit_mode) {
         int tri_center = SCREEN_WIDTH / 2;
-        UI.display->fillTriangle(tri_center, text_top - 10, tri_center - 2, text_top - 8, tri_center + 2, text_top - 8, SSD1306_WHITE);
-        UI.display->fillTriangle(tri_center, text_top + 15, tri_center - 2, text_top + 13, tri_center + 2, text_top + 13, SSD1306_WHITE);
+        UI.display->fillTriangle(tri_center, text_top - 10, tri_center - 2, text_top - 8,
+                                 tri_center + 2, text_top - 8, SSD1306_WHITE);
+        UI.display->fillTriangle(tri_center, text_top + 15, tri_center - 2, text_top + 13,
+                                 tri_center + 2, text_top + 13, SSD1306_WHITE);
     } else {
         int tri_center = SCREEN_HEIGHT / 2;
         if (cursor > 0) {
-            UI.display->fillTriangle(1, tri_center, 3, tri_center - 2, 3, tri_center + 2, SSD1306_WHITE);
+            UI.display->fillTriangle(1, tri_center, 3, tri_center - 2, 3, tri_center + 2,
+                                     SSD1306_WHITE);
         }
         if (cursor < strlen(current_value)) {
             int r = SCREEN_WIDTH - 2;
-            UI.display->fillTriangle(r, tri_center, r-2, tri_center - 2, r-2, tri_center + 2, SSD1306_WHITE);
+            UI.display->fillTriangle(r, tri_center, r - 2, tri_center - 2, r - 2, tri_center + 2,
+                                     SSD1306_WHITE);
         }
     }
 
@@ -150,17 +150,16 @@ void UITextInput::render() {
     UI.render();
 }
 
-void UITextInput::tick() {
-    UIMenu::tick();
-}
+void UITextInput::tick() { UIMenu::tick(); }
 
 void UITextInput::advance_character(int steps) {
-    const char *charset = CHARSETS[current_charset_index];
-    int charset_len = (int) strlen(charset);
+    const char* charset = CHARSETS[current_charset_index];
+    int charset_len = (int)strlen(charset);
 
     if (current_value[cursor] != '\0') {
         this->current_char_index = (current_char_index + steps) % charset_len;
-        if (current_char_index < 0) current_char_index += charset_len;
+        if (current_char_index < 0)
+            current_char_index += charset_len;
     }
 
     char c = charset[current_char_index];
@@ -171,13 +170,13 @@ void UITextInput::advance_character(int steps) {
 void UITextInput::advance_cursor(int steps) {
     char current_char = current_value[cursor];
 
-    int next_cursor = std::max(0, std::min(cursor + steps, (int) strlen(current_value)));
+    int next_cursor = std::max(0, std::min(cursor + steps, (int)strlen(current_value)));
     char c = current_value[next_cursor];
 
     if (!this->char_edit_mode && current_value[cursor] == '\0' && steps > 0) {
         return;
     }
-    
+
     // Move the null ternimator if we're advancing past the
     // end of the string.
     if (c == '\0' && steps > 0) {
@@ -194,19 +193,19 @@ void UITextInput::advance_cursor(int steps) {
     this->render();
 }
 
-void UITextInput::selectNext() {
+void UITextInput::selectNext(int step) {
     if (char_edit_mode) {
-        this->advance_character(1);
+        this->advance_character(step);
     } else {
-        this->advance_cursor(1);
+        this->advance_cursor(step);
     }
 }
 
-void UITextInput::selectPrev() {
+void UITextInput::selectPrev(int step) {
     if (char_edit_mode) {
-        this->advance_character(-1);
+        this->advance_character(step);
     } else {
-        this->advance_cursor(-1);
+        this->advance_cursor(step);
     }
 }
 
@@ -292,8 +291,8 @@ void UITextInput::delete_current_character(void) {
         cursor = cursor > 0 ? cursor - 1 : 0;
     }
 
-    char *src = current_value + cursor + 1;
-    char *dest = current_value + cursor;
+    char* src = current_value + cursor + 1;
+    char* dest = current_value + cursor;
     size_t len = strlen(current_value) - cursor;
 
     memmove(dest, src, len);
@@ -310,7 +309,8 @@ void UITextInput::insert_new_character(void) {
         return;
     }
 
-    size_t len = std::min(strlen(this->current_value) - this->cursor, (size_t)this->maxlen - this->cursor);
+    size_t len =
+        std::min(strlen(this->current_value) - this->cursor, (size_t)this->maxlen - this->cursor);
 
     printf("insert: src=\"%s\", dest=\"%s\", len=%d, cursor=%d\n", src, dest, len, this->cursor);
     memmove(dest, src, len);
@@ -326,7 +326,7 @@ void UITextInput::exit_character_edit_mode(void) {
 
     if (current_value[cursor] == '\0') {
         select_character(' ');
-    } 
+    }
 
     render();
 }
