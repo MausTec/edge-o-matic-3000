@@ -5,22 +5,22 @@
 #include "config.h"
 #include "config_defs.h"
 
+#include <stdio.h>
 #include <string.h>
 #include <sys/stat.h>
-#include <stdio.h>
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
+#include "VERSION.h"
 #include "commands/index.h"
-#include "linenoise/linenoise.h"
 #include "driver/uart.h"
+#include "eom-hal.h"
+#include "eom_tscode_handler.h"
 #include "esp_console.h"
 #include "esp_vfs_dev.h"
-#include "eom-hal.h"
+#include "linenoise/linenoise.h"
 #include "tscode.h"
-#include "eom_tscode_handler.h"
-#include "VERSION.h"
 
 #define PROMPT "eom:%s> "
 #define ARGV_MAX 16
@@ -28,13 +28,13 @@
 
 static const char* TAG = "console";
 static esp_console_repl_t* _repl = NULL;
-static char _history_file[SD_MAX_DIR_LENGTH + 1] = { 0 };
+static char _history_file[SD_MAX_DIR_LENGTH + 1] = {0};
 static bool _tscode_mode = false;
 
 static struct cmd_node {
     command_t* command;
     struct cmd_node* next;
-} *_first = NULL;
+}* _first = NULL;
 
 static command_err_t cmd_help(int argc, char** argv, console_t* console) {
     struct cmd_node* ptr = _first;
@@ -57,7 +57,6 @@ static command_err_t cmd_help(int argc, char** argv, console_t* console) {
                 while ((sub = ptr->command->subcommands[idx++]) != NULL) {
                     fprintf(console->out, "  %-10s  %s\n", sub->command, sub->help);
                 }
-
             }
             return CMD_OK;
         }
@@ -78,12 +77,10 @@ static const command_t cmd_help_s = {
     .help = "Get help about all or a specific command.",
     .alias = '?',
     .func = &cmd_help,
-    .subcommands = { NULL },
+    .subcommands = {NULL},
 };
 
-static void register_help(void) {
-    console_register_command(&cmd_help_s);
-}
+static void register_help(void) { console_register_command(&cmd_help_s); }
 
 static void reinitialize_console(void) {
     if (_tscode_mode || Config.console_basic_mode) {
@@ -91,7 +88,7 @@ static void reinitialize_console(void) {
         linenoiseAllowEmpty(false);
         linenoiseSetMultiLine(false);
         linenoiseHistorySetMaxLen(0);
-    } else {    
+    } else {
         linenoiseAllowEmpty(true);
         linenoiseSetMultiLine(true);
         linenoiseHistorySetMaxLen(100);
@@ -104,7 +101,8 @@ static void reinitialize_console(void) {
         int resp = linenoiseProbe();
         if (resp != 0) {
             printf("Your terminal does not support escape sequences. This experience may\n"
-                "not be as pretty as on other consoles: %d\n", resp);
+                   "not be as pretty as on other consoles: %d\n",
+                   resp);
             linenoiseSetDumbMode(true);
         }
     }
@@ -113,7 +111,8 @@ static void reinitialize_console(void) {
 /**
  * Intercept TS-code commands to see if we're changing modes, otherwise pass to global handler.
  */
-static tscode_command_response_t tscode_handler(tscode_command_t* cmd, char* response, size_t resp_len) {
+static tscode_command_response_t tscode_handler(tscode_command_t* cmd, char* response,
+                                                size_t resp_len) {
     if (cmd->type == TSCODE_EXIT_TSCODE_MODE) {
         _tscode_mode = false;
         reinitialize_console();
@@ -127,7 +126,7 @@ static tscode_command_response_t tscode_handler(tscode_command_t* cmd, char* res
  * Dedicated system task for handling the console initialization and looping.
  */
 static void console_task(void* args) {
-    char prompt[1033] = { 0 };
+    char prompt[1033] = {0};
 
     console_t uart_console = {
         .out = stdout,
@@ -140,7 +139,8 @@ static void console_task(void* args) {
     if (!Config.console_basic_mode) {
         printf("Press any key to initialize the terminal.\n");
         for (;;) {
-            if (getc(stdin) != EOF) break;
+            if (getc(stdin) != EOF)
+                break;
             vTaskDelay(1);
         }
     }
@@ -148,7 +148,7 @@ static void console_task(void* args) {
     reinitialize_console();
 
     for (;;) {
-        char *line = NULL;
+        char* line = NULL;
 
         // TScode does not use a prompt:
         if (_tscode_mode) {
@@ -158,8 +158,10 @@ static void console_task(void* args) {
             line = linenoise(prompt);
         }
 
-        if (!line) { continue; }
-        
+        if (!line) {
+            continue;
+        }
+
         if (strcasecmp(line, "tscode") == 0) {
             _tscode_mode = true;
             reinitialize_console();
@@ -167,7 +169,7 @@ static void console_task(void* args) {
 
         if (line[0] != '\0') {
             if (_tscode_mode) {
-                char out[1025] = { 0 };
+                char out[1025] = {0};
                 tscode_process_buffer(line, &tscode_handler, out, 1024);
                 printf("%s\n", out);
             } else {
@@ -177,7 +179,7 @@ static void console_task(void* args) {
                     linenoiseHistorySave(_history_file);
                 }
 
-                char* argv[ARGV_MAX] = { 0 };
+                char* argv[ARGV_MAX] = {0};
                 int argc = esp_console_split_argv(line, argv, ARGV_MAX);
                 console_run_command(argc, argv, &uart_console);
             }
@@ -223,8 +225,8 @@ void console_init(void) {
     ESP_ERROR_CHECK(esp_console_init(&console_config));
 }
 
-void console_register_command(command_t* command) {
-    struct cmd_node* n = (struct cmd_node*) malloc(sizeof(struct cmd_node));
+void console_register_command(const command_t* command) {
+    struct cmd_node* n = (struct cmd_node*)malloc(sizeof(struct cmd_node));
     n->command = command;
     n->next = NULL;
 
@@ -232,20 +234,14 @@ void console_register_command(command_t* command) {
         _first = n;
     } else {
         struct cmd_node* ptr = _first;
-        while (ptr->next != NULL) ptr = ptr->next;
+        while (ptr->next != NULL)
+            ptr = ptr->next;
         ptr->next = n;
     }
 }
 
 void console_ready(void) {
-    xTaskCreate(
-        &console_task,
-        "CONSOLE",
-        8192,
-        NULL,
-        tskIDLE_PRIORITY,
-        NULL
-    );
+    xTaskCreate(&console_task, "CONSOLE", 8192, NULL, tskIDLE_PRIORITY, NULL);
 }
 
 void console_send_file(const char* filename, console_t* console) {
@@ -280,7 +276,8 @@ void console_send_file(const char* filename, console_t* console) {
     fprintf(console->out, "<<<EOF\n");
 }
 
-static command_err_t _console_run_subcommands(command_t* command, int argc, char** argv, console_t* console) {
+static command_err_t _console_run_subcommands(command_t* command, int argc, char** argv,
+                                              console_t* console) {
     command_err_t err = CMD_SUBCOMMAND_NOT_FOUND;
 
     if (argc == 0) {
@@ -314,7 +311,8 @@ void console_run_command(int argc, char** argv, console_t* console) {
     bool aliased = strlen(argv[0]) == 1;
 
     while (ptr != NULL) {
-        if ((aliased && argv[0][0] == ptr->command->alias) || !strcasecmp(argv[0], ptr->command->command)) {
+        if ((aliased && argv[0][0] == ptr->command->alias) ||
+            !strcasecmp(argv[0], ptr->command->command)) {
             if (ptr->command->subcommands[0] != NULL) {
                 err = _console_run_subcommands(ptr->command, argc - 1, argv + 1, console);
             } else if (ptr->command->func != NULL) {

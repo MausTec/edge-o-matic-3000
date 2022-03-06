@@ -1,18 +1,17 @@
 #include "Hardware.h"
-#include "OrgasmControl.h"
-#include "BluetoothDriver.h"
 #include "AccessoryDriver.h"
+#include "BluetoothDriver.h"
+#include "OrgasmControl.h"
 #include "eom-hal.h"
 #include "esp_log.h"
 #include "esp_timer.h"
 
 #include "polyfill.h"
 
-#define min(a,b) ((a) < (b) ? (a) : (b))
-#define max(a,b) ((a) > (b) ? (a) : (b))
+#define min(a, b) ((a) < (b) ? (a) : (b))
+#define max(a, b) ((a) > (b) ? (a) : (b))
 
-
-static const char *TAG = "Hardware";
+static const char* TAG = "Hardware";
 
 namespace Hardware {
     namespace {
@@ -30,7 +29,7 @@ namespace Hardware {
                     break;
 
                 case EOM_HAL_BUTTON_MENU:
-                    UI.screenshot();
+                    UI.screenshot(NULL, 0);
                     break;
 
                 default:
@@ -38,23 +37,7 @@ namespace Hardware {
                     break;
                 }
             } else {
-                switch (button) {
-                case EOM_HAL_BUTTON_BACK:
-                    UI.onKeyPress(0);
-                    break;
-
-                case EOM_HAL_BUTTON_MID:
-                    UI.onKeyPress(1);
-                    break;
-
-                case EOM_HAL_BUTTON_OK:
-                    UI.onKeyPress(2);
-                    break;
-
-                case EOM_HAL_BUTTON_MENU:
-                    UI.onKeyPress(3);
-                    break;
-                }
+                UI.onKeyPress(button);
             }
         }
 
@@ -62,8 +45,7 @@ namespace Hardware {
             UI.onEncoderChange(diff);
             idle_since_ms = millis();
         }
-    }
-
+    } // namespace
 
     bool initialize() {
         setPressureSensitivity(Config.sensor_sensitivity);
@@ -87,8 +69,10 @@ namespace Hardware {
     void tick() {
         if ((Config.screen_dim_seconds + Config.screen_timeout_seconds) > 0 || idle || standby) {
             long idle_time_ms = millis() - idle_since_ms;
-            bool do_dim = Config.screen_dim_seconds > 0 && idle_time_ms > Config.screen_dim_seconds * 1000;
-            bool do_off = Config.screen_timeout_seconds > 0 && idle_time_ms > Config.screen_timeout_seconds * 1000;
+            bool do_dim =
+                Config.screen_dim_seconds > 0 && idle_time_ms > Config.screen_dim_seconds * 1000;
+            bool do_off = Config.screen_timeout_seconds > 0 &&
+                          idle_time_ms > Config.screen_timeout_seconds * 1000;
 
             if (do_dim || do_off) {
                 if ((!idle && do_dim) || (!standby && do_off)) {
@@ -121,8 +105,7 @@ namespace Hardware {
     /**
      * @deprecated - Go forth and use the HAL
      */
-    [[deprecated("Use eom_hal_set_encoder_color(r, g, b)")]]
-    void setEncoderColor(CRGB color) {
+    [[deprecated("Use eom_hal_set_encoder_color(r, g, b)")]] void setEncoderColor(CRGB color) {
         encoderColor = color;
         eom_hal_color_t hal_color = {
             .r = color.r,
@@ -132,24 +115,22 @@ namespace Hardware {
         eom_hal_set_encoder_color(hal_color);
     }
 
-    [[deprecated("Use eom_hal_get_device_serial()")]]
-    std::string getDeviceSerial() {
+    [[deprecated("Use eom_hal_get_device_serial()")]] std::string getDeviceSerial() {
         char serial[40] = "";
         auto err = eom_hal_get_device_serial(serial, 40);
         return std::string(serial);
     }
 
-    void setDeviceSerial(const char* serial) {
-        ESP_LOGI(TAG, "E_DEPRECATED");
-    }
+    void setDeviceSerial(const char* serial) { ESP_LOGI(TAG, "E_DEPRECATED"); }
 
     void setMotorSpeed(int speed) {
         int new_speed = min(max(speed, 0), 255);
-        if (new_speed == motor_speed) return;
+        if (new_speed == motor_speed)
+            return;
         motor_speed = new_speed;
 
         eom_hal_set_motor_speed(motor_speed);
-        
+
         BluetoothDriver::broadcastSpeed(new_speed);
         AccessoryDriver::broadcastSpeed(new_speed);
     }
@@ -159,26 +140,20 @@ namespace Hardware {
         setMotorSpeed(new_speed);
     }
 
-    int getMotorSpeed() {
-        return motor_speed;
-    }
+    int getMotorSpeed() { return motor_speed; }
 
-    float getMotorSpeedPercent() {
-        return (float) motor_speed / 255.0;
-    }
+    float getMotorSpeedPercent() { return (float)motor_speed / 255.0; }
 
-    [[deprecated("Use eom_hal_get_pressure_reading()")]]
-    long getPressure() {
+    [[deprecated("Use eom_hal_get_pressure_reading()")]] long getPressure() {
         return eom_hal_get_pressure_reading();
     }
 
-    [[deprecated("Use eom_hal_set_sensor_sensitivity()")]]
-    void setPressureSensitivity(uint8_t value) {
+    [[deprecated("Use eom_hal_set_sensor_sensitivity()")]] void
+    setPressureSensitivity(uint8_t value) {
         eom_hal_set_sensor_sensitivity(value);
     }
 
-    [[deprecated("Use eom_hal_get_sensor_sensitivity()")]]
-    uint8_t getPressureSensitivity() {
+    [[deprecated("Use eom_hal_get_sensor_sensitivity()")]] uint8_t getPressureSensitivity() {
         return eom_hal_get_sensor_sensitivity();
     }
-}
+} // namespace Hardware

@@ -2,9 +2,12 @@
 #include "console.h"
 #include "eom-hal.h"
 #include "esp_system.h"
+#include "system/screenshot.h"
 
 static command_err_t cmd_system_restart(int argc, char** argv, console_t* console) {
-    if (argc != 0) { return CMD_ARG_ERR; }
+    if (argc != 0) {
+        return CMD_ARG_ERR;
+    }
     fprintf(console->out, "Device going down for restart, like, NOW!\n");
     fflush(stdout);
     esp_restart();
@@ -17,11 +20,13 @@ static const command_t cmd_system_restart_s = {
     .help = "Restart your device",
     .alias = NULL,
     .func = &cmd_system_restart,
-    .subcommands = {NULL},
+    .subcommands = { NULL },
 };
 
 static command_err_t cmd_system_time(int argc, char** argv, console_t* console) {
-    if (argc != 0) { return CMD_ARG_ERR; }
+    if (argc != 0) {
+        return CMD_ARG_ERR;
+    }
     time_t now;
     time(&now);
     fprintf(console->out, "Time: %s", ctime(&now));
@@ -33,7 +38,7 @@ static const command_t cmd_system_time_s = {
     .help = "Get system time",
     .alias = NULL,
     .func = &cmd_system_time,
-    .subcommands = {NULL},
+    .subcommands = { NULL },
 };
 
 static command_err_t cmd_system_color(int argc, char** argv, console_t* console) {
@@ -46,8 +51,9 @@ static command_err_t cmd_system_color(int argc, char** argv, console_t* console)
 
         eom_hal_set_encoder_color(color);
     } else if (argc == 1) {
-        char *ptr = argv[0];
-        if (ptr[0] == '#') ptr++;
+        char* ptr = argv[0];
+        if (ptr[0] == '#')
+            ptr++;
 
         uint32_t color_hex = strtol(ptr, NULL, 16);
         eom_hal_color_t color = {
@@ -69,7 +75,29 @@ static const command_t cmd_system_color_s = {
     .help = "Set the illumination color of the device",
     .alias = NULL,
     .func = &cmd_system_color,
-    .subcommands = {NULL},
+    .subcommands = { NULL },
+};
+
+static command_err_t cmd_system_screenshot(int argc, char** argv, console_t* console) {
+    if (argc != 0) {
+        return CMD_ARG_ERR;
+    }
+
+    char path[PATH_MAX + 1] = { 0 };
+    if (screenshot_save_to_file(path, PATH_MAX)) {
+        console_send_file(path, console);
+        return CMD_OK;
+    }
+
+    return CMD_FAIL;
+}
+
+static const command_t cmd_system_screenshot_s = {
+    .command = "screenshot",
+    .help = "Take a screenshot and send the file over",
+    .alias = 's',
+    .func = &cmd_system_screenshot,
+    .subcommands = { NULL },
 };
 
 static const command_t cmd_system_s = {
@@ -81,10 +109,9 @@ static const command_t cmd_system_s = {
         &cmd_system_restart_s,
         &cmd_system_time_s,
         &cmd_system_color_s,
-        NULL
-    }
+        &cmd_system_screenshot_s,
+        NULL,
+    },
 };
 
-void commands_register_system(void) {
-    console_register_command(&cmd_system_s);
-}
+void commands_register_system(void) { console_register_command(&cmd_system_s); }

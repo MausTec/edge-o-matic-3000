@@ -2,6 +2,7 @@ from platformio.commands.device import DeviceMonitorFilter
 import pathlib
 import math
 import re
+import subprocess
 
 file_start = re.compile(r'^>>>HEXFILE:(\d+);(.*)')
 file_end = re.compile(r'^<<<EOF')
@@ -33,15 +34,45 @@ class Hexfile(DeviceMonitorFilter):
 
                 elif m_end:
                     self._incoming_file = False
-                    path = pathlib.Path("tmp/serial-downloads/").absolute().joinpath(self._incoming_file_name.strip('/'))
-                    path.parent.mkdir(parents=True, exist_ok=True)
+                    
+                    if self._incoming_file_name == "" or self._incoming_file_name == "/":
+                        pass
+                    else:
+                        path = pathlib.Path("tmp/serial-downloads/").absolute().joinpath(self._incoming_file_name.strip('/'))
+                        path.parent.mkdir(parents=True, exist_ok=True)
 
-                    f = open(path, "w+b")
-                    for n in range(0, math.floor(len(self._file_buffer) / 2)):
-                        pos = n * 2
-                        byte = int(self._file_buffer[pos:pos+2], 16)
-                        f.write(bytes([byte]))
-                    f.close()
+                        f = open(path, "w+b")
+                        for n in range(0, math.floor(len(self._file_buffer) / 2)):
+                            pos = n * 2
+                            byte = int(self._file_buffer[pos:pos+2], 16)
+                            f.write(bytes([byte]))
+                        f.close()
+
+                        if path.suffix == ".xbm":
+                            # parse screenshots
+                            pngpath = path.with_suffix('.png')
+                            args = [
+                                'C:\Program Files\ImageMagick-7.0.8-Q16\convert.exe', 
+                                path, 
+                                '-negate', 
+                                '-filter', 'point', 
+                                '-resize', '600%', 
+                                '(', 
+                                    '+clone', 
+                                    '-colorspace', 'gray',
+                                    '-fx', '(i%6 == 0 || j%6 == 0)?0:1',
+                                ')',
+                                '-compose', 'darken',
+                                '-composite',
+                                '-channel', 'R', '-evaluate', 'set', '0%',
+                                '-compose', 'copy',
+                                '-bordercolor', 'black',
+                                '-border', '10',
+                                '-rotate', '180',
+                                pngpath
+                            ]
+                            print(subprocess.list2cmdline(args))
+                            subprocess.call(args)
                 
                 elif self._incoming_file:
                     self._file_buffer += self._buffer.strip()

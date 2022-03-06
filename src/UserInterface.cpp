@@ -1,13 +1,15 @@
 #include "UserInterface.h"
 #include "Icons.h"
 #include "OrgasmControl.h"
-
 #include "Page.h"
+#include "SDHelper.h"
 #include "esp_log.h"
 #include "polyfill.h"
+#include "system/screenshot.h"
 #include "system/websocket_handler.h"
 #include <algorithm>
 #include <cstring>
+#include <fcntl.h>
 #include <math.h>
 
 static const char* TAG = "UserInterface";
@@ -180,7 +182,7 @@ void UserInterface::clearButtons() {
     }
 }
 
-void UserInterface::setButton(uint8_t i, char* text, ButtonCallback fn) {
+void UserInterface::setButton(uint8_t i, const char* text, ButtonCallback fn) {
     strcpy(buttons[i].text, text);
     if (fn != nullptr)
         buttons[i].fn = fn;
@@ -264,7 +266,6 @@ void UserInterface::onKeyPress(uint8_t i) {
 
 void UserInterface::onEncoderChange(int value) {
     if (UI.isMenuOpen()) {
-        // Todo we can pass diff here to provide a better fast scrolly experience.
         if (value < 0) {
             current_menu->selectPrev(abs(value));
         } else {
@@ -418,32 +419,11 @@ void UserInterface::drawIcons() {
     drawUpdateIcon();
 }
 
-void UserInterface::screenshot(std::string& out_data) {
-    int buffer_size = SCREEN_WIDTH * ((SCREEN_HEIGHT + 7) / 8);
-    // uint8_t *buffer = display->getBuffer();
-    // String data = "";
-
-    for (int i = 0; i < buffer_size; i++) {
-        // data += String((buffer[i] & 0xF0) >> 4, HEX);
-        // data += String(buffer[i] & 0x0F, HEX);
-    }
-
-    // out_data = data;
-    out_data = "";
-}
-
-void UserInterface::screenshot() {
-    // String buffer;
-    // screenshot(buffer);
-    // Serial.println(buffer);
-    // toast("Screenshot Saved", 3000);
-}
+void UserInterface::screenshot(char* outpath, size_t len) { screenshot_save_to_file(outpath, len); }
 
 void UserInterface::drawToast() {
     toast_render_pending = false;
 
-    // Can C++ just let me do toast_message == ""
-    // because that'd be prettier.
     if (toast_message[0] == '\0')
         return;
 

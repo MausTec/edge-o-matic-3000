@@ -8,7 +8,7 @@ typedef std::function<void(const char*)> TextInputCallback;
 
 class UIInput : public UIMenu {
   public:
-    UIInput(char* t, MenuCallback cb = nullptr) : UIMenu(t, cb){};
+    UIInput(const char* t, MenuCallback cb = nullptr) : UIMenu(t, cb){};
 
     void render() override;
     void setMax(int);
