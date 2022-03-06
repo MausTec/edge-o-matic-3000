@@ -85,8 +85,10 @@ void DisplayPolyfill::print(int val) {
 
 void DisplayPolyfill::setTextSize(uint8_t size) {
     static const uint8_t* fonts[] = {
-        u8g2_font_squeezed_r7_tr,
-        u8g2_font_10x20_mn,
+        // u8g2_font_squeezed_r7_tr, // narrow
+        // u8g2_font_squeezed_b7_tr,    // flex width and pretty, but bold
+        u8g2_font_mozart_nbp_tf,
+        u8g2_font_profont22_tn,
     };
 
     if (size == 0 || size > sizeof(fonts) / sizeof(fonts[0])) {
