@@ -7,7 +7,7 @@ UIInput MotorMaxSpeedInput("Motor Max Speed", [](UIMenu *ip) {
   UIInput *input = (UIInput*) ip;
   input->setMax(255);
   input->setValue(Config.motor_max_speed);
-  input->setStep(16);
+  input->setStep(1);
 
   input->onOpen([](UIMenu*) {
     OrgasmControl::pauseControl();
@@ -30,7 +30,7 @@ UIInput MotorMaxSpeedInput("Motor Max Speed", [](UIMenu *ip) {
 
 UIInput MotorStartSpeedInput("Motor Start Speed", [](UIMenu *ip) {
   UIInput *input = (UIInput*) ip;
-  input->setMax(150);
+  input->setMax(255);
   input->setStep(1);
   input->setValue(Config.motor_start_speed);
   input->onChange([](int value) {
@@ -43,7 +43,7 @@ UIInput MotorStartSpeedInput("Motor Start Speed", [](UIMenu *ip) {
 
 UIInput MotorRampTimeInput("Motor Ramp Time", [](UIMenu *ip) {
   UIInput *input = (UIInput*) ip;
-  input->setMax(120);
+  input->setMax(180);
   input->setStep(5);
   input->setValue(Config.motor_ramp_time_s);
   input->onChange([](int value) {
