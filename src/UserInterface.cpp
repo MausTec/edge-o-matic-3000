@@ -31,12 +31,12 @@ void UserInterface::drawStatus(const char* s) {
         cJSON_Delete(root);
 
         strlcpy(status, s, STATUS_SIZE);
-        uint32_t sum = 0;
-        for (int i = 0; i < strlen(status); i++) {
-            sum += (uint8_t)status[i];
+        uint64_t hash = 2166136261U;
+        for (int i = 0; i < strlen(s); i++) {
+            hash = (127 * hash) + s[i];
         }
 
-        Hardware::setEncoderColor(CRGB(sum % 255 >> 16, sum % 255 >> 8, sum % 255 >> 0));
+        Hardware::setEncoderColor(CRGB((hash >> 20) * 4, (hash >> 12) * 4, (hash >> 4) * 4));
     }
 
     // actually calculate ---------------\/
