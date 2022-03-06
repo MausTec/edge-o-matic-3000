@@ -5,9 +5,10 @@
 extern "C" {
 #endif
 
-#include <string.h>
-#include <stdio.h>
 #include "esp_vfs.h"
+#include <stdio.h>
+#include <string.h>
+
 
 enum command_err {
     CMD_FAIL = -1,
@@ -22,31 +23,31 @@ typedef enum command_err command_err_t;
 
 struct console {
     char cwd[PATH_MAX + 1];
-    FILE *out;
+    FILE* out;
     command_err_t err;
 };
 
 typedef struct console console_t;
 
-typedef command_err_t (*command_func_t)(int argc, char **argv, console_t *console);
+typedef command_err_t (*command_func_t)(int argc, char** argv, console_t* console);
 
 struct command {
-    const char *command;
-    const char *help;
+    const char* command;
+    const char* help;
     const char alias;
     command_func_t func;
-    struct command *subcommands[];
+    struct command* subcommands[];
 };
 
 typedef struct command command_t;
 
 void console_init(void);
 void console_ready(void);
-void console_handle_message(char *line, char* out, size_t len);
-void console_send_file(const char *filename, console_t *console);
-void console_register_command(command_t *command);
-void console_run_command(int argc, char **argv, console_t *console);
-int console_cd(const char *path);
+void console_handle_message(char* line, char* out, size_t len);
+void console_send_file(const char* filename, console_t* console);
+void console_register_command(const command_t* command);
+void console_run_command(int argc, char** argv, console_t* console);
+int console_cd(const char* path);
 
 #ifdef __cplusplus
 }

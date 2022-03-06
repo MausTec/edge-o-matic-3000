@@ -1,11 +1,11 @@
 #include "commands/index.h"
 #include "console.h"
 
-#include <stdio.h>
-#include <sys/stat.h>
 #include "SDHelper.h"
 #include "esp_vfs.h"
 #include <errno.h>
+#include <stdio.h>
+#include <sys/stat.h>
 
 static void _mkpath(char* path, const char* argv, console_t* console) {
     if (argv != NULL) {
@@ -35,7 +35,7 @@ static command_err_t cmd_cd(int argc, char** argv, console_t* console) {
         return CMD_ARG_ERR;
     }
 
-    char path[PATH_MAX + 1] = { 0 };
+    char path[PATH_MAX + 1] = {0};
     _mkpath(path, argv[0], console);
 
     if (_isdir(path)) {
@@ -52,11 +52,11 @@ const command_t cmd_cd_s = {
     .help = "Change working directory",
     .alias = '.',
     .func = &cmd_cd,
-    .subcommands = { NULL },
+    .subcommands = {NULL},
 };
 
 static command_err_t cmd_ls(int argc, char** argv, console_t* console) {
-    char path[PATH_MAX + 1] = { 0 };
+    char path[PATH_MAX + 1] = {0};
     _mkpath(path, argc > 0 ? argv[0] : NULL, console);
 
     DIR* d;
@@ -69,9 +69,15 @@ static command_err_t cmd_ls(int argc, char** argv, console_t* console) {
             char dt = '?';
 
             switch (dir->d_type) {
-            case DT_REG: dt = '-'; break;
-            case DT_DIR: dt = 'd'; break;
-            default: dt = '?'; break;
+            case DT_REG:
+                dt = '-';
+                break;
+            case DT_DIR:
+                dt = 'd';
+                break;
+            default:
+                dt = '?';
+                break;
             }
 
             fprintf(console->out, "%c  %s\n", dt, dir->d_name);
@@ -89,7 +95,7 @@ const command_t cmd_ls_s = {
     .help = "List directory contents",
     .alias = NULL,
     .func = &cmd_ls,
-    .subcommands = { NULL },
+    .subcommands = {NULL},
 };
 
 static command_err_t cmd_pwd(int argc, char** argv, console_t* console) {
@@ -102,7 +108,7 @@ const command_t cmd_pwd_s = {
     .help = "Print working directory",
     .alias = NULL,
     .func = &cmd_pwd,
-    .subcommands = { NULL },
+    .subcommands = {NULL},
 };
 
 static command_err_t cmd_mkdir(int argc, char** argv, console_t* console) {
@@ -112,7 +118,7 @@ static command_err_t cmd_mkdir(int argc, char** argv, console_t* console) {
 
     bool parents = !strcmp(argv[0], "-p");
     const char* new_path = argv[argc - 1];
-    char path[PATH_MAX + 1] = { 0 };
+    char path[PATH_MAX + 1] = {0};
     _mkpath(path, new_path, console);
 
     if (parents) {
@@ -154,7 +160,7 @@ const command_t cmd_mkdir_s = {
     .help = "Make a new directory",
     .alias = NULL,
     .func = &cmd_mkdir,
-    .subcommands = { NULL },
+    .subcommands = {NULL},
 };
 
 static command_err_t cmd_rm(int argc, char** argv, console_t* console) {
@@ -163,7 +169,7 @@ static command_err_t cmd_rm(int argc, char** argv, console_t* console) {
     }
 
     bool recurse = !strcmp(argv[0], "-r");
-    char path[PATH_MAX + 1] = { 0 };
+    char path[PATH_MAX + 1] = {0};
     _mkpath(path, argv[argc - 1], console);
 
     if (_isdir(path)) {
@@ -190,17 +196,19 @@ const command_t cmd_rm_s = {
     .help = "Remove a regular file or directory",
     .alias = NULL,
     .func = &cmd_rm,
-    .subcommands = { NULL },
+    .subcommands = {NULL},
 };
 
 static command_err_t cmd_cat(int argc, char** argv, console_t* console) {
-    if (argc == 0) { return CMD_ARG_ERR; }
+    if (argc == 0) {
+        return CMD_ARG_ERR;
+    }
 
-    char path[PATH_MAX + 1] = { 0 };
+    char path[PATH_MAX + 1] = {0};
     bool binary = !strcmp(argv[0], "-b");
     SDHelper_getRelativePath(path, PATH_MAX, argv[argc - 1], console);
 
-    FILE *f = fopen(path, binary ? "rb" : "r");
+    FILE* f = fopen(path, binary ? "rb" : "r");
     if (!f) {
         fprintf(console->out, "No such file or directory: %s\n", path);
         return CMD_FAIL;
@@ -229,6 +237,25 @@ static const command_t cmd_cat_s = {
     .subcommands = {NULL},
 };
 
+static command_err_t cmd_fget(int argc, char** argv, console_t* console) {
+    if (argc != 1) {
+        return CMD_ARG_ERR;
+    }
+
+    char path[PATH_MAX + 1] = {0};
+    SDHelper_getRelativePath(path, PATH_MAX, argv[0], console);
+    console_send_file(path, console);
+    return CMD_OK;
+}
+
+static const command_t cmd_fget_s = {
+    .command = "fget",
+    .help = "Download a file from the SD card",
+    .alias = NULL,
+    .func = &cmd_fget, 
+    .subcommands = {NULL},
+};
+
 void commands_register_fsutils(void) {
     console_register_command(&cmd_cd_s);
     console_register_command(&cmd_ls_s);
@@ -236,4 +263,5 @@ void commands_register_fsutils(void) {
     console_register_command(&cmd_mkdir_s);
     console_register_command(&cmd_rm_s);
     console_register_command(&cmd_cat_s);
+    console_register_command(&cmd_fget_s);
 }

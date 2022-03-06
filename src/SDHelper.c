@@ -1,13 +1,15 @@
 #include "SDHelper.h"
-#include <string.h>
 #include "cJSON.h"
 #include "eom-hal.h"
+#include "esp_log.h"
+#include <errno.h>
+#include <string.h>
+
+static const char* TAG = "SDHelper";
 
 size_t SDHelper_join(char* buf, size_t len, const char* path) {
     size_t size = 0;
-    char* saveptr = NULL,
-        * token = NULL,
-        tmppath[PATH_MAX + 1];
+    char *saveptr = NULL, *token = NULL, tmppath[PATH_MAX + 1];
 
     strlcpy(tmppath, path, PATH_MAX);
 
@@ -19,9 +21,11 @@ size_t SDHelper_join(char* buf, size_t len, const char* path) {
     token = strtok_r(tmppath, "/\\", &saveptr);
     while (token != NULL) {
         if (!strcmp(token, "..")) {
-            char *parent = strrchr(buf, '/');
-            if (parent) *parent = '\0';
-            else buf[0] = '\0';
+            char* parent = strrchr(buf, '/');
+            if (parent)
+                *parent = '\0';
+            else
+                buf[0] = '\0';
         } else if (!strcmp(token, ".")) {
             // ... do nothing
         } else {
@@ -136,7 +140,7 @@ static bool _isdir(const char* path) {
     return stat(path, &st) == 0 && S_ISDIR(st.st_mode);
 }
 
-size_t SDHelper_getRelativePath(char *path, size_t len, const char *argv, console_t *console) {
+size_t SDHelper_getRelativePath(char* path, size_t len, const char* argv, console_t* console) {
     if (argv != NULL) {
         if (argv[0] == '/') {
             return SDHelper_getAbsolutePath(path, len, argv);
@@ -147,4 +151,14 @@ size_t SDHelper_getRelativePath(char *path, size_t len, const char *argv, consol
     } else {
         return SDHelper_join(path, len, console->cwd);
     }
+}
+
+FILE* SDHelper_open(const char* filename, const char* mode) {
+    char path[PATH_MAX + 1] = "";
+    SDHelper_getAbsolutePath(path, PATH_MAX, filename);
+    FILE* fh = fopen(path, mode);
+    if (fh == NULL) {
+        ESP_LOGW(TAG, "Error opening %s (%s): %s", path, mode, strerror(errno));
+    }
+    return fh;
 }

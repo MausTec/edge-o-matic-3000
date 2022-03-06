@@ -79,10 +79,10 @@ class UIMenu {
     void addItem(const char* text, Page* p);
     void addItem(UIMenu* submenu, void* arg = nullptr);
     void addItem(std::string text, UIMenu* submenu, void* arg = nullptr);
-    void addItem(const char* text, IParameterizedMenuCallback pcb = nullptr, int arg = NULL);
-    void addItem(const char* text, PIParameterizedMenuCallback pcb = nullptr, void* parg = NULL,
-                 int arg = NULL);
-    void addItem(std::string text, IParameterizedMenuCallback pcb = nullptr, int arg = NULL) {
+    void addItem(const char* text, IParameterizedMenuCallback pcb = nullptr, int arg = 0);
+    void addItem(const char* text, PIParameterizedMenuCallback pcb = nullptr, void* parg = nullptr,
+                 int arg = 0);
+    void addItem(std::string text, IParameterizedMenuCallback pcb = nullptr, int arg = 0) {
         addItem(text.c_str(), pcb, arg);
     };
     void addItemAt(size_t index, const char* text, MenuCallback cb = nullptr);

@@ -7,7 +7,7 @@ typedef std::function<void(const char*, UIMenu*)> TextInputCallback;
 
 class UITextInput : public UIMenu {
   public:
-    UITextInput(char* t, int len, MenuCallback cb = nullptr) : UIMenu(t, cb) {
+    UITextInput(const char* t, int len, MenuCallback cb = nullptr) : UIMenu(t, cb) {
         maxlen = len;
         current_value = (char*)malloc(len + 1);
         default_value = (char*)malloc(len + 1);
