@@ -5,7 +5,6 @@
 #include "eom-hal.h"
 #include "system/websocket_handler.h"
 
-
 static command_err_t cmd_config_list(cJSON* command, cJSON* response, websocket_client_t* client) {
     cJSON_AddStringToObject(response, "_filename", Config._filename);
     config_to_json(response, &Config);

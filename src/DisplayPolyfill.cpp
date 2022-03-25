@@ -12,7 +12,7 @@ static const char* TAG = "DisplayPolyfill";
 void DisplayPolyfill::fillTriangle(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, uint8_t x3,
                                    uint8_t y3, display_color_t color) {
     u8g2_SetDrawColor(this->display_ptr, color);
-    u8g2_DrawTriangle(this->display_ptr, x1, y1, x2, y2, x3, y3);
+    u8g2_DrawTriangle(this->display_ptr, x1, y1, x2 + 1, y2, x3, y3 + 1);
 }
 
 void DisplayPolyfill::drawLine(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2,
