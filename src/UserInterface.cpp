@@ -83,8 +83,11 @@ void UserInterface::drawCompactBar(int x, int y, int width, int value, int maxim
     // Markers
     UI.display->fillTriangle(marker_1_x - 2, y - bar_height, marker_1_x + 2, y - bar_height,
                              marker_1_x, y - 1, 1);
-    UI.display->fillTriangle(marker_2_x - 1, y + bar_height, marker_2_x + 1, y + bar_height,
-                             marker_2_x, y + 2, 1);
+
+    // UI.display->fillTriangle(marker_2_x - 1, y + bar_height, marker_2_x + 1, y + bar_height,
+    //                          marker_2_x, y + 2, 1);
+    u8g2_DrawTriangle(this->display_ptr, marker_2_x - 2, y + bar_height + 1, marker_2_x, y + 1,
+                      marker_2_x + 2, y + bar_height + 1);
 }
 
 void UserInterface::drawBar(int y, char label, int value, int maximum, int limit, int peak) {
