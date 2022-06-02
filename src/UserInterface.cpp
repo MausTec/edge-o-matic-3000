@@ -7,6 +7,7 @@
 #include "polyfill.h"
 #include "system/screenshot.h"
 #include "system/websocket_handler.h"
+#include "wifi_manager.h"
 #include <algorithm>
 #include <cstring>
 #include <fcntl.h>
@@ -266,8 +267,6 @@ void UserInterface::onKeyPress(uint8_t i) {
 }
 
 void UserInterface::onEncoderChange(int value) {
-    ESP_LOGI(TAG, "%s(%d)", __FUNCTION__, value);
-
     if (UI.isMenuOpen()) {
         if (value < 0) {
             current_menu->selectPrev(abs(value));
@@ -400,6 +399,10 @@ void UserInterface::drawWifiIcon(uint8_t status, long flash_ms) {
     drawIcon(WIFI_ICON_IDX, WIFI_ICON, status, flash_ms);
 }
 
+void UserInterface::drawBTIcon(uint8_t status, long flash_ms) {
+    drawIcon(BT_ICON_IDX, BT_ICON, status, flash_ms);
+}
+
 void UserInterface::drawSdIcon(uint8_t status, long flash_ms) {
     drawIcon(SD_ICON_IDX, SD_ICON, status, flash_ms);
 }
@@ -417,6 +420,7 @@ void UserInterface::drawUpdateIcon(uint8_t status, long flash_ms) {
  */
 void UserInterface::drawIcons() {
     drawWifiIcon();
+    drawBTIcon();
     drawSdIcon();
     drawRecordIcon();
     drawUpdateIcon();

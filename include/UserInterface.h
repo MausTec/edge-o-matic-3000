@@ -19,9 +19,10 @@
 #define TOAST_LINES 4
 
 #define WIFI_ICON_IDX 0
-#define SD_ICON_IDX 1
-#define RECORD_ICON_IDX 2
-#define UPDATE_ICON_IDX 3
+#define BT_ICON_IDX 1
+#define SD_ICON_IDX 2
+#define RECORD_ICON_IDX 3
+#define UPDATE_ICON_IDX 4
 
 #include "DisplayPolyfill.hpp"
 #include "UIMenu.h"
@@ -72,6 +73,7 @@ class UserInterface {
 
     // Icons
     void drawWifiIcon(uint8_t strength = 255, long flash_ms = 0);
+    void drawBTIcon(uint8_t strength = 255, long flash_ms = 0);
     void drawSdIcon(uint8_t status = 255, long flash_ms = 0);
     void drawRecordIcon(uint8_t status = 255, long flash_ms = 0);
     void drawUpdateIcon(uint8_t status = 255, long flash_ms = 0);
@@ -121,15 +123,15 @@ class UserInterface {
     bool initialized = false;
 
     // Chart Data:
-    int chartReadings[2][CHART_WIDTH] = {{0}, {0}};
-    uint8_t chartCursor[2] = {0, 0};
+    int chartReadings[2][CHART_WIDTH] = { { 0 }, { 0 } };
+    uint8_t chartCursor[2] = { 0, 0 };
 
     // Buttons
     UIButton buttons[3];
 
     // Header Data
-    char status[STATUS_SIZE + 1] = {0};
-    UIIcon icons[4];
+    char status[STATUS_SIZE + 1] = { 0 };
+    UIIcon icons[5];
 
     // Toast Data
     char toast_message[(TOAST_WIDTH * TOAST_LINES) + 1] = "";

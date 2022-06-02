@@ -28,6 +28,8 @@ void loop(void);
 
 UserInterface UI;
 
+static const char* TAG = "main";
+
 void resetSD() {
     long long int cardSize = eom_hal_get_sd_size_bytes();
 
@@ -84,7 +86,10 @@ extern "C" void app_main() {
 
     // Initialize WiFi
     if (Config.wifi_on) {
-        wifi_manager_connect_to_ap(Config.wifi_ssid, Config.wifi_key);
+        if (ESP_OK == wifi_manager_connect_to_ap(Config.wifi_ssid, Config.wifi_key)) {
+            UI.drawWifiIcon(2);
+            UI.render();
+        }
     }
 
     // Initialize Bluetooth
@@ -93,6 +98,9 @@ extern "C" void app_main() {
         BT.begin();
         printf("Now Discoverable!\n");
         BT.advertise();
+        UI.drawBTIcon(1);
+    } else {
+        UI.drawBTIcon(0);
     }
 
     // I'm always one for the dramatics:
@@ -125,18 +133,19 @@ void loop() {
     if (millis() - lastStatusTick > 1000 * 10) {
         lastStatusTick = millis();
         api_broadcast_network_status();
+
+        // Update Icons
+        if (wifi_manager_get_status() == WIFI_MANAGER_CONNECTED) {
+            int8_t rssi = wifi_manager_get_rssi();
+            uint8_t status = ((100 + rssi) / 10);
+            UI.drawWifiIcon(status < 4 ? status : 4);
+        } else {
+            UI.drawWifiIcon(1);
+        }
     }
 
     if (millis() - lastTick > 1000 / 15) {
         lastTick = millis();
-
-        // Update Icons
-        if (wifi_manager_get_status() == WIFI_MANAGER_CONNECTED) {
-            UI.drawWifiIcon(1);
-        } else {
-            UI.drawWifiIcon(0);
-        }
-
         api_broadcast_readings();
     }
 

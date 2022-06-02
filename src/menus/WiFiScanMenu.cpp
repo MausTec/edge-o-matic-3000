@@ -1,7 +1,10 @@
 #include "UIMenu.h"
 #include "UITextInput.h"
-#include "wifi_manager.h"
 #include "UserInterface.h"
+#include "esp_log.h"
+#include "wifi_manager.h"
+
+static const char* TAG = "WiFiScanMenu";
 
 #include <cstring>
 
@@ -10,21 +13,21 @@
 static bool scanning = false;
 static void addScanItem(UIMenu* menu);
 
-UITextInput WiFiKeyInput("WiFi Key", 64, [](UIMenu *ip) {
-    UITextInput *input = (UITextInput*) ip;
+UITextInput WiFiKeyInput("WiFi Key", 64, [](UIMenu* ip) {
+    UITextInput* input = (UITextInput*)ip;
 
     input->setValue("");
 
-    input->onConfirm([](const char *key, UIMenu *menu) {
-        UITextInput *inp = (UITextInput*) menu;
-        char *ssid = (char*) inp->getCurrentArg();
+    input->onConfirm([](const char* key, UIMenu* menu) {
+        UITextInput* inp = (UITextInput*)menu;
+        char* ssid = (char*)inp->getCurrentArg();
 
         UI.toastNow("Connecting...", 0, false);
 
         Config.wifi_on = true;
         strlcpy(Config.wifi_ssid, ssid, WIFI_SSID_MAX_LEN);
         strlcpy(Config.wifi_key, key, WIFI_KEY_MAX_LEN);
-        
+
         if (wifi_manager_connect_to_ap(Config.wifi_ssid, Config.wifi_key) == ESP_OK) {
             UI.toastNow("WiFi Connected!", 3000);
             config_enqueue_save(0);
@@ -35,7 +38,7 @@ UITextInput WiFiKeyInput("WiFi Key", 64, [](UIMenu *ip) {
     });
 });
 
-static void selectNetwork(UIMenu *menu, void *ssid) {
+static void selectNetwork(UIMenu* menu, void* ssid) {
     UI.openMenu(&WiFiKeyInput, true, true, ssid);
 }
 
@@ -56,13 +59,15 @@ static void startScan(UIMenu* menu) {
     esp_err_t err = wifi_manager_scan(ap_info, &count);
 
     if (err != ESP_OK) {
+        ESP_LOGE(TAG, "Error scanning for WiFi networks: %s", esp_err_to_name(err));
         UI.toastNow("Error scanning for\nWiFi networks.");
     }
 
     for (int i = 0; i < count; i++) {
         wifi_ap_record_t network = ap_info[i];
-        char *ssid = (char*) malloc(sizeof(char) * (strlen((char*)network.ssid) + 1));
-        menu->addItem((char*)network.ssid, &selectNetwork, (void*) ssid);
+        char* ssid = (char*)malloc(sizeof(char) * (strlen((char*)network.ssid) + 1));
+        strcpy(ssid, (char*)network.ssid);
+        menu->addItem((char*)network.ssid, &selectNetwork, (void*)ssid);
     }
 
     scanning = false;

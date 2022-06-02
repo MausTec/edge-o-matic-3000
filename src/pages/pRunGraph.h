@@ -135,9 +135,9 @@ class pRunGraph : public Page {
             renderChart();
         }
 
-        UI.drawIcons();
         UI.drawStatus();
         UI.drawButtons();
+        UI.drawIcons();
     }
 
     void Loop() override {
@@ -149,6 +149,9 @@ class pRunGraph : public Page {
             }
 
             Rerender();
+        } else {
+            UI.drawIcons();
+            UI.render();
         }
     }
 
