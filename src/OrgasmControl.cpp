@@ -171,7 +171,7 @@ namespace OrgasmControl {
       
       // Pre-Orgasm loop -- Orgasm is permited
       if ( isPermitOrgasmReached() && !isPostOrgasmReached() ) {  
-        Hardware::setEncoderColor(CRGB::Green);
+        eom_hal_set_encoder_rgb(0, 255, 0);
         if (control_motor) {
           pauseControl();  // make sure orgasm is now possible
         }
@@ -183,7 +183,7 @@ namespace OrgasmControl {
             menu_is_locked = true;
             RunGraphPage.menuUpdate();
           }
-          Hardware::setEncoderColor(CRGB::Red);
+          eom_hal_set_encoder_rgb(255, 0, 0);
         }
         // raise motor speed to max speep. protect not to go higher than max
         if ( motor_speed <= (Config.motor_max_speed - 5) ) {

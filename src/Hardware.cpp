@@ -102,19 +102,6 @@ namespace Hardware {
         }
     }
 
-    /**
-     * @deprecated - Go forth and use the HAL
-     */
-    [[deprecated("Use eom_hal_set_encoder_color(r, g, b)")]] void setEncoderColor(CRGB color) {
-        encoderColor = color;
-        eom_hal_color_t hal_color = {
-            .r = color.r,
-            .g = color.g,
-            .b = color.b,
-        };
-        eom_hal_set_encoder_color(hal_color);
-    }
-
     [[deprecated("Use eom_hal_get_device_serial()")]] std::string getDeviceSerial() {
         char serial[40] = "";
         auto err = eom_hal_get_device_serial(serial, 40);

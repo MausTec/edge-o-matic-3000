@@ -26,7 +26,6 @@ namespace Hardware {
   bool initialize();
   void tick();
 
-  void setEncoderColor(CRGB color);
   void setLedColor(uint8_t i, CRGB color = CRGB::Black);
   void ledShow();
 

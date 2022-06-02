@@ -36,7 +36,7 @@ void UserInterface::drawStatus(const char* s) {
             hash = (127 * hash) + s[i];
         }
 
-        Hardware::setEncoderColor(CRGB((hash >> 20) * 4, (hash >> 12) * 4, (hash >> 4) * 4));
+        eom_hal_set_encoder_rgb((hash >> 20) * 4, (hash >> 12) * 4, (hash >> 4) * 4);
     }
 
     // actually calculate ---------------\/
