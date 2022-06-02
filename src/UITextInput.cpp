@@ -118,6 +118,7 @@ void UITextInput::render() {
 
     // draw amount left
     UI.display->setCursor(0, 11);
+    UI.display->setTextColor(SSD1306_WHITE, SSD1306_BLACK);
     UI.display->printf("%d/%d", strlen(this->current_value), this->maxlen);
 
     UI.drawPattern(1, text_top - 1, 18, 9, 2, SSD1306_BLACK);
@@ -195,17 +196,17 @@ void UITextInput::advance_cursor(int steps) {
 
 void UITextInput::selectNext(int step) {
     if (char_edit_mode) {
-        this->advance_character(step);
+        this->advance_character(1);
     } else {
-        this->advance_cursor(step);
+        this->advance_cursor(1);
     }
 }
 
 void UITextInput::selectPrev(int step) {
     if (char_edit_mode) {
-        this->advance_character(step);
+        this->advance_character(-1);
     } else {
-        this->advance_cursor(step);
+        this->advance_cursor(-1);
     }
 }
 

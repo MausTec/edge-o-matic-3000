@@ -16,7 +16,7 @@ class DisplayPolyfill {
     DisplayPolyfill(u8g2_t* d) : display_ptr(d) {
         u8g2_SetFontPosTop(d);
         u8g2_SetDrawColor(d, 1);
-        u8g2_SetFont(d, u8g2_font_6x10_mf);
+        this->setTextSize(1);
     };
 
     // Basic Graphics
