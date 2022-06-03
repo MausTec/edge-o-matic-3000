@@ -4,21 +4,22 @@
 #include "cJSON.h"
 #include "config.h"
 #include "esp_err.h"
+#include "esp_log.h"
 #include <stdbool.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-enum _config_def_operation { 
+enum _config_def_operation {
     // Get a config entry into the target JSON object or String (single key)
-    CFG_GET, 
-    
+    CFG_GET,
+
     // Set a config entry from target JSON object (with defaults) or String (single key)
-    CFG_SET, 
-    
+    CFG_SET,
+
     // Merge the target JSON object into the config, leaving missing entries alone
-    CFG_MERGE 
+    CFG_MERGE
 };
 
 #define CONFIG_DEFS                                                                                \
@@ -31,7 +32,7 @@ enum _config_def_operation {
         if (root != NULL) {                                                                        \
             if (operation == CFG_SET || operation == CFG_MERGE) {                                  \
                 cJSON* item = cJSON_GetObjectItem(root, #name);                                    \
-                if (item != NULL || operation == CFG_GET)                                          \
+                if (item != NULL || operation == CFG_SET)                                          \
                     strncpy(cfg->name, item == NULL ? default : item->valuestring,                 \
                             sizeof(cfg->name));                                                    \
             } else {                                                                               \
@@ -55,8 +56,9 @@ enum _config_def_operation {
         if (root != NULL) {                                                                        \
             if (operation == CFG_SET || operation == CFG_MERGE) {                                  \
                 cJSON* item = cJSON_GetObjectItem(root, #name);                                    \
-                if (item != NULL || operation == CFG_GET)                                          \
+                if (item != NULL || operation == CFG_SET) {                                        \
                     cfg->name = item == NULL ? default : item->valueint;                           \
+                }                                                                                  \
             } else {                                                                               \
                 cJSON_AddNumberToObject(root, #name, cfg->name);                                   \
             }                                                                                      \
@@ -78,7 +80,7 @@ enum _config_def_operation {
         if (root != NULL) {                                                                        \
             if (operation == CFG_SET || operation == CFG_MERGE) {                                  \
                 cJSON* item = cJSON_GetObjectItem(root, #name);                                    \
-                if (item != NULL || operation == CFG_GET)                                          \
+                if (item != NULL || operation == CFG_SET)                                          \
                     cfg->name = item == NULL ? default : (type)item->valueint;                     \
             } else {                                                                               \
                 cJSON_AddNumberToObject(root, #name, (int)cfg->name);                              \
@@ -101,7 +103,7 @@ enum _config_def_operation {
         if (root != NULL) {                                                                        \
             if (operation == CFG_SET || operation == CFG_MERGE) {                                  \
                 cJSON* item = cJSON_GetObjectItem(root, #name);                                    \
-                if (item != NULL || operation == CFG_GET)                                          \
+                if (item != NULL || operation == CFG_SET)                                          \
                     cfg->name = item == NULL ? default : item->valueint;                           \
             } else {                                                                               \
                 cJSON_AddBoolToObject(root, #name, cfg->name);                                     \
