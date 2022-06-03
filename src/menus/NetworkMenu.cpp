@@ -91,9 +91,7 @@ static void onDisconnect(UIMenu* menu) {
     menu->render();
 }
 
-static void onMausLink(UIMenu* menu) {
-    // websocket_connect_to_bridge("192.168.1.3", 8080);
-}
+static void onMausLink(UIMenu* menu) { websocket_connect_to_bridge("link.maustec.net", 8080); }
 
 static void buildMenu(UIMenu* menu) {
     if (Config.bt_on) {

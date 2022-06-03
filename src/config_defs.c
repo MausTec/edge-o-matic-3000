@@ -76,7 +76,7 @@ defaults:
         nvs_close(nvs);
 
     if (err == ESP_ERR_NVS_NOT_FOUND) {
-        char path[CONFIG_PATH_MAX + 1] = {0};
+        char path[CONFIG_PATH_MAX + 1] = { 0 };
         SDHelper_getAbsolutePath(path, CONFIG_PATH_MAX, CONFIG_FILENAME);
         err = config_load_from_sd(path, &Config);
     }
@@ -107,7 +107,7 @@ void config_deserialize(config_t* cfg, const char* buf) {
 
 // get_config_to_json
 void config_to_json(cJSON* root, config_t* cfg) {
-    _config_defs(CFG_GET, root, cfg, NULL, NULL, NULL, NULL, NULL);
+    _config_defs(CFG_GET, root, cfg, NULL, NULL, NULL, 0, NULL);
 }
 
 static void _validate_config(config_t* cfg) {
@@ -120,18 +120,18 @@ static void _validate_config(config_t* cfg) {
 
 // set_config_from_json
 void json_to_config(cJSON* root, config_t* cfg) {
-    _config_defs(CFG_SET, root, cfg, NULL, NULL, NULL, NULL, NULL);
+    _config_defs(CFG_SET, root, cfg, NULL, NULL, NULL, 0, NULL);
     _validate_config(cfg);
 }
 
 // merge_config_from_json
 void json_to_config_merge(cJSON* root, config_t* cfg) {
-    _config_defs(CFG_MERGE, root, cfg, NULL, NULL, NULL, NULL, NULL);
+    _config_defs(CFG_MERGE, root, cfg, NULL, NULL, NULL, 0, NULL);
     _validate_config(cfg);
 }
 
 bool set_config_value(const char* option, const char* value, bool* require_reboot) {
-    if (_config_defs(CFG_SET, NULL, &Config, option, value, NULL, NULL, require_reboot)) {
+    if (_config_defs(CFG_SET, NULL, &Config, option, value, NULL, 0, require_reboot)) {
         _validate_config(&Config);
         return true;
     }
@@ -294,6 +294,7 @@ esp_err_t config_save_to_sd(const char* path, config_t* cfg) {
 }
 
 void config_load_default(config_t* cfg) {
+    ESP_LOGI(TAG, "Loading default config...");
     cJSON* root = cJSON_CreateObject();
     json_to_config(root, cfg);
     SDHelper_getAbsolutePath(cfg->_filename, CONFIG_PATH_MAX, CONFIG_FILENAME);

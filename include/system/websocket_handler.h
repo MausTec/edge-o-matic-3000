@@ -49,6 +49,8 @@ void websocket_run_commands(cJSON* commands, cJSON* response, websocket_client_t
 // Broadcast update triggers:
 esp_err_t websocket_broadcast(cJSON* root, int broadcast_flags);
 
+esp_err_t websocket_connect_to_bridge(const char* address, int port);
+
 #ifdef __cplusplus
 }
 #endif

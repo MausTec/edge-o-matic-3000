@@ -238,3 +238,5 @@ cleanup:
         free(buf);
     return ret;
 }
+
+esp_err_t websocket_connect_to_bridge(const char* address, int port) { return ESP_FAIL; }
