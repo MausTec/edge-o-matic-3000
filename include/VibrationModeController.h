@@ -74,6 +74,7 @@ private:
 namespace VibrationPatterns {
   extern VibrationPattern Step[];
   extern VibrationPattern Wave[];
+  extern VibrationPattern Sawtooth[];
 }
 
 namespace VibrationControllers {

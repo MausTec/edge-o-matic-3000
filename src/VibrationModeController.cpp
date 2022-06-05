@@ -101,8 +101,28 @@ VibrationPattern VibrationPatterns::Wave[] = {
     { 255, 60, true },
 };
 
+VibrationPattern VibrationPatterns::Sawtooth[] = {
+    {   0, 10, true  },
+    {  32, 60, true  },
+    {  64, 10, false },
+    {  32, 60, true  },
+    {  96, 10, false },
+    {  32, 60, true  },
+    { 128, 10, false },
+    {  32, 60, true  },
+    { 160, 10, false },
+    {  32, 60, true  },
+    { 192, 10, false },
+    {  32, 60, true  },
+    { 224, 10, false },
+    {  32, 60, true  },
+    { 255, 10, false },
+};
+
 PatternController::PatternController() {
-  setPattern(VibrationPatterns::Wave);
+  //setPattern(VibrationPatterns::Wave);
+  //setPattern(VibrationPatterns::Step);
+  setPattern(VibrationPatterns::Sawtooth);
 }
 
 float PatternController::start() {
@@ -120,15 +140,15 @@ float PatternController::increment() {
     this->pattern_step = (this->pattern_step + 1) % this->pattern_length;
     this->step_ticks = 0;
     p = this->pattern[this->pattern_step];
-    return p.motor_speed;
+    return ((float)p.motor_speed * ((float)Config.motor_max_speed / (float)255));
   }
 
   VibrationPattern next = this->nextStep();
 
   if (p.ramp_to) {
-    return motor_speed + rampToIncrement(p.motor_speed, next.motor_speed, p.hold_ticks / Config.update_frequency_hz);
+    return (motor_speed + rampToIncrement(((float)p.motor_speed * ((float)Config.motor_max_speed / (float)255)), ((float)next.motor_speed * ((float)Config.motor_max_speed / (float)255)), p.hold_ticks / Config.update_frequency_hz));
   } else {
-    return p.motor_speed;
+    return ((float)p.motor_speed * ((float)Config.motor_max_speed / (float)255));
   }
 }
 

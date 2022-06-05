@@ -138,6 +138,10 @@ static void setVibrateMode(UIMenu *menu, int m) {
     case VibrationMode::RampStop:
       Serial.println("RampStop");
       break;
+    case VibrationMode::Pattern:
+      Serial.println("Pattern");
+      break;
+    
   }
 
   Config.vibration_mode = mode;
@@ -161,6 +165,7 @@ static void buildVibrationModeMenu(UIMenu *menu) {
   add_vibration_item(menu, "Depletion", VibrationMode::Depletion);
   add_vibration_item(menu, "Enhancement", VibrationMode::Enhancement);
   add_vibration_item(menu, "Ramp-Stop", VibrationMode::RampStop);
+//  add_vibration_item(menu, "Pattern", VibrationMode::Pattern);
 }
 
 UIMenu VibrationModeMenu("Vibration Mode", &buildVibrationModeMenu);
