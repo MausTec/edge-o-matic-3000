@@ -102,7 +102,7 @@ class pRunGraph : public Page {
     }
 
     // Motor / Arousal bars
-    UI.drawBar(10, 'M', Hardware::getMotorSpeed(), 255, mode == Automatic ? Config.motor_max_speed : 0);
+    UI.drawBar(10, 'M', Hardware::getMotorSpeed(), 255, (mode == Automatic || mode == PostOrgasm ) ? Config.motor_max_speed : 0);
     UI.drawBar(SCREEN_HEIGHT - 18, 'A', OrgasmControl::getArousal(), 1023, Config.sensitivity_threshold, arousal_peak);
 
     // Pressure Icon

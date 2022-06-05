@@ -168,6 +168,12 @@ namespace OrgasmControl {
         if (control_motor) {
           pauseControl();  // make sure orgasm is now possible
         }
+        // Now we need to control the motor speed increments
+        float motor_increment = (
+          (float)(Config.motor_max_speed - Config.motor_start_speed)  /
+          ((float)Config.update_frequency_hz * (float)Config.motor_ramp_time_s)
+        );
+
         //now detect the orgasm to start post orgasm torture timer
         if (detected_orgasm) {
           post_orgasm_start_millis = millis();   // Start Post orgasm torture timer
@@ -179,8 +185,8 @@ namespace OrgasmControl {
           Hardware::setEncoderColor(CRGB::Red);
         }
         // raise motor speed to max speep. protect not to go higher than max
-        if ( motor_speed <= (Config.motor_max_speed - 5) ) {
-          motor_speed = motor_speed + 5;
+        if ( motor_speed <= (Config.motor_max_speed - motor_increment) ) {
+          motor_speed = motor_speed + motor_increment;
           Hardware::setMotorSpeed(motor_speed);
         } else {
           motor_speed = Config.motor_max_speed;
@@ -192,10 +198,20 @@ namespace OrgasmControl {
       if ( isPostOrgasmReached() ) { 
         post_orgasm_duration_millis = (post_orgasm_duration_seconds * 1000);
 
+        float motor_increment = (
+          (float)(Config.motor_max_speed - Config.motor_start_speed)  /
+          ((float)Config.update_frequency_hz * (float)Config.motor_ramp_time_s)
+        );
+
         // Detect if within post orgasm session
         if ( millis() < (post_orgasm_start_millis + post_orgasm_duration_millis)) { 
-          motor_speed = Config.motor_max_speed;
-          Hardware::setMotorSpeed(motor_speed);
+          if ( motor_speed <= (Config.motor_max_speed - motor_increment) ) {
+            motor_speed = motor_speed + motor_increment;
+            Hardware::setMotorSpeed(motor_speed);
+          } else {
+            motor_speed = Config.motor_max_speed;
+            Hardware::setMotorSpeed(motor_speed);
+          }
         } else { // Post_orgasm timer reached
           if ( motor_speed >= 10 ) { // Ramp down motor speed to 0 
             motor_speed = motor_speed - 10;
