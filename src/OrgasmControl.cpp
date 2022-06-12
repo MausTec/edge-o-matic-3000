@@ -61,15 +61,18 @@ namespace OrgasmControl {
       if (p_check >= clench_pressure_threshold) {
         clench_duration += 1;
   
-        // Orgasm detected
-        if ( clench_duration >= Config.clench_threshold_2_orgasm && isPermitOrgasmReached()) { 
-          detected_orgasm = true;
-          clench_duration = 0;
+        // Orgasm permited 
+        if (isPermitOrgasmReached()) { 
+          // this check is now after IsPermitOrgasmReached() to remove race condition and make sure clench_duration has a proper value to detect orgasm
+          if ( clench_duration >= Config.clench_threshold_2_orgasm) {
+            detected_orgasm = true;
+            clench_duration = 0;
+          }
         }
   
         // ajust arousal if Clench_detector in Edge is turned on
         if ( Config.clench_detector_in_edging ) {
-          if ( clench_duration > (Config.clench_threshold_2_orgasm/2) ) {
+          if ( clench_duration > (Config.clench_threshold_2_orgasm/3) ) {
             arousal += 5;     // boost arousal  because clench duration exceeded
           }
         }
@@ -165,9 +168,6 @@ namespace OrgasmControl {
       // Pre-Orgasm loop -- Orgasm is permited
       if ( isPermitOrgasmReached() && !isPostOrgasmReached() ) {  
         Hardware::setEncoderColor(CRGB::Green);
-        if (control_motor) {
-          pauseControl();  // make sure orgasm is now possible
-        }
         // Now we need to control the motor speed increments
         float motor_increment = (
           (float)(Config.motor_max_speed - Config.motor_start_speed)  /
@@ -378,6 +378,13 @@ namespace OrgasmControl {
   bool isPermitOrgasmReached() {
     // Detect if edging time has passed
     if ( millis() > (auto_edging_start_millis + ( Config.auto_edging_duration_minutes * 60 * 1000 ))) {  
+      // Set this orgasm detect values only once
+      if (control_motor) {
+          pauseControl();      // make sure orgasm is now possible
+          clench_duration = 0; // reset clench detector to detect orgasm
+          motor_speed = 0;     // shutdown motor to relax muscle before detecting if orgasm
+          Hardware::setMotorSpeed(motor_speed); // start motor speed from 0 before giving orgasm
+      }
       return true;
     } else {
       return false;
