@@ -187,6 +187,7 @@ namespace WebSocketHelper {
     doc["runMode"] = mode;
     doc["permitOrgasm"] = OrgasmControl::isPermitOrgasmReached();
     doc["postOrgrasm"] = OrgasmControl::isPostOrgasmReached();
+    doc["orgasmDetected"] = OrgasmControl::isOrgasmDetected();
     doc["lock"] = OrgasmControl::isMenuLocked();
     //    doc["screenshot"] = screenshot;
 

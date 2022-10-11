@@ -170,6 +170,7 @@ class pRunGraph : public Page {
         mode = Manual;
         Hardware::setMotorSpeed(0);
         OrgasmControl::controlMotor(false);
+        OrgasmControl::resetOrgasm();
         break;
       case 2:
         if (OrgasmControl::isMenuLocked()) {
@@ -185,6 +186,7 @@ class pRunGraph : public Page {
           mode = Manual;
           OrgasmControl::controlMotor(false);
         }
+        OrgasmControl::resetOrgasm();
         break;
     }
 
@@ -221,6 +223,7 @@ public:
       mode = PostOrgasm;
       OrgasmControl::controlMotor(true);
     }
+    OrgasmControl::resetOrgasm();
 
     updateButtons();
   }

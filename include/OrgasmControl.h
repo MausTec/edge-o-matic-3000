@@ -24,6 +24,7 @@ namespace OrgasmControl {
   void controlMotor(bool control = true);
   void pauseControl();
   void resumeControl();
+  void resetOrgasm();
 
   // Recording Control
   void startRecording();
@@ -37,6 +38,7 @@ namespace OrgasmControl {
   bool isMenuLocked();
   bool isPermitOrgasmReached();
   bool isPostOrgasmReached();
+  bool isOrgasmDetected();
   void permitOrgasmNow(int seconds);
   void lockMenuNow(bool value);
 

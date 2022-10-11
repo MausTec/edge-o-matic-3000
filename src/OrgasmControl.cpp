@@ -62,7 +62,7 @@ namespace OrgasmControl {
         clench_duration += 1;
   
         // Orgasm detected
-        if ( clench_duration >= Config.clench_threshold_2_orgasm && isPermitOrgasmReached()) { 
+        if ( clench_duration >= Config.clench_threshold_2_orgasm && (RunGraphPage.getMode() == 0 || isPermitOrgasmReached())) {
           detected_orgasm = true;
           clench_duration = 0;
         }
@@ -202,7 +202,7 @@ namespace OrgasmControl {
             Hardware::setMotorSpeed(motor_speed);
           } else {
             menu_is_locked = false;
-            detected_orgasm = false;
+            resetOrgasm();
             motor_speed = 0;
             Hardware::setMotorSpeed(motor_speed);
             RunGraphPage.setMode("manual");
@@ -352,8 +352,12 @@ namespace OrgasmControl {
     control_motor = prev_control_motor;
   }
 
-  void permitOrgasmNow(int seconds) {
+  void resetOrgasm() {
     detected_orgasm = false;
+  }
+
+  void permitOrgasmNow(int seconds) {
+    resetOrgasm();
     RunGraphPage.setMode("postorgasm");
     auto_edging_start_millis = millis() - (Config.auto_edging_duration_minutes * 60 * 1000);
     post_orgasm_duration_seconds = seconds;
@@ -366,6 +370,10 @@ namespace OrgasmControl {
     } else {
       return false;
     }
+  }
+
+  bool isOrgasmDetected() {
+    return detected_orgasm;
   }
 
   bool isPostOrgasmReached() {
