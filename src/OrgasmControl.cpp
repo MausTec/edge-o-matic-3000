@@ -37,15 +37,21 @@ namespace OrgasmControl {
       long p_avg = PressureAverage.getAverage();
       long p_check = Config.use_average_values ? p_avg : pressure_value;
 
-      // Increment arousal:
+      // Increment arousal
       if (p_check < last_value) { // falling edge of peak
-        if (p_check > peak_start) { // first tick past peak?
-          if (p_check - peak_start >= Config.sensitivity_threshold / 10) { // big peak
-            arousal += p_check - peak_start;
+        if (last_value > peak_start) { // first tick past peak?
+          if (last_value - peak_start >= Config.sensitivity_threshold / 10) { // big peak
+            arousal += last_value - peak_start;
+            peak_start = p_check;
           }
         }
-        peak_start = p_check;
+        
+        if (p_check < peak_start) {
+          // run this value down to a new minimum after a peak detected.
+          peak_start = p_check;
+        }
       }
+        
 
       last_value = p_check;
 
