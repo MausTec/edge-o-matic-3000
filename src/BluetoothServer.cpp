@@ -22,10 +22,8 @@ void BluetoothServer::disconnect() {
 void BluetoothServer::begin() {
   Serial.println("BLEDevice::init");
   NimBLEDevice::init(Config.bt_display_name);
-
   Serial.println("Create server");
-  this->server = BLEDevice::createServer();
-
+  this->server = NimBLEDevice::createServer();
   Serial.println("Create service");
   this->service = this->server->createService(SERVICE_UUID);
 

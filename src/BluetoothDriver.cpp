@@ -1,5 +1,6 @@
 #include "BluetoothDriver.h"
 #include "drivers/Lovense.h"
+#include "drivers/Nobra.h"
 
 static const char *TAG = "BluetoothDriver";
 
@@ -9,7 +10,8 @@ namespace BluetoothDriver {
      * driver's detect routine. Thanks!
      */
     static const DeviceDetectionCallback DEVICE_DRIVERS[] = {
-        Lovense::detect,
+        Nobra::detect,
+        Lovense::detect
     };
 
     void registerDevice(Device *device) {
@@ -97,8 +99,11 @@ namespace BluetoothDriver {
             return nullptr;
         }
 
-        client->connect(device);
-
+        if (!client->connect(device)) {
+            ESP_LOGE(TAG, "Failed to connect to device (%s).", device->toString().c_str());
+            return nullptr;
+        }
+    
         BLEUUID serviceUUID = device->getServiceUUID();
         if (serviceUUID.toString() == "") {
             ESP_LOGE(TAG, "No serviceUUID advertised.");
