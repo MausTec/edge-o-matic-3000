@@ -99,8 +99,11 @@ namespace BluetoothDriver {
             return nullptr;
         }
 
-        client->connect(device);
-
+        if (!client->connect(device)) {
+            ESP_LOGE(TAG, "Failed to connect to device (%s).", device->toString().c_str());
+            return nullptr;
+        }
+    
         BLEUUID serviceUUID = device->getServiceUUID();
         if (serviceUUID.toString() == "") {
             ESP_LOGE(TAG, "No serviceUUID advertised.");
