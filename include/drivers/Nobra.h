@@ -2,10 +2,8 @@
 #define __drivers_Nobra_h
 
 #include "drivers/Device.h"
-#include <NimBLEDevice.h>
 
 #define CMD_MAX_LEN 40
-#define WAIT_FOR_NOTIFY_TIMEOUT_MS 1000
 
 namespace BluetoothDriver {
     class Nobra : public Device {
