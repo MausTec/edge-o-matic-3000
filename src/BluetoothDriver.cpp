@@ -1,5 +1,6 @@
 #include "BluetoothDriver.h"
 #include "drivers/Lovense.h"
+#include "drivers/Nobra.h"
 
 static const char *TAG = "BluetoothDriver";
 
@@ -9,7 +10,8 @@ namespace BluetoothDriver {
      * driver's detect routine. Thanks!
      */
     static const DeviceDetectionCallback DEVICE_DRIVERS[] = {
-        Lovense::detect,
+        Nobra::detect,
+        Lovense::detect
     };
 
     void registerDevice(Device *device) {
