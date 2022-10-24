@@ -5,7 +5,7 @@ using namespace BluetoothDriver;
 
 static const char* TAG = "BluetoothDriver::Nobra";
 
-char Nobra::getSpeed(uint8_t speed) {
+char Nobra::mapSpeed(uint8_t speed) {
     const uint8_t nobraSpeedResolution = 15;
     float proportion = float(speed) / 255.0;
     uint8_t nobraSpeed = round(nobraSpeedResolution * proportion);
@@ -17,7 +17,7 @@ char Nobra::getSpeed(uint8_t speed) {
 }
 
 bool Nobra::setSpeed(uint8_t speed) {
-    char speedCommand = getSpeed(speed);
+    char speedCommand = mapSpeed(speed);
 
     bool isShiftingGears = lastSentSpeed != speedCommand;
     if (!isShiftingGears) {

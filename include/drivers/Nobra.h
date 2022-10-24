@@ -16,7 +16,7 @@ namespace BluetoothDriver {
         bool setSpeed(uint8_t speed) override;
 
     protected:
-        char getSpeed(uint8_t speed);
+        char mapSpeed(uint8_t speed);
         bool send(const char *cmd);
         bool sendf(const char *fmt, ...);
         
