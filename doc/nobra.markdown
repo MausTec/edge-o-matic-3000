@@ -7,7 +7,7 @@ Basic integration for Nobra devices is included with the Edge-O-Matic-3000.
 2. A green light indicates 'AzureFang' is enabled.
 3. If the light is not green, press the outer two buttons on the control box at the same time and power cycle the device.
 4. Turn the main control knob so that the Nobra device is vibrating slightly.
-5. With your EOM3k, push the knob and select "Network Settings".
+5. With your EOM3k, push the knob and select "Network Settings > Bluetooth Pair".
 6. Select "NobraControl" to pair.
 7. The EOM3k is now controlling your Nobra device.
 
