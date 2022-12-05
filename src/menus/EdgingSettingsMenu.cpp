@@ -11,7 +11,7 @@ UIInput MotorMaxSpeedInput("Motor Max Speed", [](UIMenu *ip) {
   UIInput *input = (UIInput*) ip;
   input->setMax(255);
   input->setValue(Config.motor_max_speed);
-  input->setStep(16);
+  input->setStep(1);
 
   input->onOpen([](UIMenu*) {
     OrgasmControl::pauseControl();
@@ -87,7 +87,7 @@ UIInput MaxAdditionalDelayInput("Maximum Additional Delay", [](UIMenu *ip) {
 UIInput MinimumOnTimeInput("Minimum On Time", [](UIMenu *ip) {
   UIInput *input = (UIInput*) ip;
   input->setMax(5000);
-  input->setStep(100);
+  input->setStep(50);
   input->setValue(Config.minimum_on_time);
   input->onChange([](int value) {
     Config.minimum_on_time = value;
@@ -100,7 +100,7 @@ UIInput MinimumOnTimeInput("Minimum On Time", [](UIMenu *ip) {
 UIInput ArousalLimitInput("Arousal Limit", [](UIMenu *ip) {
   UIInput *input = (UIInput*) ip;
   input->setMax(1023);
-  input->setStep(16);
+  input->setStep(8);
   input->setValue(Config.sensitivity_threshold);
   input->onChange([](int value) {
     Config.sensitivity_threshold = value;
