@@ -24,3 +24,5 @@ tmp/
 __pycache__/
 
 *.old
+.ruby-version
+
