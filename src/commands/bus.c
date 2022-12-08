@@ -1,6 +1,11 @@
 #include "commands/index.h"
 #include "console.h"
 #include "eom-hal.h"
+#include "accessory/driver.h"
+
+static void _print_device_name(maus_bus_device_t *device) {
+    printf("Found device: %s\n", device->product_name);
+}
 
 static command_err_t cmd_bus_scan(int argc, char** argv, console_t* console) {
     if (argc != 0) {
@@ -8,7 +13,12 @@ static command_err_t cmd_bus_scan(int argc, char** argv, console_t* console) {
     }
 
     fprintf(console->out, "Scanning I2C bus...\n");
+
     eom_hal_accessory_scan_bus();
+    
+    size_t devices = accessory_scan_bus_full(&_print_device_name);
+    fprintf(console->out, "Found %d devices.\n", devices);
+    accessory_free_device_scan();
 
     return CMD_OK;
 }
@@ -96,6 +106,37 @@ static const command_t cmd_bus_write_s = {
     .subcommands = { NULL },
 };
 
+static command_err_t cmd_bus_write_str(int argc, char** argv, console_t* console) {
+    if (argc != 3) {
+        return CMD_ARG_ERR;
+    }
+
+    uint8_t address = strtoul(argv[0], NULL, 16);
+    size_t len = strlen(argv[2]) + 2;
+    uint8_t *buffer = malloc(len);
+
+    if (buffer == NULL) {
+        return CMD_FAIL;
+    }
+
+    buffer[0] = strtoul(argv[1], NULL, 16);
+    memcpy(buffer + 1, argv[2], strlen(argv[2]) + 1);
+
+    fprintf(console->out, "Writing %d bytes to 0x%02X...\n", len, address);
+    eom_hal_accessory_master_write(address, buffer, len);
+
+    free(buffer);
+    return CMD_OK;
+}
+
+static const command_t cmd_bus_write_str_s = {
+    .command = "writestr",
+    .help = "Write a string to an address",
+    .alias = 's',
+    .func = &cmd_bus_write_str,
+    .subcommands = { NULL },
+};
+
 static const command_t cmd_bus_s = {
     .command = "bus",
     .help = "Bus / Accessory Control",
@@ -105,6 +146,7 @@ static const command_t cmd_bus_s = {
         &cmd_bus_scan_s,
         &cmd_bus_read_s,
         &cmd_bus_write_s,
+        &cmd_bus_write_str_s,
         NULL,
     },
 };
