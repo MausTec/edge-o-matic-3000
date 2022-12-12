@@ -16,7 +16,7 @@ static command_err_t cmd_bus_scan(int argc, char** argv, console_t* console) {
 
     eom_hal_accessory_scan_bus();
     
-    size_t devices = accessory_scan_bus_full(&_print_device_name);
+    size_t devices = accessory_scan_bus_full(&_print_device_name, NULL);
     fprintf(console->out, "Found %d devices.\n", devices);
     accessory_free_device_scan();
 

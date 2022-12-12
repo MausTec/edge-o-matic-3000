@@ -8,7 +8,25 @@ extern "C" {
 #include <stddef.h>
 #include "maus_bus.h"
 
-typedef void (*accessory_scan_callback_t)(maus_bus_device_t* device);
+typedef enum {
+    ACCESSORY_CONNECTED,
+    ACCESSORY_PROBED,
+    ACCESSORY_TIMEOUT,
+    ACCESSORY_DISCONNECTED,
+} accessory_status_t;
+
+typedef struct {
+    
+} accessory_driver_t;
+
+typedef struct {
+    uint8_t address;
+    maus_bus_device_t *device;
+    accessory_status_t status;
+    accessory_driver_t *driver;
+} accessory_device_t;
+
+typedef void (*accessory_scan_callback_t)(maus_bus_device_t* device, uint8_t address, void* ptr);
 
 /**
  * @brief Scans the accessory bus only walking hubs and ID chips.
@@ -20,7 +38,7 @@ typedef void (*accessory_scan_callback_t)(maus_bus_device_t* device);
  * @param cb 
  * @return size_t Count of devices found.
  */
-size_t accessory_scan_bus_quick(accessory_scan_callback_t cb);
+size_t accessory_scan_bus_quick(accessory_scan_callback_t cb, void* ptr);
 
 /**
  * @brief Returns a full list of devices found on the bus.
@@ -31,7 +49,7 @@ size_t accessory_scan_bus_quick(accessory_scan_callback_t cb);
  * @param cb 
  * @return size_t Count of devices found.
  */
-size_t accessory_scan_bus_full(accessory_scan_callback_t cb);
+size_t accessory_scan_bus_full(accessory_scan_callback_t cb, void* ptr);
 
 /**
  * @brief Frees the internal device list generated from the last scan.
