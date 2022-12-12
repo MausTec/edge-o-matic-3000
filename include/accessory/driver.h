@@ -8,6 +8,8 @@ extern "C" {
 #include <stddef.h>
 #include "maus_bus.h"
 
+typedef uint8_t *accessory_address_t;
+
 typedef enum {
     ACCESSORY_CONNECTED,
     ACCESSORY_PROBED,
@@ -26,7 +28,15 @@ typedef struct {
     accessory_driver_t *driver;
 } accessory_device_t;
 
-typedef void (*accessory_scan_callback_t)(maus_bus_device_t* device, uint8_t address, void* ptr);
+/**
+ * @brief Callback for devices found on the bus.
+ * 
+ * The address of the device is included here, as well as any optional pointer you may have passed
+ * in from the original call to the scan routine.
+ * 
+ * @todo These addresses will eventually be a pointer to a null-terminated array.
+ */
+typedef void (*accessory_scan_callback_t)(maus_bus_device_t* device, accessory_address_t address, void* ptr);
 
 /**
  * @brief Scans the accessory bus only walking hubs and ID chips.
@@ -58,6 +68,8 @@ size_t accessory_scan_bus_full(accessory_scan_callback_t cb, void* ptr);
  * so be sure to copy those to your own structure.
  */
 void accessory_free_device_scan(void);
+
+size_t accessory_addr2str(char *str, size_t max_len, accessory_address_t address);
 
 #ifdef __cplusplus
 }

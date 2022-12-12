@@ -38,17 +38,17 @@ static void busItemFound(eom_hal_accessory_bus_device_t *device, void *v_menu) {
   menu->render();
 }
 
-static void scan_item_cb(maus_bus_device_t *device, uint8_t address, void *v_menu) {
+static void scan_item_cb(maus_bus_device_t *device, accessory_address_t address, void *v_menu) {
   UIMenu *menu = (UIMenu*) v_menu;
 
   // The new driver will actually determine which address we talk to given the device descriptor.
   AccessoryDriver::Device *d = new AccessoryDriver::Device(
     device->product_name,
-    address,
+    address[0],
     AccessoryDriver::PROTOCOL_TSCODE
   );
 
-  ESP_LOGI(TAG, "Found device: %02X v %02X", address, d->address);
+  ESP_LOGI(TAG, "Found device: %02X v %02X", address[0], d->address);
 
   menu->addItem(device->product_name, &selectDevice, d);
   menu->render();
@@ -87,7 +87,7 @@ static void menuOpen(UIMenu *menu) {
 }
 
 static void menuClose(UIMenu *menu) {
-  
+  accessory_free_device_scan();
 }
 
 static void buildMenu(UIMenu *menu) {

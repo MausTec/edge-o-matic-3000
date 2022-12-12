@@ -30,7 +30,7 @@ CONFIG_DEFS {
 
     // UI Settings
     CFG_NUMBER(led_brightness, 128);
-    CFG_NUMBER(screen_dim_seconds, 10);
+    CFG_NUMBER(screen_dim_seconds, 0);
     CFG_NUMBER(screen_timeout_seconds, 0);
 
     // Orgasm Settings
