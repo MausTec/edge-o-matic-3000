@@ -10,7 +10,7 @@ static struct _device_scan_node {
     struct _device_scan_node *next;
 } *_scan_list;
 
-size_t accessory_scan_bus_quick(accessory_scan_callback_t cb) {
+size_t accessory_scan_bus_quick(accessory_scan_callback_t cb, void *ptr) {
     size_t count = 0;
     // TODO - scan hubs. This will be a recursive case.
 
@@ -18,8 +18,9 @@ size_t accessory_scan_bus_quick(accessory_scan_callback_t cb) {
     static const uint8_t EEPROM_IDS[] = { 0x50 };
 
     for (size_t i = 0; i < sizeof(EEPROM_IDS); i++) {
+        uint8_t address = EEPROM_IDS[i];
         uint16_t guard = 0x0000;
-        eom_hal_accessory_master_read_register(EEPROM_IDS[i], 0x00, &guard, 2);
+        eom_hal_accessory_master_read_register(address, 0x00, &guard, 2);
         
         ESP_LOGD(TAG, "Contemplating device 0x%02X, guard: 0x%04X", EEPROM_IDS[i], guard);
 
@@ -29,7 +30,7 @@ size_t accessory_scan_bus_quick(accessory_scan_callback_t cb) {
 
             node->next = NULL;
 
-            eom_hal_accessory_master_read_register(EEPROM_IDS[i], 0x00, (uint8_t*) &node->device, sizeof(maus_bus_device_t));
+            eom_hal_accessory_master_read_register(address, 0x00, (uint8_t*) &node->device, sizeof(maus_bus_device_t));
             ESP_LOGD(TAG, "Read in device struct, guard: 0x%04X", node->device.__guard);
             if (node->device.__guard != guard) return count;
 
@@ -46,7 +47,7 @@ size_t accessory_scan_bus_quick(accessory_scan_callback_t cb) {
             }
 
             if (cb != NULL) {
-                (*cb)(&node->device);
+                (*cb)(&node->device, address, ptr);
             }
 
             count++;
@@ -56,8 +57,8 @@ size_t accessory_scan_bus_quick(accessory_scan_callback_t cb) {
     return count;
 }
 
-size_t accessory_scan_bus_full(accessory_scan_callback_t cb) {
-    size_t count = accessory_scan_bus_quick(cb);
+size_t accessory_scan_bus_full(accessory_scan_callback_t cb, void *ptr) {
+    size_t count = accessory_scan_bus_quick(cb, ptr);
     return count;
 }
 

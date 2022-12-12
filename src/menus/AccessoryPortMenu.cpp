@@ -3,6 +3,9 @@
 #include "UIMenu.h"
 #include "UserInterface.h"
 #include "AccessoryDriver.h"
+#include "accessory/driver.h"
+
+// AccessoryDriver.h is going to be deprecated now, but we can't break M1K yet.
 
 static int scanTime = 30; //In seconds
 static bool scanning = false;
@@ -35,6 +38,22 @@ static void busItemFound(eom_hal_accessory_bus_device_t *device, void *v_menu) {
   menu->render();
 }
 
+static void scan_item_cb(maus_bus_device_t *device, uint8_t address, void *v_menu) {
+  UIMenu *menu = (UIMenu*) v_menu;
+
+  // The new driver will actually determine which address we talk to given the device descriptor.
+  AccessoryDriver::Device *d = new AccessoryDriver::Device(
+    device->product_name,
+    address,
+    AccessoryDriver::PROTOCOL_TSCODE
+  );
+
+  ESP_LOGI(TAG, "Found device: %02X v %02X", address, d->address);
+
+  menu->addItem(device->product_name, &selectDevice, d);
+  menu->render();
+}
+
 static void stopScan(UIMenu *menu);
 
 static void startScan(UIMenu *menu) {
@@ -42,7 +61,7 @@ static void startScan(UIMenu *menu) {
   menu->initialize();
   menu->render();
 
-  eom_hal_accessory_scan_bus_p(&busItemFound, (void*) menu);
+  accessory_scan_bus_full(&scan_item_cb, (void*) menu);
   stopScan(menu);
 }
 
