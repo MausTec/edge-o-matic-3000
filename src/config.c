@@ -32,6 +32,7 @@ CONFIG_DEFS {
     CFG_NUMBER(led_brightness, 128);
     CFG_NUMBER(screen_dim_seconds, 0);
     CFG_NUMBER(screen_timeout_seconds, 0);
+    CFG_NUMBER(enable_screensaver, false);
 
     // Orgasm Settings
     CFG_NUMBER(motor_max_speed, 128);

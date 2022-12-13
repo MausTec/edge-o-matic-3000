@@ -10,6 +10,7 @@ static void buildMenu(UIMenu *menu) {
   menu->addItem(&EdgingSettingsMenu);
   menu->addItem(&EdgingOrgasmSettingsMenu);
   menu->addItem(&UISettingsMenu);
+  menu->addItem(&ConfigMenu);
   menu->addItem(&NetworkMenu);
   menu->addItem(&GamesMenu);
   menu->addItem(&UpdateMenu);

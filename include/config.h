@@ -57,6 +57,7 @@ struct config {
   uint8_t led_brightness;
   int screen_dim_seconds;
   int screen_timeout_seconds;
+  uint8_t enable_screensaver;
 
   // Console
   bool store_command_history;

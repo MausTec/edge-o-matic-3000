@@ -1,7 +1,7 @@
 #include "UIMenu.h"
 #include "Page.h"
 
-UIMenu GamesMenu("Games", [](UIMenu *menu) {
+UIMenu GamesMenu("Apps", [](UIMenu *menu) {
   menu->addItem("Snake", [](UIMenu*) {
     Page::Go(&SnakePage);
   });
