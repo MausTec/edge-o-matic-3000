@@ -4,6 +4,7 @@
 #include "OrgasmControl.h"
 #include "eom-hal.h"
 #include "esp_log.h"
+#include "assets.h"
 #include "esp_timer.h"
 
 #include "polyfill.h"
@@ -66,17 +67,50 @@ namespace Hardware {
         return true;
     }
 
+    void render_screensaver_frame() {
+        static const int pos_x_max = eom_hal_get_display_width() - 24;
+        static const int pos_y_max = eom_hal_get_display_height() - 24;
+        static int16_t pos_x = 0;
+        static int16_t pos_y = 0;
+        static uint8_t direction = 0b11;
+        static long last_frame_ms = 0;
+        long millis = esp_timer_get_time() / 1000;
+
+        if (millis - last_frame_ms > (1000 / 20)) {
+            last_frame_ms = millis;
+            UI.clear(false);
+            pos_x += (direction & 1) ? 1 : -1;
+            pos_y += (direction & 2) ? 1 : -1;
+
+            if (pos_x >= pos_x_max || pos_x <= 0) {
+                direction ^= 0b01;
+            }
+
+            if (pos_y >= pos_y_max || pos_y <= 0) {
+                direction ^= 0b10;
+            }
+
+            int pressure_icon = map(OrgasmControl::getAveragePressure(), 0, 4095, 0, 4);
+            UI.display->drawBitmap(pos_x, pos_y, PLUG_ICON[pressure_icon], 24, 24, SSD1306_WHITE);
+
+            u8g2_SendBuffer(UI.display_ptr);
+        }
+    }
+
     void tick() {
         if ((Config.screen_dim_seconds + Config.screen_timeout_seconds) > 0 || idle || standby) {
             long idle_time_ms = millis() - idle_since_ms;
+
             bool do_dim =
                 Config.screen_dim_seconds > 0 && idle_time_ms > Config.screen_dim_seconds * 1000;
+
             bool do_off = Config.screen_timeout_seconds > 0 &&
                           idle_time_ms > Config.screen_timeout_seconds * 1000;
 
             if (do_dim || do_off) {
                 if ((!idle && do_dim) || (!standby && do_off)) {
-                    u8g2_SetPowerSave(UI.display_ptr, true);
+                    // u8g2_SetPowerSave(UI.display_ptr, true);
+                    u8g2_SetContrast(UI.display_ptr, 1);
 
                     if (do_off) {
                         UI.fadeTo();
@@ -88,11 +122,23 @@ namespace Hardware {
                         standby = true;
                     }
 
+                    if (do_dim && Config.enable_screensaver) {
+                        ESP_LOGI(TAG, "Entering screensaver...");
+                        UI.fadeTo();
+                        UI.displayOff();
+                        UI.clear(false);
+                    }
+
                     idle = true;
+                }
+
+                if (idle && !standby && Config.enable_screensaver) {
+                    render_screensaver_frame();
                 }
             } else {
                 if (idle || standby) {
-                    u8g2_SetPowerSave(UI.display_ptr, false);
+                    // u8g2_SetPowerSave(UI.display_ptr, false);
+                    u8g2_SetContrast(UI.display_ptr, 255);
                     UI.displayOn();
                     UI.render();
                     idle = false;

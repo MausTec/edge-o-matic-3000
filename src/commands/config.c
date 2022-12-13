@@ -93,6 +93,7 @@ static command_err_t cmd_config_set(int argc, char** argv, console_t* console) {
     if (argc != 2) { return CMD_ARG_ERR; }
     bool require_reboot = false;
 
+    // potential bug: write timeout when setting still printed ok
     if (set_config_value(argv[0], argv[1], &require_reboot)) {
         fprintf(console->out, "OK\n");
         if (require_reboot) {

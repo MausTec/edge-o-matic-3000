@@ -148,5 +148,6 @@ extern UIMenu UpdateMenu;
 extern UIMenu BluetoothScanMenu;
 extern UIMenu BluetoothDevicesMenu;
 extern UIMenu WiFiScanMenu;
+extern UIMenu ConfigMenu;
 
 #endif
