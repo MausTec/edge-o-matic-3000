@@ -21,6 +21,7 @@
 #include "UserInterface.h"
 #include "api/broadcast.h"
 #include "wifi_manager.h"
+#include "accessory_driver.h"
 
 #include "polyfill.h"
 
@@ -47,8 +48,6 @@ void resetSD() {
 }
 
 void setupHardware() {
-    // pinMode(MOT_PWM_PIN, OUTPUT);
-
     if (!Hardware::initialize()) {
         printf("Hardware initialization failed!\n");
         for (;;) {
@@ -67,6 +66,7 @@ extern "C" void app_main() {
     console_init();
     http_server_init();
     wifi_manager_init();
+    accessory_driver_init();
 
     printf("Maus-Tec presents: Edge-o-Matic 3000\n");
     printf("Version: " VERSION "\n");
