@@ -150,8 +150,8 @@ class pRunGraph : public Page {
 
             Rerender();
         } else {
-            UI.drawIcons();
-            UI.render();
+            // UI.drawIcons();
+            // UI.render();
         }
     }
 

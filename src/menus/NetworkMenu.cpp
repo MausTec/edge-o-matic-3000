@@ -5,6 +5,9 @@
 #include "system/websocket_handler.h"
 #include "wifi_manager.h"
 #include <string>
+#include "esp_log.h"
+
+static const char *TAG = "NetworkMenu";
 
 static void onDisableWiFi(UIMenu* menu) {
     UI.toastNow("Disconnecting...", 0, false);
@@ -28,7 +31,8 @@ static void onEnableWiFi(UIMenu* menu) {
     if (wifi_manager_connect_to_ap(Config.wifi_ssid, Config.wifi_key) == ESP_OK) {
         UI.toastNow("WiFi Connected!", 3000);
         config_enqueue_save(0);
-        menu->initialize();
+        UI.closeMenu();
+        return;
     } else {
         UI.toastNow("Failed to connect.", 3000);
     }
@@ -42,14 +46,16 @@ static void onViewStatus(UIMenu*) {
     if (Config.bt_on) {
         status += "Bluetooth On\n";
         status += Config.bt_display_name;
-        status += "\n";
+        if (Config.wifi_on) {
+            status += "\n";
+        }
     }
 
     if (wifi_manager_get_status() == WIFI_MANAGER_CONNECTED) {
-        status += "Connected\n";
-        status += wifi_manager_get_local_ip() + '\n';
+        status += "WiFi Connected\n";
+        status += wifi_manager_get_local_ip();
     } else if (!Config.bt_on) {
-        status += "Disconnected";
+        status += "WiFi Disconnected";
     }
 
     UI.toast(status.c_str(), 0);

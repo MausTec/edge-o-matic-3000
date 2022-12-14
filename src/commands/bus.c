@@ -1,9 +1,9 @@
 #include "commands/index.h"
 #include "console.h"
 #include "eom-hal.h"
-#include "accessory/driver.h"
+#include "maus_bus.h"
 
-static void _print_device_name(maus_bus_device_t *device) {
+static void _print_device_name(maus_bus_device_t *device, maus_bus_address_t address, void* ptr) {
     printf("Found device: %s\n", device->product_name);
 }
 
@@ -13,12 +13,10 @@ static command_err_t cmd_bus_scan(int argc, char** argv, console_t* console) {
     }
 
     fprintf(console->out, "Scanning I2C bus...\n");
-
-    eom_hal_accessory_scan_bus();
     
-    size_t devices = accessory_scan_bus_full(&_print_device_name, NULL);
+    size_t devices = maus_bus_scan_bus_full(&_print_device_name, NULL);
     fprintf(console->out, "Found %d devices.\n", devices);
-    accessory_free_device_scan();
+    maus_bus_free_device_scan();
 
     return CMD_OK;
 }
