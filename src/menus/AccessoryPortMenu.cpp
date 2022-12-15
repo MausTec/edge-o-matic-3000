@@ -18,6 +18,19 @@ static void selectDevice(UIMenu *menu, void *ptr) {
     return;
   }
 
+  maus_bus_err_t err = maus_bus_register_device((maus_bus_address_t) ptr);
+
+    if (err == MAUS_BUS_NOT_SUPPORTED) {
+        UI.toastNow("Not Supported");
+        return;
+    }
+
+  if (err != MAUS_BUS_OK) {
+    ESP_LOGE(TAG, "Failed to register device: %d", err);
+    UI.toastNow("Error Registering Device");
+    return;
+  }
+
   UI.toastNow(device->product_name);
   return;
 }
