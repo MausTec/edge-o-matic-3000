@@ -6,7 +6,7 @@
 #include "esp_log.h"
 #include "assets.h"
 #include "esp_timer.h"
-
+#include "accessory_driver.h"
 #include "polyfill.h"
 
 #define min(a, b) ((a) < (b) ? (a) : (b))
@@ -165,7 +165,7 @@ namespace Hardware {
         eom_hal_set_motor_speed(motor_speed);
 
         BluetoothDriver::broadcastSpeed(new_speed);
-        AccessoryDriver::broadcastSpeed(new_speed);
+        accessory_driver_broadcast_speed(new_speed);
     }
 
     void changeMotorSpeed(int diff) {

@@ -5,7 +5,7 @@
 #include <string>
 #include <math.h>
 #include "esp_log.h"
-
+#include "accessory_driver.h"
 #include <algorithm>
 #include "polyfill.h"
 
@@ -99,6 +99,8 @@ namespace OrgasmControl {
         }
       } // END of clench detector
 
+      // Update accessories:
+      accessory_driver_broadcast_arousal(arousal);
     }
 
     void updateMotorSpeed() {
