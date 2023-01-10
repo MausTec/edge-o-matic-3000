@@ -22,6 +22,8 @@
 #include "linenoise/linenoise.h"
 #include "tscode.h"
 
+#include "my_basic.h"
+
 #define PROMPT "eom:%s> "
 #define ARGV_MAX 16
 #define CMDLINE_MAX 256
@@ -195,6 +197,8 @@ void console_init(void) {
     register_help();
     commands_register_all();
     eom_tscode_install();
+
+
 
     // Set UART up:
     fflush(stdout);
