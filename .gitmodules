@@ -16,3 +16,6 @@
 [submodule "components/esp-nimble-cpp"]
 	path = components/esp-nimble-cpp
 	url = https://github.com/h2zero/esp-nimble-cpp
+[submodule "lib/my_basic"]
+	path = lib/my_basic
+	url = https://github.com/paladin-t/my_basic
