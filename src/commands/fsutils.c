@@ -7,6 +7,8 @@
 #include <stdio.h>
 #include <sys/stat.h>
 
+#include "my_basic.h"
+
 static void _mkpath(char* path, const char* argv, console_t* console) {
     if (argv != NULL) {
         if (argv[0] == '/') {
@@ -237,6 +239,55 @@ static const command_t cmd_cat_s = {
     .subcommands = {NULL},
 };
 
+static command_err_t cmd_load(int argc, char** argv, console_t* console) {
+    if (argc == 0) {
+        return CMD_ARG_ERR;
+    }
+
+    char path[PATH_MAX + 1] = {0};
+    SDHelper_getRelativePath(path, PATH_MAX, argv[argc - 1], console);
+
+    // FILE* f = fopen(path, binary ? "rb" : "r");
+    // if (!f) {
+    //     fprintf(console->out, "No such file or directory: %s\n", path);
+    //     return CMD_FAIL;
+    // }
+    // fclose(f);
+
+    fprintf(console->out, "Loading %s...\n", path);
+
+    struct mb_interpreter_t* bas = NULL;
+    int mb_err = MB_FUNC_OK;
+
+	mb_init();
+	mb_open(&bas);
+
+    mb_err = mb_load_file(bas, path);
+    if (mb_err != MB_FUNC_OK) goto cleanup;
+    
+	mb_err = mb_run(bas, true);
+    if (mb_err != MB_FUNC_OK) goto cleanup;
+
+cleanup:
+    if (mb_err != MB_FUNC_OK) {
+        mb_error_e err = mb_get_last_error(bas, NULL, NULL, NULL, NULL);
+        fprintf(console->out, "Basic Error %d: %s\n", err, mb_get_error_desc(err));
+    }
+
+	mb_close(&bas);
+	mb_dispose();
+
+    return mb_err == MB_FUNC_OK ? CMD_OK : CMD_FAIL;
+}
+
+static const command_t cmd_load_s = {
+    .command = "load",
+    .help = "Loads and runs a Basic program",
+    .alias = NULL,
+    .func = &cmd_load,
+    .subcommands = {NULL},
+};
+
 static command_err_t cmd_fget(int argc, char** argv, console_t* console) {
     if (argc != 1) {
         return CMD_ARG_ERR;
@@ -264,4 +315,5 @@ void commands_register_fsutils(void) {
     console_register_command(&cmd_rm_s);
     console_register_command(&cmd_cat_s);
     console_register_command(&cmd_fget_s);
+    console_register_command(&cmd_load_s);
 }
