@@ -58,7 +58,7 @@ void accessory_driver_broadcast_speed(uint8_t speed) {
     if (speed == last_value) return;
     last_value = speed;
 
-    ESP_LOGI(TAG, "accessory_driver_broadcast_speed(%d);", speed);
+    ESP_LOGD(TAG, "accessory_driver_broadcast_speed(%d);", speed);
 
     maus_bus_enumerate_devices(_device_speed_cb, &last_value);
 }
@@ -68,5 +68,5 @@ void accessory_driver_broadcast_arousal(uint16_t arousal) {
     if (arousal == last_value) return;
     last_value = arousal;
 
-    ESP_LOGI(TAG, "accessory_driver_broadcast_arousal(%d);", arousal);
+    ESP_LOGD(TAG, "accessory_driver_broadcast_arousal(%d);", arousal);
 }

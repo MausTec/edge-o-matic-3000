@@ -36,7 +36,12 @@ static void event_handler(void* arg, esp_event_base_t event_base, int32_t event_
                           void* event_data) {
     if (event_base == WIFI_EVENT) {
         if (event_id == WIFI_EVENT_STA_START) {
-            esp_wifi_connect();
+            wifi_config_t config = {0};
+            esp_wifi_get_config(WIFI_IF_STA, &config);
+            if (config.ap.ssid[0] != '\0') {
+                ESP_LOGI(TAG, "Auto-connect WiFi to: %s", config.ap.ssid);
+                esp_wifi_connect();
+            }
         } else if (event_id == WIFI_EVENT_STA_DISCONNECTED) {
             if (s_wifi_status == WIFI_MANAGER_DISCONNECTING) {
                 s_wifi_status = WIFI_MANAGER_DISCONNECTED;
