@@ -38,7 +38,8 @@ static void event_handler(void* arg, esp_event_base_t event_base, int32_t event_
         if (event_id == WIFI_EVENT_STA_START) {
             wifi_config_t config = {0};
             esp_wifi_get_config(WIFI_IF_STA, &config);
-            if (config.ap.ssid[0] != '\0') {
+
+            if (config.ap.ssid[0] != '\0' && Config.wifi_on) {
                 ESP_LOGI(TAG, "Auto-connect WiFi to: %s", config.ap.ssid);
                 esp_wifi_connect();
             }

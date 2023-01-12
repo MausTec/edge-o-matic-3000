@@ -245,7 +245,7 @@ void console_register_command(const command_t* command) {
 }
 
 void console_ready(void) {
-    xTaskCreate(&console_task, "CONSOLE", 8192, NULL, tskIDLE_PRIORITY, NULL);
+    xTaskCreate(&console_task, "CONSOLE", 1024*32, NULL, tskIDLE_PRIORITY, NULL);
 }
 
 void console_send_file(const char* filename, console_t* console) {
