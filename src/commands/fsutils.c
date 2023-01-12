@@ -8,6 +8,7 @@
 #include <sys/stat.h>
 
 #include "my_basic.h"
+#include "application.h"
 
 static void _mkpath(char* path, const char* argv, console_t* console) {
     if (argv != NULL) {
@@ -95,7 +96,7 @@ static command_err_t cmd_ls(int argc, char** argv, console_t* console) {
 const command_t cmd_ls_s = {
     .command = "ls",
     .help = "List directory contents",
-    .alias = NULL,
+    .alias = '\0',
     .func = &cmd_ls,
     .subcommands = {NULL},
 };
@@ -108,7 +109,7 @@ static command_err_t cmd_pwd(int argc, char** argv, console_t* console) {
 const command_t cmd_pwd_s = {
     .command = "pwd",
     .help = "Print working directory",
-    .alias = NULL,
+    .alias = '\0',
     .func = &cmd_pwd,
     .subcommands = {NULL},
 };
@@ -160,7 +161,7 @@ static command_err_t cmd_mkdir(int argc, char** argv, console_t* console) {
 const command_t cmd_mkdir_s = {
     .command = "mkdir",
     .help = "Make a new directory",
-    .alias = NULL,
+    .alias = '\0',
     .func = &cmd_mkdir,
     .subcommands = {NULL},
 };
@@ -196,7 +197,7 @@ static command_err_t cmd_rm(int argc, char** argv, console_t* console) {
 const command_t cmd_rm_s = {
     .command = "rm",
     .help = "Remove a regular file or directory",
-    .alias = NULL,
+    .alias = '\0',
     .func = &cmd_rm,
     .subcommands = {NULL},
 };
@@ -234,7 +235,7 @@ static command_err_t cmd_cat(int argc, char** argv, console_t* console) {
 static const command_t cmd_cat_s = {
     .command = "cat",
     .help = "Print the contents of a file to the terminal",
-    .alias = NULL,
+    .alias = '\0',
     .func = &cmd_cat,
     .subcommands = {NULL},
 };
@@ -244,20 +245,35 @@ static command_err_t cmd_load(int argc, char** argv, console_t* console) {
         return CMD_ARG_ERR;
     }
 
+    struct mb_interpreter_t* bas = NULL;
+    int mb_err = MB_FUNC_OK;
+
     char path[PATH_MAX + 1] = {0};
     SDHelper_getRelativePath(path, PATH_MAX, argv[argc - 1], console);
 
-    // FILE* f = fopen(path, binary ? "rb" : "r");
-    // if (!f) {
-    //     fprintf(console->out, "No such file or directory: %s\n", path);
-    //     return CMD_FAIL;
-    // }
-    // fclose(f);
+    // Branch off to load apps, otherwise run an inline interpreter below:
+    if (!strcmp(path + strlen(path) - 4, ".zip")) {
+        application_t application;
+        app_err_t app_err = application_load(path, &application);
 
+        if (app_err != APP_OK) {
+            fprintf(console->out, "Application loading error %d: ...\n", app_err);
+            return CMD_FAIL;
+        }
+         
+        fprintf(console->out, "Loaded: %s\n", application.title);
+        app_err = application_start(&application);
+        fprintf(console->out, "\n");
+
+        if (app_err != APP_OK) {
+            fprintf(console->out, "Application runtime error %d: ...\n", app_err);
+            return CMD_FAIL;
+        }
+
+        return CMD_OK;
+    }
+     
     fprintf(console->out, "Loading %s...\n", path);
-
-    struct mb_interpreter_t* bas = NULL;
-    int mb_err = MB_FUNC_OK;
 
 	mb_init();
 	mb_open(&bas);
@@ -283,7 +299,7 @@ cleanup:
 static const command_t cmd_load_s = {
     .command = "load",
     .help = "Loads and runs a Basic program",
-    .alias = NULL,
+    .alias = '\0',
     .func = &cmd_load,
     .subcommands = {NULL},
 };
@@ -302,7 +318,7 @@ static command_err_t cmd_fget(int argc, char** argv, console_t* console) {
 static const command_t cmd_fget_s = {
     .command = "fget",
     .help = "Download a file from the SD card",
-    .alias = NULL,
+    .alias = '\0',
     .func = &cmd_fget, 
     .subcommands = {NULL},
 };
