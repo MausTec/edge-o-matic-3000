@@ -124,18 +124,12 @@ static tscode_command_response_t tscode_handler(tscode_command_t* cmd, char* res
     }
 }
 
+static void console_task(void* args);
+
 /**
  * Dedicated system task for handling the console initialization and looping.
  */
-static void console_task(void* args) {
-    char prompt[1033] = {0};
-
-    console_t uart_console = {
-        .out = stdout,
-        .err = -1,
-    };
-
-    strncpy(uart_console.cwd, eom_hal_get_sd_mount_point(), PATH_MAX);
+static void console_idle_task(void* args) {
 
     // Delay here on console initialization to allow the user to connect a terminal first.
     if (!Config.console_basic_mode) {
@@ -147,7 +141,21 @@ static void console_task(void* args) {
         }
     }
 
+    xTaskCreate(&console_task, "CONSOLE", 1024*8, NULL, tskIDLE_PRIORITY, NULL);
+    vTaskDelete(NULL);
+}
+
+static void console_task(void* args) {
+    char *prompt = (char*) malloc(PATH_MAX + 7);
+
     reinitialize_console();
+
+    console_t uart_console = {
+        .out = stdout,
+        .err = -1,
+    };
+
+    strncpy(uart_console.cwd, eom_hal_get_sd_mount_point(), PATH_MAX);
 
     for (;;) {
         char* line = NULL;
@@ -156,7 +164,7 @@ static void console_task(void* args) {
         if (_tscode_mode) {
             line = linenoise("");
         } else {
-            snprintf(prompt, 1032, PROMPT, uart_console.cwd);
+            snprintf(prompt, PATH_MAX + 7, PROMPT, uart_console.cwd);
             line = linenoise(prompt);
         }
 
@@ -171,8 +179,8 @@ static void console_task(void* args) {
 
         if (line[0] != '\0') {
             if (_tscode_mode) {
-                char out[1025] = {0};
-                tscode_process_buffer(line, &tscode_handler, out, 1024);
+                char out[256] = {0};
+                tscode_process_buffer(line, &tscode_handler, out, 256);
                 printf("%s\n", out);
             } else {
                 linenoiseHistoryAdd(line);
@@ -197,8 +205,6 @@ void console_init(void) {
     register_help();
     commands_register_all();
     eom_tscode_install();
-
-
 
     // Set UART up:
     fflush(stdout);
@@ -245,7 +251,7 @@ void console_register_command(const command_t* command) {
 }
 
 void console_ready(void) {
-    xTaskCreate(&console_task, "CONSOLE", 1024*32, NULL, tskIDLE_PRIORITY, NULL);
+    xTaskCreate(&console_idle_task, "con_idle", 1024, NULL, tskIDLE_PRIORITY, NULL);
 }
 
 void console_send_file(const char* filename, console_t* console) {

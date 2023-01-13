@@ -14,7 +14,6 @@ extern "C" {
 
 // This is just a default, others can be loaded after boot.
 #define CONFIG_FILENAME "/config.json"
-#define UPDATE_FILENAME "/update.bin"
 
 // String Lengths
 #define WIFI_SSID_MAX_LEN 64
