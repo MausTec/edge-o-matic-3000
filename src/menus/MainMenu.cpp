@@ -2,7 +2,6 @@
 #include "UserInterface.h"
 #include "Page.h"
 #include <string>
-#include "UpdateHelper.h"
 
 static void buildMenu(UIMenu *menu) {
   menu->addItem("Automatic Edging", &RunGraphPage);

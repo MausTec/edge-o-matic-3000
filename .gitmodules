@@ -16,3 +16,6 @@
 [submodule "lib/my_basic"]
 	path = lib/my_basic
 	url = https://github.com/paladin-t/my_basic
+[submodule "lib/semver"]
+	path = lib/semver
+	url = https://github.com/h2non/semver.c
