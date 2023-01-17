@@ -10,6 +10,7 @@ extern "C" {
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
+#define APP_EXTENSION ".mpk"
 #define APP_TITLE_MAXLEN 20
 #define APP_MIN_STACK (1024 * 2)
 
@@ -24,7 +25,8 @@ typedef enum {
 
 typedef struct {
     char title[APP_TITLE_MAXLEN];
-    char archive_path[255];
+    char pack_path[PATH_MAX];
+    char entrypoint[APP_TITLE_MAXLEN];
     struct mb_interpreter_t *interpreter;
     TaskHandle_t task;
     uint32_t stack_depth;

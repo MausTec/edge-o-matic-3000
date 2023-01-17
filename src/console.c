@@ -141,7 +141,7 @@ static void console_idle_task(void* args) {
         }
     }
 
-    xTaskCreate(&console_task, "CONSOLE", 1024*6, NULL, tskIDLE_PRIORITY, NULL);
+    xTaskCreate(&console_task, "CONSOLE", 1024*8, NULL, tskIDLE_PRIORITY, NULL);
     vTaskDelete(NULL);
 }
 

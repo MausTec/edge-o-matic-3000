@@ -18,7 +18,7 @@ static command_err_t cmd_system_restart(int argc, char** argv, console_t* consol
 static const command_t cmd_system_restart_s = {
     .command = "restart",
     .help = "Restart your device",
-    .alias = NULL,
+    .alias = '\0',
     .func = &cmd_system_restart,
     .subcommands = { NULL },
 };
@@ -36,7 +36,7 @@ static command_err_t cmd_system_time(int argc, char** argv, console_t* console) 
 static const command_t cmd_system_time_s = {
     .command = "time",
     .help = "Get system time",
-    .alias = NULL,
+    .alias = '\0',
     .func = &cmd_system_time,
     .subcommands = { NULL },
 };
@@ -73,7 +73,7 @@ static command_err_t cmd_system_color(int argc, char** argv, console_t* console)
 static const command_t cmd_system_color_s = {
     .command = "color",
     .help = "Set the illumination color of the device",
-    .alias = NULL,
+    .alias = '\0',
     .func = &cmd_system_color,
     .subcommands = { NULL },
 };
@@ -107,18 +107,18 @@ static command_err_t cmd_system_tasklist(int argc, char** argv, console_t* conso
     TaskHandle_t th = NULL;
     size_t waste = 0;
 
-    fprintf(console->out, "ID  Task Name            High W");
+    fprintf(console->out, "ID  Task Name            High W\n");
 
     for (size_t i = 0; i < n; i++) {
         th = pxTaskGetNext(th);
         if (th == NULL) break;
         size_t highw = uxTaskGetStackHighWaterMark(th);
         waste += highw;
-        fprintf(console->out, "%-3d %-20s %-4d", i, pcTaskGetName(th), highw);
+        fprintf(console->out, "%-3d %-20s %-4d\n", i, pcTaskGetName(th), highw);
     }
 
-    fprintf(console->out, "-------------------------------");
-    fprintf(console->out, "Wasted memory: %d", waste);
+    fprintf(console->out, "-------------------------------\n");
+    fprintf(console->out, "Wasted memory: %d\n", waste); 
 
     fprintf(console->out, "Heap used: %d/%d (%02f) (%d bytes free, max %d)\n", 
         heap_caps_get_total_size(MALLOC_CAP_8BIT) - heap_caps_get_free_size(MALLOC_CAP_8BIT), 
@@ -142,7 +142,7 @@ static const command_t cmd_system_tasklist_s = {
 static const command_t cmd_system_s = {
     .command = "system",
     .help = "System control",
-    .alias = NULL,
+    .alias = '\0',
     .func = NULL,
     .subcommands = {
         &cmd_system_restart_s,

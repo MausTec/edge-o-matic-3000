@@ -41,65 +41,70 @@ static void app_run_task(void *arg) {
     vTaskDelete(NULL);
 }
 
-static void app_load_task(void *arg) {
-    const char *path = ((struct app_load_args*) arg)->path;
-    application_t *app = ((struct app_load_args*) arg)->app;
+/**
+ * @brief Loads the application manifest and initializes the pack path for the app.
+ * 
+ * @param pack_path 
+ * @param app 
+ * @return app_err_t 
+ */
+app_err_t application_parse_manifest(const char* pack_path, application_t *app) {
+    char path[PATH_MAX] = "";
+    long fsize;
+    char* buffer;
+    size_t result;
 
-    mz_zip_archive *archive = (mz_zip_archive*) malloc(sizeof(mz_zip_archive));
-    mz_bool status = 1;
-    app_err_t err = APP_OK;
-    cJSON *manifest_json = NULL;
-    char *manifest = NULL;
-    char tmp_ep_path[PATH_MAX] = "";
-    int mb_err = MB_FUNC_OK;
+    sniprintf(path, PATH_MAX, "%s/manifest.json", pack_path);
+    strncpy(app->pack_path, pack_path, 255);
 
-    memset(app, 0, sizeof(application_t));
-    memset(archive, 0, sizeof(*archive));
+    FILE* f = fopen(path, "r");
 
-    app->status = APP_NOT_LOADED;
-
-    ESP_LOGI(TAG, "Stack HWMK: %d bytes", uxTaskGetStackHighWaterMark(NULL));
-    ESP_LOGI(TAG, "Current: %d bytes", ((void*)&mb_err) - ((void*)pxTaskGetStackStart(NULL)));
-    ESP_LOGI(TAG, "Loading %s/manifest.json from archive...", path);
-
-    status = mz_zip_reader_init_file(archive, path, 0);
-    if (!status) goto cleanup;
-
-    ESP_LOGI(TAG, "Locating manifest...");
-
-    size_t fcount = mz_zip_reader_get_num_files(archive);
-    ESP_LOGI(TAG, "Archive has %d files.", fcount);
-
-    for (size_t i = 0; i < fcount; i++) {
-        char fname[100] = "";
-        mz_zip_reader_get_filename(archive, i, fname, 99);
-        ESP_LOGI(TAG, "- %s", fname);
+    // Sometimes the first file read fails:
+    if (!f) {
+        f = fopen(path, "r");
     }
 
-    size_t manifest_size = 0;
-    manifest = mz_zip_reader_extract_file_to_heap(archive, "manifest.json", &manifest_size, 0);
-
-    if (manifest == NULL) {
-        status = 0;
-        goto cleanup;
+    if (!f) {
+        ESP_LOGW(TAG, "File does not exist: %s", path);
+        return APP_FILE_NOT_FOUND;
     }
 
-    ESP_LOGI(TAG, "Manifest: %.*s", manifest_size, (char*)manifest);
+    fseek(f, 0, SEEK_END);
+    fsize = ftell(f);
+    rewind(f);
 
-    manifest_json = cJSON_ParseWithLength(manifest, manifest_size);
-    free(manifest);
+    ESP_LOGD(TAG, "Allocating %ld bytes for file: %s", fsize, path);
+    buffer = (char*)malloc(fsize + 1);
+
+    if (!buffer) {
+        fclose(f);
+        ESP_LOGE(TAG, "Failed to allocate memory for file: %s", path);
+        return APP_FILE_INVALID;
+    }
+
+    result = fread(buffer, 1, fsize, f);
+    buffer[fsize] = '\0';
+    fclose(f);
+
+    if (result != fsize) {
+        free(buffer);
+        ESP_LOGE(TAG, "Failed to read file: %s", path);
+        return APP_FILE_INVALID;
+    }
+
+    cJSON *manifest_json = cJSON_ParseWithLength(buffer, fsize);
+    free(buffer);
 
     if (manifest_json == NULL) {
-        err = APP_FILE_INVALID;
-        goto cleanup;
+        return APP_FILE_INVALID;
     }
 
     { // Get Title
         cJSON *title = cJSON_GetObjectItem(manifest_json, "title");
 
         if (title == NULL || !cJSON_IsString(title)) {
-            err = APP_FILE_INVALID;
-            goto cleanup;
+            cJSON_free(manifest_json);
+            return APP_FILE_INVALID;
         }
 
         strlcpy(app->title, title->valuestring, APP_TITLE_MAXLEN);
@@ -109,23 +114,35 @@ static void app_load_task(void *arg) {
         cJSON *entrypoint = cJSON_GetObjectItem(manifest_json, "entrypoint");
 
         if (entrypoint == NULL || !cJSON_IsString(entrypoint)) {
-            err = APP_NO_ENTRYPOINT;
-            goto cleanup;
-        }
-
-        size_t len = sniprintf(tmp_ep_path, PATH_MAX - 10, "%s/tmp/app-", eom_hal_get_sd_mount_point());
-        for (size_t i = 0; i < 10; i++) tmp_ep_path[i+len] = (i < 9) ? ('a' + rand() % 26) : '\0';
-        strlcat(tmp_ep_path, ".tmp", PATH_MAX);
-
-        ESP_LOGI(TAG, "Extracting %s to %s...", entrypoint->valuestring, tmp_ep_path);
-
-        status = mz_zip_reader_extract_file_to_file(archive, entrypoint->valuestring, tmp_ep_path, 0);
-        
-        if (!status) {
-            err = APP_NO_ENTRYPOINT;
-            goto cleanup;
+            strlcpy(app->entrypoint, "main.bas", APP_TITLE_MAXLEN);
+        } else {
+            strlcpy(app->entrypoint, entrypoint->valuestring, APP_TITLE_MAXLEN);
         }
     }
+
+    cJSON_free(manifest_json);
+    return APP_OK;
+}
+
+app_err_t application_load(const char* path, application_t **app_h) {
+    app_err_t err = APP_OK;
+    char tmp_ep_path[PATH_MAX] = "";
+    int mb_err = MB_FUNC_OK;
+
+    ESP_LOGI(TAG, "Loading application %s...", path);
+
+    *app_h = (application_t*) malloc(sizeof(application_t));
+    application_t *app = *app_h;
+    memset(app, 0, sizeof(application_t));
+    app->status = APP_NOT_LOADED;
+
+    ESP_LOGI(TAG, "Locating manifest...");
+    err = application_parse_manifest(path, app);
+
+    if (err != APP_OK) {
+        goto cleanup;
+    }
+    
 
     { // Parse Script
         ESP_LOGI(TAG, "Loaded, initializing interpreter...");
@@ -133,6 +150,7 @@ static void app_load_task(void *arg) {
         mb_open(&app->interpreter);
         application_interpreter_hooks(app->interpreter);
 
+        sniprintf(tmp_ep_path, PATH_MAX, "%s/%s", app->pack_path, app->entrypoint);
         mb_err = mb_load_file(app->interpreter, tmp_ep_path);
         
         if (mb_err != MB_FUNC_OK) {
@@ -143,68 +161,34 @@ static void app_load_task(void *arg) {
 
     ESP_LOGI(TAG, "Application loaded.");
 
-cleanup:
-    if (!status) {
-        mz_zip_error zerr = mz_zip_get_last_error(archive);
-        err = APP_FILE_INVALID;
-        ESP_LOGE(TAG, "Zip error %d: %s", zerr, mz_zip_get_error_string(zerr));
-    }
-
-    mz_zip_reader_end(archive);
-    cJSON_free(manifest_json);
-    remove(tmp_ep_path);
-    free(archive);
-    ((struct app_load_args*) arg)->err = err;
-
-    xTaskNotifyGive(((struct app_load_args*) arg)->caller);
-    vTaskSuspend(NULL);
-}
-
-app_err_t application_load(const char* path, application_t **app) {
-    TaskHandle_t load_task;
-
-    // Provision an entry in our task manager. THIS LEAKS RIGHT NOW.
+    // register to task list
     struct app_task_node *node = (struct app_task_node*) malloc(sizeof(struct app_task_node));
-    *app = &node->app;
 
-    struct app_load_args args = {
-        .app = &node->app,
-        .path = path,
-        .err = APP_NOT_LOADED,
-        .caller = xTaskGetCurrentTaskHandle(),
-    };
-
-    BaseType_t err = xTaskCreate(app_load_task, "apploader", 1024 * 15, &args, tskIDLE_PRIORITY + 1, &load_task);
-    
-    if (err == pdPASS) {
-        ESP_LOGI(TAG, "Waiting for loader to finish:");
-        TaskStatus_t lt_status;
-    
-        do {
-            ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
-            vTaskGetInfo(load_task, &lt_status, pdFALSE, eInvalid);
-        } while (lt_status.eCurrentState != eSuspended);
-
-        vTaskDelete(load_task);
+    if (node == NULL) {
+        err = APP_FILE_INVALID;
+        goto cleanup;
     }
 
-    if (args.err != APP_OK) {
-        ESP_LOGE(TAG, "App load error: %d", args.err);
-        free(node);
-        *app = NULL;
+    if (tasklist == NULL) {
+        tasklist = node;
     } else {
-        if (tasklist == NULL) {
-            tasklist = node;
-        } else {
-            struct app_task_node *ptr = tasklist;
-            while (ptr != NULL && ptr->next != NULL) ptr = ptr->next;
-            if (ptr != NULL) ptr->next = node;
-            node->next = NULL;
-        }
-        ESP_LOGI(TAG, "App registered with index.");
+        struct app_task_node *ptr = tasklist;
+        while (ptr != NULL && ptr->next != NULL) ptr = ptr->next;
+        if (ptr != NULL) ptr->next = node;
+        node->next = NULL;
     }
 
-    return args.err;
+    ESP_LOGI(TAG, "App registered with index.");
+
+cleanup:
+    if (err != APP_OK) {
+        ESP_LOGW(TAG, "Application load error: %d", err);
+        free(node);
+        free(*app_h);
+        *app_h = NULL;
+    }
+
+    return err;
 }
 
 app_err_t application_start(application_t *app) {
