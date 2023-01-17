@@ -21,6 +21,7 @@ static void onCheckForUpdates(UIMenu *menu) {
 static void onWebUpdate(UIMenu *menu) {
   UI.toastNow("Connecting...", 0, false);
   esp_err_t err = update_manager_update_from_web();
+  
   if (err != ESP_OK) {
     UI.toastNow("Update failed.");
   } else {

@@ -100,6 +100,45 @@ static const command_t cmd_system_screenshot_s = {
     .subcommands = { NULL },
 };
 
+
+
+static command_err_t cmd_system_tasklist(int argc, char** argv, console_t* console) {
+    size_t n = uxTaskGetNumberOfTasks();
+    TaskHandle_t th = NULL;
+    size_t waste = 0;
+
+    fprintf(console->out, "ID  Task Name            High W");
+
+    for (size_t i = 0; i < n; i++) {
+        th = pxTaskGetNext(th);
+        if (th == NULL) break;
+        size_t highw = uxTaskGetStackHighWaterMark(th);
+        waste += highw;
+        fprintf(console->out, "%-3d %-20s %-4d", i, pcTaskGetName(th), highw);
+    }
+
+    fprintf(console->out, "-------------------------------");
+    fprintf(console->out, "Wasted memory: %d", waste);
+
+    fprintf(console->out, "Heap used: %d/%d (%02f) (%d bytes free, max %d)\n", 
+        heap_caps_get_total_size(MALLOC_CAP_8BIT) - heap_caps_get_free_size(MALLOC_CAP_8BIT), 
+        heap_caps_get_total_size(MALLOC_CAP_8BIT),
+        (1.0f - ((float) heap_caps_get_free_size(MALLOC_CAP_8BIT) / heap_caps_get_total_size(MALLOC_CAP_8BIT))) * 100,
+        heap_caps_get_free_size(MALLOC_CAP_8BIT),
+        heap_caps_get_largest_free_block(MALLOC_CAP_8BIT)
+    );
+
+    return CMD_OK;
+}
+
+static const command_t cmd_system_tasklist_s = {
+    .command = "tasklist",
+    .help = "Dump tasks and heap information",
+    .alias = 't',
+    .func = &cmd_system_tasklist,
+    .subcommands = { NULL },
+};
+
 static const command_t cmd_system_s = {
     .command = "system",
     .help = "System control",
@@ -110,6 +149,7 @@ static const command_t cmd_system_s = {
         &cmd_system_time_s,
         &cmd_system_color_s,
         &cmd_system_screenshot_s,
+        &cmd_system_tasklist_s,
         NULL,
     },
 };

@@ -36,7 +36,7 @@ struct command {
     const char* help;
     const char alias;
     command_func_t func;
-    struct command* subcommands[];
+    const struct command* subcommands[];
 };
 
 typedef struct command command_t;
