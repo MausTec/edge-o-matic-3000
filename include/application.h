@@ -11,13 +11,7 @@ extern "C" {
 #include "freertos/task.h"
 
 #define APP_TITLE_MAXLEN 20
-
-typedef struct {
-    char title[APP_TITLE_MAXLEN];
-    char archive_path[255];
-    struct mb_interpreter_t *interpreter;
-    TaskHandle_t task;
-} application_t;
+#define APP_MIN_STACK (1024 * 2)
 
 typedef enum {
     APP_OK,
@@ -25,12 +19,24 @@ typedef enum {
     APP_FILE_INVALID,
     APP_NO_ENTRYPOINT,
     APP_START_NO_MEMORY,
+    APP_NOT_LOADED,
 } app_err_t;
 
-app_err_t application_load(const char* filename, application_t *app);
+typedef struct {
+    char title[APP_TITLE_MAXLEN];
+    char archive_path[255];
+    struct mb_interpreter_t *interpreter;
+    TaskHandle_t task;
+    uint32_t stack_depth;
+    app_err_t status;
+} application_t;
+
+app_err_t application_load(const char* filename, application_t **app);
 app_err_t application_start(application_t *app);
 app_err_t application_kill(application_t *app);
 void app_dispose(application_t *app);
+
+void application_interpreter_hooks(struct mb_interpreter_t *interpreter);
 
 #ifdef __cplusplus
 }

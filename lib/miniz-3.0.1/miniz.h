@@ -129,7 +129,7 @@
 /*#define MINIZ_NO_TIME */
 
 /* Define MINIZ_NO_DEFLATE_APIS to disable all compression API's. */
-/*#define MINIZ_NO_DEFLATE_APIS */
+#define MINIZ_NO_DEFLATE_APIS
 
 /* Define MINIZ_NO_INFLATE_APIS to disable all decompression API's. */
 /*#define MINIZ_NO_INFLATE_APIS */
@@ -138,10 +138,10 @@
 /*#define MINIZ_NO_ARCHIVE_APIS */
 
 /* Define MINIZ_NO_ARCHIVE_WRITING_APIS to disable all writing related ZIP archive API's. */
-/*#define MINIZ_NO_ARCHIVE_WRITING_APIS */
+#define MINIZ_NO_ARCHIVE_WRITING_APIS
 
 /* Define MINIZ_NO_ZLIB_APIS to remove all ZLIB-style compression/decompression API's. */
-/*#define MINIZ_NO_ZLIB_APIS */
+#define MINIZ_NO_ZLIB_APIS
 
 /* Define MINIZ_NO_ZLIB_COMPATIBLE_NAME to disable zlib names, to prevent conflicts against stock zlib. */
 /*#define MINIZ_NO_ZLIB_COMPATIBLE_NAMES */
@@ -640,7 +640,7 @@ extern "C" {
 /* ------------------- Low-level Compression API Definitions */
 
 /* Set TDEFL_LESS_MEMORY to 1 to use less memory (compression will be slightly slower, and raw/dynamic blocks will be output more frequently). */
-#define TDEFL_LESS_MEMORY 0
+#define TDEFL_LESS_MEMORY 1
 
 /* tdefl_init() compression flags logically OR'd together (low 12 bits contain the max. number of probes per dictionary search): */
 /* TDEFL_DEFAULT_MAX_PROBES: The compressor defaults to 128 dictionary probes per dictionary search. 0=Huffman only, 1=Huffman+LZ (fastest/crap compression), 4095=Huffman+LZ (slowest/best compression). */
@@ -986,7 +986,7 @@ extern "C" {
 enum
 {
     /* Note: These enums can be reduced as needed to save memory or stack space - they are pretty conservative. */
-    MZ_ZIP_MAX_IO_BUF_SIZE = 64 * 1024,
+    MZ_ZIP_MAX_IO_BUF_SIZE = 4 * 1024,
     MZ_ZIP_MAX_ARCHIVE_FILENAME_SIZE = 512,
     MZ_ZIP_MAX_ARCHIVE_FILE_COMMENT_SIZE = 512
 };

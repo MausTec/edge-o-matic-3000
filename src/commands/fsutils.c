@@ -253,7 +253,7 @@ static command_err_t cmd_load(int argc, char** argv, console_t* console) {
 
     // Branch off to load apps, otherwise run an inline interpreter below:
     if (!strcmp(path + strlen(path) - 4, ".zip")) {
-        application_t application;
+        application_t *application;
         app_err_t app_err = application_load(path, &application);
 
         if (app_err != APP_OK) {
@@ -261,8 +261,8 @@ static command_err_t cmd_load(int argc, char** argv, console_t* console) {
             return CMD_FAIL;
         }
          
-        fprintf(console->out, "Loaded: %s\n", application.title);
-        app_err = application_start(&application);
+        fprintf(console->out, "Loaded: %s\n", application->title);
+        app_err = application_start(application);
         fprintf(console->out, "\n");
 
         if (app_err != APP_OK) {
@@ -277,6 +277,7 @@ static command_err_t cmd_load(int argc, char** argv, console_t* console) {
 
 	mb_init();
 	mb_open(&bas);
+    application_interpreter_hooks(bas);
 
     mb_err = mb_load_file(bas, path);
     if (mb_err != MB_FUNC_OK) goto cleanup;

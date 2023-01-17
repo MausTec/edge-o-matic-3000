@@ -1,1 +1,0 @@
-print "Snake application main.bas"
