@@ -252,7 +252,7 @@ static command_err_t cmd_load(int argc, char** argv, console_t* console) {
     SDHelper_getRelativePath(path, PATH_MAX, argv[argc - 1], console);
 
     // Branch off to load apps, otherwise run an inline interpreter below:
-    if (!strcmp(path + strlen(path) - 4, ".zip")) {
+    if (!strcmp(path + strlen(path) - 4, APP_EXTENSION)) {
         application_t *application;
         app_err_t app_err = application_load(path, &application);
 
