@@ -12,7 +12,7 @@ extern "C" {
 
 #define APP_EXTENSION ".mpk"
 #define APP_TITLE_MAXLEN 20
-#define APP_MIN_STACK (1024 * 2)
+#define APP_MIN_STACK (1024 * 4)
 
 typedef enum {
     APP_OK,
@@ -38,7 +38,6 @@ app_err_t application_start(application_t *app);
 app_err_t application_kill(application_t *app);
 void app_dispose(application_t *app);
 
-void application_interpreter_hooks(struct mb_interpreter_t *interpreter);
 
 #ifdef __cplusplus
 }

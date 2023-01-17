@@ -1,20 +1,14 @@
 #include "application.h"
-#include "miniz.h"
 #include "esp_log.h"
 #include "cJSON.h"
 #include "eom-hal.h"
 #include <stdio.h>
+#include <string.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/semphr.h"
+#include "basic_api.h"
 
 static const char *TAG = "application";
-
-struct app_load_args {
-    const char *path;
-    application_t *app;
-    app_err_t err;
-    TaskHandle_t caller;
-};
 
 static struct app_task_node {
     application_t app;
@@ -26,18 +20,22 @@ static void app_run_task(void *arg) {
 
     ESP_LOGI(TAG, "Executing BASIC program %s. Stack high water: %d bytes free. Heap %d bytes free.", app->title, uxTaskGetStackHighWaterMark(NULL), heap_caps_get_free_size(MALLOC_CAP_8BIT));
 
+    app->status = APP_OK;
     int mb_err = mb_run(app->interpreter, true);
+
     if (mb_err != MB_FUNC_OK) {
+        const char *file = NULL;
+        int pos = 0, row = 0, col = 0;
+        mb_error_e er = mb_get_last_error(app->interpreter, &file, &pos, &row, &col);
+        ESP_LOGE(TAG, "Basic Error: %d, %s in %s:%d:%d (%d)", er, mb_get_error_desc(er), file, row, col, pos);
         app->status = APP_START_NO_MEMORY;
-        return;
     }
 
     mb_close(&app->interpreter);
     mb_dispose();
 
-    ESP_LOGI(TAG, "Application %s terminated. Stack high water: %d bytes free.", app->title, uxTaskGetStackHighWaterMark(NULL));
+    ESP_LOGI(TAG, "Application %s terminated. Stack high water: %d bytes free. Status: %d", app->title, uxTaskGetStackHighWaterMark(NULL), app->status);
     app->task = NULL;
-    app->status = APP_OK;
     vTaskDelete(NULL);
 }
 
@@ -148,7 +146,7 @@ app_err_t application_load(const char* path, application_t **app_h) {
         ESP_LOGI(TAG, "Loaded, initializing interpreter...");
         mb_init();
         mb_open(&app->interpreter);
-        application_interpreter_hooks(app->interpreter);
+        basic_api_register_all(app->interpreter);
 
         sniprintf(tmp_ep_path, PATH_MAX, "%s/%s", app->pack_path, app->entrypoint);
         mb_err = mb_load_file(app->interpreter, tmp_ep_path);
@@ -213,47 +211,7 @@ app_err_t application_kill(application_t *app) {
 
 void app_dispose(application_t *app);
 
-// Abstract thes out to mb_hooks.h / mb_hooks.c
-
-static int _toast(struct mb_interpreter_t* s, void** l) {
-    int result = MB_FUNC_OK;
-	mb_value_t arg;
-    char *str = NULL;
-
-	mb_assert(s && l);
-	mb_check(mb_attempt_open_bracket(s, l));
-	mb_check(mb_pop_value(s, l, &arg));
-	mb_check(mb_attempt_close_bracket(s, l));
-
-	switch(arg.type) {
-	case MB_DT_NIL:
-		break;
-
-	case MB_DT_INT:
-        ESP_LOGI(TAG, "Need to toast: %d", arg.value.integer);
-		break;
-
-    case MB_DT_STRING:
-        ESP_LOGI(TAG, "Need to toast: %s", arg.value.string);
-        break;
-
-	default:
-		break;
-	}
-
-    mb_check(mb_push_int(s, l, 0));
-	return result;
-}
-
 static void _mb_handle_error(struct mb_interpreter_t *s, mb_error_e err, const char *file, const char *idk, int wat, unsigned short srsly, unsigned short wtf, int whomst) {
     ESP_LOGW(TAG, "Syntax Error in %s: (%d)", file, err);
     ESP_LOGW(TAG, "idk=%s, wat=%d, srsly=%d, wtf=%d, whomst=%d", idk, wat, srsly, wtf, whomst);
-}
-
-void application_interpreter_hooks(struct mb_interpreter_t *s) {
-    mb_set_error_handler(s, _mb_handle_error);
-
-    mb_begin_module(s, "UI");
-    mb_register_func(s, "TOAST", _toast);
-    mb_end_module(s);
 }

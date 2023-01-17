@@ -9,6 +9,7 @@
 
 #include "my_basic.h"
 #include "application.h"
+#include "basic_api.h"
 
 static void _mkpath(char* path, const char* argv, console_t* console) {
     if (argv != NULL) {
@@ -277,7 +278,7 @@ static command_err_t cmd_load(int argc, char** argv, console_t* console) {
 
 	mb_init();
 	mb_open(&bas);
-    application_interpreter_hooks(bas);
+    basic_api_register_all(bas);
 
     mb_err = mb_load_file(bas, path);
     if (mb_err != MB_FUNC_OK) goto cleanup;
