@@ -107,14 +107,16 @@ static command_err_t cmd_system_tasklist(int argc, char** argv, console_t* conso
     TaskHandle_t th = NULL;
     size_t waste = 0;
 
-    fprintf(console->out, "ID  Task Name            High W\n");
+    fprintf(console->out, "ID  Task Name            High W STAT\n");
 
     for (size_t i = 0; i < n; i++) {
         th = pxTaskGetNext(th);
         if (th == NULL) break;
-        size_t highw = uxTaskGetStackHighWaterMark(th);
+        TaskStatus_t status;
+        size_t highw = 0;
+        vTaskGetInfo(th, &status, &highw, eInvalid);
         waste += highw;
-        fprintf(console->out, "%-3d %-20s %-4d\n", i, pcTaskGetName(th), highw);
+        fprintf(console->out, "%-3d %-20s %-6d %02d\n", i, status.pcTaskName, highw, status.eCurrentState);
     }
 
     fprintf(console->out, "-------------------------------\n");
