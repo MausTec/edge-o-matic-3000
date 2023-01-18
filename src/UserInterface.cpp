@@ -13,6 +13,8 @@
 #include <fcntl.h>
 #include <math.h>
 
+#include "ui/toast.h"
+
 static const char* TAG = "UserInterface";
 
 #define icon_y(idx) (SCREEN_WIDTH - (10 * (idx + 1)) + 2)
@@ -229,16 +231,16 @@ void UserInterface::drawButtons() {
 }
 
 void UserInterface::onKeyPress(uint8_t i) {
-    if (hasToast()) {
-        if (toast_allow_clear) {
-            UI.toast("", 0);
+    if (ui_toast_is_active()) {
+        if (ui_toast_is_dismissable()) {
+            ui_toast_clear();
         }
         return;
     }
 
     // don't lock Chart button (i == 0)
     if (i != 0 && OrgasmControl::isMenuLocked()) {
-        UI.toastNow("Access Denied", 1000);
+        ui_toast("Access Denied");
         return;
     }
 
@@ -429,80 +431,15 @@ void UserInterface::drawIcons() {
 void UserInterface::screenshot(char* outpath, size_t len) { screenshot_save_to_file(outpath, len); }
 
 void UserInterface::drawToast() {
-    toast_render_pending = false;
-
-    if (toast_message[0] == '\0')
-        return;
-
-    if (toast_expiration != 0 && millis() > toast_expiration) {
-        toast_message[0] = '\0';
-        toast_render_pending = true;
-        return;
-    }
-
-    // Line width = 18 char
-    const int padding = 2;
-    const int margin = 4;
-    int start_x = 4;
-
-    int text_lines = 1;
-    for (int i = 0; i < strlen(toast_message); i++) {
-        if (toast_message[i] == '\n') {
-            text_lines++;
-        }
-    }
-
-    // TODO: This is a clusterfuck of math, and on odd lined text is off-by-one
-    int start_y =
-        (SCREEN_HEIGHT / 2) - (((7 + padding) * text_lines) / 2) - (padding / 2) - margin - 1;
-    if (text_lines & 1)
-        start_y -= 1; // <-- hack for that off-by-one
-
-    int end_y = SCREEN_HEIGHT - start_y;
-    int text_start_y = start_y + margin + padding + 1;
-
-    // Clear Border
-    for (int y = 0; y < SCREEN_HEIGHT; y++) {
-        for (int x = 0; x < SCREEN_WIDTH; x++) {
-            if ((x + y) % 2 == 0) {
-                display->drawPixel(x, y, 0);
-            }
-        }
-    }
-
-    display->fillRect(start_x, start_y, SCREEN_WIDTH - (start_x * 2), SCREEN_HEIGHT - (start_y * 2),
-                      0);
-    display->drawRect(start_x + margin, start_y + margin,
-                      SCREEN_WIDTH - (start_x * 2) - (margin * 2),
-                      SCREEN_HEIGHT - (start_y * 2) - (margin * 2), 1);
-    display->setTextColor(1, 0);
-
-    char tmp[19 * 4] = "";
-    strcpy(tmp, toast_message);
-
-    char* tok = strtok(tmp, "\n");
-    while (tok != NULL) {
-        display->setCursor(start_x + margin + padding + 1, text_start_y);
-        display->print(tok);
-        text_start_y += 7 + padding;
-        tok = strtok(NULL, "\n");
-    }
-
-    if (toast_allow_clear) {
-        // render press-any-key message
-        display->fillRect(0, SCREEN_HEIGHT - 9, SCREEN_WIDTH, 9, 1);
-        display->setCursor(1, SCREEN_HEIGHT - 8);
-        display->setTextSize(1);
-        display->setTextColor(0);
-        display->print("Press any key...");
-    }
+    ui_toast_render();
 }
 
 void UserInterface::toast(const char* message, long duration, bool allow_clear) {
-    strlcpy(toast_message, message, 19 * 4);
-    toast_expiration = duration > 0 ? millis() + duration : 0;
-    toast_render_pending = true;
-    toast_allow_clear = allow_clear;
+    if (allow_clear) {
+        ui_toast(message);
+    } else {
+        ui_toast_blocking(message);
+    }
 }
 
 void UserInterface::toast(std::string message, long duration, bool allow_clear) {
@@ -579,8 +516,7 @@ void UserInterface::openMenu(UIMenu* menu, bool save_history, bool reenter, void
 }
 
 bool UserInterface::toastRenderPending() {
-    bool trp = toast_render_pending || (toast_message[0] != '\0' && millis() > toast_expiration);
-    return trp;
+    return false;
 }
 
 void UserInterface::tick() {
@@ -590,7 +526,5 @@ void UserInterface::tick() {
 }
 
 bool UserInterface::hasToast() {
-    bool has_toast =
-        toast_message[0] != '\0' && (toast_expiration == 0 || millis() < toast_expiration);
-    return has_toast;
+    return ui_toast_is_active();
 }
