@@ -1,6 +1,7 @@
 #include "basic_api.h"
 #include <stddef.h>
 #include "esp_log.h"
+#include "ui/toast.h"
 
 static const char *TAG = "basic:ui";
 
@@ -20,10 +21,12 @@ static int _toast(struct mb_interpreter_t* s, void** l) {
 
 	case MB_DT_INT:
         ESP_LOGI(TAG, "Need to toast: %d", arg.value.integer);
+        ui_toast("%d", arg.value.integer);
 		break;
 
     case MB_DT_STRING:
         ESP_LOGI(TAG, "Need to toast: %s", arg.value.string);
+        ui_toast("%s", arg.value.string);
         break;
 
 	default:

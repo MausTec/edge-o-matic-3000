@@ -5,7 +5,11 @@
 extern "C" {
 #endif
 
+#define UI_MENU_TITLE_MAX 64
 
+typedef struct ui_menu {
+    char title[UI_MENU_TITLE_MAX];
+} ui_menu_t;
 
 #ifdef __cplusplus
 }

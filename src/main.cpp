@@ -10,7 +10,9 @@
 #include "eom-hal.h"
 
 #include "system/http_server.h"
+#include "ui/ui.h"
 
+// Legacy / C++
 #include "BluetoothServer.h"
 #include "Console.h"
 #include "Hardware.h"
@@ -21,7 +23,6 @@
 #include "api/broadcast.h"
 #include "wifi_manager.h"
 #include "accessory_driver.h"
-
 #include "polyfill.h"
 
 void loop(void);
@@ -79,6 +80,7 @@ static void hal_task(void *args) {
 
 static void ui_task(void *args) {
     // for (;;) {
+        ui_tick();
         UI.tick();
         Page::DoLoop();
 
@@ -120,6 +122,7 @@ static void loop_task(void *args) {
 
 extern "C" void app_main() {
     eom_hal_init();
+    ui_init();
     console_init();
     http_server_init();
     wifi_manager_init();
