@@ -35,13 +35,13 @@ void resetSD() {
     long long int cardSize = eom_hal_get_sd_size_bytes();
 
     if (cardSize == -1) {
-        UI.drawSdIcon(0);
+        // UI.drawSdIcon(0);
         printf("Card Mount Failed\n");
         config_load_default(&Config);
         return;
     }
 
-    UI.drawSdIcon(1);
+    // UI.drawSdIcon(1);
     printf("SD Card Size: %llu MB\n", cardSize / 1000000ULL);
 
     config_init();
@@ -81,8 +81,8 @@ static void hal_task(void *args) {
 static void ui_task(void *args) {
     // for (;;) {
         ui_tick();
-        UI.tick();
-        Page::DoLoop();
+        // UI.tick();
+        // Page::DoLoop();
 
         // vTaskDelay(1);
     // }
@@ -102,9 +102,9 @@ static void loop_task(void *args) {
             if (wifi_manager_get_status() == WIFI_MANAGER_CONNECTED) {
                 int8_t rssi = wifi_manager_get_rssi();
                 uint8_t status = ((100 + rssi) / 10);
-                UI.drawWifiIcon(status < 4 ? status : 4);
+                // UI.drawWifiIcon(status < 4 ? status : 4);
             } else {
-                UI.drawWifiIcon(1);
+                // UI.drawWifiIcon(1);
             }
         }
 
@@ -137,18 +137,18 @@ extern "C" void app_main() {
     resetSD();
 
     // Go to the splash page:
-    Page::Go(&DebugPage, false);
+    // Page::Go(&DebugPage, false);
     eom_hal_set_encoder_brightness(Config.led_brightness);
     eom_hal_set_encoder_rgb(255, 0, 0);
 
-    UI.drawWifiIcon(1);
-    UI.render();
+    // UI.drawWifiIcon(1);
+    // UI.render();
 
     // Initialize WiFi
     if (Config.wifi_on) {
         if (ESP_OK == wifi_manager_connect_to_ap(Config.wifi_ssid, Config.wifi_key)) {
-            UI.drawWifiIcon(2);
-            UI.render();
+            // UI.drawWifiIcon(2);
+            // UI.render();
         }
     }
 
@@ -158,21 +158,17 @@ extern "C" void app_main() {
         BT.begin();
         printf("Now Discoverable!\n");
         BT.advertise();
-        UI.drawBTIcon(1);
+        // UI.drawBTIcon(1);
     } else {
-        UI.drawBTIcon(0);
+        // UI.drawBTIcon(0);
     }
 
     // I'm always one for the dramatics:
-    delay(500);
-    eom_hal_set_encoder_rgb(0, 255, 0);
-    delay(500);
-    eom_hal_set_encoder_rgb(0, 0, 255);
-    delay(500);
-    UI.fadeTo();
+    // UI.fadeTo();
 
-    Page::Go(&RunGraphPage);
+    // Page::Go(&RunGraphPage);
     console_ready();
+    ui_open_page(&pSNAKE, NULL);
     
     for (;;) {
         loop_task(NULL);

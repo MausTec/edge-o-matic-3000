@@ -1,3 +1,23 @@
+/**
+ * @file snake.c
+ * @author Idia Shroud (ishroud72@nightraven.edu)
+ * @brief An example UI page which renders the game Snake.
+ * @version $Version$
+ * @date 2023-01-19
+ * 
+ * @copyright Copyright (c) 2023 Maus-Tec Electronics
+ * 
+ * What is a snake?! A miserable little pile of slithers. But enough talk, have at you!
+ * 
+ * This file should actually be split into a platform-agnostic Snake library, and Page
+ * files should only be used for rendering and interacting with the UI, but not process
+ * device functions.
+ * 
+ * The Render hook will only be executed in the main task, or the UI Render task, and should
+ * not process any additional code aside from what is required to render the UI.
+ * 
+ */
+
 #include "ui/ui.h"
 #include <string.h>
 #include "esp_log.h"
@@ -8,8 +28,8 @@ static const char *TAG = "page:snake";
 #define SNAKE_CUBE_SIZE 3
 #define SNAKE_PADDING_SIZE 1
 
-#define GAME_TABLE_WIDTH  (eom_hal_get_display_width() / (SNAKE_CUBE_SIZE + SNAKE_PADDING_SIZE))
-#define GAME_TABLE_HEIGHT (eom_hal_get_display_height() / (SNAKE_CUBE_SIZE + SNAKE_PADDING_SIZE))
+#define GAME_TABLE_WIDTH  ((EOM_DISPLAY_WIDTH) / (SNAKE_CUBE_SIZE + SNAKE_PADDING_SIZE))
+#define GAME_TABLE_HEIGHT ((EOM_DISPLAY_HEIGHT - UI_BUTTON_HEIGHT - 1) / (SNAKE_CUBE_SIZE + SNAKE_PADDING_SIZE))
 
 enum snake_game_state { GAME_STARTING, GAME_PAUSED, GAME_RUNNING, GAME_OVER };
 enum snake_move_direction { UP, RIGHT, DOWN, LEFT };
@@ -57,8 +77,8 @@ static void snake_add_node(uint8_t x, uint8_t y) {
     if (Game == NULL) return;
     
     struct snake_node *node = (struct snake_node*) malloc(sizeof(struct snake_node));
-    node->point.x = x;
-    node->point.y = y;
+    node->point.x = x % GAME_TABLE_WIDTH;
+    node->point.y = y % GAME_TABLE_HEIGHT;
     node->prev = NULL;
     node->next = Game->head;
 
@@ -74,17 +94,18 @@ static int snake_check_intersect(struct snake_point *p) {
 
     struct snake_node *ptr = Game->head;
     int idx = 0;
+    int max = -1;
     
     while (ptr != NULL) {
         if (p->x == ptr->point.x && p->y == ptr->point.y) {
-            return idx;
+            max = idx;
         }
 
         ptr = ptr->next;
         idx++;
     }
 
-    return -1;
+    return max;
 }
 
 static void snake_randomize_food(void) {
@@ -106,9 +127,18 @@ static void snake_remove_tail(void) {
     struct snake_node *tail = Game->tail;
     if (tail != NULL) {
         struct snake_node *prev = tail->prev;
-        prev->next = NULL;
+
+        if (prev == NULL) {
+            Game->head = NULL;
+            Game->tail = NULL;
+            Game->length = 0;
+        } else {
+            prev->next = NULL;
+            Game->length--;
+            Game->tail = prev;
+        }
+
         free(tail);
-        Game->length--;
     } else {
         Game->head = NULL;
         Game->length = 0;
@@ -133,7 +163,7 @@ static void snake_init_game(void) {
 
 static uint32_t snake_calculate_delay_ms(void) {
     if (Game == NULL) return 0;
-    return 500 + (Game->length * 250);
+    return (1000UL / (Game->length - 1));
 }
 
 static int snake_move(void) {
@@ -143,11 +173,11 @@ static int snake_move(void) {
 
     switch (Game->direction) {
         case UP:
-        snake_add_node(p->x, p->y + 1);
+        snake_add_node(p->x, p->y - 1);
         break;
 
         case DOWN:
-        snake_add_node(p->x, p->y - 1);
+        snake_add_node(p->x, p->y + 1);
         break;
 
         case LEFT:
@@ -165,6 +195,8 @@ static int snake_move(void) {
 
     if (snake_check_intersect(&Game->food) < 0) {
         snake_remove_tail();
+    } else {
+        snake_randomize_food();
     }
 
     return -1;
@@ -180,75 +212,144 @@ static void snake_game_pause() {
 
     if (Game->state == GAME_PAUSED) {
         Game->state = GAME_RUNNING;
-    }
-
-    if (Game->state == GAME_RUNNING) {
+    } else if (Game->state == GAME_RUNNING) {
         Game->state = GAME_PAUSED;
     }
 }
 
-static void on_open(struct ui_page *p) {
+static void on_open(void *arg) {
     snake_init_game();
 }
 
-static void on_render(u8g2_t *display, struct ui_page *p) {
+static void on_render(u8g2_t *display, void *arg) {
     if (Game == NULL) return;
 
-    ESP_LOGI(TAG, "Rendering Snake:");
-    ESP_LOGI(TAG, "State: %d", Game->state);
-    ESP_LOGI(TAG, "Length: %d, Direction: %d", Game->length, Game->direction);
-    ESP_LOGI(TAG, "Head: (%d,%d), Food: (%d,%d)", Game->head->point.x, Game->head->point.y, Game->food.x, Game->food.y);
+    struct snake_node *s = Game->head;
+
+    while (s != NULL) {
+        if (s == Game->head) {
+            u8g2_DrawFrame(
+                display, 
+                s->point.x * (SNAKE_CUBE_SIZE + SNAKE_PADDING_SIZE), 
+                s->point.y * (SNAKE_CUBE_SIZE + SNAKE_PADDING_SIZE), 
+                SNAKE_CUBE_SIZE, SNAKE_CUBE_SIZE
+            );
+        } else {
+            u8g2_DrawBox(
+                display, 
+                s->point.x * (SNAKE_CUBE_SIZE + SNAKE_PADDING_SIZE), 
+                s->point.y * (SNAKE_CUBE_SIZE + SNAKE_PADDING_SIZE), 
+                SNAKE_CUBE_SIZE, SNAKE_CUBE_SIZE
+            ); 
+        }
+
+        s = s->next;
+    }
+
+    u8g2_DrawVLine(
+        display, 
+        Game->food.x * (SNAKE_CUBE_SIZE + SNAKE_PADDING_SIZE) + 1, 
+        Game->food.y * (SNAKE_CUBE_SIZE + SNAKE_PADDING_SIZE),
+        3
+    );
+
+    u8g2_DrawHLine(
+        display, 
+        Game->food.x * (SNAKE_CUBE_SIZE + SNAKE_PADDING_SIZE), 
+        (Game->food.y * (SNAKE_CUBE_SIZE + SNAKE_PADDING_SIZE)) + 1,
+        3
+    );
+
+    ui_draw_button_labels(display, "<", 
+        Game->state == GAME_PAUSED ? "PLAY" : 
+        Game->state == GAME_STARTING ? "START" : 
+        Game->state == GAME_OVER ? "RESTART" : "PAUSE", 
+        ">"
+    );
 }
 
-static void on_loop(struct ui_page *p) {
-    if (Game == NULL) return;
-    int64_t millis = esp_timer_get_time();
+static ui_render_flag_t on_loop(void *arg) {
+    if (Game == NULL) return NORENDER;
+    int64_t millis = esp_timer_get_time() / 1000UL;
 
-    if (millis - Game->last_tick >= snake_calculate_delay_ms()) {
+    if ((millis - Game->last_tick) >= snake_calculate_delay_ms()) {
         Game->last_tick = millis;
 
         if (Game->state != GAME_RUNNING) {
-            return;
+            return NORENDER;
         }
 
         int consume = snake_move();
 
         if (consume >= 0) {
             Game->state = GAME_OVER;
+            ui_toast("GAME OVER!\nScore: %d", Game->length);
         }
+
+        return RENDER;
     }
+
+    return NORENDER;
 }
 
-static void on_close(struct ui_page *p) {
+static void on_close(void *arg) {
     snake_deinit_game();
 }
 
-static void on_button(eom_hal_button_t button, eom_hal_button_event_t evt, struct ui_page *p) {
-    if (evt != EOM_HAL_BUTTON_PRESS) return;
+static ui_render_flag_t on_button(eom_hal_button_t button, eom_hal_button_event_t evt, void *arg) {
+    if (evt != EOM_HAL_BUTTON_PRESS) return PASS;
+    if (Game == NULL) return NORENDER;
     
     switch (button) {
         case EOM_HAL_BUTTON_BACK:
-            snake_turn(CCW);
+            if (Game->state == GAME_RUNNING) {
+                snake_turn(CCW);
+                return RENDER;
+            }
             break;
         case EOM_HAL_BUTTON_OK:
-            snake_turn(CW);
+            if (Game->state == GAME_RUNNING) {
+                snake_turn(CW);
+                return RENDER;
+            }
             break;
         case EOM_HAL_BUTTON_MID:
-            snake_game_pause();
+            if (Game->state == GAME_RUNNING || Game->state == GAME_PAUSED) {
+                snake_game_pause();
+                return RENDER;
+            }
+
+            if (Game->state == GAME_STARTING) {
+                Game->state = GAME_RUNNING;
+                return RENDER;
+            }
+
+            if (Game->state == GAME_OVER) {
+                snake_init_game();
+                return RENDER;
+            }
+
             break;
         default:
+            return PASS;
             break;
     }
+
+    return NORENDER;
 }
 
-static void on_encoder(int difference, struct ui_page *p) {
-    if (Game == NULL) return;
+static ui_render_flag_t on_encoder(int difference, void *arg) {
+    if (Game == NULL) return NORENDER;
 
     if (difference < 0) {
         snake_turn(CCW);
     } else if (difference > 0) {
         snake_turn(CW);
+    } else {
+        return PASS;
     }
+
+    return RENDER;
 }
 
 const struct ui_page pSNAKE = {
