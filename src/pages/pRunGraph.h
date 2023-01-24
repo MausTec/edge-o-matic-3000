@@ -2,7 +2,7 @@
 #define __p_RUN_GRAPH_h
 
 #include "Hardware.h"
-#include "OrgasmControl.h"
+#include "orgasm_control.h"
 #include "Page.h"
 #include "UserInterface.h"
 #include "assets.h"
@@ -22,7 +22,7 @@ class pRunGraph : public Page {
         if (reinitialize) {
             view = StatsView;
             mode = Manual;
-            OrgasmControl::controlMotor(false);
+            orgasm_control_controlMotor(OC_MANUAL_CONTROL);
             Hardware::setPressureSensitivity(Config.sensor_sensitivity);
         }
 
@@ -51,7 +51,7 @@ class pRunGraph : public Page {
             UI.setButton(2, "MANUAL");
         }
 
-        if (OrgasmControl::isMenuLocked()) {
+        if (orgasm_control_isMenuLocked()) {
             UI.setButton(1, "LOCK");
             UI.setButton(2, "LOCK");
         }
@@ -59,21 +59,21 @@ class pRunGraph : public Page {
 
     void renderChart() {
         // Update Counts
-        char status[7] = "";
+        char status[10] = "";
         uint8_t motor = Hardware::getMotorSpeedPercent() * 100;
-        uint8_t stat_a = OrgasmControl::getArousalPercent() * 100;
+        uint8_t stat_a = orgasm_control_getArousalPercent() * 100;
 
         UI.display->setTextColor(SSD1306_WHITE, SSD1306_BLACK);
         UI.display->setCursor(0, 10);
-        sprintf(status, "M:%03d%%", motor);
+        snprintf(status, 10, "M:%03d%%", motor);
         UI.display->print(status);
 
         UI.display->setCursor(SCREEN_WIDTH / 3 + 3, 10);
-        sprintf(status, "P:%04ld", OrgasmControl::getAveragePressure());
+        snprintf(status, 10, "P:%04d", orgasm_control_getAveragePressure());
         UI.display->print(status);
 
         UI.display->setCursor(SCREEN_WIDTH / 3 * 2 + 7, 10);
-        sprintf(status, "A:%03d%%", stat_a);
+        snprintf(status, 10, "A:%03d%%", stat_a);
         UI.display->print(status);
 
         // Update Chart
@@ -84,7 +84,7 @@ class pRunGraph : public Page {
     void renderStats() {
         static long arousal_peak = 0;
         static long last_peak_ms = millis();
-        long arousal = OrgasmControl::getArousal();
+        long arousal = orgasm_control_getArousal();
 
         if (arousal > arousal_peak) {
             last_peak_ms = millis();
@@ -99,11 +99,11 @@ class pRunGraph : public Page {
         // Motor / Arousal bars
         UI.drawBar(10, 'M', Hardware::getMotorSpeed(), 255,
                    mode == Automatic ? Config.motor_max_speed : 0);
-        UI.drawBar(SCREEN_HEIGHT - 18, 'A', OrgasmControl::getArousal(), 1023,
+        UI.drawBar(SCREEN_HEIGHT - 18, 'A', orgasm_control_getArousal(), 1023,
                    Config.sensitivity_threshold, arousal_peak);
 
         // Pressure Icon
-        int pressure_icon = map(OrgasmControl::getAveragePressure(), 0, 4095, 0, 4);
+        int pressure_icon = map(orgasm_control_getAveragePressure(), 0, 4095, 0, 4);
         UI.display->drawBitmap(0, 19, PLUG_ICON[pressure_icon], 24, 24, SSD1306_WHITE);
 
         const int horiz_split_x = (SCREEN_WIDTH / 2) + 25;
@@ -112,7 +112,7 @@ class pRunGraph : public Page {
         const int press_x = 24 + 2;  // icon_x + icon_width + 2
         const int press_y = 19 + 12; // icon_y + (icon_height / 2)
         UI.drawCompactBar(press_x, press_y, horiz_split_x - press_x - 9,
-                          OrgasmControl::getAveragePressure(), 4095, Config.sensor_sensitivity,
+                          orgasm_control_getAveragePressure(), 4095, Config.sensor_sensitivity,
                           255);
 
         // Draw a Border!
@@ -124,7 +124,7 @@ class pRunGraph : public Page {
         UI.display->print("Denied");
         UI.display->setCursor(horiz_split_x + 3, 19 + 9);
         UI.display->setTextSize(2);
-        UI.display->printf("%3d", OrgasmControl::getDenialCount() % 1000);
+        UI.display->printf("%3d", orgasm_control_getDenialCount() % 1000);
         UI.display->setTextSize(1);
     }
 
@@ -141,11 +141,11 @@ class pRunGraph : public Page {
     }
 
     void Loop() override {
-        if (OrgasmControl::updated()) {
+        if (orgasm_control_updated()) {
             if (view == GraphView) {
                 // Update Chart
-                UI.addChartReading(0, OrgasmControl::getAveragePressure());
-                UI.addChartReading(1, OrgasmControl::getArousal());
+                UI.addChartReading(0, orgasm_control_getAveragePressure());
+                UI.addChartReading(1, orgasm_control_getArousal());
             }
 
             Rerender();
@@ -166,26 +166,26 @@ class pRunGraph : public Page {
             }
             break;
         case 1:
-            if (OrgasmControl::isMenuLocked()) {
+            if (orgasm_control_isMenuLocked()) {
                 break;
             }
             mode = Manual;
             Hardware::setMotorSpeed(0);
-            OrgasmControl::controlMotor(false);
+            orgasm_control_controlMotor(OC_MANUAL_CONTROL);
             break;
         case 2:
-            if (OrgasmControl::isMenuLocked()) {
+            if (orgasm_control_isMenuLocked()) {
                 break;
             }
             if (mode == Automatic) {
                 mode = PostOrgasm;
-                OrgasmControl::controlMotor(true);
+                orgasm_control_controlMotor(OC_LOCKOUT_POST_MODE);
             } else if (mode == Manual) {
                 mode = Automatic;
-                OrgasmControl::controlMotor(true);
+                orgasm_control_controlMotor(OC_AUTOMAITC_CONTROL);
             } else if (mode == PostOrgasm) {
                 mode = Manual;
-                OrgasmControl::controlMotor(false);
+                orgasm_control_controlMotor(OC_MANUAL_CONTROL);
             }
             break;
         }
@@ -195,7 +195,7 @@ class pRunGraph : public Page {
     }
 
     void onEncoderChange(int diff) override {
-        if (OrgasmControl::isMenuLocked()) {
+        if (orgasm_control_isMenuLocked()) {
             UI.toastNow("Access Denied", 1000);
             return;
         }
@@ -228,13 +228,13 @@ class pRunGraph : public Page {
     void setMode(const char* newMode) {
         if (!strcmp(newMode, "automatic")) {
             mode = Automatic;
-            OrgasmControl::controlMotor(true);
+            orgasm_control_controlMotor(OC_AUTOMAITC_CONTROL);
         } else if (!strcmp(newMode, "manual")) {
             mode = Manual;
-            OrgasmControl::controlMotor(false);
+            orgasm_control_controlMotor(OC_MANUAL_CONTROL);
         } else if (!strcmp(newMode, "postorgasm")) {
             mode = PostOrgasm;
-            OrgasmControl::controlMotor(true);
+            orgasm_control_controlMotor(OC_LOCKOUT_POST_MODE);
         } else {
             return;
         }

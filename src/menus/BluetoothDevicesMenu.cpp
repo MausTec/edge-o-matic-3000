@@ -1,7 +1,7 @@
 #include "UIMenu.h"
 #include "BluetoothDriver.h"
 #include "UserInterface.h"
-#include "OrgasmControl.h"
+#include "orgasm_control.h"
 #include "esp_log.h"
 
 static const char *TAG = "BluetoothDevicesMenu";
@@ -40,9 +40,9 @@ static void setVibrateMode(UIMenu *menu, int m) {
 }
 
 static void buildVibrateModeMenu(UIMenu *menu) {
-  menu->addItem("Depletion", &setVibrateMode, (int) VibrationMode::Depletion);
-  menu->addItem("Enhancement", &setVibrateMode, (int) VibrationMode::Enhancement);
-  menu->addItem("Ramp-Stop", &setVibrateMode, (int) VibrationMode::RampStop);
+  menu->addItem("Depletion", &setVibrateMode, (int) Depletion);
+  menu->addItem("Enhancement", &setVibrateMode, (int) Enhancement);
+  menu->addItem("Ramp-Stop", &setVibrateMode, (int) RampStop);
 }
 
 UIMenu VibrateModeMenu("Vibrate Mode", &buildVibrateModeMenu);

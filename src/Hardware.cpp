@@ -1,7 +1,7 @@
 #include "Hardware.h"
 #include "AccessoryDriver.h"
 #include "BluetoothDriver.h"
-#include "OrgasmControl.h"
+#include "orgasm_control.h"
 #include "eom-hal.h"
 #include "esp_log.h"
 #include "assets.h"
@@ -22,10 +22,10 @@ namespace Hardware {
             if (event == EOM_HAL_BUTTON_HOLD) {
                 switch (button) {
                 case EOM_HAL_BUTTON_BACK:
-                    if (OrgasmControl::isRecording()) {
-                        OrgasmControl::stopRecording();
+                    if (orgasm_control_isRecording()) {
+                        orgasm_control_stopRecording();
                     } else {
-                        OrgasmControl::startRecording();
+                        orgasm_control_startRecording();
                     }
                     break;
 
@@ -90,7 +90,7 @@ namespace Hardware {
                 direction ^= 0b10;
             }
 
-            int pressure_icon = map(OrgasmControl::getAveragePressure(), 0, 4095, 0, 4);
+            int pressure_icon = map(orgasm_control_getAveragePressure(), 0, 4095, 0, 4);
             UI.display->drawBitmap(pos_x, pos_y, PLUG_ICON[pressure_icon], 24, 24, SSD1306_WHITE);
 
             u8g2_SendBuffer(UI.display_ptr);

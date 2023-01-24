@@ -32,7 +32,8 @@ struct ui_page {
  * Register your pages here.
  */
 
-extern const ui_page_t pSNAKE;
+extern const ui_page_t PAGE_SNAKE;
+extern const ui_page_t PAGE_EDGING_STATS;
 
 #ifdef __cplusplus
 }

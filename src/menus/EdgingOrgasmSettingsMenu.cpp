@@ -1,7 +1,7 @@
 #include "UIMenu.h"
 #include "UIInput.h"
 #include "Hardware.h"
-#include "OrgasmControl.h"
+#include "orgasm_control.h"
 
 UIInput ClenchPressureSensitivity("Clench Pressure Sensitivity", [](UIMenu *ip) {
   UIInput *input = (UIInput*) ip;
