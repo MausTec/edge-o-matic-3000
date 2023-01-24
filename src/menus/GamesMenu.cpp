@@ -2,6 +2,7 @@
 #include "Page.h"
 #include "application.h"
 
+
 #include "esp_log.h"
 static const char *TAG = "GamesMenu";
 
@@ -9,7 +10,7 @@ UIMenu GamesMenu("Apps", [](UIMenu *menu) {
   menu->enableAutoCleanup(AUTOCLEAN_FREE);
 
   menu->addItem("Snake", [](UIMenu*) {
-    Page::Go(&SnakePage);
+      
   });
 
   DIR* d;

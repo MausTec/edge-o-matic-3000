@@ -4,7 +4,7 @@
 #include "eom-hal.h"
 
 #include "Console.h"
-#include "OrgasmControl.h"
+#include "orgasm_control.h"
 #include "Hardware.h"
 #include "Page.h"
 #include "SDHelper.h"
@@ -143,11 +143,11 @@ namespace WebSocketHelper {
 
 
   void cbOrgasm(int num, cJSON* seconds) {
-    // OrgasmControl::permitOrgasmNow(seconds);
+    orgasm_control_permitOrgasmNow(seconds->valueint);
   }
 
   void cbLock(int num, cJSON* value) {
-    OrgasmControl::lockMenuNow(value);
+    orgasm_control_lockMenuNow(value->valueint ? ocTRUE : ocFALSE);
   }
 
   void onMessage(int num, const char* payload) {

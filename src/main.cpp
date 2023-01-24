@@ -16,9 +16,8 @@
 #include "BluetoothServer.h"
 #include "Console.h"
 #include "Hardware.h"
-#include "OrgasmControl.h"
+#include "orgasm_control.h"
 #include "Page.h"
-#include "RunningAverage.h"
 #include "UserInterface.h"
 #include "api/broadcast.h"
 #include "wifi_manager.h"
@@ -63,7 +62,7 @@ void setupHardware() {
 
 static void orgasm_task(void *args) {
     // for (;;) {
-        OrgasmControl::tick();
+        orgasm_control_tick();
 
         // vTaskDelay(1);
     // }
@@ -127,6 +126,7 @@ extern "C" void app_main() {
     http_server_init();
     wifi_manager_init();
     accessory_driver_init();
+    orgasm_control_init();
 
     printf("Maus-Tec presents: Edge-o-Matic 3000\n");
     printf("Version: " VERSION "\n");
@@ -168,7 +168,7 @@ extern "C" void app_main() {
 
     // Page::Go(&RunGraphPage);
     console_ready();
-    ui_open_page(&pSNAKE, NULL);
+    ui_open_page(&PAGE_EDGING_STATS, NULL);
     
     for (;;) {
         loop_task(NULL);

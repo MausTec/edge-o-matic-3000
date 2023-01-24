@@ -35,17 +35,17 @@ void api_broadcast_readings(void) {
         mode = "";
     }
 
-    cJSON_AddNumberToObject(root, "pressure", OrgasmControl::getLastPressure());
-    cJSON_AddNumberToObject(root, "pavg", OrgasmControl::getAveragePressure());
+    cJSON_AddNumberToObject(root, "pressure", orgasm_control_getLastPressure());
+    cJSON_AddNumberToObject(root, "pavg", orgasm_control_getAveragePressure());
     cJSON_AddNumberToObject(root, "motor", Hardware::getMotorSpeed());
-    cJSON_AddNumberToObject(root, "arousal", OrgasmControl::getArousal());
+    cJSON_AddNumberToObject(root, "arousal", orgasm_control_getArousal());
     cJSON_AddNumberToObject(root, "millis", esp_timer_get_time() / 1000);
 
     // Everything around this is deprecated and should be moved into its own broadcast.
     cJSON_AddStringToObject(root, "runMode", mode);
-    cJSON_AddBoolToObject(root, "permitOrgasm", OrgasmControl::isPermitOrgasmReached());
-    cJSON_AddBoolToObject(root, "postOrgasm", OrgasmControl::isPostOrgasmReached());
-    cJSON_AddBoolToObject(root, "lock", OrgasmControl::isMenuLocked());
+    cJSON_AddBoolToObject(root, "permitOrgasm", orgasm_control_isPermitOrgasmReached());
+    cJSON_AddBoolToObject(root, "postOrgasm", orgasm_control_isPostOrgasmReached());
+    cJSON_AddBoolToObject(root, "lock", orgasm_control_isMenuLocked());
 
     websocket_broadcast(payload, WS_BROADCAST_READINGS);
     cJSON_Delete(payload);

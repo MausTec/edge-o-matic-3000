@@ -44,7 +44,4 @@ extern pDebug DebugPage;
 #include "../src/pages/pRunGraph.h"
 extern pRunGraph RunGraphPage;
 
-#include "../src/pages/pSnake.h"
-extern pSnake SnakePage;
-
 #endif

@@ -1,7 +1,7 @@
 #include "UIMenu.h"
 #include "UIInput.h"
 #include "Hardware.h"
-#include "OrgasmControl.h"
+#include "orgasm_control.h"
 
 #include "esp_log.h"
 
@@ -14,11 +14,11 @@ UIInput MotorMaxSpeedInput("Motor Max Speed", [](UIMenu *ip) {
   input->setStep(1);
 
   input->onOpen([](UIMenu*) {
-    OrgasmControl::pauseControl();
+    orgasm_control_pauseControl();
   });
 
   input->onClose([](UIMenu*) {
-    OrgasmControl::resumeControl();
+    orgasm_control_resumeControl();
   });
 
   input->onChange([](int value) {
@@ -129,17 +129,17 @@ UIInput SensorSensitivityInput("Sensor Sensitivity", [](UIMenu *ip) {
 });
 
 static void setVibrateMode(UIMenu *menu, int m) {
-  VibrationMode mode = (VibrationMode) m;
+  vibration_mode_t mode = (vibration_mode_t) m;
 
   ESP_LOGI(TAG, "Setting mode to: ");
   switch(mode) {
-    case VibrationMode::Depletion:
+    case Depletion:
       ESP_LOGI(TAG, "Depletion");
       break;
-    case VibrationMode::Enhancement:
+    case Enhancement:
       ESP_LOGI(TAG, "Enhancement");
       break;
-    case VibrationMode::RampStop:
+    case RampStop:
       ESP_LOGI(TAG, "RampStop");
       break;
     default:
@@ -151,7 +151,7 @@ static void setVibrateMode(UIMenu *menu, int m) {
   menu->rerender();
 }
 
-static void add_vibration_item(UIMenu *menu, std::string label, VibrationMode mode) {
+static void add_vibration_item(UIMenu *menu, std::string label, vibration_mode_t mode) {
   std::string text = "";
   if (Config.vibration_mode == mode) {
     text += "X";
@@ -163,16 +163,16 @@ static void add_vibration_item(UIMenu *menu, std::string label, VibrationMode mo
   menu->addItem(text, &setVibrateMode, (int) mode);
 }
 
-static void buildVibrationModeMenu(UIMenu *menu) {
-  add_vibration_item(menu, "Depletion", VibrationMode::Depletion);
-  add_vibration_item(menu, "Enhancement", VibrationMode::Enhancement);
-  add_vibration_item(menu, "Ramp-Stop", VibrationMode::RampStop);
+static void buildvibration_mode_tMenu(UIMenu *menu) {
+  add_vibration_item(menu, "Depletion", Depletion);
+  add_vibration_item(menu, "Enhancement", Enhancement);
+  add_vibration_item(menu, "Ramp-Stop", RampStop);
 }
 
-UIMenu VibrationModeMenu("Vibration Mode", &buildVibrationModeMenu);
+UIMenu vibration_mode_tMenu("Vibration Mode", &buildvibration_mode_tMenu);
 
 static void buildMenu(UIMenu *menu) {
-  menu->addItem(&VibrationModeMenu);
+  menu->addItem(&vibration_mode_tMenu);
   menu->addItem(&MotorMaxSpeedInput);
   menu->addItem(&MotorStartSpeedInput);
   menu->addItem(&MotorRampTimeInput);

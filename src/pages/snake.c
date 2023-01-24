@@ -352,7 +352,7 @@ static ui_render_flag_t on_encoder(int difference, void *arg) {
     return RENDER;
 }
 
-const struct ui_page pSNAKE = {
+const struct ui_page PAGE_SNAKE = {
     .title = "Snake",
     .on_open = on_open,
     .on_render = on_render,

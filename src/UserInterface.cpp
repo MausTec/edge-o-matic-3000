@@ -1,6 +1,6 @@
 #include "UserInterface.h"
 #include "Icons.h"
-#include "OrgasmControl.h"
+#include "orgasm_control.h"
 #include "Page.h"
 #include "SDHelper.h"
 #include "esp_log.h"
@@ -239,7 +239,7 @@ void UserInterface::onKeyPress(uint8_t i) {
     }
 
     // don't lock Chart button (i == 0)
-    if (i != 0 && OrgasmControl::isMenuLocked()) {
+    if (i != 0 && orgasm_control_isMenuLocked()) {
         ui_toast("Access Denied");
         return;
     }

@@ -42,7 +42,7 @@ and is automatically generated. Here is a quick summary of config variables:
 |`screen_dim_seconds`|Int|10|Time, in seconds, before the screen dims. 0 to disable.|
 |`screen_timeout_seconds`|Int|0|Time, in seconds, before the screen turns off. 0 to disable.|
 |`pressure_smoothing`|Byte|5|Number of samples to take an average of. Higher results in lag and lower resolution!|
-|`classic_serial`|Boolean|false|Output classic NoGasm values over serial for backwards compatibility.|
+|`classic_serial`|Boolean|false|Output continuous stream of arousal data over serial for backwards compatibility with other software.|
 |`sensitivity_threshold`|Int|600|The arousal threshold for orgasm detection. Lower = sooner cutoff.|
 |`update_frequency_hz`|Int|50|Update frequency for pressure readings and arousal steps. Higher = crash your serial monitor.|
 |`sensor_sensitivity`|Byte|128|Analog pressure prescaling. Adjust this until the pressure is ~60-70%|
