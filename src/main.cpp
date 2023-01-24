@@ -34,30 +34,16 @@ void resetSD() {
     long long int cardSize = eom_hal_get_sd_size_bytes();
 
     if (cardSize == -1) {
-        // UI.drawSdIcon(0);
+        ui_set_icon(UI_ICON_SD, -1);
         printf("Card Mount Failed\n");
         config_load_default(&Config);
         return;
     }
 
-    // UI.drawSdIcon(1);
+    ui_set_icon(UI_ICON_SD, SD_ICON_PRESENT);
     printf("SD Card Size: %llu MB\n", cardSize / 1000000ULL);
 
     config_init();
-}
-
-void setupHardware() {
-    if (!Hardware::initialize()) {
-        printf("Hardware initialization failed!\n");
-        for (;;) {
-        }
-    }
-
-    if (!UI.begin(eom_hal_get_display_ptr())) {
-        printf("SSD1306 allocation failed\n");
-        for (;;) {
-        }
-    }
 }
 
 static void orgasm_task(void *args) {
@@ -100,10 +86,10 @@ static void loop_task(void *args) {
             // Update Icons
             if (wifi_manager_get_status() == WIFI_MANAGER_CONNECTED) {
                 int8_t rssi = wifi_manager_get_rssi();
-                uint8_t status = ((100 + rssi) / 10);
-                // UI.drawWifiIcon(status < 4 ? status : 4);
+                ESP_LOGI(TAG, "WiFi RSSI: %d", rssi);
+                ui_set_icon(UI_ICON_WIFI, WIFI_ICON_STRONG_SIGNAL);
             } else {
-                // UI.drawWifiIcon(1);
+                ui_set_icon(UI_ICON_WIFI, WIFI_ICON_DISCONNECTED);
             }
         }
 
@@ -133,22 +119,19 @@ extern "C" void app_main() {
     printf("EOM-HAL Version: %s\n", eom_hal_get_version());
 
     // Setup Hardware
-    setupHardware();
     resetSD();
 
     // Go to the splash page:
     // Page::Go(&DebugPage, false);
+
+    eom_hal_set_sensor_sensitivity(Config.sensor_sensitivity);
     eom_hal_set_encoder_brightness(Config.led_brightness);
     eom_hal_set_encoder_rgb(255, 0, 0);
-
-    // UI.drawWifiIcon(1);
-    // UI.render();
 
     // Initialize WiFi
     if (Config.wifi_on) {
         if (ESP_OK == wifi_manager_connect_to_ap(Config.wifi_ssid, Config.wifi_key)) {
-            // UI.drawWifiIcon(2);
-            // UI.render();
+            ui_set_icon(UI_ICON_WIFI, WIFI_ICON_WEAK_SIGNAL);
         }
     }
 
@@ -158,15 +141,11 @@ extern "C" void app_main() {
         BT.begin();
         printf("Now Discoverable!\n");
         BT.advertise();
-        // UI.drawBTIcon(1);
+        ui_set_icon(UI_ICON_BT, BT_ICON_ACTIVE);
     } else {
-        // UI.drawBTIcon(0);
+        ui_set_icon(UI_ICON_BT, -1);
     }
 
-    // I'm always one for the dramatics:
-    // UI.fadeTo();
-
-    // Page::Go(&RunGraphPage);
     console_ready();
     ui_open_page(&PAGE_EDGING_STATS, NULL);
     

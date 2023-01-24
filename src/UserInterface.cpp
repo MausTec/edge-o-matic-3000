@@ -1,5 +1,5 @@
 #include "UserInterface.h"
-#include "Icons.h"
+#include "assets/icons.h"
 #include "orgasm_control.h"
 #include "Page.h"
 #include "SDHelper.h"
@@ -370,7 +370,7 @@ void UserInterface::render() {
     }
 }
 
-void UserInterface::drawIcon(uint8_t icon_idx, uint8_t icon_graphic[][8], uint8_t status,
+void UserInterface::drawIcon(uint8_t icon_idx, const unsigned char icon_graphic[][8], uint8_t status,
                              long flash_ms) {
     UIIcon* icon = &icons[icon_idx];
     uint8_t icon_frame_idx;
@@ -398,23 +398,23 @@ void UserInterface::drawIcon(uint8_t icon_idx, uint8_t icon_graphic[][8], uint8_
 }
 
 void UserInterface::drawWifiIcon(uint8_t status, long flash_ms) {
-    drawIcon(WIFI_ICON_IDX, WIFI_ICON, status, flash_ms);
+    // drawIcon(WIFI_ICON_IDX, WIFI_ICON, status, flash_ms);
 }
 
 void UserInterface::drawBTIcon(uint8_t status, long flash_ms) {
-    drawIcon(BT_ICON_IDX, BT_ICON, status, flash_ms);
+    // drawIcon(BT_ICON_IDX, BT_ICON, status, flash_ms);
 }
 
 void UserInterface::drawSdIcon(uint8_t status, long flash_ms) {
-    drawIcon(SD_ICON_IDX, SD_ICON, status, flash_ms);
+    // drawIcon(SD_ICON_IDX, SD_ICON, status, flash_ms);
 }
 
 void UserInterface::drawRecordIcon(uint8_t status, long flash_ms) {
-    drawIcon(RECORD_ICON_IDX, RECORD_ICON, status, flash_ms);
+    // drawIcon(RECORD_ICON_IDX, RECORD_ICON, status, flash_ms);
 }
 
 void UserInterface::drawUpdateIcon(uint8_t status, long flash_ms) {
-    drawIcon(UPDATE_ICON_IDX, UPDATE_ICON, status, flash_ms);
+    // drawIcon(UPDATE_ICON_IDX, UPDATE_ICON, status, flash_ms);
 }
 
 /**

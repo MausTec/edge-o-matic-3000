@@ -5,6 +5,10 @@ IndentWidth: 4
 ColumnLimit: 100
 IndentExternBlock: NoIndent
 BreakBeforeBraces: Attach
+AllowShortFunctionsOnASingleLine: None
+BinPackArguments: false
+BinPackParameters: false
+AlignAfterOpenBracket: BlockIndent
 ---
 Language: Cpp
 # Force pointers to the type for C++.
