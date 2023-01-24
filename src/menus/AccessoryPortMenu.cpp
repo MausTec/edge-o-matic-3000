@@ -4,8 +4,6 @@
 #include "UserInterface.h"
 #include "maus_bus.h"
 
-// AccessoryDriver.h is going to be deprecated now, but we can't break M1K yet.
-
 static int scanTime = 30; //In seconds
 static bool scanning = false;
 

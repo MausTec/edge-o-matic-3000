@@ -4,8 +4,8 @@
 #include "eom-hal.h"
 #include "esp_log.h"
 #include "esp_timer.h"
-#include "running_average.h"
 #include "ui/ui.h"
+#include "util/running_average.h"
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
@@ -296,6 +296,10 @@ void orgasm_control_twitchDetect() {
     }
 }
 
+orgasm_output_mode_t orgasm_control_get_output_mode(void) {
+    return output_state.output_mode;
+}
+
 /**
  * \todo Recording functions don't need to be here.
  */
@@ -342,7 +346,9 @@ void orgasm_control_stopRecording() {
     // }
 }
 
-oc_bool_t orgasm_control_isRecording() { return (oc_bool_t)logger_state.logfile; }
+oc_bool_t orgasm_control_isRecording() {
+    return (oc_bool_t)logger_state.logfile;
+}
 
 void orgasm_control_tick() {
     long update_frequency_ms = (1.0f / Config.update_frequency_hz) * 1000.0f;
@@ -356,15 +362,26 @@ void orgasm_control_tick() {
 
         // Data for logfile or classic log.
         char data_csv[255];
-        snprintf(data_csv, 255, "%d,%d,%d,%d,%ld,%d", orgasm_control_getAveragePressure(),
-                 orgasm_control_getArousal(), eom_hal_get_motor_speed(),
-                 Config.sensitivity_threshold, post_orgasm_state.clench_pressure_threshold,
-                 post_orgasm_state.clench_duration);
+        snprintf(
+            data_csv,
+            255,
+            "%d,%d,%d,%d,%ld,%d",
+            orgasm_control_getAveragePressure(),
+            orgasm_control_getArousal(),
+            eom_hal_get_motor_speed(),
+            Config.sensitivity_threshold,
+            post_orgasm_state.clench_pressure_threshold,
+            post_orgasm_state.clench_duration
+        );
 
         // Write out to logfile, which includes millis:
         if (logger_state.logfile != NULL) {
-            fprintf(logger_state.logfile, "%ld,%s\n",
-                    arousal_state.last_update_ms - logger_state.recording_start_ms, data_csv);
+            fprintf(
+                logger_state.logfile,
+                "%ld,%s\n",
+                arousal_state.last_update_ms - logger_state.recording_start_ms,
+                data_csv
+            );
         }
 
         // Write to console for classic log mode:
@@ -376,9 +393,13 @@ void orgasm_control_tick() {
     }
 }
 
-oc_bool_t orgasm_control_updated() { return arousal_state.update_flag; }
+oc_bool_t orgasm_control_updated() {
+    return arousal_state.update_flag;
+}
 
-int orgasm_control_getDenialCount() { return arousal_state.denial_count; }
+int orgasm_control_getDenialCount() {
+    return arousal_state.denial_count;
+}
 
 /**
  * Returns a normalized motor speed from 0..255
@@ -397,13 +418,17 @@ float orgasm_control_getMotorSpeedPercent() {
     return (float)orgasm_control_getMotorSpeed() / 255.0f;
 }
 
-uint16_t orgasm_control_getArousal() { return arousal_state.arousal; }
+uint16_t orgasm_control_getArousal() {
+    return arousal_state.arousal;
+}
 
 float orgasm_control_getArousalPercent() {
     return (float)arousal_state.arousal / Config.sensitivity_threshold;
 }
 
-uint16_t orgasm_control_getLastPressure() { return arousal_state.pressure_value; }
+uint16_t orgasm_control_getLastPressure() {
+    return arousal_state.pressure_value;
+}
 
 uint16_t orgasm_control_getAveragePressure() {
     return running_avergae_get_average(arousal_state.average);
@@ -451,6 +476,10 @@ oc_bool_t orgasm_control_isPostOrgasmReached() {
     }
 }
 
-oc_bool_t orgasm_control_isMenuLocked() { return post_orgasm_state.menu_is_locked; };
+oc_bool_t orgasm_control_isMenuLocked() {
+    return post_orgasm_state.menu_is_locked;
+};
 
-void orgasm_control_lockMenuNow(oc_bool_t value) { post_orgasm_state.menu_is_locked = value; }
+void orgasm_control_lockMenuNow(oc_bool_t value) {
+    post_orgasm_state.menu_is_locked = value;
+}

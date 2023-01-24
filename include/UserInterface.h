@@ -77,7 +77,7 @@ class UserInterface {
     void drawSdIcon(uint8_t status = 255, long flash_ms = 0);
     void drawRecordIcon(uint8_t status = 255, long flash_ms = 0);
     void drawUpdateIcon(uint8_t status = 255, long flash_ms = 0);
-    void drawIcon(uint8_t icon_idx, uint8_t icon[][8], uint8_t status, long flash_ms);
+    void drawIcon(uint8_t icon_idx, const unsigned char icon[][8], uint8_t status, long flash_ms);
     void drawIcons();
 
     // Buttons

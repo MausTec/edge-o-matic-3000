@@ -1,12 +1,11 @@
 #include "Hardware.h"
-#include "AccessoryDriver.h"
+#include "accessory_driver.h"
 #include "BluetoothDriver.h"
 #include "orgasm_control.h"
 #include "eom-hal.h"
 #include "esp_log.h"
 #include "assets.h"
 #include "esp_timer.h"
-#include "accessory_driver.h"
 #include "polyfill.h"
 
 #define min(a, b) ((a) < (b) ? (a) : (b))
@@ -50,20 +49,6 @@ namespace Hardware {
 
     bool initialize() {
         setPressureSensitivity(Config.sensor_sensitivity);
-
-        // Alright so, when I made the interface for the HAL I thought it'd be great to
-        // have individual registration for each button. Oh how wrong I was, friendo!
-        // All my projects are now doing this, so I'm probably going to revise the interface
-        // for the HAL to register one global handler, since the button and hold is passed
-        // as a parameter anyway.
-        eom_hal_register_button_hold(EOM_HAL_BUTTON_BACK, handle_key_press);
-        eom_hal_register_button_hold(EOM_HAL_BUTTON_MENU, handle_key_press);
-        eom_hal_register_button_press(EOM_HAL_BUTTON_BACK, handle_key_press);
-        eom_hal_register_button_press(EOM_HAL_BUTTON_MID, handle_key_press);
-        eom_hal_register_button_press(EOM_HAL_BUTTON_OK, handle_key_press);
-        eom_hal_register_button_press(EOM_HAL_BUTTON_MENU, handle_key_press);
-        eom_hal_register_encoder_change(handle_encoder_change);
-
         return true;
     }
 
