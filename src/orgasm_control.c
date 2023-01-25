@@ -56,6 +56,14 @@ static struct {
     int post_orgasm_duration_seconds;
 } post_orgasm_state;
 
+#define update_check(variable, value)                                                              \
+    {                                                                                              \
+        if (variable != value) {                                                                   \
+            variable = value;                                                                      \
+            arousal_state.update_flag = ocTRUE;                                                    \
+        }                                                                                          \
+    }
+
 void orgasm_control_init(void) {
     output_state.output_mode = OC_MANUAL_CONTROL;
     output_state.vibration_mode = Config.vibration_mode;
@@ -89,7 +97,7 @@ static const vibration_mode_controller_t* orgasm_control_getVibrationMode() {
  */
 static void orgasm_control_updateArousal() {
     // Decay stale arousal value:
-    arousal_state.arousal *= 0.99;
+    update_check(arousal_state.arousal, arousal_state.arousal * 0.99);
 
     // Acquire new pressure and take average:
     arousal_state.pressure_value = eom_hal_get_pressure_reading();
@@ -102,7 +110,10 @@ static void orgasm_control_updateArousal() {
         if (p_check > arousal_state.peak_start) { // first tick past peak?
             if (p_check - arousal_state.peak_start >=
                 Config.sensitivity_threshold / 10) { // big peak
-                arousal_state.arousal += p_check - arousal_state.peak_start;
+                update_check(
+                    arousal_state.arousal,
+                    arousal_state.arousal + p_check - arousal_state.peak_start
+                );
             }
         }
         arousal_state.peak_start = p_check;
@@ -134,7 +145,8 @@ static void orgasm_control_updateArousal() {
         // ajust arousal if Clench_detector in Edge is turned on
         if (Config.clench_detector_in_edging) {
             if (post_orgasm_state.clench_duration > (Config.clench_threshold_2_orgasm / 2)) {
-                arousal_state.arousal += 5; // boost arousal  because clench duration exceeded
+                arousal_state.arousal += 5;
+                arousal_state.update_flag = ocTRUE;
             }
         }
 
@@ -176,7 +188,7 @@ static void orgasm_control_updateMotorSpeed() {
 
     if ((esp_timer_get_time() / 1000UL) - output_state.motor_stop_time >
         Config.edge_delay + output_state.random_additional_delay) {
-        time_out_over = ocTRUE;
+        update_check(time_out_over, ocTRUE);
     }
 
     // Ope, orgasm incoming! Stop it!
@@ -191,6 +203,7 @@ static void orgasm_control_updateMotorSpeed() {
         output_state.motor_stop_time = (esp_timer_get_time() / 1000UL);
         output_state.motor_start_time = 0;
         arousal_state.denial_count++;
+        arousal_state.update_flag = ocTRUE;
 
         // If Max Additional Delay is not disabled, caculate a new delay every time the motor is
         // stopped.
@@ -203,10 +216,11 @@ static void orgasm_control_updateMotorSpeed() {
         output_state.motor_speed = controller->start();
         output_state.motor_start_time = (esp_timer_get_time() / 1000UL);
         output_state.random_additional_delay = 0;
+        arousal_state.update_flag = ocTRUE;
 
         // Increment or Change
     } else {
-        output_state.motor_speed = controller->increment();
+        update_check(output_state.motor_speed, controller->increment());
     }
 
     // Control motor if we are not manually doing so.
@@ -235,6 +249,7 @@ static void orgasm_control_updateEdgingTime() { // Edging+Orgasm timer
         if ((esp_timer_get_time() / 1000UL) >
             post_orgasm_state.auto_edging_start_millis + (2 * 60 * 1000)) {
             post_orgasm_state.menu_is_locked = ocTRUE;
+            arousal_state.update_flag = ocTRUE;
         }
     }
 
@@ -262,7 +277,7 @@ static void orgasm_control_updateEdgingTime() { // Edging+Orgasm timer
         if (output_state.motor_speed <= (Config.motor_max_speed - 5)) {
             output_state.motor_speed += 5;
         } else {
-            output_state.motor_speed = Config.motor_max_speed;
+            update_check(output_state.motor_speed, Config.motor_max_speed);
         }
     }
 
@@ -357,7 +372,6 @@ void orgasm_control_tick() {
         orgasm_control_updateArousal();
         orgasm_control_updateEdgingTime();
         orgasm_control_updateMotorSpeed();
-        arousal_state.update_flag = ocTRUE;
         arousal_state.last_update_ms = (esp_timer_get_time() / 1000UL);
 
         // Data for logfile or classic log.
@@ -388,13 +402,15 @@ void orgasm_control_tick() {
         if (Config.classic_serial) {
             printf("%s\n", data_csv);
         }
-    } else {
-        arousal_state.update_flag = ocFALSE;
     }
 }
 
 oc_bool_t orgasm_control_updated() {
     return arousal_state.update_flag;
+}
+
+void orgasm_control_clear_update_flag(void) {
+    arousal_state.update_flag = ocFALSE;
 }
 
 int orgasm_control_getDenialCount() {
@@ -436,7 +452,6 @@ uint16_t orgasm_control_getAveragePressure() {
 
 void orgasm_control_controlMotor(orgasm_output_mode_t control) {
     output_state.output_mode = control;
-    output_state.motor_speed = 0;
     output_state.control_motor = control != OC_MANUAL_CONTROL;
 }
 

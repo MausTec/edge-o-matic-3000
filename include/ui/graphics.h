@@ -30,6 +30,15 @@ void ui_draw_button_labels(
 void ui_draw_button_disable(u8g2_t* d, uint8_t btnmsk);
 void ui_draw_status(u8g2_t* d, const char* status);
 void ui_set_icon(ui_icon_t icon, int8_t state);
+void ui_draw_bar_graph(u8g2_t* d, uint8_t y, const char label, float value, float max);
+
+void ui_draw_shaded_bar_graph(
+    u8g2_t* d, uint8_t y, const char label, float value, float max, float shade_max
+);
+
+void ui_draw_shaded_bar_graph_with_peak(
+    u8g2_t* d, uint8_t y, const char label, float value, float max, float shade_max, float peak_val
+);
 
 #ifdef __cplusplus
 }
