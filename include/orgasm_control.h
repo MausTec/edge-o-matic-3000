@@ -33,6 +33,7 @@ float orgasm_control_getMotorSpeedPercent(void);
 uint16_t orgasm_control_getLastPressure(void);
 uint16_t orgasm_control_getAveragePressure(void);
 oc_bool_t orgasm_control_updated(void);
+void orgasm_control_clear_update_flag(void);
 int orgasm_control_getDenialCount(void);
 
 // Set Controls

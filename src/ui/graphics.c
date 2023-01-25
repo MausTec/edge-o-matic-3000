@@ -2,7 +2,11 @@
 #include "eom-hal.h"
 
 #include "assets/icons.h"
+#include "esp_log.h"
 #include "ui/ui.h"
+#include <math.h>
+
+static const char* TAG = "ui:graphcis";
 
 // todo: perhaps this may get moved to its own file, ui/icons.h
 static struct status_icon {
@@ -34,6 +38,17 @@ void ui_draw_str_center(u8g2_t* d, uint8_t cx, uint8_t y, const char* str) {
     u8g2_DrawStr(d, cx - (width / 2), y, str);
 }
 
+void ui_draw_shaded_rect(u8g2_t* d, uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint8_t color) {
+    u8g2_SetDrawColor(d, color);
+
+    for (int i = 0; i < w; i++) {
+        for (int j = 0; j < h; j++) {
+            if ((i + j) % 2 == 0)
+                u8g2_DrawPixel(d, x + i, y + j);
+        }
+    }
+}
+
 void ui_draw_button_labels(
     u8g2_t* d, const char* left_str, const char* mid_str, const char* right_str
 ) {
@@ -42,21 +57,21 @@ void ui_draw_button_labels(
         d,
         (EOM_DISPLAY_WIDTH / 3) * 0,
         EOM_DISPLAY_HEIGHT - UI_BUTTON_HEIGHT,
-        EOM_DISPLAY_WIDTH / 3,
+        (EOM_DISPLAY_WIDTH / 3),
         UI_BUTTON_HEIGHT
     );
     u8g2_DrawBox(
         d,
-        (EOM_DISPLAY_WIDTH / 3) * 1,
+        ((EOM_DISPLAY_WIDTH / 3) * 1) + 1,
         EOM_DISPLAY_HEIGHT - UI_BUTTON_HEIGHT,
-        EOM_DISPLAY_WIDTH / 3,
+        (EOM_DISPLAY_WIDTH / 3),
         UI_BUTTON_HEIGHT
     );
     u8g2_DrawBox(
         d,
-        (EOM_DISPLAY_WIDTH / 3) * 2,
+        ((EOM_DISPLAY_WIDTH / 3) * 2) + 2,
         EOM_DISPLAY_HEIGHT - UI_BUTTON_HEIGHT,
-        EOM_DISPLAY_WIDTH / 3,
+        (EOM_DISPLAY_WIDTH / 3),
         UI_BUTTON_HEIGHT
     );
 
@@ -101,6 +116,55 @@ void ui_draw_status(u8g2_t* d, const char* status) {
     u8g2_SetFontPosTop(d);
     u8g2_SetFont(d, UI_FONT_SMALL);
     u8g2_DrawStr(d, 0, 0, status);
-    u8g2_DrawHLine(d, 0, 9, EOM_DISPLAY_WIDTH);
     ui_draw_icons(d);
+}
+
+void ui_draw_bar_graph(u8g2_t* d, uint8_t y, const char label, float value, float max) {
+    uint8_t x = 0;
+    uint8_t width = EOM_DISPLAY_WIDTH;
+    uint8_t fill_width = max > 0 ? floor((value / max) * (width - 9)) : width - 9;
+
+    u8g2_SetDrawColor(d, 1);
+
+    // Draw label
+    u8g2_SetFontPosTop(d);
+    u8g2_SetFont(d, UI_FONT_DEFAULT);
+    u8g2_DrawGlyph(d, x, y, label);
+
+    // Draw Rect
+    u8g2_DrawFrame(d, x + 7, y, width - 7, 9);
+
+    if (value > 0) {
+        u8g2_DrawBox(d, x + 8, y + 1, fill_width, 7);
+    }
+}
+
+void ui_draw_shaded_bar_graph(
+    u8g2_t* d, uint8_t y, const char label, float value, float max, float shade_max
+) {
+    uint8_t x = 0;
+    uint8_t width = EOM_DISPLAY_WIDTH;
+    uint8_t fill_width = width - 9;
+    uint8_t shade_width = max > 0 ? floor((shade_max / max) * fill_width) : fill_width;
+
+    ui_draw_bar_graph(d, y, label, value, max);
+
+    if (shade_max > 0) {
+        ui_draw_shaded_rect(d, x + shade_width + 8, y + 2, fill_width - shade_width - 1, 5, 1);
+    }
+}
+
+void ui_draw_shaded_bar_graph_with_peak(
+    u8g2_t* d, uint8_t y, const char label, float value, float max, float shade_max, float peak_val
+) {
+    uint8_t x = 0;
+    uint8_t width = EOM_DISPLAY_WIDTH;
+    uint8_t fill_width = width - 9;
+    uint8_t peak_width = max > 0 ? floor((peak_val / max) * fill_width) : fill_width;
+
+    ui_draw_shaded_bar_graph(d, y, label, value, max, shade_max);
+
+    if (peak_val > 0) {
+        u8g2_DrawVLine(d, x + peak_width + 8, y + 1, 7);
+    }
 }
