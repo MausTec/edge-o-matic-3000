@@ -59,6 +59,7 @@ static struct {
 #define update_check(variable, value)                                                              \
     {                                                                                              \
         if (variable != value) {                                                                   \
+            ESP_LOGD(TAG, "updated: %s = %s", #variable, #value);                                  \
             variable = value;                                                                      \
             arousal_state.update_flag = ocTRUE;                                                    \
         }                                                                                          \
@@ -188,7 +189,7 @@ static void orgasm_control_updateMotorSpeed() {
 
     if ((esp_timer_get_time() / 1000UL) - output_state.motor_stop_time >
         Config.edge_delay + output_state.random_additional_delay) {
-        update_check(time_out_over, ocTRUE);
+        time_out_over = ocTRUE;
     }
 
     // Ope, orgasm incoming! Stop it!
@@ -440,6 +441,19 @@ uint16_t orgasm_control_getArousal() {
 
 float orgasm_control_getArousalPercent() {
     return (float)arousal_state.arousal / Config.sensitivity_threshold;
+}
+
+void orgasm_control_increment_arousal_threshold(int threshold) {
+    orgasm_control_set_arousal_threshold(Config.sensitivity_threshold + threshold);
+}
+
+void orgasm_control_set_arousal_threshold(int threshold) {
+    Config.sensitivity_threshold = threshold >= 0 ? threshold : 0;
+    config_enqueue_save(30);
+}
+
+int orgasm_control_get_arousal_threshold(void) {
+    return Config.sensitivity_threshold;
 }
 
 uint16_t orgasm_control_getLastPressure() {

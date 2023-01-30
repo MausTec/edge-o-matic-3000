@@ -34,8 +34,8 @@ static struct status_icon {
                     } };
 
 void ui_draw_str_center(u8g2_t* d, uint8_t cx, uint8_t y, const char* str) {
-    u8g2_uint_t width = u8g2_GetStrWidth(d, str);
-    u8g2_DrawStr(d, cx - (width / 2), y, str);
+    u8g2_uint_t width = u8g2_GetUTF8Width(d, str);
+    u8g2_DrawUTF8(d, cx - (width / 2), y, str);
 }
 
 void ui_draw_shaded_rect(u8g2_t* d, uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint8_t color) {
@@ -115,7 +115,7 @@ void ui_draw_status(u8g2_t* d, const char* status) {
     u8g2_SetDrawColor(d, 1);
     u8g2_SetFontPosTop(d);
     u8g2_SetFont(d, UI_FONT_SMALL);
-    u8g2_DrawStr(d, 0, 0, status);
+    u8g2_DrawUTF8(d, 0, 0, status);
     ui_draw_icons(d);
 }
 

@@ -11,6 +11,7 @@
 
 #include "system/http_server.h"
 #include "ui/ui.h"
+#include "util/i18n.h"
 
 // Legacy / C++
 #include "BluetoothServer.h"
@@ -109,17 +110,18 @@ extern "C" void app_main() {
     eom_hal_init();
     ui_init();
     console_init();
+    resetSD();
     http_server_init();
     wifi_manager_init();
     accessory_driver_init();
     orgasm_control_init();
+    i18n_init();
 
     printf("Maus-Tec presents: Edge-o-Matic 3000\n");
     printf("Version: " VERSION "\n");
     printf("EOM-HAL Version: %s\n", eom_hal_get_version());
 
     // Setup Hardware
-    resetSD();
 
     // Go to the splash page:
     // Page::Go(&DebugPage, false);
