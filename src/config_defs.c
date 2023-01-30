@@ -82,8 +82,11 @@ defaults:
     }
 
     if (err != ESP_OK) {
-        ESP_LOGW(TAG, "Trouble loading previous config file, falling back to default: %s\n",
-                 esp_err_to_name(err));
+        ESP_LOGW(
+            TAG,
+            "Trouble loading previous config file, falling back to default: %s\n",
+            esp_err_to_name(err)
+        );
         config_load_default(&Config);
     }
 
@@ -175,8 +178,10 @@ void config_enqueue_save(long save_at_ms) {
  * @return
  */
 bool atob(const char* a) {
-    return !(strcasecmp(a, "false") == 0 || strcasecmp(a, "no") == 0 || strcasecmp(a, "off") == 0 ||
-             strcasecmp(a, "0") == 0);
+    return !(
+        strcasecmp(a, "false") == 0 || strcasecmp(a, "no") == 0 || strcasecmp(a, "off") == 0 ||
+        strcasecmp(a, "0") == 0
+    );
 }
 
 // Here There Be Dragons

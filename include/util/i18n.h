@@ -5,7 +5,8 @@
 extern "C" {
 #endif
 
-const char *_(const char *str);
+void i18n_init(void);
+const char* _(const char* str);
 
 #ifdef __cplusplus
 }

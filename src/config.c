@@ -28,11 +28,12 @@ CONFIG_DEFS {
     CFG_BOOL(use_ssl, false);
     CFG_STRING(hostname, "eom3k");
 
-    // UI Settings 
+    // UI Settings
     CFG_NUMBER(led_brightness, 128);
     CFG_NUMBER(screen_dim_seconds, 0);
     CFG_NUMBER(screen_timeout_seconds, 0);
     CFG_NUMBER(enable_screensaver, false);
+    CFG_STRING(language_file_name, "de.json");
 
     // Orgasm Settings
     CFG_NUMBER(motor_max_speed, 128);

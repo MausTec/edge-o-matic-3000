@@ -62,6 +62,7 @@ struct config {
     // Time, in seconds, before the screen turns off. 0 to disable.
     int screen_timeout_seconds;
     uint8_t enable_screensaver;
+    char language_file_name[CONFIG_PATH_MAX + 1];
 
     //= Console
 

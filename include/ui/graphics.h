@@ -12,7 +12,9 @@ extern "C" {
 #define UI_BUTTON_HEIGHT 9
 #define UI_FONT_DEFAULT u8g2_font_mozart_nbp_tf
 #define UI_FONT_LARGE u8g2_font_profont22_tf
-#define UI_FONT_SMALL u8g2_font_squeezed_r7_tr
+#define UI_FONT_SMALL u8g2_font_5x7_tf
+#define UI_FONT_SMALL_CYR u8g2_font_5x7_t_cyrillic
+#define UI_FONT_JAPANESE u8g2_font_b10_t_japanese1
 
 typedef enum ui_icon {
     UI_ICON_SD,

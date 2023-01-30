@@ -7,9 +7,9 @@
 #include <stdio.h>
 #include <sys/stat.h>
 
-#include "my_basic.h"
 #include "application.h"
 #include "basic_api.h"
+#include "my_basic.h"
 
 static void _mkpath(char* path, const char* argv, console_t* console) {
     if (argv != NULL) {
@@ -39,7 +39,7 @@ static command_err_t cmd_cd(int argc, char** argv, console_t* console) {
         return CMD_ARG_ERR;
     }
 
-    char path[PATH_MAX + 1] = {0};
+    char path[PATH_MAX + 1] = { 0 };
     _mkpath(path, argv[0], console);
 
     if (_isdir(path)) {
@@ -56,11 +56,11 @@ const command_t cmd_cd_s = {
     .help = "Change working directory",
     .alias = '.',
     .func = &cmd_cd,
-    .subcommands = {NULL},
+    .subcommands = { NULL },
 };
 
 static command_err_t cmd_ls(int argc, char** argv, console_t* console) {
-    char path[PATH_MAX + 1] = {0};
+    char path[PATH_MAX + 1] = { 0 };
     _mkpath(path, argc > 0 ? argv[0] : NULL, console);
 
     DIR* d;
@@ -70,6 +70,9 @@ static command_err_t cmd_ls(int argc, char** argv, console_t* console) {
     if (d) {
         fprintf(console->out, "Directory contents of %s:\n\n", path);
         while ((dir = readdir(d)) != NULL) {
+            if (dir->d_name[0] == '.')
+                continue;
+
             char dt = '?';
 
             switch (dir->d_type) {
@@ -99,7 +102,7 @@ const command_t cmd_ls_s = {
     .help = "List directory contents",
     .alias = '\0',
     .func = &cmd_ls,
-    .subcommands = {NULL},
+    .subcommands = { NULL },
 };
 
 static command_err_t cmd_pwd(int argc, char** argv, console_t* console) {
@@ -112,7 +115,7 @@ const command_t cmd_pwd_s = {
     .help = "Print working directory",
     .alias = '\0',
     .func = &cmd_pwd,
-    .subcommands = {NULL},
+    .subcommands = { NULL },
 };
 
 static command_err_t cmd_mkdir(int argc, char** argv, console_t* console) {
@@ -122,7 +125,7 @@ static command_err_t cmd_mkdir(int argc, char** argv, console_t* console) {
 
     bool parents = !strcmp(argv[0], "-p");
     const char* new_path = argv[argc - 1];
-    char path[PATH_MAX + 1] = {0};
+    char path[PATH_MAX + 1] = { 0 };
     _mkpath(path, new_path, console);
 
     if (parents) {
@@ -164,7 +167,7 @@ const command_t cmd_mkdir_s = {
     .help = "Make a new directory",
     .alias = '\0',
     .func = &cmd_mkdir,
-    .subcommands = {NULL},
+    .subcommands = { NULL },
 };
 
 static command_err_t cmd_rm(int argc, char** argv, console_t* console) {
@@ -173,7 +176,7 @@ static command_err_t cmd_rm(int argc, char** argv, console_t* console) {
     }
 
     bool recurse = !strcmp(argv[0], "-r");
-    char path[PATH_MAX + 1] = {0};
+    char path[PATH_MAX + 1] = { 0 };
     _mkpath(path, argv[argc - 1], console);
 
     if (_isdir(path)) {
@@ -200,7 +203,7 @@ const command_t cmd_rm_s = {
     .help = "Remove a regular file or directory",
     .alias = '\0',
     .func = &cmd_rm,
-    .subcommands = {NULL},
+    .subcommands = { NULL },
 };
 
 static command_err_t cmd_cat(int argc, char** argv, console_t* console) {
@@ -208,7 +211,7 @@ static command_err_t cmd_cat(int argc, char** argv, console_t* console) {
         return CMD_ARG_ERR;
     }
 
-    char path[PATH_MAX + 1] = {0};
+    char path[PATH_MAX + 1] = { 0 };
     bool binary = !strcmp(argv[0], "-b");
     SDHelper_getRelativePath(path, PATH_MAX, argv[argc - 1], console);
 
@@ -238,7 +241,7 @@ static const command_t cmd_cat_s = {
     .help = "Print the contents of a file to the terminal",
     .alias = '\0',
     .func = &cmd_cat,
-    .subcommands = {NULL},
+    .subcommands = { NULL },
 };
 
 static command_err_t cmd_load(int argc, char** argv, console_t* console) {
@@ -249,19 +252,19 @@ static command_err_t cmd_load(int argc, char** argv, console_t* console) {
     struct mb_interpreter_t* bas = NULL;
     int mb_err = MB_FUNC_OK;
 
-    char path[PATH_MAX + 1] = {0};
+    char path[PATH_MAX + 1] = { 0 };
     SDHelper_getRelativePath(path, PATH_MAX, argv[argc - 1], console);
 
     // Branch off to load apps, otherwise run an inline interpreter below:
     if (!strcmp(path + strlen(path) - 4, APP_EXTENSION)) {
-        application_t *application;
+        application_t* application;
         app_err_t app_err = application_load(path, &application);
 
         if (app_err != APP_OK) {
             fprintf(console->out, "Application loading error %d: ...\n", app_err);
             return CMD_FAIL;
         }
-         
+
         fprintf(console->out, "Loaded: %s\n", application->title);
         app_err = application_start(application);
         fprintf(console->out, "\n");
@@ -273,18 +276,20 @@ static command_err_t cmd_load(int argc, char** argv, console_t* console) {
 
         return CMD_OK;
     }
-     
+
     fprintf(console->out, "Loading %s...\n", path);
 
-	mb_init();
-	mb_open(&bas);
+    mb_init();
+    mb_open(&bas);
     basic_api_register_all(bas);
 
     mb_err = mb_load_file(bas, path);
-    if (mb_err != MB_FUNC_OK) goto cleanup;
-    
-	mb_err = mb_run(bas, true);
-    if (mb_err != MB_FUNC_OK) goto cleanup;
+    if (mb_err != MB_FUNC_OK)
+        goto cleanup;
+
+    mb_err = mb_run(bas, true);
+    if (mb_err != MB_FUNC_OK)
+        goto cleanup;
 
 cleanup:
     if (mb_err != MB_FUNC_OK) {
@@ -292,8 +297,8 @@ cleanup:
         fprintf(console->out, "Basic Error %d: %s\n", err, mb_get_error_desc(err));
     }
 
-	mb_close(&bas);
-	mb_dispose();
+    mb_close(&bas);
+    mb_dispose();
 
     return mb_err == MB_FUNC_OK ? CMD_OK : CMD_FAIL;
 }
@@ -303,7 +308,7 @@ static const command_t cmd_load_s = {
     .help = "Loads and runs a Basic program",
     .alias = '\0',
     .func = &cmd_load,
-    .subcommands = {NULL},
+    .subcommands = { NULL },
 };
 
 static command_err_t cmd_fget(int argc, char** argv, console_t* console) {
@@ -311,7 +316,7 @@ static command_err_t cmd_fget(int argc, char** argv, console_t* console) {
         return CMD_ARG_ERR;
     }
 
-    char path[PATH_MAX + 1] = {0};
+    char path[PATH_MAX + 1] = { 0 };
     SDHelper_getRelativePath(path, PATH_MAX, argv[0], console);
     console_send_file(path, console);
     return CMD_OK;
@@ -321,8 +326,8 @@ static const command_t cmd_fget_s = {
     .command = "fget",
     .help = "Download a file from the SD card",
     .alias = '\0',
-    .func = &cmd_fget, 
-    .subcommands = {NULL},
+    .func = &cmd_fget,
+    .subcommands = { NULL },
 };
 
 void commands_register_fsutils(void) {
