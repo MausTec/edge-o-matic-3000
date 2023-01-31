@@ -12,6 +12,13 @@
 
 static const char* TAG = "orgasm_control";
 
+static const char* orgasm_output_mode_str[] = {
+    "MANUAL_CONTROL",
+    "AUTOMAITC_CONTROL",
+    "ORGASM_MODE",
+    "LOCKOUT_POST_MODE",
+};
+
 static struct {
     unsigned long last_update_ms;
     running_average_t* average;
@@ -298,7 +305,7 @@ static void orgasm_control_updateEdgingTime() { // Edging+Orgasm timer
                 post_orgasm_state.menu_is_locked = ocFALSE;
                 post_orgasm_state.detected_orgasm = ocFALSE;
                 output_state.motor_speed = 0;
-                orgasm_control_controlMotor(OC_MANUAL_CONTROL);
+                orgasm_control_set_output_mode(OC_MANUAL_CONTROL);
             }
         }
     }
@@ -314,6 +321,24 @@ void orgasm_control_twitchDetect() {
 
 orgasm_output_mode_t orgasm_control_get_output_mode(void) {
     return output_state.output_mode;
+}
+
+const char* orgasm_control_get_output_mode_str(void) {
+    if (output_state.output_mode < _OC_MODE_MAX) {
+        return orgasm_output_mode_str[output_state.output_mode];
+    } else {
+        return "";
+    }
+}
+
+orgasm_output_mode_t orgasm_control_str_to_output_mode(const char* str) {
+    for (int i = 0; i < _OC_MODE_MAX; i++) {
+        if (!strcmp(str, orgasm_output_mode_str[i])) {
+            return (orgasm_output_mode_t)i;
+        }
+    }
+
+    return -1;
 }
 
 /**
@@ -465,6 +490,10 @@ uint16_t orgasm_control_getAveragePressure() {
 }
 
 void orgasm_control_controlMotor(orgasm_output_mode_t control) {
+    orgasm_control_set_output_mode(control);
+}
+
+void orgasm_control_set_output_mode(orgasm_output_mode_t control) {
     output_state.output_mode = control;
     output_state.control_motor = control != OC_MANUAL_CONTROL;
 }
@@ -480,7 +509,7 @@ void orgasm_control_resumeControl() {
 
 void orgasm_control_permitOrgasmNow(int seconds) {
     post_orgasm_state.detected_orgasm = ocFALSE;
-    orgasm_control_controlMotor(OC_ORGASM_MODE);
+    orgasm_control_set_output_mode(OC_ORGASM_MODE);
     post_orgasm_state.auto_edging_start_millis =
         (esp_timer_get_time() / 1000UL) - (Config.auto_edging_duration_minutes * 60 * 1000);
     post_orgasm_state.post_orgasm_duration_seconds = seconds;
