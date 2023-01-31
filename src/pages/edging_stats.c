@@ -1,8 +1,10 @@
+#include "assets.h"
 #include "esp_log.h"
 #include "esp_timer.h"
 #include "orgasm_control.h"
 #include "ui/ui.h"
 #include "util/i18n.h"
+#include <math.h>
 #include <string.h>
 
 #define CHANGE_NOTICE_DELAY_MS 1000UL
@@ -98,7 +100,7 @@ static void _draw_meters(u8g2_t* d, orgasm_output_mode_t mode) {
 
     ui_draw_shaded_bar_graph_with_peak(
         d,
-        EOM_DISPLAY_HEIGHT - 19,
+        EOM_DISPLAY_HEIGHT - 18,
         'A',
         orgasm_control_getArousal(),
         Config.sensitivity_threshold * 1.5,
@@ -129,6 +131,88 @@ static void _draw_arousal_change(u8g2_t* d) {
     ui_draw_str_center(d, EOM_DISPLAY_WIDTH / 2, EOM_DISPLAY_HEIGHT / 2, msg);
 }
 
+static void _draw_pressure_icon(u8g2_t* d) {
+    const uint16_t PRESSURE_MAX = 4095;
+    const uint8_t MID_HEIGHT = 20;
+    const uint8_t BAR_LEFT = 26;
+
+    uint16_t pressure = orgasm_control_getLastPressure();
+    uint8_t pressure_idx = pressure / (PRESSURE_MAX / 4);
+    float pressure_pct = (float)pressure / PRESSURE_MAX;
+    float sensitivity_pct = (float)Config.sensor_sensitivity / 255.0f;
+
+    char pres_str[4];
+    char sens_str[4];
+    char pres_str_full[16];
+    char sens_str_full[16];
+
+    if (pressure_pct >= 1.0f) {
+        strncpy(pres_str, _("MAX"), 4);
+    } else {
+        snprintf(pres_str, 4, "%02d%%", (int)floor(pressure_pct * 100.0f));
+    }
+
+    if (sensitivity_pct >= 1.0f) {
+        strncpy(sens_str, _("MAX"), 4);
+    } else {
+        snprintf(sens_str, 4, "%02d%%", (int)floor(sensitivity_pct * 100.0f));
+    }
+
+    snprintf(pres_str_full, 16, _("Pres: %s"), pres_str);
+    snprintf(sens_str_full, 16, _("Sens: %s"), sens_str);
+
+    u8g2_SetDrawColor(d, 1);
+    u8g2_SetFont(d, UI_FONT_DEFAULT);
+    u8g2_SetFontPosTop(d);
+    u8g2_DrawBitmap(d, 0, 20, 24 / 8, 24, PLUG_ICON[pressure_idx]);
+    u8g2_DrawUTF8(d, BAR_LEFT, MID_HEIGHT, pres_str_full);
+    u8g2_DrawUTF8(d, BAR_LEFT, MID_HEIGHT + 16, sens_str_full);
+
+    // Draw Bar
+    uint8_t line_width = u8g2_GetUTF8Width(d, pres_str_full);
+    uint8_t pres_width = (int)floor(pressure_pct * (line_width - 7));
+
+    if (pres_width > 0) {
+        u8g2_DrawHLine(d, BAR_LEFT, MID_HEIGHT + 12, 1 + pres_width);
+    }
+
+    if (pres_width < line_width - 7) {
+        u8g2_DrawHLine(d, BAR_LEFT + pres_width + 6, MID_HEIGHT + 12, line_width - pres_width - 7);
+    }
+
+    u8g2_DrawVLine(d, BAR_LEFT, MID_HEIGHT + 10, 5);
+    u8g2_DrawVLine(d, BAR_LEFT + line_width - 1, MID_HEIGHT + 10, 5);
+
+    u8g2_DrawHLine(d, BAR_LEFT + pres_width + 1, MID_HEIGHT + 10, 5);
+    u8g2_DrawHLine(d, BAR_LEFT + pres_width + 2, MID_HEIGHT + 11, 3);
+    u8g2_DrawPixel(d, BAR_LEFT + pres_width + 3, MID_HEIGHT + 12);
+}
+
+static void _draw_denial_count(u8g2_t* d) {
+    int denial = orgasm_control_getDenialCount();
+    const uint8_t MID_HEIGHT = 20;
+    const uint8_t DENIAL_WIDTH = 41;
+    char denial_str[4];
+
+    snprintf(denial_str, 4, "%03d", denial);
+
+    u8g2_SetDrawColor(d, 1);
+    u8g2_DrawVLine(
+        d,
+        EOM_DISPLAY_WIDTH - DENIAL_WIDTH - 2,
+        MID_HEIGHT + 1,
+        EOM_DISPLAY_HEIGHT - MID_HEIGHT - 21
+    );
+
+    u8g2_SetFont(d, UI_FONT_SMALL);
+    u8g2_SetFontPosTop(d);
+
+    ui_draw_str_center(d, EOM_DISPLAY_WIDTH - (DENIAL_WIDTH / 2), MID_HEIGHT, _("Denied"));
+
+    u8g2_SetFont(d, UI_FONT_LARGE);
+    ui_draw_str_center(d, EOM_DISPLAY_WIDTH - (DENIAL_WIDTH / 2), MID_HEIGHT + 9, denial_str);
+}
+
 static void on_render(u8g2_t* d, void* arg) {
     orgasm_output_mode_t mode = orgasm_control_get_output_mode();
 
@@ -141,11 +225,8 @@ static void on_render(u8g2_t* d, void* arg) {
     } else if (state.arousal_change_notice_ms > 0) {
         _draw_arousal_change(d);
     } else {
-        // Pressure Icon
-
-        // Pressure and Sensitivity Meter
-
-        // Denial Limit
+        _draw_pressure_icon(d);
+        _draw_denial_count(d);
     }
 }
 
