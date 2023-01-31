@@ -75,6 +75,10 @@ static void _draw_buttons(u8g2_t* d, orgasm_output_mode_t mode) {
     } else if (mode == OC_LOCKOUT_POST_MODE) {
         ui_draw_button_labels(d, btn1, btn2, _("MANUAL"));
     }
+
+    if (eom_hal_get_motor_speed() == 0) {
+        ui_draw_button_disable(d, 0b010);
+    }
 }
 
 static void _draw_status(u8g2_t* d, orgasm_output_mode_t mode) {
