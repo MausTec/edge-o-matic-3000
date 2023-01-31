@@ -84,7 +84,27 @@ void ui_draw_button_labels(
     ui_draw_str_center(d, (EOM_DISPLAY_WIDTH / 6) * 5, EOM_DISPLAY_HEIGHT - 1, right_str);
 }
 
+/**
+ * @brief I'm not 100% sure this is how I want to handle this, but here we are.
+ *
+ * @param d
+ * @param btnmsk
+ */
 void ui_draw_button_disable(u8g2_t* d, uint8_t btnmsk) {
+    uint8_t i = 0;
+    for (uint8_t i = 0; i < 3; i++) {
+        if (!(btnmsk & (1 << i)))
+            continue;
+
+        ui_draw_shaded_rect(
+            d,
+            ((EOM_DISPLAY_WIDTH / 3) * i) + i,
+            EOM_DISPLAY_HEIGHT - UI_BUTTON_HEIGHT,
+            (EOM_DISPLAY_WIDTH / 3),
+            UI_BUTTON_HEIGHT,
+            0
+        );
+    }
 }
 
 void ui_draw_icon(u8g2_t* d, uint8_t idx, const unsigned char* bmp) {
