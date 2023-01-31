@@ -1,5 +1,4 @@
 #include "UIMenu.h"
-#include "Page.h"
 #include "UserInterface.h"
 
 #include "polyfill.h"
@@ -177,7 +176,7 @@ void UIMenu::addItem(std::string text, UIMenu* submenu, void* arg) {
 }
 
 void UIMenu::addItem(const char* text, Page* page) {
-    addItem(text, [=](UIMenu*) { Page::Go(page); });
+    // addItem(text, [=](UIMenu*) { Page::Go(page); });
 }
 
 void UIMenu::render() {

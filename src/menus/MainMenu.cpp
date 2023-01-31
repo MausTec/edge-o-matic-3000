@@ -1,10 +1,9 @@
 #include "UIMenu.h"
 #include "UserInterface.h"
-#include "Page.h"
 #include <string>
 
 static void buildMenu(UIMenu *menu) {
-  menu->addItem("Automatic Edging", &RunGraphPage);
+  // menu->addItem("Automatic Edging", &RunGraphPage);
 
   menu->addItem(&EdgingSettingsMenu);
   menu->addItem(&EdgingOrgasmSettingsMenu);
@@ -15,7 +14,7 @@ static void buildMenu(UIMenu *menu) {
   menu->addItem(&UpdateMenu);
 
   menu->addItem("System Info", [](UIMenu*) {
-    UI.toastNow(std::string("S/N: ") + Hardware::getDeviceSerial() + "\n" + "Version: " VERSION);
+    // UI.toastNow(std::string("S/N: ") + Hardware::getDeviceSerial() + "\n" + "Version: " VERSION);
   });
 }
 

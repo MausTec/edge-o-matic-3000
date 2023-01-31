@@ -1,7 +1,6 @@
 #include "UserInterface.h"
 #include "assets/icons.h"
 #include "orgasm_control.h"
-#include "Page.h"
 #include "SDHelper.h"
 #include "esp_log.h"
 #include "polyfill.h"
@@ -263,9 +262,9 @@ void UserInterface::onKeyPress(uint8_t i) {
         return;
     }
 
-    if (Page::currentPage != nullptr) {
-        Page::currentPage->onKeyPress(i);
-    }
+//     if (Page::currentPage != nullptr) {
+//         Page::currentPage->onKeyPress(i);
+//     }
 }
 
 void UserInterface::onEncoderChange(int value) {
@@ -278,53 +277,53 @@ void UserInterface::onEncoderChange(int value) {
         return;
     }
 
-    if (Page::currentPage != nullptr) {
-        Page::currentPage->onEncoderChange(value);
-    }
+    // if (Page::currentPage != nullptr) {
+    //     Page::currentPage->onEncoderChange(value);
+    // }
 }
 
 void UserInterface::drawChart(int peakLimit = 600) {
     // Clear Chart
-    this->display->fillRect(CHART_START_X, CHART_START_Y, CHART_WIDTH, CHART_HEIGHT, 0);
+    // this->display->fillRect(CHART_START_X, CHART_START_Y, CHART_WIDTH, CHART_HEIGHT, 0);
 
-    int previousValue;
-    int activeRow = 1;
-    int seriesMax;
+    // int previousValue;
+    // int activeRow = 1;
+    // int seriesMax;
 
-    // For each series:
-    for (int r = 0; r < 2; r++) {
-        previousValue = 0;
-        seriesMax = r == 0 ? 4096 : peakLimit;
+    // // For each series:
+    // for (int r = 0; r < 2; r++) {
+    //     previousValue = 0;
+    //     seriesMax = r == 0 ? 4096 : peakLimit;
 
-        // For each point:
-        for (int i = 0; i < CHART_WIDTH; i++) {
-            int valueIndex = (i + this->chartCursor[r] + 1) % CHART_WIDTH;
-            int value = this->chartReadings[r][valueIndex];
+    //     // For each point:
+    //     for (int i = 0; i < CHART_WIDTH; i++) {
+    //         int valueIndex = (i + this->chartCursor[r] + 1) % CHART_WIDTH;
+    //         int value = this->chartReadings[r][valueIndex];
 
-            int y2 = (CHART_END_Y - map(value, 0, seriesMax, CHART_START_Y, CHART_END_Y) +
-                      CHART_START_Y);
+    //         int y2 = (CHART_END_Y - map(value, 0, seriesMax, CHART_START_Y, CHART_END_Y) +
+    //                   CHART_START_Y);
 
-            int y1;
-            if (i > 0) {
-                y1 = (CHART_END_Y - map(previousValue, 0, seriesMax, CHART_START_Y, CHART_END_Y) +
-                      CHART_START_Y);
-            } else {
-                y1 = y2;
-            }
+    //         int y1;
+    //         if (i > 0) {
+    //             y1 = (CHART_END_Y - map(previousValue, 0, seriesMax, CHART_START_Y, CHART_END_Y) +
+    //                   CHART_START_Y);
+    //         } else {
+    //             y1 = y2;
+    //         }
 
-            // Constrain to window:
-            y1 = std::min(std::max(CHART_START_Y, y1), CHART_END_Y);
-            y2 = std::min(std::max(CHART_START_Y, y2), CHART_END_Y);
+    //         // Constrain to window:
+    //         y1 = std::min(std::max(CHART_START_Y, y1), CHART_END_Y);
+    //         y2 = std::min(std::max(CHART_START_Y, y2), CHART_END_Y);
 
-            if (activeRow == r) {
-                this->display->drawLine(i + CHART_START_X, y1, i + CHART_START_X, y2, 1);
-            } else if (i % 2 == 0) {
-                this->display->drawPixel(i + CHART_START_X, y2, 1);
-            }
+    //         if (activeRow == r) {
+    //             this->display->drawLine(i + CHART_START_X, y1, i + CHART_START_X, y2, 1);
+    //         } else if (i % 2 == 0) {
+    //             this->display->drawPixel(i + CHART_START_X, y2, 1);
+    //         }
 
-            previousValue = value;
-        }
-    }
+    //         previousValue = value;
+    //     }
+    // }
 }
 
 void UserInterface::setMotorSpeed(uint8_t perc) {
@@ -511,7 +510,7 @@ void UserInterface::openMenu(UIMenu* menu, bool save_history, bool reenter, void
     current_menu = menu;
 
     if (current_menu == nullptr && reenter) {
-        Page::Reenter();
+        // Page::Reenter();
     }
 }
 

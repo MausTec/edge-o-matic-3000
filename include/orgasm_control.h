@@ -10,11 +10,13 @@ extern "C" {
 #include <stddef.h>
 #include <stdint.h>
 
+// This enum has an associated strings array in orgasm_control.c
 typedef enum orgasm_output_mode {
     OC_MANUAL_CONTROL,
     OC_AUTOMAITC_CONTROL,
     OC_ORGASM_MODE,
     OC_LOCKOUT_POST_MODE,
+    _OC_MODE_MAX,
 } orgasm_output_mode_t;
 
 typedef enum oc_bool {
@@ -41,9 +43,14 @@ int orgasm_control_get_arousal_threshold(void);
 
 // Set Controls
 void orgasm_control_controlMotor(orgasm_output_mode_t control);
+
 void orgasm_control_pauseControl(void);
 void orgasm_control_resumeControl(void);
+
 orgasm_output_mode_t orgasm_control_get_output_mode(void);
+void orgasm_control_set_output_mode(orgasm_output_mode_t mode);
+const char *orgasm_control_get_output_mode_str(void);
+orgasm_output_mode_t orgasm_control_str_to_output_mode(const char* str);
 
 // Recording Control
 void orgasm_control_startRecording(void);
