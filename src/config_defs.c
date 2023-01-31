@@ -119,6 +119,9 @@ static void _validate_config(config_t* cfg) {
         ESP_LOGW(TAG, "Not enough memory for WiFi and Bluetooth, disabling BT.");
         cfg->bt_on = false;
     }
+
+    // Update hardware:
+    eom_hal_set_sensor_sensitivity(cfg->sensor_sensitivity);
 }
 
 // set_config_from_json

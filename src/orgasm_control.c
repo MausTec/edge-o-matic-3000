@@ -101,7 +101,7 @@ static void orgasm_control_updateArousal() {
     update_check(arousal_state.arousal, arousal_state.arousal * 0.99);
 
     // Acquire new pressure and take average:
-    arousal_state.pressure_value = eom_hal_get_pressure_reading();
+    update_check(arousal_state.pressure_value, eom_hal_get_pressure_reading());
     running_average_add_value(arousal_state.average, arousal_state.pressure_value);
     long p_avg = running_avergae_get_average(arousal_state.average);
     long p_check = Config.use_average_values ? p_avg : arousal_state.pressure_value;
