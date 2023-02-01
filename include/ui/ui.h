@@ -5,7 +5,7 @@
 extern "C" {
 #endif
 
-#define MENU_HISTORY_DEPTH 10
+#define UI_MENU_HISTORY_DEPTH 10
 
 #include "ui/graphics.h"
 #include "ui/input.h"
@@ -17,6 +17,7 @@ extern "C" {
 void ui_init(void);
 void ui_tick(void);
 void ui_redraw_all(void);
+void ui_send_buffer(void);
 
 void ui_open_page(const ui_page_t* page, void* arg);
 

@@ -8,11 +8,13 @@ static volatile struct ui_state {
     const ui_page_t* current_page;
     void* current_page_arg;
 
-    const ui_menu_t* menu_history[MENU_HISTORY_DEPTH];
-    void* menu_arg_history[MENU_HISTORY_DEPTH];
+    const ui_menu_t* menu_history[UI_MENU_HISTORY_DEPTH];
+    void* menu_arg_history[UI_MENU_HISTORY_DEPTH];
     size_t menu_history_depth;
 
     const ui_input_t* current_input;
+    void* current_input_arg;
+
     ui_render_flag_t force_rerender;
 } UI;
 
@@ -33,12 +35,10 @@ static void handle_button(eom_hal_button_t button, eom_hal_button_event_t event)
     if (UI.current_input != NULL) {
     }
 
-    else if (UI.menu_history_depth > 0) {
-        const ui_menu_t* m = UI.menu_history[UI.menu_history_depth - 1];
-        if (m == NULL)
-            return; // This is an invalid state.
-        void* arg = UI.menu_arg_history[UI.menu_history_depth - 1];
-        // if (m->on_button != NULL) rf = m->on_button(button, event, arg);
+    else if (UI.menu_history[UI.menu_history_depth] != NULL) {
+        const ui_menu_t* m = UI.menu_history[UI.menu_history_depth];
+        void* arg = UI.menu_arg_history[UI.menu_history_depth];
+        rf = ui_menu_handle_button(m, button, event, arg);
     }
 
     else if (UI.current_page != NULL) {
@@ -48,8 +48,9 @@ static void handle_button(eom_hal_button_t button, eom_hal_button_event_t event)
             rf = p->on_button(button, event, arg);
     }
 
-    if (rf == RENDER)
+    if (rf == RENDER) {
         UI.force_rerender = 1;
+    }
 }
 
 static void handle_encoder(int delta) {
@@ -62,12 +63,10 @@ static void handle_encoder(int delta) {
     if (UI.current_input != NULL) {
     }
 
-    else if (UI.menu_history_depth > 0) {
-        const ui_menu_t* m = UI.menu_history[UI.menu_history_depth - 1];
-        if (m == NULL)
-            return; // This is an invalid state.
-        void* arg = UI.menu_arg_history[UI.menu_history_depth - 1];
-        // if (m->on_encoder != NULL) rf = m->on_encoder(delta, arg);
+    else if (UI.menu_history[UI.menu_history_depth] != NULL) {
+        const ui_menu_t* m = UI.menu_history[UI.menu_history_depth];
+        void* arg = UI.menu_arg_history[UI.menu_history_depth];
+        rf = ui_menu_handle_encoder(m, delta, arg);
     }
 
     else if (UI.current_page != NULL) {
@@ -92,7 +91,7 @@ void ui_init(void) {
     UI.current_input = NULL;
     UI.force_rerender = 0;
 
-    for (int i = 0; i < MENU_HISTORY_DEPTH; i++) {
+    for (int i = 0; i < UI_MENU_HISTORY_DEPTH; i++) {
         UI.menu_history[i] = NULL;
         UI.menu_arg_history[i] = NULL;
     }
@@ -117,6 +116,37 @@ void ui_open_page(const ui_page_t* p, void* arg) {
             p->on_open(arg);
         UI.force_rerender = RENDER;
     }
+}
+
+void ui_open_menu(const ui_menu_t* menu, void* arg) {
+    ESP_LOGI(TAG, "Open menu \"%s\" with arg: %p", menu->title, arg);
+    size_t new_idx = (UI.menu_history_depth + 1) % UI_MENU_HISTORY_DEPTH;
+    size_t next_idx = (UI.menu_history_depth + 1) % UI_MENU_HISTORY_DEPTH;
+
+    // Prevent infinite menu loops
+    // todo - this throws away the arg pointer, which may not be what we want here since that could
+    // lead to leaks, check how this is implemented. We may not call close until we go back or
+    // dispose a menu. The problem, however, is that at a certain point a lower menu MAY hold onto
+    // something a higher menu wants in an arg, so if we dispose it here, it'll break higher menus.
+    UI.menu_arg_history[next_idx] = NULL;
+    UI.menu_history[next_idx] = NULL;
+
+    const ui_menu_t* current = UI.menu_history[UI.menu_history_depth];
+
+    if (current != NULL) {
+        ui_menu_handle_close(current, UI.menu_arg_history[UI.menu_history_depth]);
+    }
+
+    UI.menu_history[new_idx] = menu;
+    UI.menu_arg_history[new_idx] = arg;
+    UI.menu_history_depth = new_idx;
+    UI.force_rerender = RENDER;
+
+    ui_menu_handle_open(menu, arg);
+}
+
+// this will automatically go back, if it needs to.
+void ui_close_menu(void) {
 }
 
 /**
@@ -159,18 +189,21 @@ void ui_tick(void) {
         rendered = 1;
     }
 
-    if (UI.menu_history_depth > 0) {
-        const ui_menu_t* m = UI.menu_history[UI.menu_history_depth - 1];
-        if (m == NULL)
-            return; // This is an invalid state.
+    if (UI.menu_history[UI.menu_history_depth] != NULL) {
+        const ui_menu_t* m = UI.menu_history[UI.menu_history_depth];
+        void* arg = UI.menu_arg_history[UI.menu_history_depth];
 
-        ui_render_flag_t rf = NORENDER;
+        ui_render_flag_t rf = ui_menu_handle_loop(m, arg);
         if (UI.force_rerender == RENDER)
             rf = RENDER;
 
         if (!rendered) {
-            void* arg = UI.menu_arg_history[UI.menu_history_depth - 1];
-            // if (rf == RENDER && m->on_render != NULL) m->on_render(display, arg);
+            if (rf == RENDER) {
+                u8g2_ClearBuffer(display);
+                ui_menu_handle_render(m, display, arg);
+                ui_send_buffer();
+            }
+
             rendered = 1;
         }
     }
