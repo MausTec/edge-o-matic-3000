@@ -9,6 +9,7 @@ extern "C" {
 #include "eom-hal.h"
 #include "u8g2.h"
 
+#define UI_BUTTON_STR_MAX 12
 #define UI_BUTTON_HEIGHT 8
 #define UI_FONT_DEFAULT u8g2_font_mozart_nbp_tf
 #define UI_FONT_LARGE u8g2_font_profont22_tf
