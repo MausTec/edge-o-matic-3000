@@ -43,10 +43,21 @@ void ui_draw_shaded_rect(u8g2_t* d, uint8_t x, uint8_t y, uint8_t w, uint8_t h, 
 
     for (int i = 0; i < w; i++) {
         for (int j = 0; j < h; j++) {
-            if ((i + j) % 2 == 0)
-                u8g2_DrawPixel(d, x + i, y + j);
+            if ((i + j) % 2 == 0) u8g2_DrawPixel(d, x + i, y + j);
         }
     }
+}
+
+void ui_draw_scrollbar(u8g2_t* d, size_t index, size_t count, size_t window_size) {
+    const int title_bar_height = 10;
+    const int button_height = 9;
+    const int track_height = EOM_DISPLAY_HEIGHT - title_bar_height - button_height - 1;
+
+    int bar_height = track_height / window_size;
+    int offset_top = count > 1 ? (track_height - bar_height) * index / (count - 1) : 0;
+
+    u8g2_SetDrawColor(d, 1);
+    u8g2_DrawBox(d, EOM_DISPLAY_WIDTH - 2, title_bar_height + 1 + offset_top, 2, bar_height);
 }
 
 void ui_draw_button_labels(
@@ -93,8 +104,7 @@ void ui_draw_button_labels(
 void ui_draw_button_disable(u8g2_t* d, uint8_t btnmsk) {
     uint8_t i = 0;
     for (uint8_t i = 0; i < 3; i++) {
-        if (!(btnmsk & (1 << i)))
-            continue;
+        if (!(btnmsk & (4 >> i))) continue;
 
         ui_draw_shaded_rect(
             d,
@@ -123,8 +133,7 @@ void ui_draw_icons(u8g2_t* d) {
 }
 
 void ui_set_icon(ui_icon_t icon, int8_t state) {
-    if (icon >= _UI_ICON_MAX)
-        return;
+    if (icon >= _UI_ICON_MAX) return;
     if (icon_states[icon].index != state) {
         icon_states[icon].index = state;
         ui_redraw_all();

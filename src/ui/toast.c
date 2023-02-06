@@ -1,33 +1,33 @@
 #include "ui/toast.h"
 
-#include <stdarg.h>
-#include <string.h>
-#include <stdio.h>
 #include "eom-hal.h"
 #include "esp_log.h"
+#include <stdarg.h>
+#include <stdio.h>
+#include <string.h>
 
 #include "ui/graphics.h"
 
-static const char *TAG = "ui:toast";
+static const char* TAG = "ui:toast";
 
 static struct {
     char str[TOAST_MAX];
     uint8_t blocking;
 } current_toast;
 
-void ui_toast(const char *fmt, ...) {
+void ui_toast(const char* fmt, ...) {
     va_list args;
     va_start(args, fmt);
     vsnprintf(current_toast.str, TOAST_MAX, fmt, args);
     va_end(args);
 
-    ESP_LOGI(TAG, "Toast: \"%s\", non-blocking", current_toast.str);
+    ESP_LOGD(TAG, "Toast: \"%s\", non-blocking", current_toast.str);
 
     current_toast.blocking = 0;
 }
 
-void ui_toast_append(const char *fmt, ...) {
-    char buf[TOAST_MAX] = {0};
+void ui_toast_append(const char* fmt, ...) {
+    char buf[TOAST_MAX] = { 0 };
 
     va_list args;
     va_start(args, fmt);
@@ -38,8 +38,7 @@ void ui_toast_append(const char *fmt, ...) {
     strlcat(current_toast.str, buf, TOAST_MAX);
 }
 
-
-void ui_toast_blocking(const char *fmt, ...) {
+void ui_toast_blocking(const char* fmt, ...) {
     va_list args;
     va_start(args, fmt);
     vsnprintf(current_toast.str, TOAST_MAX, fmt, args);
@@ -48,27 +47,23 @@ void ui_toast_blocking(const char *fmt, ...) {
     current_toast.blocking = 1;
 }
 
-
 void ui_toast_clear(void) {
-    ESP_LOGI(TAG, "Clearing Toast.");
     current_toast.str[0] = '\0';
     current_toast.blocking = 0;
 }
 
-
 void ui_toast_render(void) {
     if (current_toast.str[0] == '\0') return;
-
-    ESP_LOGI(TAG, "Rendering Toast...");
 
     // Line width = 18 char
     const int padding = 2;
     const int margin = 4;
     int start_x = 4;
 
-    u8g2_t *display = eom_hal_get_display_ptr();
+    u8g2_t* display = eom_hal_get_display_ptr();
 
-    u8g2_SetFont(display, UI_FONT_DEFAULT);
+    u8g2_SetFont(display, UI_FONT_SMALL);
+    u8g2_SetFontPosTop(display);
 
     int text_lines = 1;
     for (int i = 0; i < strlen(current_toast.str); i++) {
@@ -80,8 +75,7 @@ void ui_toast_render(void) {
     // TODO: This is a clusterfuck of math, and on odd lined text is off-by-one
     int start_y =
         (EOM_DISPLAY_HEIGHT / 2) - (((7 + padding) * text_lines) / 2) - (padding / 2) - margin - 1;
-    if (text_lines & 1)
-        start_y -= 1; // <-- hack for that off-by-one
+    if (text_lines & 1) start_y -= 1; // <-- hack for that off-by-one
 
     int end_y = EOM_DISPLAY_HEIGHT - start_y;
     int text_start_y = start_y + margin + padding + 1;
@@ -97,14 +91,23 @@ void ui_toast_render(void) {
         }
     }
 
-    u8g2_DrawBox(display, start_x, start_y, EOM_DISPLAY_WIDTH - (start_x * 2), EOM_DISPLAY_HEIGHT - (start_y * 2));
+    u8g2_DrawBox(
+        display,
+        start_x,
+        start_y,
+        EOM_DISPLAY_WIDTH - (start_x * 2),
+        EOM_DISPLAY_HEIGHT - (start_y * 2)
+    );
 
     u8g2_SetDrawColor(display, 1);
 
-    u8g2_DrawFrame(display, start_x + margin, start_y + margin,
-                   EOM_DISPLAY_WIDTH - (start_x * 2) - (margin * 2),
-                   EOM_DISPLAY_HEIGHT - (start_y * 2) - (margin * 2));
-
+    u8g2_DrawFrame(
+        display,
+        start_x + margin,
+        start_y + margin,
+        EOM_DISPLAY_WIDTH - (start_x * 2) - (margin * 2),
+        EOM_DISPLAY_HEIGHT - (start_y * 2) - (margin * 2)
+    );
 
     char tmp[19 * 4] = "";
     strcpy(tmp, current_toast.str);
@@ -122,20 +125,22 @@ void ui_toast_render(void) {
         u8g2_DrawBox(display, 0, EOM_DISPLAY_HEIGHT - UI_BUTTON_HEIGHT, EOM_DISPLAY_WIDTH, 9);
         u8g2_SetDrawColor(display, 0);
         u8g2_SetFont(display, UI_FONT_SMALL);
-        ui_draw_str_center(display, EOM_DISPLAY_WIDTH / 2, EOM_DISPLAY_HEIGHT - UI_BUTTON_HEIGHT, "Press any key...");
+        ui_draw_str_center(
+            display,
+            EOM_DISPLAY_WIDTH / 2,
+            EOM_DISPLAY_HEIGHT - UI_BUTTON_HEIGHT,
+            "Press any key..."
+        );
     }
 }
-
 
 int ui_toast_is_active(void) {
     return current_toast.str[0] != '\0';
 }
 
-
 int ui_toast_is_dismissable(void) {
     return !(current_toast.blocking & 0x01);
 }
-
 
 const char* ui_toast_get_str(void) {
     return current_toast.str;

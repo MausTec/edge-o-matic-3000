@@ -6,6 +6,9 @@ ColumnLimit: 100
 IndentExternBlock: NoIndent
 BreakBeforeBraces: Attach
 AllowShortFunctionsOnASingleLine: None
+AllowShortCaseLabelsOnASingleLine: true
+AllowShortEnumsOnASingleLine: true
+AllowShortIfStatementsOnASingleLine: WithoutElse
 BinPackArguments: false
 BinPackParameters: false
 AlignAfterOpenBracket: BlockIndent
