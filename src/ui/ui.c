@@ -44,8 +44,7 @@ static void handle_button(eom_hal_button_t button, eom_hal_button_event_t event)
     else if (UI.current_page != NULL) {
         const ui_page_t* p = UI.current_page;
         void* arg = UI.current_page_arg;
-        if (p->on_button != NULL)
-            rf = p->on_button(button, event, arg);
+        rf = ui_page_handle_button(p, button, event, arg);
     }
 
     if (rf == RENDER) {
@@ -57,8 +56,7 @@ static void handle_encoder(int delta) {
     ui_render_flag_t rf = PASS;
 
     // Toasts always eat encoder...
-    if (ui_toast_is_active())
-        return;
+    if (ui_toast_is_active()) return;
 
     if (UI.current_input != NULL) {
     }
@@ -72,17 +70,14 @@ static void handle_encoder(int delta) {
     else if (UI.current_page != NULL) {
         const ui_page_t* p = UI.current_page;
         void* arg = UI.current_page_arg;
-        if (p->on_encoder != NULL)
-            rf = p->on_encoder(delta, arg);
+        rf = ui_page_handle_encoder(p, delta, arg);
     }
 
-    if (rf == RENDER)
-        UI.force_rerender = 1;
+    if (rf == RENDER) UI.force_rerender = 1;
 }
 
 void ui_init(void) {
-    if (_initialized)
-        return;
+    if (_initialized) return;
 
     // We can't simply memset here since that's, apparently, not volatile safe.
     UI.current_page = NULL;
@@ -102,26 +97,20 @@ void ui_init(void) {
 }
 
 void ui_open_page(const ui_page_t* p, void* arg) {
-    if (UI.current_page != NULL) {
-        UI.current_page->on_close(UI.current_page_arg);
-        // Dispose current page arg?
-    }
+    ui_page_handle_close(p, arg);
 
     UI.current_page = p;
     UI.current_page_arg = arg;
 
     if (p != NULL) {
-        ESP_LOGI(TAG, "Open page \"%s\"", p->title);
-        if (p->on_open)
-            p->on_open(arg);
+        ui_page_handle_open(p, arg);
         UI.force_rerender = RENDER;
     }
 }
 
 void ui_open_menu(const ui_menu_t* menu, void* arg) {
-    ESP_LOGI(TAG, "Open menu \"%s\" with arg: %p", menu->title, arg);
     size_t new_idx = (UI.menu_history_depth + 1) % UI_MENU_HISTORY_DEPTH;
-    size_t next_idx = (UI.menu_history_depth + 1) % UI_MENU_HISTORY_DEPTH;
+    size_t next_idx = (UI.menu_history_depth + 2) % UI_MENU_HISTORY_DEPTH;
 
     // Prevent infinite menu loops
     // todo - this throws away the arg pointer, which may not be what we want here since that could
@@ -147,6 +136,30 @@ void ui_open_menu(const ui_menu_t* menu, void* arg) {
 
 // this will automatically go back, if it needs to.
 void ui_close_menu(void) {
+    size_t new_idx = (UI.menu_history_depth - 1) % UI_MENU_HISTORY_DEPTH;
+
+    const ui_menu_t* current = UI.menu_history[UI.menu_history_depth];
+
+    if (current != NULL) {
+        ui_menu_handle_close(current, UI.menu_arg_history[UI.menu_history_depth]);
+    }
+
+    UI.menu_history[UI.menu_history_depth] = NULL;
+    UI.menu_arg_history[UI.menu_history_depth] = NULL;
+    UI.menu_history_depth = new_idx;
+    UI.force_rerender = RENDER;
+
+    const ui_menu_t* menu = UI.menu_history[UI.menu_history_depth];
+
+    if (menu != NULL) {
+        ui_menu_handle_open(menu, UI.menu_arg_history[UI.menu_history_depth]);
+    }
+}
+
+void ui_close_all_menu(void) {
+    while (UI.menu_history[UI.menu_history_depth] != NULL) {
+        ui_close_menu();
+    }
 }
 
 /**
@@ -194,8 +207,7 @@ void ui_tick(void) {
         void* arg = UI.menu_arg_history[UI.menu_history_depth];
 
         ui_render_flag_t rf = ui_menu_handle_loop(m, arg);
-        if (UI.force_rerender == RENDER)
-            rf = RENDER;
+        if (UI.force_rerender == RENDER) rf = RENDER;
 
         if (!rendered) {
             if (rf == RENDER) {
@@ -214,8 +226,7 @@ void ui_tick(void) {
 
         // TODO: Swap pages to take an arg, not the current page.
         ui_render_flag_t rf = p->on_loop == NULL ? NORENDER : p->on_loop(arg);
-        if (UI.force_rerender == RENDER)
-            rf = RENDER;
+        if (UI.force_rerender == RENDER) rf = RENDER;
 
         if (!rendered) {
             if (rf == RENDER && p->on_render != NULL) {

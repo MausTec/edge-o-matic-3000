@@ -29,6 +29,20 @@ struct ui_page {
     ui_page_encoder_cb on_encoder;
 };
 
+/***
+ * Lifecycle methods.
+ */
+
+ui_render_flag_t ui_page_handle_button(
+    const ui_page_t* p, eom_hal_button_t button, eom_hal_button_event_t event, void* arg
+);
+
+ui_render_flag_t ui_page_handle_encoder(const ui_page_t* p, int delta, void* arg);
+void ui_page_handle_open(const ui_page_t* p, void* arg);
+ui_render_flag_t ui_page_handle_loop(const ui_page_t* p, void* arg);
+void ui_page_handle_render(const ui_page_t* p, u8g2_t* d, void* arg);
+void ui_page_handle_close(const ui_page_t* p, void* arg);
+
 /**
  * Register your pages here.
  */

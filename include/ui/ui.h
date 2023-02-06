@@ -5,6 +5,7 @@
 extern "C" {
 #endif
 
+// @todo At some point, we can possibly expand the history to a linked list of menu states/args.
 #define UI_MENU_HISTORY_DEPTH 10
 
 #include "ui/graphics.h"
@@ -23,9 +24,13 @@ void ui_open_page(const ui_page_t* page, void* arg);
 
 void ui_open_menu(const ui_menu_t* menu, void* arg);
 void ui_close_menu(void);
+void ui_close_all_menu(void);
 
 void ui_open_input(const ui_input_t* input, void* arg);
 void ui_close_input(void);
+void ui_close_all_input(void);
+
+void ui_close_all(void);
 
 #ifdef __cplusplus
 }

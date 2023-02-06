@@ -43,6 +43,10 @@ void ui_draw_shaded_bar_graph_with_peak(
     u8g2_t* d, uint8_t y, const char label, float value, float max, float shade_max, float peak_val
 );
 
+void ui_draw_shaded_rect(u8g2_t* d, uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint8_t color);
+
+void ui_draw_scrollbar(u8g2_t* d, size_t index, size_t count, size_t window_size);
+
 #ifdef __cplusplus
 }
 #endif
