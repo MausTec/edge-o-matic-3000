@@ -6,7 +6,7 @@ branch = ""
 
 try:
     revision = (
-        subprocess.check_output(["git", "describe", "--tags", "--abbrev=1"], stderr=subprocess.STDOUT)
+        subprocess.check_output(["git", "describe", "--tags", "--abbrev=5"], stderr=subprocess.STDOUT)
         .strip()
         .decode("utf-8")
     )

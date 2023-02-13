@@ -47,8 +47,11 @@ void ui_page_handle_close(const ui_page_t* p, void* arg);
  * Register your pages here.
  */
 
+// TODO: Move to pages/index.h and put page suffix.
+
 extern const ui_page_t PAGE_SNAKE;
 extern const ui_page_t PAGE_EDGING_STATS;
+extern const ui_page_t PAGE_APP_RUNNER;
 
 #ifdef __cplusplus
 }

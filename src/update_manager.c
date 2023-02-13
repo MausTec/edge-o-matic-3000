@@ -1,5 +1,5 @@
 #include "update_manager.h"
-#include "VERSION.h"
+#include "version.h"
 
 #include "esp_log.h"
 #include "esp_tls.h"

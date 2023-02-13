@@ -1,5 +1,6 @@
-#include "ui/page.h"
 #include "esp_log.h"
+#include "menus/index.h"
+#include "ui/menu.h"
 #include "ui/ui.h"
 
 static const char* TAG = "ui:page";

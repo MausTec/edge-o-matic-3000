@@ -1,0 +1,63 @@
+#include "application.h"
+#include "eom-hal.h"
+#include "ui/toast.h"
+#include "ui/ui.h"
+#include "util/i18n.h"
+#include <dirent.h>
+#include <stdio.h>
+#include <string.h>
+
+static void on_app_load(const ui_menu_t* m, const ui_menu_item_t* item, void* menu_arg) {
+    if (item == NULL) return;
+    const char* path = (const char*)item->arg;
+    application_t* app;
+
+    ui_toast_blocking(_("Loading app:\n%s"), path);
+    app_err_t err = application_load(path, &app);
+
+    if (err == APP_OK) {
+        ui_toast(_("Loaded"));
+        ui_open_page(&PAGE_APP_RUNNER, app);
+
+    } else {
+        ui_toast(_("App Load Error: %d"), err);
+    }
+}
+
+static void populate_apps(const ui_menu_t* m) {
+    DIR* d;
+    struct dirent* dir;
+    const char* path = eom_hal_get_sd_mount_point();
+    d = opendir(path);
+
+    if (d) {
+        while ((dir = readdir(d)) != NULL) {
+            if (dir->d_type == DT_DIR && !strcmp(dir->d_name + strlen(dir->d_name) - 4, ".mpk")) {
+                char* file = (char*)malloc(strlen(dir->d_name) + strlen(path) + 2);
+                if (file == NULL) break;
+                sprintf(file, "%s/%s", path, dir->d_name);
+                ui_menu_add_item(m, dir->d_name, on_app_load, file);
+            }
+        }
+
+        closedir(d);
+    }
+}
+
+static void on_open(const ui_menu_t* m, const void* arg) {
+    // ui_menu_add_page(PAGE_EDGING_STATS);
+
+    if (eom_hal_get_sd_size_bytes() > 0) {
+        // TODO: this won't actually render out in this routine.
+        ui_toast_blocking(_("Reading SD card..."));
+        populate_apps(m);
+        ui_toast_clear();
+    }
+}
+
+static void on_close(const ui_menu_t* m, const void* arg) {
+    // TODO: Probably each menu item can hold a pointer to a freer?
+    ui_menu_free(m, free);
+}
+
+DYNAMIC_MENU(APPLICATIONS_MENU, "Applications", on_open);

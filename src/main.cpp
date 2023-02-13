@@ -4,10 +4,10 @@
 
 #include <time.h>
 
-#include "VERSION.h"
 #include "config.h"
 #include "config_defs.h"
 #include "eom-hal.h"
+#include "version.h"
 
 #include "system/http_server.h"
 #include "ui/ui.h"
@@ -17,12 +17,12 @@
 #include "BluetoothServer.h"
 #include "Console.h"
 #include "Hardware.h"
-#include "orgasm_control.h"
 #include "UserInterface.h"
-#include "api/broadcast.h"
-#include "wifi_manager.h"
 #include "accessory_driver.h"
+#include "api/broadcast.h"
+#include "orgasm_control.h"
 #include "polyfill.h"
+#include "wifi_manager.h"
 
 void loop(void);
 
@@ -46,63 +46,75 @@ void resetSD() {
     config_init();
 }
 
-static void orgasm_task(void *args) {
+static void orgasm_task(void* args) {
     // for (;;) {
-        orgasm_control_tick();
+    orgasm_control_tick();
 
-        // vTaskDelay(1);
+    // vTaskDelay(1);
     // }
 }
 
-static void hal_task(void *args) {
+static void hal_task(void* args) {
     // for (;;) {
-        eom_hal_tick();
-        Hardware::tick();
+    eom_hal_tick();
+    Hardware::tick();
 
-        // vTaskDelay(1);
+    // vTaskDelay(1);
     // }
 }
 
-static void ui_task(void *args) {
+static void ui_task(void* args) {
     // for (;;) {
-        ui_tick();
-        // UI.tick();
-        // Page::DoLoop();
+    ui_tick();
+    // UI.tick();
+    // Page::DoLoop();
 
-        // vTaskDelay(1);
+    // vTaskDelay(1);
     // }
 }
 
-static void loop_task(void *args) {
+static void loop_task(void* args) {
     // for (;;) {
-        static long lastStatusTick = 0;
-        static long lastTick = 0;
+    static long lastStatusTick = 0;
+    static long lastTick = 0;
 
-        // Periodically send out WiFi status:
-        if (millis() - lastStatusTick > 1000 * 10) {
-            lastStatusTick = millis();
-            api_broadcast_network_status();
+    // Periodically send out WiFi status:
+    if (millis() - lastStatusTick > 1000 * 10) {
+        lastStatusTick = millis();
+        api_broadcast_network_status();
 
-            // Update Icons
-            if (wifi_manager_get_status() == WIFI_MANAGER_CONNECTED) {
-                int8_t rssi = wifi_manager_get_rssi();
-                ESP_LOGI(TAG, "WiFi RSSI: %d", rssi);
-                ui_set_icon(UI_ICON_WIFI, WIFI_ICON_STRONG_SIGNAL);
-            } else {
-                ui_set_icon(UI_ICON_WIFI, WIFI_ICON_DISCONNECTED);
-            }
+        // Update Icons
+        if (wifi_manager_get_status() == WIFI_MANAGER_CONNECTED) {
+            int8_t rssi = wifi_manager_get_rssi();
+            ESP_LOGI(TAG, "WiFi RSSI: %d", rssi);
+            ui_set_icon(UI_ICON_WIFI, WIFI_ICON_STRONG_SIGNAL);
+        } else {
+            ui_set_icon(UI_ICON_WIFI, WIFI_ICON_DISCONNECTED);
         }
+    }
 
-        if (millis() - lastTick > 1000 / 15) {
-            lastTick = millis();
-            api_broadcast_readings();
-        }
+    if (millis() - lastTick > 1000 / 15) {
+        lastTick = millis();
+        api_broadcast_readings();
+    }
 
-        // Tick and see if we need to save config:
-        config_enqueue_save(-1);
+    // Tick and see if we need to save config:
+    config_enqueue_save(-1);
 
-        vTaskDelay(1);
+    vTaskDelay(1);
     // }
+}
+
+static void main_task(void* args) {
+    console_ready();
+    ui_open_page(&PAGE_EDGING_STATS, NULL);
+
+    for (;;) {
+        loop_task(NULL);
+        hal_task(NULL);
+        ui_task(NULL);
+        orgasm_task(NULL);
+    }
 }
 
 extern "C" void app_main() {
@@ -117,7 +129,7 @@ extern "C" void app_main() {
     i18n_init();
 
     printf("Maus-Tec presents: Edge-o-Matic 3000\n");
-    printf("Version: " VERSION "\n");
+    printf("Version: %s\n", VERSION);
     printf("EOM-HAL Version: %s\n", eom_hal_get_version());
 
     // Setup Hardware
@@ -147,13 +159,5 @@ extern "C" void app_main() {
         ui_set_icon(UI_ICON_BT, -1);
     }
 
-    console_ready();
-    ui_open_page(&PAGE_EDGING_STATS, NULL);
-    
-    for (;;) {
-        loop_task(NULL);
-        hal_task(NULL);
-        ui_task(NULL);
-        orgasm_task(NULL);
-    }
+    xTaskCreate(main_task, "MAIN", 1024 * 8, NULL, tskIDLE_PRIORITY, NULL);
 }

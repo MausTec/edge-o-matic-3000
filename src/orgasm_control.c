@@ -5,6 +5,7 @@
 #include "esp_log.h"
 #include "esp_timer.h"
 #include "ui/ui.h"
+#include "ui/toast.h"
 #include "util/running_average.h"
 #include <math.h>
 #include <stdio.h>

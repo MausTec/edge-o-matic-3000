@@ -1,5 +1,5 @@
 #include "WebSocketHelper.h"
-#include "VERSION.h"
+#include "version.h"
 
 #include "eom-hal.h"
 

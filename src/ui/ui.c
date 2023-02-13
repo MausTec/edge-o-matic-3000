@@ -1,5 +1,6 @@
 #include "ui/ui.h"
 #include "esp_log.h"
+#include "ui/toast.h"
 #include <string.h>
 
 static const char* TAG = "UI";

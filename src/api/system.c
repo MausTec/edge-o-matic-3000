@@ -1,7 +1,8 @@
-#include "VERSION.h"
 #include "api/index.h"
 #include "eom-hal.h"
 #include "system/websocket_handler.h"
+#include "version.h"
+
 
 static command_err_t cmd_system_restart(cJSON* command, cJSON* response,
                                         websocket_client_t* client) {
