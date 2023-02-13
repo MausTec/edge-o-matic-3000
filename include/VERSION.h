@@ -1,5 +1,15 @@
-#ifndef EOM_FW_VERSION
-#define VERSION "0.0.0"
-#else
-#define VERSION EOM_FW_VERSION
+#ifndef __edge_o_matic__version_h
+#define __edge_o_matic__version_h
+
+#ifdef __cplusplus
+extern "C" {
 #endif
+
+extern const char* VERSION;
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif
+ 

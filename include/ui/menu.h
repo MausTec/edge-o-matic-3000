@@ -17,6 +17,7 @@ struct ui_menu_item;
 typedef void (*ui_menu_item_callback_t
 )(const struct ui_menu* m, const struct ui_menu_item* item, UI_MENU_ARG_TYPE menu_arg);
 typedef void (*ui_menu_open_callback_t)(const struct ui_menu* m, UI_MENU_ARG_TYPE arg);
+typedef void (*ui_menu_item_free_callback_t)(void* arg);
 
 typedef struct ui_menu_item {
     char label[UI_MENU_TITLE_MAX];
@@ -60,8 +61,12 @@ typedef struct ui_menu {
                                .dynamic_items = &container,                                        \
                                .static_items = {} }
 
-void ui_menu_cb_open_page(const ui_menu_t* m, UI_MENU_ARG_TYPE arg);
-void ui_menu_cb_open_menu(const ui_menu_t* m, UI_MENU_ARG_TYPE arg);
+void ui_menu_cb_open_page(
+    const ui_menu_t* m, const ui_menu_item_t* item, UI_MENU_ARG_TYPE menu_arg
+);
+void ui_menu_cb_open_menu(
+    const ui_menu_t* m, const ui_menu_item_t* item, UI_MENU_ARG_TYPE menu_arg
+);
 
 // Dynamic menu manipulation
 void ui_menu_add_static_items(const ui_menu_t* m);
@@ -72,6 +77,7 @@ ui_menu_item_t* ui_menu_add_item(
 ui_menu_item_t* ui_menu_add_page(const ui_menu_t* m, ui_page_t* page);
 ui_menu_item_t* ui_menu_add_menu(const ui_menu_t* m, ui_menu_t* menu);
 void ui_menu_clear(const ui_menu_t* m);
+void ui_menu_free(const ui_menu_t* m, ui_menu_item_free_callback_t free_cb);
 
 const ui_menu_item_t* ui_menu_get_nth_item(const ui_menu_t* m, size_t n);
 const ui_menu_item_t* ui_menu_get_current_item(const ui_menu_t* m);
@@ -86,12 +92,6 @@ void ui_menu_handle_open(const ui_menu_t* m, UI_MENU_ARG_TYPE arg);
 ui_render_flag_t ui_menu_handle_loop(const ui_menu_t* m, UI_MENU_ARG_TYPE arg);
 void ui_menu_handle_render(const ui_menu_t* m, u8g2_t* d, UI_MENU_ARG_TYPE arg);
 void ui_menu_handle_close(const ui_menu_t* m, UI_MENU_ARG_TYPE arg);
-
-/**
- * Register your menus here.
- */
-
-extern const ui_menu_t MAIN_MENU;
 
 #ifdef __cplusplus
 }

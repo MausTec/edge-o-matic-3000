@@ -8,12 +8,9 @@ extern "C" {
 // @todo At some point, we can possibly expand the history to a linked list of menu states/args.
 #define UI_MENU_HISTORY_DEPTH 10
 
-#include "ui/graphics.h"
 #include "ui/input.h"
 #include "ui/menu.h"
 #include "ui/page.h"
-#include "ui/render.h"
-#include "ui/toast.h"
 
 void ui_init(void);
 void ui_tick(void);

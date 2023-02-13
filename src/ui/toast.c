@@ -1,4 +1,5 @@
 #include "ui/toast.h"
+#include "ui/ui.h"
 
 #include "eom-hal.h"
 #include "esp_log.h"
@@ -11,7 +12,7 @@
 static const char* TAG = "ui:toast";
 
 static struct {
-    char str[TOAST_MAX];
+    char str[TOAST_MAX + 1];
     uint8_t blocking;
 } current_toast;
 
@@ -27,7 +28,7 @@ void ui_toast(const char* fmt, ...) {
 }
 
 void ui_toast_append(const char* fmt, ...) {
-    char buf[TOAST_MAX] = { 0 };
+    char buf[TOAST_MAX + 1] = { 0 };
 
     va_list args;
     va_start(args, fmt);
@@ -45,6 +46,8 @@ void ui_toast_blocking(const char* fmt, ...) {
     va_end(args);
 
     current_toast.blocking = 1;
+    ui_toast_render();
+    ui_send_buffer();
 }
 
 void ui_toast_clear(void) {
@@ -109,14 +112,21 @@ void ui_toast_render(void) {
         EOM_DISPLAY_HEIGHT - (start_y * 2) - (margin * 2)
     );
 
-    char tmp[19 * 4] = "";
-    strcpy(tmp, current_toast.str);
+    char* str = current_toast.str;
 
-    char* tok = strtok(tmp, "\n");
-    while (tok != NULL) {
-        u8g2_DrawStr(display, start_x + margin + padding + 1, text_start_y, tok);
-        text_start_y += 7 + padding;
-        tok = strtok(NULL, "\n");
+    while (str != NULL && *str != '\0') {
+        char* tok = strchr(str, '\n');
+        if (tok != NULL) *tok = '\0';
+
+        u8g2_DrawUTF8(display, start_x + margin + padding + 1, text_start_y, str);
+
+        if (tok != NULL) {
+            *tok = '\n';
+            str = tok + 1;
+            text_start_y += 7 + padding;
+        } else {
+            break;
+        }
     }
 
     if (!current_toast.blocking) {

@@ -8,8 +8,18 @@
 static const char* TAG = "ui:menu";
 static size_t _index = 0;
 
-void ui_menu_cb_open_page(const ui_menu_t* m, UI_MENU_ARG_TYPE arg);
-void ui_menu_cb_open_menu(const ui_menu_t* m, UI_MENU_ARG_TYPE arg);
+void ui_menu_cb_open_page(
+    const ui_menu_t* m, const ui_menu_item_t* item, UI_MENU_ARG_TYPE menu_arg
+) {
+}
+
+void ui_menu_cb_open_menu(
+    const ui_menu_t* m, const ui_menu_item_t* item, UI_MENU_ARG_TYPE menu_arg
+) {
+    if (item == NULL) return;
+    const ui_menu_t* menu = (const ui_menu_t*)item->arg;
+    ui_open_menu(menu, NULL);
+}
 
 // Dynamic menu manipulation
 int ui_menu_add_node(const ui_menu_t* m, ui_menu_item_t* item, UI_MENU_ARG_TYPE arg) {
@@ -34,6 +44,47 @@ int ui_menu_add_node(const ui_menu_t* m, ui_menu_item_t* item, UI_MENU_ARG_TYPE 
 
     list->count++;
     return 1;
+}
+
+void ui_menu_clear(const ui_menu_t* m) {
+    if (m == NULL) return;
+
+    ui_menu_item_list_t* list = m->dynamic_items;
+    if (list == NULL) return;
+
+    while (list->first != NULL) {
+        ui_menu_item_node_t* node = list->first;
+        list->first = node->next;
+        free(node);
+    }
+
+    list->first = NULL;
+    list->last = NULL;
+    list->count = 0;
+}
+
+void ui_menu_free(const ui_menu_t* m, ui_menu_item_free_callback_t free_cb) {
+    if (m == NULL) return;
+
+    ui_menu_item_list_t* list = m->dynamic_items;
+    if (list == NULL) return;
+
+    ui_menu_item_node_t* node = list->first;
+
+    while (node != NULL) {
+        if (node->item) free_cb(node->item->arg);
+        node = node->next;
+    }
+}
+
+void ui_menu_handle_close(const ui_menu_t* m, UI_MENU_ARG_TYPE arg) {
+    if (m == NULL) return;
+
+    if (m->on_close != NULL) {
+        m->on_close(m, arg);
+    }
+
+    ui_menu_clear(m);
 }
 
 ui_menu_item_t* ui_menu_add_item(
@@ -64,7 +115,8 @@ ui_menu_item_t* ui_menu_add_page(const ui_menu_t* m, ui_page_t* page) {
 }
 
 ui_menu_item_t* ui_menu_add_menu(const ui_menu_t* m, ui_menu_t* menu) {
-    return NULL;
+    if (menu == NULL) return NULL;
+    return ui_menu_add_item(m, menu->title, ui_menu_cb_open_menu, (void*)menu);
 }
 
 // Menu Lifecycle Callbacks
@@ -123,9 +175,12 @@ void ui_menu_add_static_items(const ui_menu_t* m) {
 }
 
 void ui_menu_handle_open(const ui_menu_t* m, UI_MENU_ARG_TYPE arg) {
-    if (m != NULL && m->on_open != NULL) {
-        _index = 0;
-        ui_menu_add_static_items(m);
+    if (m == NULL) return;
+    _index = 0;
+
+    ui_menu_add_static_items(m);
+
+    if (m->on_open != NULL) {
         m->on_open(m, arg);
     }
 }
@@ -158,6 +213,8 @@ enum _menu_item_render_flags { ITEM_NORMAL = 0x00, ITEM_SELECTED = 0x01, ITEM_DI
 
 static void
 _render_menu_item(u8g2_t* d, uint8_t y, const char* label, enum _menu_item_render_flags flags) {
+    if (y < 0 || y > 5) return;
+
     u8g2_SetFont(d, UI_FONT_DEFAULT);
     u8g2_SetFontPosTop(d);
     u8g2_SetDrawColor(d, 1);
@@ -221,10 +278,4 @@ void ui_menu_handle_render(const ui_menu_t* m, u8g2_t* d, UI_MENU_ARG_TYPE arg) 
         0x00 | (current_item == NULL || current_item->on_option == NULL ? 0b10 : 0x00) |
             (current_item == NULL || current_item->on_select == NULL ? 0b01 : 0x00)
     );
-}
-
-void ui_menu_handle_close(const ui_menu_t* m, UI_MENU_ARG_TYPE arg) {
-    if (m != NULL && m->on_close != NULL) {
-        m->on_close(m, arg);
-    }
 }

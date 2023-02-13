@@ -12,7 +12,6 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
-#include "VERSION.h"
 #include "commands/index.h"
 #include "driver/uart.h"
 #include "eom-hal.h"
@@ -21,6 +20,7 @@
 #include "esp_vfs_dev.h"
 #include "linenoise/linenoise.h"
 #include "tscode.h"
+#include "version.h"
 
 #include "my_basic.h"
 
@@ -30,7 +30,7 @@
 
 static const char* TAG = "console";
 static esp_console_repl_t* _repl = NULL;
-static char _history_file[SD_MAX_DIR_LENGTH + 1] = {0};
+static char _history_file[SD_MAX_DIR_LENGTH + 1] = { 0 };
 static bool _tscode_mode = false;
 
 static struct cmd_node {
@@ -42,7 +42,7 @@ static command_err_t cmd_help(int argc, char** argv, console_t* console) {
     struct cmd_node* ptr = _first;
 
     if (argc == 0) {
-        fprintf(console->out, "Edge-o-Matic 3000, " VERSION "\n\nCOMMANDS\n");
+        fprintf(console->out, "Edge-o-Matic 3000, %s\n\nCOMMANDS\n", VERSION);
     }
 
     while (ptr != NULL) {
@@ -79,10 +79,12 @@ static const command_t cmd_help_s = {
     .help = "Get help about all or a specific command.",
     .alias = '?',
     .func = &cmd_help,
-    .subcommands = {NULL},
+    .subcommands = { NULL },
 };
 
-static void register_help(void) { console_register_command(&cmd_help_s); }
+static void register_help(void) {
+    console_register_command(&cmd_help_s);
+}
 
 static void reinitialize_console(void) {
     if (_tscode_mode || Config.console_basic_mode) {
@@ -102,9 +104,11 @@ static void reinitialize_console(void) {
 
         int resp = linenoiseProbe();
         if (resp != 0) {
-            printf("Your terminal does not support escape sequences. This experience may\n"
-                   "not be as pretty as on other consoles: %d\n",
-                   resp);
+            printf(
+                "Your terminal does not support escape sequences. This experience may\n"
+                "not be as pretty as on other consoles: %d\n",
+                resp
+            );
             linenoiseSetDumbMode(true);
         }
     }
@@ -113,8 +117,8 @@ static void reinitialize_console(void) {
 /**
  * Intercept TS-code commands to see if we're changing modes, otherwise pass to global handler.
  */
-static tscode_command_response_t tscode_handler(tscode_command_t* cmd, char* response,
-                                                size_t resp_len) {
+static tscode_command_response_t
+tscode_handler(tscode_command_t* cmd, char* response, size_t resp_len) {
     if (cmd->type == TSCODE_EXIT_TSCODE_MODE) {
         _tscode_mode = false;
         reinitialize_console();
@@ -135,18 +139,17 @@ static void console_idle_task(void* args) {
     if (!Config.console_basic_mode) {
         printf("Press any key to initialize the terminal.\n");
         for (;;) {
-            if (getc(stdin) != EOF)
-                break;
+            if (getc(stdin) != EOF) break;
             vTaskDelay(1);
         }
     }
 
-    xTaskCreate(&console_task, "CONSOLE", 1024*8, NULL, tskIDLE_PRIORITY, NULL);
+    xTaskCreate(&console_task, "CONSOLE", 1024 * 8, NULL, tskIDLE_PRIORITY, NULL);
     vTaskDelete(NULL);
 }
 
 static void console_task(void* args) {
-    char *prompt = (char*) malloc(PATH_MAX + 7);
+    char* prompt = (char*)malloc(PATH_MAX + 7);
 
     reinitialize_console();
 
@@ -179,7 +182,7 @@ static void console_task(void* args) {
 
         if (line[0] != '\0') {
             if (_tscode_mode) {
-                char out[256] = {0};
+                char out[256] = { 0 };
                 tscode_process_buffer(line, &tscode_handler, out, 256);
                 printf("%s\n", out);
             } else {
@@ -189,7 +192,7 @@ static void console_task(void* args) {
                     linenoiseHistorySave(_history_file);
                 }
 
-                char* argv[ARGV_MAX] = {0};
+                char* argv[ARGV_MAX] = { 0 };
                 int argc = esp_console_split_argv(line, argv, ARGV_MAX);
                 console_run_command(argc, argv, &uart_console);
             }
@@ -251,7 +254,7 @@ void console_register_command(const command_t* command) {
 }
 
 void console_ready(void) {
-    xTaskCreate(&console_idle_task, "con_idle", 1024*2, NULL, tskIDLE_PRIORITY, NULL);
+    xTaskCreate(&console_idle_task, "con_idle", 1024 * 2, NULL, tskIDLE_PRIORITY, NULL);
 }
 
 void console_send_file(const char* filename, console_t* console) {
@@ -286,8 +289,8 @@ void console_send_file(const char* filename, console_t* console) {
     fprintf(console->out, "<<<EOF\n");
 }
 
-static command_err_t _console_run_subcommands(command_t* command, int argc, char** argv,
-                                              console_t* console) {
+static command_err_t
+_console_run_subcommands(command_t* command, int argc, char** argv, console_t* console) {
     command_err_t err = CMD_SUBCOMMAND_NOT_FOUND;
 
     if (argc == 0) {
@@ -314,8 +317,7 @@ static command_err_t _console_run_subcommands(command_t* command, int argc, char
 void console_run_command(int argc, char** argv, console_t* console) {
     command_err_t err = CMD_NOT_FOUND;
 
-    if (argc == 0)
-        return;
+    if (argc == 0) return;
 
     struct cmd_node* ptr = _first;
     bool aliased = strlen(argv[0]) == 1;
