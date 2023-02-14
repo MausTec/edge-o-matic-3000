@@ -22,3 +22,6 @@
 [submodule "lib/semver"]
 	path = lib/semver
 	url = https://github.com/h2non/semver.c
+[submodule "lib/wren"]
+	path = lib/wren
+	url = https://github.com/wren-lang/wren

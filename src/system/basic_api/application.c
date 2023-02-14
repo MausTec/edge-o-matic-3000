@@ -4,6 +4,7 @@
 static const char* TAG = "basic:application";
 
 static int _register_application(struct mb_interpreter_t* s, void** l) {
+    return 0;
 }
 
 void basic_api_register_application(struct mb_interpreter_t* bas) {

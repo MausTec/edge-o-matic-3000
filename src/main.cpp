@@ -28,6 +28,9 @@ void loop(void);
 
 UserInterface UI;
 
+static StackType_t MAIN_STACK[1024 * 32] = { 0 };
+static StaticTask_t MAIN_TASK;
+
 static const char* TAG = "main";
 
 void resetSD() {
@@ -159,5 +162,8 @@ extern "C" void app_main() {
         ui_set_icon(UI_ICON_BT, -1);
     }
 
-    xTaskCreate(main_task, "MAIN", 1024 * 8, NULL, tskIDLE_PRIORITY, NULL);
+    // xTaskCreate(main_task, "MAIN", 1024 * 40, NULL, tskIDLE_PRIORITY, NULL);
+    xTaskCreateStatic(
+        main_task, "MAIN", sizeof(MAIN_STACK), NULL, tskIDLE_PRIORITY, MAIN_STACK, &MAIN_TASK
+    );
 }

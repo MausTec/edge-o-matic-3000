@@ -15,6 +15,40 @@ static struct app_task_node {
     struct app_task_node* next;
 }* tasklist = NULL;
 
+static char* _read_file(const char* path) {
+    FILE* file = fopen(path, "rb");
+    char* buffer = NULL;
+    if (file == NULL) return NULL;
+
+    // Find out how big the file is.
+    fseek(file, 0L, SEEK_END);
+    size_t fileSize = ftell(file);
+    rewind(file);
+
+    // Allocate a buffer for it.
+    buffer = (char*)malloc(fileSize + 1);
+    if (buffer == NULL) {
+        ESP_LOGE(TAG, "Could not read file \"%s\".\n", path);
+        goto cleanup;
+    }
+
+    // Read the entire file.
+    size_t bytesRead = fread(buffer, 1, fileSize, file);
+    if (bytesRead < fileSize) {
+        ESP_LOGE(TAG, "Could not read file \"%s\".\n", path);
+        free(buffer);
+        buffer = NULL;
+        goto cleanup;
+    }
+
+    // Terminate the string.
+    buffer[bytesRead] = '\0';
+
+cleanup:
+    fclose(file);
+    return buffer;
+}
+
 static void app_run_task(void* arg) {
     application_t* app = (application_t*)arg;
 
@@ -133,7 +167,7 @@ app_err_t application_parse_manifest(const char* pack_path, application_t* app) 
         cJSON* entrypoint = cJSON_GetObjectItem(manifest_json, "entrypoint");
 
         if (entrypoint == NULL || !cJSON_IsString(entrypoint)) {
-            strlcpy(app->entrypoint, "main.bas", APP_TITLE_MAXLEN);
+            strlcpy(app->entrypoint, "main.wren", APP_TITLE_MAXLEN);
         } else {
             strlcpy(app->entrypoint, entrypoint->valuestring, APP_TITLE_MAXLEN);
         }
@@ -170,17 +204,39 @@ app_err_t application_load(const char* path, application_t** app_h) {
 
     { // Parse Script
         ESP_LOGI(TAG, "Loaded, initializing interpreter...");
-        mb_init();
-        mb_open(&app->interpreter);
-        basic_api_register_all(app->interpreter);
+        WrenConfiguration config;
+        wrenInitConfiguration(&config);
+
+        config.initialHeapSize = (1024 * 4);
+        config.minHeapSize = (1024);
+
+        app->vm = wrenNewVM(&config);
+        ESP_LOGI(TAG, "VM initialized.");
+
+        if (app->vm == NULL) {
+            err = APP_START_NO_MEMORY;
+            ESP_LOGE(TAG, "Failed to create new Wren VM");
+            goto cleanup;
+        }
 
         sniprintf(tmp_ep_path, PATH_MAX, "%s/%s", app->pack_path, app->entrypoint);
-        mb_err = mb_load_file(app->interpreter, tmp_ep_path);
+        char* buffer = _read_file(tmp_ep_path);
 
-        if (mb_err != MB_FUNC_OK) {
+        if (buffer == NULL) {
             err = APP_NO_ENTRYPOINT;
             goto cleanup;
         }
+
+        ESP_LOGI(TAG, "Script loaded.");
+        WrenInterpretResult result = wrenInterpret(app->vm, "application", buffer);
+
+        if (result != WREN_RESULT_SUCCESS) {
+            ESP_LOGE(TAG, "Wren compile error: %d", result);
+            err = APP_NO_ENTRYPOINT;
+            goto cleanup;
+        }
+
+        ESP_LOGI(TAG, "Script interpreted and executed.");
     }
 
     ESP_LOGI(TAG, "Application loaded.");
