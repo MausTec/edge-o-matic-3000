@@ -73,6 +73,8 @@ void i18n_init(void) {
 }
 
 void i18n_miss(const char* key) {
+    ESP_LOGI(TAG, "MISS: \"%s\"", key);
+    hashmap_insert(dict, key, "");
 }
 
 const char* _(const char* str) {

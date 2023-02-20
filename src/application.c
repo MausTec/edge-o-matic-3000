@@ -31,7 +31,8 @@ static void app_run_task(void* arg) {
 
     if (mb_err != MB_FUNC_OK) {
         const char* file = NULL;
-        int pos = 0, row = 0, col = 0;
+        int pos = 0;
+        unsigned short row = 0, col = 0;
         mb_error_e er = mb_get_last_error(app->interpreter, &file, &pos, &row, &col);
         ESP_LOGE(
             TAG,
@@ -242,23 +243,23 @@ app_err_t application_start_background(application_t* app) {
 app_err_t application_start(application_t* app) {
     if (app->interpreter == NULL) return APP_FILE_NOT_FOUND;
 
+    ESP_LOGI(TAG, "Running app immediately...");
+
     app->status = APP_OK;
-    int mb_err = mb_run(app->interpreter, true);
+    int mb_err = mb_run(app->interpreter, false);
 
     if (mb_err != MB_FUNC_OK) {
+        ESP_LOGE(TAG, "Basic returned: %d, interpreter: %p", mb_err, app->interpreter);
+
         const char* file = NULL;
-        int pos = 0, row = 0, col = 0;
+        int pos = 0;
+        unsigned short row = 0, col = 0;
+
         mb_error_e er = mb_get_last_error(app->interpreter, &file, &pos, &row, &col);
-        ESP_LOGE(
-            TAG,
-            "Basic Error: %d, %s in %s:%d:%d (%d)",
-            er,
-            mb_get_error_desc(er),
-            file,
-            row,
-            col,
-            pos
-        );
+        const char* err_str = mb_get_error_desc(er);
+        ESP_LOGE(TAG, "Basic Error: %s", err_str);
+        ESP_LOGE(TAG, "AT %s:%d:%d (%d)", file == NULL ? "-" : file, row, col, pos);
+
         app->status = APP_START_NO_MEMORY;
         return APP_FILE_INVALID;
     }
@@ -266,9 +267,20 @@ app_err_t application_start(application_t* app) {
     return APP_OK;
 }
 
+application_t* application_find_by_interpreter(struct mb_interpreter_t* bas) {
+    struct app_task_node* ptr = tasklist;
+
+    while (ptr != NULL) {
+        if (ptr->app->interpreter == bas) return ptr->app;
+        ptr = ptr->next;
+    }
+
+    return NULL;
+}
+
 app_err_t application_kill(application_t* app) {
     if (app == NULL) return APP_FILE_NOT_FOUND;
-    mb_close(app->interpreter);
+    mb_close(&app->interpreter);
     mb_dispose();
     return APP_OK;
 }
