@@ -5,10 +5,10 @@
 extern "C" {
 #endif
 
-#include <stdio.h>
-#include "my_basic.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "my_basic.h"
+#include <stdio.h>
 
 #define APP_EXTENSION ".mpk"
 #define APP_TITLE_MAXLEN 20
@@ -27,17 +27,18 @@ typedef struct {
     char title[APP_TITLE_MAXLEN];
     char pack_path[PATH_MAX];
     char entrypoint[APP_TITLE_MAXLEN];
-    struct mb_interpreter_t *interpreter;
+    struct mb_interpreter_t* interpreter;
+    void** interpreter_context;
     TaskHandle_t task;
     uint32_t stack_depth;
     app_err_t status;
 } application_t;
 
-app_err_t application_load(const char* filename, application_t **app);
-app_err_t application_start(application_t *app);
-app_err_t application_kill(application_t *app);
-void app_dispose(application_t *app);
-
+app_err_t application_load(const char* filename, application_t** app);
+app_err_t application_start(application_t* app);
+app_err_t application_kill(application_t* app);
+application_t* application_find_by_interpreter(struct mb_interpreter_t* bas);
+void app_dispose(application_t* app);
 
 #ifdef __cplusplus
 }

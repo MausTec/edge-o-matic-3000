@@ -1,20 +1,39 @@
-REM This program is an example of MY-BASIC
-REM For more information, see https://github.com/paladin-t/my_basic/
+REM This is an example application for the Edge-o-Matic 3000
 
 import "@application"
-import "@ui"
-import "@graphics"
-import "@system"
+import "@toast"
 
-def initialize()
-enddef
+class Point
+	var px = 0
+	var py = 0
 
-def tick()
-enddef
+	def assign(x, y)
+		px = x
+		py = y
+	enddef
+endclass
 
-def render()
-enddef
+class Snake
+	dim points(10)
 
-def shutdown()
-enddef
+	def add_point(x, y)
+		let point = new(Point)
+		point.assign(x, y)
+		push(points, point)
+	enddef
+endclass
 
+' TODO: Implement the superclass Application for this to provide useful stubs.
+' class SnakeGame(Application)
+class SnakeGame
+	def setup()
+		toast("Application Setup!")
+	enddef
+
+	def loop()
+		print "loop"
+	enddef
+endclass
+
+let app = new(SnakeGame)
+start(app)
