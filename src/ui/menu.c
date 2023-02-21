@@ -116,7 +116,13 @@ ui_menu_item_t* ui_menu_add_page(const ui_menu_t* m, ui_page_t* page) {
 
 ui_menu_item_t* ui_menu_add_menu(const ui_menu_t* m, ui_menu_t* menu) {
     if (menu == NULL) return NULL;
-    return ui_menu_add_item(m, menu->title, ui_menu_cb_open_menu, (void*)menu);
+
+    return ui_menu_add_item(
+        m,
+        menu->flags.translate_title ? _(menu->title) : menu->title,
+        ui_menu_cb_open_menu,
+        (void*)menu
+    );
 }
 
 // Menu Lifecycle Callbacks
@@ -209,24 +215,27 @@ ui_render_flag_t ui_menu_handle_loop(const ui_menu_t* m, UI_MENU_ARG_TYPE arg) {
     return PASS;
 }
 
-enum _menu_item_render_flags { ITEM_NORMAL = 0x00, ITEM_SELECTED = 0x01, ITEM_DISABLED = 0x02 };
+struct _menu_item_render_flags {
+    uint8_t item_selected : 1;
+    uint8_t item_disabled : 1;
+};
 
 static void
-_render_menu_item(u8g2_t* d, uint8_t y, const char* label, enum _menu_item_render_flags flags) {
+_render_menu_item(u8g2_t* d, uint8_t y, const char* label, struct _menu_item_render_flags flags) {
     if (y < 0 || y > 5) return;
 
     u8g2_SetFont(d, UI_FONT_DEFAULT);
     u8g2_SetFontPosTop(d);
     u8g2_SetDrawColor(d, 1);
 
-    if (flags & ITEM_SELECTED) {
+    if (flags.item_selected) {
         u8g2_DrawBox(d, 0, 10 + (10 * y), EOM_DISPLAY_WIDTH - 3, 10);
         u8g2_SetDrawColor(d, 0);
     }
 
     u8g2_DrawUTF8(d, 1, 11 + (10 * y), label);
 
-    if (flags & ITEM_DISABLED && (!(flags & ITEM_SELECTED))) {
+    if (flags.item_disabled && !flags.item_selected) {
         u8g2_SetDrawColor(d, 0);
         ui_draw_shaded_rect(d, 0, 10 + (10 * y), EOM_DISPLAY_WIDTH - 3, 10, 0);
     }
@@ -249,11 +258,12 @@ void ui_menu_handle_render(const ui_menu_t* m, u8g2_t* d, UI_MENU_ARG_TYPE arg) 
 
         while (node != NULL) {
             ui_menu_item_t* item = node->item;
-            enum _menu_item_render_flags flags = ITEM_NORMAL;
-            if (item->on_select == NULL) flags |= ITEM_DISABLED;
+            struct _menu_item_render_flags flags = { .item_disabled =
+                                                         item->on_select == NULL ? 1 : 0,
+                                                     .item_selected = 0 };
 
             if (idx == _index) {
-                flags |= ITEM_SELECTED;
+                flags.item_selected = 1;
                 current_item = item;
             }
 
@@ -270,7 +280,7 @@ void ui_menu_handle_render(const ui_menu_t* m, u8g2_t* d, UI_MENU_ARG_TYPE arg) 
         _("BACK"),
         current_item != NULL && current_item->option_str[0] != '\0' ? current_item->option_str : "",
         current_item != NULL && current_item->select_str[0] != '\0' ? current_item->select_str
-                                                                    : ("ENTER")
+                                                                    : _("ENTER")
     );
 
     ui_draw_button_disable(

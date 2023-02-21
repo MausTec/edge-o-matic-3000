@@ -19,6 +19,10 @@ extern "C" {
 #define WIFI_SSID_MAX_LEN 64
 #define WIFI_KEY_MAX_LEN 64
 
+// Some Experiments
+#define EOM_BETA 1
+#define I18N_USE_CJSON_DICT 1
+
 // Vibration Modes
 // See vibration_mode_controller.h for more.
 

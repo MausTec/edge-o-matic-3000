@@ -28,7 +28,9 @@ static void on_info(const ui_menu_t* m, const ui_menu_item_t* item, const void* 
 }
 
 static void on_open(const ui_menu_t* m, const void* arg) {
+#ifdef EOM_BETA
     ui_menu_add_menu(m, &APPLICATIONS_MENU);
+#endif
     ui_menu_add_menu(m, &EDGING_SETTINGS_MENU);
     ui_menu_add_menu(m, &ORGASM_SETTINGS_MENU);
     ui_menu_add_menu(m, &UI_SETTINGS_MENU);

@@ -19,6 +19,10 @@ typedef void (*ui_menu_item_callback_t
 typedef void (*ui_menu_open_callback_t)(const struct ui_menu* m, UI_MENU_ARG_TYPE arg);
 typedef void (*ui_menu_item_free_callback_t)(void* arg);
 
+typedef struct ui_menu_render_flags {
+    uint8_t translate_title : 1;
+} ui_menu_render_flags_t;
+
 typedef struct ui_menu_item {
     char label[UI_MENU_TITLE_MAX];
     UI_MENU_ARG_TYPE arg;
@@ -41,21 +45,27 @@ typedef struct ui_menu_item_list {
 
 typedef struct ui_menu {
     char title[UI_MENU_TITLE_MAX];
+    ui_menu_render_flags_t flags;
     ui_menu_open_callback_t on_open;
     ui_menu_open_callback_t on_close;
     ui_menu_item_list_t* dynamic_items;
     ui_menu_item_t static_items[];
 } ui_menu_t;
 
-#define STATIC_MENU(title_str, items)                                                              \
-    {                                                                                              \
-        .title = title_str, .on_open = NULL, .on_close = NULL, .dynamic_items = NULL,              \
+#define STATIC_MENU(symbol, title_str, items)                                                      \
+    const ui_menu_t symbol = {                                                                     \
+        .title = title_str,                                                                        \
+        .flags = { .translate_title = 1 },                                                         \
+        .on_open = NULL,                                                                           \
+        .on_close = NULL,                                                                          \
+        .dynamic_items = NULL,                                                                     \
         .static_items = items,                                                                     \
     }
 
 #define DYNAMIC_MENU(symbol, title_str, open_cb)                                                   \
     static ui_menu_item_list_t container = { .first = NULL, .last = NULL, .count = 0 };            \
     const ui_menu_t symbol = { .title = title_str,                                                 \
+                               .flags = { .translate_title = 1 },                                  \
                                .on_open = open_cb,                                                 \
                                .on_close = NULL,                                                   \
                                .dynamic_items = &container,                                        \
