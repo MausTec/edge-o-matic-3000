@@ -1,0 +1,18 @@
+{
+    "CHART": "GRAPHIQUE",
+    "STOP": "ARRÊT",
+    "AUTO": "AUTO",
+    "Manual": "Manuel",
+    "Pres: %s": "Presse",
+    "Sens: %s": "Détection : %s",
+    "Denied": "Refusé",
+    "Edging Settings": "Paramètres de bordure",
+    "Orgasm Settings": "Paramètres d'orgasme",
+    "UI Settings": "Paramètres de l'interface utilisateur",
+    "User Profiles": "Des profils d'utilisateurs",
+    "Networking": "La mise en réseau",
+    "Update": "Mise à jour",
+    "System Info": "Information système",
+    "BACK": "DOS",
+    "ENTER": "ENTRER"
+}
