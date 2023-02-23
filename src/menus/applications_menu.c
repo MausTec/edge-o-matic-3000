@@ -7,7 +7,7 @@
 #include <stdio.h>
 #include <string.h>
 
-static void on_app_load(const ui_menu_t* m, const ui_menu_item_t* item, void* menu_arg) {
+static void on_app_load(const ui_menu_t* m, const ui_menu_item_t* item, UI_MENU_ARG_TYPE menu_arg) {
     if (item == NULL) return;
     const char* path = (const char*)item->arg;
     application_t* app;
@@ -44,7 +44,7 @@ static void populate_apps(const ui_menu_t* m) {
     }
 }
 
-static void on_open(const ui_menu_t* m, const void* arg) {
+static void on_open(const ui_menu_t* m, UI_MENU_ARG_TYPE arg) {
     // ui_menu_add_page(PAGE_EDGING_STATS);
 
     if (eom_hal_get_sd_size_bytes() > 0) {
@@ -55,7 +55,7 @@ static void on_open(const ui_menu_t* m, const void* arg) {
     }
 }
 
-static void on_close(const ui_menu_t* m, const void* arg) {
+static void on_close(const ui_menu_t* m, UI_MENU_ARG_TYPE arg) {
     // TODO: Probably each menu item can hold a pointer to a freer?
     ui_menu_free(m, free);
 }

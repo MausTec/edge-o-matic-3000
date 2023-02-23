@@ -1,12 +1,13 @@
 #include "Hardware.h"
-#include "accessory_driver.h"
 #include "BluetoothDriver.h"
-#include "orgasm_control.h"
+#include "accessory_driver.h"
+#include "assets.h"
 #include "eom-hal.h"
 #include "esp_log.h"
-#include "assets.h"
 #include "esp_timer.h"
+#include "orgasm_control.h"
 #include "polyfill.h"
+
 
 #define min(a, b) ((a) < (b) ? (a) : (b))
 #define max(a, b) ((a) > (b) ? (a) : (b))
@@ -28,9 +29,7 @@ namespace Hardware {
                     }
                     break;
 
-                case EOM_HAL_BUTTON_MENU:
-                    UI.screenshot(NULL, 0);
-                    break;
+                case EOM_HAL_BUTTON_MENU: UI.screenshot(NULL, 0); break;
 
                 default:
                     // noop;
@@ -95,7 +94,7 @@ namespace Hardware {
             if (do_dim || do_off) {
                 if ((!idle && do_dim) || (!standby && do_off)) {
                     // u8g2_SetPowerSave(UI.display_ptr, true);
-                    u8g2_SetContrast(UI.display_ptr, 1);
+                    // u8g2_SetContrast(UI.display_ptr, 1);
 
                     if (do_off) {
                         UI.fadeTo();
@@ -123,7 +122,7 @@ namespace Hardware {
             } else {
                 if (idle || standby) {
                     // u8g2_SetPowerSave(UI.display_ptr, false);
-                    u8g2_SetContrast(UI.display_ptr, 255);
+                    // u8g2_SetContrast(UI.display_ptr, 255);
                     UI.displayOn();
                     UI.render();
                     idle = false;
@@ -139,12 +138,13 @@ namespace Hardware {
         return std::string(serial);
     }
 
-    void setDeviceSerial(const char* serial) { ESP_LOGI(TAG, "E_DEPRECATED"); }
+    void setDeviceSerial(const char* serial) {
+        ESP_LOGI(TAG, "E_DEPRECATED");
+    }
 
     void setMotorSpeed(int speed) {
         int new_speed = min(max(speed, 0), 255);
-        if (new_speed == motor_speed)
-            return;
+        if (new_speed == motor_speed) return;
         motor_speed = new_speed;
 
         eom_hal_set_motor_speed(motor_speed);
@@ -158,16 +158,20 @@ namespace Hardware {
         setMotorSpeed(new_speed);
     }
 
-    int getMotorSpeed() { return motor_speed; }
+    int getMotorSpeed() {
+        return motor_speed;
+    }
 
-    float getMotorSpeedPercent() { return (float)motor_speed / 255.0; }
+    float getMotorSpeedPercent() {
+        return (float)motor_speed / 255.0;
+    }
 
     [[deprecated("Use eom_hal_get_pressure_reading()")]] long getPressure() {
         return eom_hal_get_pressure_reading();
     }
 
-    [[deprecated("Use eom_hal_set_sensor_sensitivity()")]] void
-    setPressureSensitivity(uint8_t value) {
+    [[deprecated("Use eom_hal_set_sensor_sensitivity()")]] void setPressureSensitivity(uint8_t value
+    ) {
         eom_hal_set_sensor_sensitivity(value);
     }
 

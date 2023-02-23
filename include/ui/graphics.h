@@ -26,7 +26,7 @@ typedef enum ui_icon {
     _UI_ICON_MAX,
 } ui_icon_t;
 
-void ui_draw_str_center(u8g2_t* d, uint8_t cx, uint8_t y, const char* str);
+uint8_t ui_draw_str_center(u8g2_t* d, uint8_t cx, uint8_t y, const char* str);
 void ui_draw_button_labels(
     u8g2_t* d, const char* left_str, const char* mid_str, const char* right_str
 );

@@ -5,6 +5,7 @@
 extern "C" {
 #endif
 
+#include "u8g2.h"
 #include <stdint.h>
 
 #define TOAST_MAX 256
@@ -52,6 +53,8 @@ int ui_toast_is_active(void);
  * @return 0 Toast can only be dismissed by code.
  */
 int ui_toast_is_dismissable(void);
+
+void ui_toast_draw_frame(u8g2_t* d, uint8_t margin, uint8_t start_x, uint8_t start_y);
 
 /**
  * @brief Returns the current toast string, if one is set.

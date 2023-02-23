@@ -21,6 +21,14 @@ void ui_menu_cb_open_menu(
     ui_open_menu(menu, NULL);
 }
 
+void ui_menu_cb_open_input(
+    const ui_menu_t* m, const ui_menu_item_t* item, UI_MENU_ARG_TYPE menu_arg
+) {
+    if (item == NULL) return;
+    const ui_input_t* input = (const ui_menu_t*)item->arg;
+    ui_open_input(input, NULL);
+}
+
 // Dynamic menu manipulation
 int ui_menu_add_node(const ui_menu_t* m, ui_menu_item_t* item, UI_MENU_ARG_TYPE arg) {
     if (m == NULL) return 0;
@@ -110,18 +118,29 @@ ui_menu_item_t* ui_menu_add_item(
     return item;
 }
 
-ui_menu_item_t* ui_menu_add_page(const ui_menu_t* m, ui_page_t* page) {
+ui_menu_item_t* ui_menu_add_page(const ui_menu_t* m, const ui_page_t* page) {
     return NULL;
 }
 
-ui_menu_item_t* ui_menu_add_menu(const ui_menu_t* m, ui_menu_t* menu) {
-    if (menu == NULL) return NULL;
+ui_menu_item_t* ui_menu_add_menu(const ui_menu_t* m, const ui_menu_t* menu) {
+    if (m == NULL || menu == NULL) return NULL;
 
     return ui_menu_add_item(
         m,
         menu->flags.translate_title ? _(menu->title) : menu->title,
         ui_menu_cb_open_menu,
         (void*)menu
+    );
+}
+
+ui_menu_item_t* ui_menu_add_input(const ui_menu_t* m, const ui_input_t* input) {
+    if (m == NULL || input == NULL) return NULL;
+
+    return ui_menu_add_item(
+        m,
+        input->flags.translate_title ? _(input->title) : input->title,
+        ui_menu_cb_open_input,
+        (void*)input
     );
 }
 

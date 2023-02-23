@@ -29,16 +29,13 @@ static esp_err_t _store_last_filename(void) {
     nvs_handle_t nvs;
 
     err = nvs_open(NVS_NAMESPACE, NVS_READWRITE, &nvs);
-    if (err != ESP_OK)
-        goto cleanup;
+    if (err != ESP_OK) goto cleanup;
 
     err = nvs_set_str(nvs, NVS_LAST_CONFIG_FILE, Config._filename);
-    if (err != ESP_OK)
-        goto cleanup;
+    if (err != ESP_OK) goto cleanup;
 
     err = nvs_commit(nvs);
-    if (err != ESP_OK)
-        goto cleanup;
+    if (err != ESP_OK) goto cleanup;
 
     ESP_LOGI(TAG, "Set last opened filename to: %s\n", Config._filename);
     nvs_close(nvs);
@@ -46,8 +43,7 @@ static esp_err_t _store_last_filename(void) {
 
 cleanup:
     ESP_LOGW(TAG, "Trouble storing current config filename: %s\n", esp_err_to_name(err));
-    if (nvs)
-        nvs_close(nvs);
+    if (nvs) nvs_close(nvs);
     return err;
 }
 
@@ -56,24 +52,20 @@ esp_err_t config_init(void) {
     nvs_handle_t nvs;
 
     err = nvs_open(NVS_NAMESPACE, NVS_READONLY, &nvs);
-    if (err != ESP_OK)
-        goto defaults;
+    if (err != ESP_OK) goto defaults;
 
     size_t len = CONFIG_PATH_MAX;
     err = nvs_get_str(nvs, NVS_LAST_CONFIG_FILE, Config._filename, &len);
-    if (err != ESP_OK)
-        goto defaults;
+    if (err != ESP_OK) goto defaults;
 
     err = config_load_from_sd(Config._filename, &Config);
-    if (err != ESP_OK)
-        goto defaults;
+    if (err != ESP_OK) goto defaults;
 
     nvs_close(nvs);
     return ESP_OK;
 
 defaults:
-    if (nvs)
-        nvs_close(nvs);
+    if (nvs) nvs_close(nvs);
 
     if (err == ESP_ERR_NVS_NOT_FOUND) {
         char path[CONFIG_PATH_MAX + 1] = { 0 };
@@ -153,6 +145,11 @@ bool get_config_value(const char* option, char* buffer, size_t len) {
     return false;
 }
 
+/**
+ * @brief Enqueue a save after a particular delay. To check or tick, pass -1 for arg.
+ *
+ * @param save_at_ms
+ */
 void config_enqueue_save(long save_at_ms) {
     static long save_at_ms_tick = 0;
 

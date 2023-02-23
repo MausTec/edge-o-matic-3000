@@ -33,9 +33,10 @@ static struct status_icon {
                         .index = -1,
                     } };
 
-void ui_draw_str_center(u8g2_t* d, uint8_t cx, uint8_t y, const char* str) {
+uint8_t ui_draw_str_center(u8g2_t* d, uint8_t cx, uint8_t y, const char* str) {
     u8g2_uint_t width = u8g2_GetUTF8Width(d, str);
     u8g2_DrawUTF8(d, cx - (width / 2), y, str);
+    return width;
 }
 
 void ui_draw_shaded_rect(u8g2_t* d, uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint8_t color) {
@@ -90,9 +91,9 @@ void ui_draw_button_labels(
     u8g2_SetFontPosBaseline(d);
     u8g2_SetFont(d, UI_FONT_SMALL);
 
-    ui_draw_str_center(d, (EOM_DISPLAY_WIDTH / 6) * 1, EOM_DISPLAY_HEIGHT - 1, left_str);
-    ui_draw_str_center(d, (EOM_DISPLAY_WIDTH / 6) * 3, EOM_DISPLAY_HEIGHT - 1, mid_str);
-    ui_draw_str_center(d, (EOM_DISPLAY_WIDTH / 6) * 5, EOM_DISPLAY_HEIGHT - 1, right_str);
+    ui_draw_str_center(d, ((EOM_DISPLAY_WIDTH / 6) * 1) + 0, EOM_DISPLAY_HEIGHT - 1, left_str);
+    ui_draw_str_center(d, ((EOM_DISPLAY_WIDTH / 6) * 3) + 1, EOM_DISPLAY_HEIGHT - 1, mid_str);
+    ui_draw_str_center(d, ((EOM_DISPLAY_WIDTH / 6) * 5) + 2, EOM_DISPLAY_HEIGHT - 1, right_str);
 }
 
 /**
