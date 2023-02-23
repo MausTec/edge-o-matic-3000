@@ -34,6 +34,9 @@ static void handle_button(eom_hal_button_t button, eom_hal_button_event_t event)
     }
 
     if (UI.current_input != NULL) {
+        const ui_input_t* i = UI.current_input;
+        void* arg = UI.current_input_arg;
+        rf = ui_input_handle_button(i, button, event, arg);
     }
 
     else if (UI.menu_history[UI.menu_history_depth] != NULL) {
@@ -60,11 +63,14 @@ static void handle_encoder(int delta) {
     if (ui_toast_is_active()) return;
 
     if (UI.current_input != NULL) {
+        const ui_input_t* i = UI.current_input;
+        void* arg = UI.current_input_arg;
+        rf = ui_input_handle_encoder(i, delta, arg);
     }
 
     else if (UI.menu_history[UI.menu_history_depth] != NULL) {
         const ui_menu_t* m = UI.menu_history[UI.menu_history_depth];
-        void* arg = UI.menu_arg_history[UI.menu_history_depth];
+        const void* arg = UI.menu_arg_history[UI.menu_history_depth];
         rf = ui_menu_handle_encoder(m, delta, arg);
     }
 
@@ -98,7 +104,7 @@ void ui_init(void) {
 }
 
 void ui_open_page(const ui_page_t* p, void* arg) {
-    ui_page_handle_close(p, arg);
+    ui_page_handle_close(UI.current_page, UI.current_page_arg);
 
     UI.current_page = p;
     UI.current_page_arg = arg;
@@ -107,6 +113,27 @@ void ui_open_page(const ui_page_t* p, void* arg) {
         ui_page_handle_open(p, arg);
         UI.force_rerender = RENDER;
     }
+}
+
+void ui_open_input(const ui_input_t* i, void* arg) {
+    ui_input_handle_close(i, arg);
+
+    UI.current_input = i;
+    UI.current_input_arg = arg;
+
+    if (i != NULL) {
+        ui_input_handle_open(i, arg);
+        UI.force_rerender = RENDER;
+    }
+}
+
+void ui_close_input(void) {
+    if (UI.current_input == NULL) return;
+
+    ui_input_handle_close(UI.current_input, UI.current_input_arg);
+    UI.current_input = NULL;
+    UI.current_input_arg = NULL;
+    UI.force_rerender = RENDER;
 }
 
 void ui_open_menu(const ui_menu_t* menu, void* arg) {
@@ -200,7 +227,32 @@ void ui_tick(void) {
     u8g2_SetFont(display, UI_FONT_DEFAULT);
 
     if (UI.current_input != NULL) {
-        rendered = 1;
+        const ui_input_t* i = UI.current_input;
+        void* arg = UI.current_input_arg;
+
+        ui_render_flag_t rf = ui_input_handle_loop(i, arg);
+        if (UI.force_rerender == RENDER) rf = RENDER;
+
+        if (!rendered) {
+            if (rf == RENDER) {
+                u8g2_ClearBuffer(display);
+
+                if (UI.menu_history[UI.menu_history_depth] != NULL) {
+                    ui_menu_handle_render(
+                        UI.menu_history[UI.menu_history_depth],
+                        display,
+                        UI.menu_arg_history[UI.menu_history_depth]
+                    );
+                } else if (UI.current_page != NULL) {
+                    ui_page_handle_render(UI.current_page, display, UI.current_page_arg);
+                }
+
+                ui_input_handle_render(i, display, arg);
+                ui_send_buffer();
+            }
+
+            rendered = 1;
+        }
     }
 
     if (UI.menu_history[UI.menu_history_depth] != NULL) {

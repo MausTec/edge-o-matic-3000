@@ -87,11 +87,12 @@ esp_err_t i18n_load(const char* filename) {
         key = key->next;
     }
 
-    cJSON_free(language);
+    cJSON_Delete(language);
 #endif
     return ESP_OK;
 }
 
+// todo: ensure re-entrant
 void i18n_init(void) {
 #ifndef I18N_USE_CJSON_DICT
     hashmap_init(&dict, 64);
@@ -105,6 +106,14 @@ void i18n_init(void) {
     else {
         language = cJSON_CreateObject();
     }
+#endif
+}
+
+void i18n_deinit(void) {
+#ifndef I18N_USE_CJSON_DICT
+    hashmap_deinit(&dict);
+#else
+    cJSON_Delete(language);
 #endif
 }
 

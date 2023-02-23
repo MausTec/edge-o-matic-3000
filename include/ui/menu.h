@@ -6,6 +6,7 @@ extern "C" {
 #endif
 
 #include "ui/graphics.h"
+#include "ui/input.h"
 #include "ui/page.h"
 
 #define UI_MENU_TITLE_MAX 64
@@ -63,18 +64,23 @@ typedef struct ui_menu {
     }
 
 #define DYNAMIC_MENU(symbol, title_str, open_cb)                                                   \
-    static ui_menu_item_list_t container = { .first = NULL, .last = NULL, .count = 0 };            \
+    static ui_menu_item_list_t symbol##_CONTAINER = { .first = NULL, .last = NULL, .count = 0 };   \
     const ui_menu_t symbol = { .title = title_str,                                                 \
                                .flags = { .translate_title = 1 },                                  \
                                .on_open = open_cb,                                                 \
                                .on_close = NULL,                                                   \
-                               .dynamic_items = &container,                                        \
+                               .dynamic_items = &symbol##_CONTAINER,                               \
                                .static_items = {} }
 
 void ui_menu_cb_open_page(
     const ui_menu_t* m, const ui_menu_item_t* item, UI_MENU_ARG_TYPE menu_arg
 );
+
 void ui_menu_cb_open_menu(
+    const ui_menu_t* m, const ui_menu_item_t* item, UI_MENU_ARG_TYPE menu_arg
+);
+
+void ui_menu_cb_open_input(
     const ui_menu_t* m, const ui_menu_item_t* item, UI_MENU_ARG_TYPE menu_arg
 );
 
@@ -84,8 +90,9 @@ int ui_menu_add_node(const ui_menu_t* m, ui_menu_item_t* node, UI_MENU_ARG_TYPE 
 ui_menu_item_t* ui_menu_add_item(
     const ui_menu_t* m, const char* label, ui_menu_item_callback_t on_select, UI_MENU_ARG_TYPE arg
 );
-ui_menu_item_t* ui_menu_add_page(const ui_menu_t* m, ui_page_t* page);
-ui_menu_item_t* ui_menu_add_menu(const ui_menu_t* m, ui_menu_t* menu);
+ui_menu_item_t* ui_menu_add_page(const ui_menu_t* m, const ui_page_t* page);
+ui_menu_item_t* ui_menu_add_menu(const ui_menu_t* m, const ui_menu_t* menu);
+ui_menu_item_t* ui_menu_add_input(const ui_menu_t* m, const ui_input_t* input);
 void ui_menu_clear(const ui_menu_t* m);
 void ui_menu_free(const ui_menu_t* m, ui_menu_item_free_callback_t free_cb);
 

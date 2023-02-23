@@ -23,4 +23,4 @@ tmp/
 *.code-workspace
 __pycache__/
 
-*.old
+*.old.DS_Store

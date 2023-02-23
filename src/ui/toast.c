@@ -55,6 +55,33 @@ void ui_toast_clear(void) {
     current_toast.blocking = 0;
 }
 
+void ui_toast_draw_frame(u8g2_t* d, uint8_t margin, uint8_t start_x, uint8_t start_y) {
+    u8g2_SetDrawColor(d, 0);
+
+    // Clear Border
+    for (int y = 0; y < EOM_DISPLAY_HEIGHT; y++) {
+        for (int x = 0; x < EOM_DISPLAY_WIDTH; x++) {
+            if ((x + y) % 2 == 0) {
+                u8g2_DrawPixel(d, x, y);
+            }
+        }
+    }
+
+    u8g2_DrawBox(
+        d, start_x, start_y, EOM_DISPLAY_WIDTH - (start_x * 2), EOM_DISPLAY_HEIGHT - (start_y * 2)
+    );
+
+    u8g2_SetDrawColor(d, 1);
+
+    u8g2_DrawFrame(
+        d,
+        start_x + margin,
+        start_y + margin,
+        EOM_DISPLAY_WIDTH - (start_x * 2) - (margin * 2),
+        EOM_DISPLAY_HEIGHT - (start_y * 2) - (margin * 2)
+    );
+}
+
 void ui_toast_render(void) {
     if (current_toast.str[0] == '\0') return;
 
@@ -83,34 +110,7 @@ void ui_toast_render(void) {
     int end_y = EOM_DISPLAY_HEIGHT - start_y;
     int text_start_y = start_y + margin + padding + 1;
 
-    u8g2_SetDrawColor(display, 0);
-
-    // Clear Border
-    for (int y = 0; y < EOM_DISPLAY_HEIGHT; y++) {
-        for (int x = 0; x < EOM_DISPLAY_WIDTH; x++) {
-            if ((x + y) % 2 == 0) {
-                u8g2_DrawPixel(display, x, y);
-            }
-        }
-    }
-
-    u8g2_DrawBox(
-        display,
-        start_x,
-        start_y,
-        EOM_DISPLAY_WIDTH - (start_x * 2),
-        EOM_DISPLAY_HEIGHT - (start_y * 2)
-    );
-
-    u8g2_SetDrawColor(display, 1);
-
-    u8g2_DrawFrame(
-        display,
-        start_x + margin,
-        start_y + margin,
-        EOM_DISPLAY_WIDTH - (start_x * 2) - (margin * 2),
-        EOM_DISPLAY_HEIGHT - (start_y * 2) - (margin * 2)
-    );
+    ui_toast_draw_frame(display, margin, start_x, start_y);
 
     char* str = current_toast.str;
 
