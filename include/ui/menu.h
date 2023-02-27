@@ -10,7 +10,7 @@ extern "C" {
 #include "ui/page.h"
 
 #define UI_MENU_TITLE_MAX 64
-#define UI_MENU_ARG_TYPE const void*
+#define UI_MENU_ARG_TYPE void*
 
 struct ui_menu;
 struct ui_menu_item;
@@ -31,11 +31,13 @@ typedef struct ui_menu_item {
     char option_str[UI_BUTTON_STR_MAX];
     ui_menu_item_callback_t on_select;
     ui_menu_item_callback_t on_option;
+    void (*freer)(void*);
 } ui_menu_item_t;
 
 typedef struct ui_menu_item_node {
     ui_menu_item_t* item;
     struct ui_menu_item_node* next;
+    void (*freer)(void*);
 } ui_menu_item_node_t;
 
 typedef struct ui_menu_item_list {
@@ -86,7 +88,8 @@ void ui_menu_cb_open_input(
 
 // Dynamic menu manipulation
 void ui_menu_add_static_items(const ui_menu_t* m);
-int ui_menu_add_node(const ui_menu_t* m, ui_menu_item_t* node, UI_MENU_ARG_TYPE arg);
+ui_menu_item_node_t*
+ui_menu_add_node(const ui_menu_t* m, ui_menu_item_t* node, UI_MENU_ARG_TYPE arg);
 ui_menu_item_t* ui_menu_add_item(
     const ui_menu_t* m, const char* label, ui_menu_item_callback_t on_select, UI_MENU_ARG_TYPE arg
 );

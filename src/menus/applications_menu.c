@@ -36,7 +36,8 @@ static void populate_apps(const ui_menu_t* m) {
                 char* file = (char*)malloc(strlen(dir->d_name) + strlen(path) + 2);
                 if (file == NULL) break;
                 sprintf(file, "%s/%s", path, dir->d_name);
-                ui_menu_add_item(m, dir->d_name, on_app_load, file);
+                ui_menu_item_t* item = ui_menu_add_item(m, dir->d_name, on_app_load, file);
+                item->freer = free;
             }
         }
 
@@ -53,11 +54,6 @@ static void on_open(const ui_menu_t* m, UI_MENU_ARG_TYPE arg) {
         populate_apps(m);
         ui_toast_clear();
     }
-}
-
-static void on_close(const ui_menu_t* m, UI_MENU_ARG_TYPE arg) {
-    // TODO: Probably each menu item can hold a pointer to a freer?
-    ui_menu_free(m, free);
 }
 
 DYNAMIC_MENU(APPLICATIONS_MENU, "Applications", on_open);

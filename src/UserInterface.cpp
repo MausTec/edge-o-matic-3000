@@ -1,8 +1,8 @@
 #include "UserInterface.h"
-#include "assets/icons.h"
-#include "orgasm_control.h"
 #include "SDHelper.h"
+#include "assets/icons.h"
 #include "esp_log.h"
+#include "orgasm_control.h"
 #include "polyfill.h"
 #include "system/screenshot.h"
 #include "system/websocket_handler.h"
@@ -48,8 +48,9 @@ void UserInterface::drawStatus(const char* s) {
     this->display->print(status);
 }
 
-void UserInterface::drawCompactBar(int x, int y, int width, int value, int maximum, int lowerValue,
-                                   int lowerMaximum) {
+void UserInterface::drawCompactBar(
+    int x, int y, int width, int value, int maximum, int lowerValue, int lowerMaximum
+) {
     // Top Text
     UI.display->setCursor(x + 1, y - 12);
     float pct1 = ((float)value / maximum);
@@ -72,9 +73,9 @@ void UserInterface::drawCompactBar(int x, int y, int width, int value, int maxim
     const int bar_height = 3;
     int marker_1_x =
         std::max(x + 2, std::min((int)map(value, 0, maximum, x + 2, x + width - 2), x + width - 2));
-    int marker_2_x =
-        std::max(x + 2, std::min((int)map(lowerValue, 0, lowerMaximum, x + 2, x + width - 2),
-                                 x + width - 2));
+    int marker_2_x = std::max(
+        x + 2, std::min((int)map(lowerValue, 0, lowerMaximum, x + 2, x + width - 2), x + width - 2)
+    );
 
     // Center line + End
     UI.display->drawLine(x, y, std::max(x, marker_1_x - 3), y, 1);                 // left half
@@ -83,11 +84,19 @@ void UserInterface::drawCompactBar(int x, int y, int width, int value, int maxim
     UI.display->drawLine(x + width, y - bar_height, x + width, y + bar_height, 1); // right bar
 
     // Markers
-    UI.display->fillTriangle(marker_1_x - 2, y - bar_height, marker_1_x + 2, y - bar_height,
-                             marker_1_x, y - 1, 1);
+    UI.display->fillTriangle(
+        marker_1_x - 2, y - bar_height, marker_1_x + 2, y - bar_height, marker_1_x, y - 1, 1
+    );
 
-    u8g2_DrawTriangle(this->display_ptr, marker_2_x - 2, y + bar_height + 1, marker_2_x, y + 1,
-                      marker_2_x + 2, y + bar_height + 1);
+    u8g2_DrawTriangle(
+        this->display_ptr,
+        marker_2_x - 2,
+        y + bar_height + 1,
+        marker_2_x,
+        y + 1,
+        marker_2_x + 2,
+        y + bar_height + 1
+    );
 }
 
 void UserInterface::drawBar(int y, char label, int value, int maximum, int limit, int peak) {
@@ -124,8 +133,7 @@ void UserInterface::drawBar(int y, char label, int value, int maximum, int limit
     if (limit > 0) {
         for (int i = limit_left; i < limit_left + limit_width; i++) {
             for (int j = 0; j < 3; j++) {
-                if ((i + j) % 2 != 0)
-                    continue;
+                if ((i + j) % 2 != 0) continue;
                 UI.display->drawPixel(i, y + 2 + j, 1);
             }
         }
@@ -168,8 +176,9 @@ void UserInterface::drawChartAxes() {
     // X-axis
     this->display->drawLine(CHART_START_X - 1, CHART_END_Y, CHART_END_X, CHART_END_Y, 1);
     for (int i = 0; i < CHART_WIDTH; i += 5) {
-        this->display->drawLine(i + CHART_START_X, CHART_END_Y, i + CHART_START_X, CHART_END_Y + 1,
-                                1);
+        this->display->drawLine(
+            i + CHART_START_X, CHART_END_Y, i + CHART_START_X, CHART_END_Y + 1, 1
+        );
     }
 }
 
@@ -187,13 +196,13 @@ void UserInterface::clearButtons() {
 
 void UserInterface::setButton(uint8_t i, const char* text, ButtonCallback fn) {
     strcpy(buttons[i].text, text);
-    if (fn != nullptr)
-        buttons[i].fn = fn;
+    if (fn != nullptr) buttons[i].fn = fn;
     buttons[i].show = true;
 }
 
-void UserInterface::drawPattern(int start_x, int start_y, int width, int height, int pattern,
-                                int color) {
+void UserInterface::drawPattern(
+    int start_x, int start_y, int width, int height, int pattern, int color
+) {
     for (int x = start_x; x < start_x + width; x++) {
         for (int y = start_y; y < start_y + height; y++) {
             if (!((x + y) % pattern)) {
@@ -258,13 +267,13 @@ void UserInterface::onKeyPress(uint8_t i) {
 
         return;
     } else if (i == 3) {
-        UI.openMenu(&MainMenu);
+        // UI.openMenu(&MainMenu);
         return;
     }
 
-//     if (Page::currentPage != nullptr) {
-//         Page::currentPage->onKeyPress(i);
-//     }
+    //     if (Page::currentPage != nullptr) {
+    //         Page::currentPage->onKeyPress(i);
+    //     }
 }
 
 void UserInterface::onEncoderChange(int value) {
@@ -305,7 +314,8 @@ void UserInterface::drawChart(int peakLimit = 600) {
 
     //         int y1;
     //         if (i > 0) {
-    //             y1 = (CHART_END_Y - map(previousValue, 0, seriesMax, CHART_START_Y, CHART_END_Y) +
+    //             y1 = (CHART_END_Y - map(previousValue, 0, seriesMax, CHART_START_Y, CHART_END_Y)
+    //             +
     //                   CHART_START_Y);
     //         } else {
     //             y1 = y2;
@@ -350,8 +360,7 @@ void UserInterface::fadeTo(uint8_t color, bool half) {
             }
 
             this->display->display();
-            if (!half)
-                delay(200 / increment);
+            if (!half) delay(200 / increment);
         }
     }
 }
@@ -369,8 +378,9 @@ void UserInterface::render() {
     }
 }
 
-void UserInterface::drawIcon(uint8_t icon_idx, const unsigned char icon_graphic[][8], uint8_t status,
-                             long flash_ms) {
+void UserInterface::drawIcon(
+    uint8_t icon_idx, const unsigned char icon_graphic[][8], uint8_t status, long flash_ms
+) {
     UIIcon* icon = &icons[icon_idx];
     uint8_t icon_frame_idx;
 
@@ -391,8 +401,9 @@ void UserInterface::drawIcon(uint8_t icon_idx, const unsigned char icon_graphic[
     if (this->initialized) {
         this->display->fillRect(icon_y(icon_idx), 0, 8, 8, 0);
         if (icon_frame_idx > 0 && icon->show)
-            this->display->drawBitmap(icon_y(icon_idx), 0, icon_graphic[icon_frame_idx - 1], 8, 8,
-                                      1);
+            this->display->drawBitmap(
+                icon_y(icon_idx), 0, icon_graphic[icon_frame_idx - 1], 8, 8, 1
+            );
     }
 }
 
@@ -427,7 +438,9 @@ void UserInterface::drawIcons() {
     drawUpdateIcon();
 }
 
-void UserInterface::screenshot(char* outpath, size_t len) { screenshot_save_to_file(outpath, len); }
+void UserInterface::screenshot(char* outpath, size_t len) {
+    screenshot_save_to_file(outpath, len);
+}
 
 void UserInterface::drawToast() {
     ui_toast_render();
@@ -491,11 +504,12 @@ void UserInterface::toastProgress(std::string message, float progress) {
     toastProgress(message.c_str(), progress);
 }
 
-bool UserInterface::isMenuOpen() { return current_menu != nullptr; }
+bool UserInterface::isMenuOpen() {
+    return current_menu != nullptr;
+}
 
 UIMenu* UserInterface::closeMenu() {
-    if (current_menu == nullptr)
-        return nullptr;
+    if (current_menu == nullptr) return nullptr;
 
     UIMenu* prev = current_menu->close();
     openMenu(prev, false);

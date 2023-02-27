@@ -148,16 +148,18 @@ bool get_config_value(const char* option, char* buffer, size_t len) {
 /**
  * @brief Enqueue a save after a particular delay. To check or tick, pass -1 for arg.
  *
- * @param save_at_ms
+ * @param delay Delay in MS after which to save, to prevent repeated duplicates. 0 to save now, -1
+ * to tick.
  */
-void config_enqueue_save(long save_at_ms) {
-    static long save_at_ms_tick = 0;
+void config_enqueue_save(long delay) {
+    static unsigned long save_at_ms_tick = 0;
+    unsigned long millis = esp_timer_get_time() / 1000UL;
 
-    if (save_at_ms >= 0) {
+    if (delay > 0) {
         // Queue a future save:
-        save_at_ms_tick = save_at_ms > save_at_ms_tick ? save_at_ms : save_at_ms_tick;
-    } else if (save_at_ms < 0) {
-        if (save_at_ms_tick > 0 && save_at_ms_tick < millis()) {
+        save_at_ms_tick = delay > save_at_ms_tick ? delay : save_at_ms_tick;
+    } else {
+        if (delay == 0 || (save_at_ms_tick > 0 && save_at_ms_tick < millis)) {
             if (Config._filename[0] == '\0') {
                 ESP_LOGW(TAG, "Attempt to save config without a _filename!");
                 return;
