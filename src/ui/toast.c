@@ -1,13 +1,12 @@
 #include "ui/toast.h"
-#include "ui/ui.h"
-
 #include "eom-hal.h"
 #include "esp_log.h"
+#include "ui/graphics.h"
+#include "ui/ui.h"
+#include "util/i18n.h"
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
-
-#include "ui/graphics.h"
 
 static const char* TAG = "ui:toast";
 
@@ -139,7 +138,7 @@ void ui_toast_render(void) {
             display,
             EOM_DISPLAY_WIDTH / 2,
             EOM_DISPLAY_HEIGHT - UI_BUTTON_HEIGHT,
-            "Press any key..."
+            _("Press any key...")
         );
     }
 }

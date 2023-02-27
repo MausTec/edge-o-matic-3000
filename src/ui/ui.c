@@ -70,7 +70,7 @@ static void handle_encoder(int delta) {
 
     else if (UI.menu_history[UI.menu_history_depth] != NULL) {
         const ui_menu_t* m = UI.menu_history[UI.menu_history_depth];
-        const void* arg = UI.menu_arg_history[UI.menu_history_depth];
+        void* arg = UI.menu_arg_history[UI.menu_history_depth];
         rf = ui_menu_handle_encoder(m, delta, arg);
     }
 

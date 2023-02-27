@@ -25,19 +25,20 @@ void ui_menu_cb_open_input(
     const ui_menu_t* m, const ui_menu_item_t* item, UI_MENU_ARG_TYPE menu_arg
 ) {
     if (item == NULL) return;
-    const ui_input_t* input = (const ui_menu_t*)item->arg;
+    const ui_input_t* input = (const ui_input_t*)item->arg;
     ui_open_input(input, NULL);
 }
 
 // Dynamic menu manipulation
-int ui_menu_add_node(const ui_menu_t* m, ui_menu_item_t* item, UI_MENU_ARG_TYPE arg) {
-    if (m == NULL) return 0;
+ui_menu_item_node_t*
+ui_menu_add_node(const ui_menu_t* m, ui_menu_item_t* item, UI_MENU_ARG_TYPE arg) {
+    if (m == NULL) return NULL;
 
     ui_menu_item_list_t* list = m->dynamic_items;
-    if (list == NULL) return 0;
+    if (list == NULL) return NULL;
 
     ui_menu_item_node_t* node = (ui_menu_item_node_t*)malloc(sizeof(ui_menu_item_node_t));
-    if (node == NULL) return 0;
+    if (node == NULL) return NULL;
 
     node->item = item;
     node->next = NULL;
@@ -51,38 +52,38 @@ int ui_menu_add_node(const ui_menu_t* m, ui_menu_item_t* item, UI_MENU_ARG_TYPE 
     }
 
     list->count++;
-    return 1;
+    return node;
 }
 
 void ui_menu_clear(const ui_menu_t* m) {
     if (m == NULL) return;
+    ESP_LOGD(TAG, "ui_menu_clear(\"%s\")", m->title);
 
     ui_menu_item_list_t* list = m->dynamic_items;
     if (list == NULL) return;
 
     while (list->first != NULL) {
         ui_menu_item_node_t* node = list->first;
+
+        if (node->item && node->item->freer != NULL) {
+            ESP_LOGD(TAG, "node->item->freer(%p) \"%s\"", node->item->arg, (char*)node->item->arg);
+            node->item->freer(node->item->arg);
+            node->item->arg = NULL;
+        }
+
         list->first = node->next;
+        if (node->freer != NULL) {
+            ESP_LOGD(TAG, "node->freer(%p)", node->item);
+            node->freer(node->item);
+        }
+
+        ESP_LOGD(TAG, "free(%p)", node);
         free(node);
     }
 
-    list->first = NULL;
     list->last = NULL;
     list->count = 0;
-}
-
-void ui_menu_free(const ui_menu_t* m, ui_menu_item_free_callback_t free_cb) {
-    if (m == NULL) return;
-
-    ui_menu_item_list_t* list = m->dynamic_items;
-    if (list == NULL) return;
-
-    ui_menu_item_node_t* node = list->first;
-
-    while (node != NULL) {
-        if (node->item) free_cb(node->item->arg);
-        node = node->next;
-    }
+    ESP_LOGD(TAG, "Menu cleared.");
 }
 
 void ui_menu_handle_close(const ui_menu_t* m, UI_MENU_ARG_TYPE arg) {
@@ -109,12 +110,16 @@ ui_menu_item_t* ui_menu_add_item(
     item->on_option = NULL;
     item->option_str[0] = '\0';
     item->select_str[0] = '\0';
+    item->freer = NULL;
 
-    if (!ui_menu_add_node(m, item, arg)) {
+    ui_menu_item_node_t* node = ui_menu_add_node(m, item, arg);
+
+    if (node == NULL) {
         free(item);
         return NULL;
     }
 
+    node->freer = free;
     return item;
 }
 

@@ -3,6 +3,7 @@
 #include "config.h"
 #include "esp_err.h"
 #include "esp_log.h"
+#include "util/fs.h"
 #include <stdio.h>
 
 static const char* TAG = "i18n";
@@ -14,47 +15,13 @@ static cJSON* language = NULL;
 static hashmap_t* dict;
 #endif
 
-char* file_read(const char* path) {
-    FILE* f = fopen(path, "r");
-    if (!f) {
-        ESP_LOGW(TAG, "File does not exist: %s", path);
-        return NULL;
-    }
-
-    size_t fsize;
-    char* buffer;
-    size_t result;
-
-    fseek(f, 0, SEEK_END);
-    fsize = ftell(f);
-    rewind(f);
-
-    buffer = (char*)malloc(fsize + 1);
-    if (!buffer) {
-        fclose(f);
-        ESP_LOGE(TAG, "Failed to allocate memory for file: %s", path);
-        return NULL;
-    }
-
-    result = fread(buffer, 1, fsize, f);
-    ESP_LOGD(TAG, "Read %d bytes from %s", result, path);
-    buffer[result] = '\0';
-    fclose(f);
-    return buffer;
-}
-
-size_t file_write(const char* path, const char* data) {
-    ESP_LOGD(TAG, "Write %s:\n%s", path, data);
-    return 0;
-}
-
 esp_err_t i18n_load(const char* filename) {
     char full_path[CONFIG_PATH_MAX];
     snprintf(full_path, CONFIG_PATH_MAX, "/sdcard/%s", filename);
 
     ESP_LOGI(TAG, "Loading language dictionary: %s", full_path);
 
-    char* buffer = file_read(full_path);
+    char* buffer = fs_read_file(full_path);
     if (buffer == NULL) return ESP_ERR_NOT_FOUND;
     ESP_LOGD(TAG, "Parsing Language Dict: %s", buffer);
 
@@ -93,13 +60,15 @@ esp_err_t i18n_load(const char* filename) {
 }
 
 // todo: ensure re-entrant
-void i18n_init(void) {
+esp_err_t i18n_init(void) {
+    esp_err_t err = ESP_OK;
+
 #ifndef I18N_USE_CJSON_DICT
     hashmap_init(&dict, 64);
 #endif
 
     if (Config.language_file_name[0] != '\0') {
-        i18n_load(Config.language_file_name);
+        err = i18n_load(Config.language_file_name);
     }
 
 #ifdef I18N_USE_CJSON_DICT
@@ -107,6 +76,8 @@ void i18n_init(void) {
         language = cJSON_CreateObject();
     }
 #endif
+
+    return err;
 }
 
 void i18n_deinit(void) {
@@ -121,7 +92,7 @@ void i18n_dump(void) {
     if (Config.language_file_name[0] == '\0') return;
 #ifdef I18N_USE_CJSON_DICT
     char* buffer = cJSON_Print(language);
-    file_write(Config.language_file_name, buffer);
+    fs_write_file(Config.language_file_name, buffer);
     cJSON_free(buffer);
 #endif
 }
@@ -129,14 +100,19 @@ void i18n_dump(void) {
 void i18n_miss(const char* key) {
 #ifdef I18N_USE_CJSON_DICT
     cJSON_AddStringToObject(language, key, "");
-    ESP_LOGD(TAG, "I18N MISS: \"%s\"", key);
-    i18n_dump();
+
+    if (Config.language_file_name[0] != '\0') {
+        ESP_LOGW(TAG, "I18N MISS: \"%s\"", key);
+        i18n_dump();
+    }
 #else
     hashmap_insert(dict, key, "");
 #endif
 }
 
 const char* _(const char* str) {
+    if (Config.language_file_name[0] == '\0') return str;
+
 #ifdef I18N_USE_CJSON_DICT
     cJSON* obj = cJSON_GetObjectItem(language, str);
     const char* value = obj == NULL ? NULL : obj->valuestring;
