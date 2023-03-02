@@ -25,6 +25,7 @@ typedef enum ui_input_type {
 
 typedef struct ui_input {
     const char* title;
+    const char* help;
     ui_input_render_flags_t flags;
     ui_input_type_t type;
 } ui_input_t;
@@ -47,26 +48,31 @@ typedef struct ui_input_numeric {
     {                                                                                              \
         .input = { .title = titlestr,                                                              \
                    .flags = { .translate_title = 1 },                                              \
+                   .help = NULL,                                                                   \
                    .type = INPUT_TYPE_NUMERIC },                                                   \
         .unit = unitstr, .value = pValue, .min = INT_MIN, .max = INT_MAX, .step = 1,               \
         .on_save = saveCb                                                                          \
     }
 
+#define UnsignedInputValues(titlestr, pValue, unitstr, saveCb)                                     \
+    .input = { .title = titlestr,                                                                  \
+               .flags = { .translate_title = 1 },                                                  \
+               .help = NULL,                                                                       \
+               .type = INPUT_TYPE_NUMERIC },                                                       \
+    .unit = unitstr, .value = pValue, .min = 0, .max = INT_MAX, .step = 1, .on_save = saveCb
+
 #define UnsignedInput(titlestr, pValue, unitstr, saveCb)                                           \
-    {                                                                                              \
-        .input = { .title = titlestr,                                                              \
-                   .flags = { .translate_title = 1 },                                              \
-                   .type = INPUT_TYPE_NUMERIC },                                                   \
-        .unit = unitstr, .value = pValue, .min = 0, .max = INT_MAX, .step = 1, .on_save = saveCb   \
-    }
+    { UnsignedInputValues(titlestr, pValue, unitstr, saveCb) }
+
+#define ByteInputValues(titlestr, pValue, unitstr, saveCb)                                         \
+    .input = { .title = titlestr,                                                                  \
+               .flags = { .translate_title = 1 },                                                  \
+               .help = NULL,                                                                       \
+               .type = INPUT_TYPE_NUMERIC },                                                       \
+    .unit = unitstr, .value = pValue, .min = 0, .max = 0xFF, .step = 1, .on_save = saveCb
 
 #define ByteInput(titlestr, pValue, unitstr, saveCb)                                               \
-    {                                                                                              \
-        .input = { .title = titlestr,                                                              \
-                   .flags = { .translate_title = 1 },                                              \
-                   .type = INPUT_TYPE_NUMERIC },                                                   \
-        .unit = unitstr, .value = pValue, .min = 0, .max = 0xFF, .step = 1, .on_save = saveCb      \
-    }
+    { ByteInputValues(titlestr, pValue, unitstr, saveCb) }
 
 // Toggle Input
 
@@ -76,8 +82,16 @@ typedef struct ui_input_toggle {
 
 // Select Inputs
 
+typedef struct ui_input_select_option {
+    const char* label;
+    int ival;
+    void* value;
+} ui_input_select_option_t;
+
 typedef struct ui_input_select {
     ui_input_t input;
+    ui_input_select_option_t** options;
+    size_t option_count;
 } ui_input_select_t;
 
 typedef struct ui_input_multiselect {

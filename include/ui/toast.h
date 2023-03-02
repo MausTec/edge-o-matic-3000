@@ -13,15 +13,39 @@ extern "C" {
 /**
  * @brief Adds a toast to the toasty queue.
  *
+ * This will format and copy the string, so you can free up your buffer when you're done.
+ *
  * @param fmt
  * @param ...
  */
 void ui_toast(const char* fmt, ...);
 
+/**
+ * @brief Toast option for longer text fields. Your buffer, your problem.
+ *
+ * This will automatically word wrap as it renders, and allow the user to scroll the toast message.
+ * This doesn't copy anything to an internal buffer, so you are responsible for the lifecycle of the
+ * buffer passed.
+ *
+ * @param msg
+ */
+void ui_toast_multiline(const char* msg);
+
+/**
+ * @brief Appends text to the current toast.
+ *
+ * This will format and copy the string, so you can free up your buffer when you're done.
+ *
+ * @param fmt
+ * @param ...
+ */
 void ui_toast_append(const char* fmt, ...);
 
 /**
- * @brief Adds a toast to the toasty queue which cannot be dismissed.
+ * @brief Adds a toast to the toasty queue which cannot be dismissed. Renders immediately.
+ *
+ * This will format and copy the string, so you can free up your buffer when you're done.
+ * This forces a rerender in the current task to display the toast immediately.
  *
  * @param fmt
  * @param ...
@@ -54,10 +78,21 @@ int ui_toast_is_active(void);
  */
 int ui_toast_is_dismissable(void);
 
+/**
+ * @brief Draws the toast frame and shadow, useful for creating other dialog boxes, like inputs.
+ *
+ * @param d
+ * @param margin
+ * @param start_x
+ * @param start_y
+ */
 void ui_toast_draw_frame(u8g2_t* d, uint8_t margin, uint8_t start_x, uint8_t start_y);
 
 /**
  * @brief Returns the current toast string, if one is set.
+ *
+ * This will return either the internal buffer for a normal toast, or the multiline buffer for
+ * a multiline toast.
  *
  * @return const char* Will be an empty string if no toast is set.
  */

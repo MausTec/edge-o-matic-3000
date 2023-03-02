@@ -3,6 +3,7 @@
 #include "ui/toast.h"
 #include "ui/ui.h"
 #include "util/i18n.h"
+#include <math.h>
 #include <stdio.h>
 
 static int _numeric_value = 0;
@@ -36,6 +37,12 @@ ui_render_flag_t ui_input_handle_button(
         }
 
         case EOM_HAL_BUTTON_MID: {
+            if (i->help != NULL && i->help[0] != '\0') {
+                // If help needs to be translated, it will happen here, however, that's a big ask.
+                ui_toast_multiline(i->help);
+                return RENDER;
+            }
+
             return PASS;
         }
 
@@ -127,17 +134,34 @@ void _render_numeric(const ui_input_numeric_t* i, u8g2_t* d, UI_INPUT_ARG_TYPE a
     );
 
     if (i->unit != NULL && i->unit[0] != '\0') {
-        u8g2_SetFont(d, UI_FONT_SMALL);
-        ui_draw_str_center(
-            d,
-            EOM_DISPLAY_WIDTH / 2,
-            value_y + 18,
-            i->input.flags.translate_title ? _(i->unit) : i->unit
-        );
+        if (i->unit[0] == '%') {
+            float max_w = EOM_DISPLAY_WIDTH - 24;
+            float perc = i->max > 0 ? (float)_numeric_value / i->max : 1.0f;
+
+            if (perc < 0.0f)
+                perc = 0.0f;
+            else if (perc > 1.0f)
+                perc = 1.0f;
+
+            u8g2_DrawHLine(d, 12, value_y + 19 + 2, max_w);
+            u8g2_DrawBox(d, 12, value_y + 19, floor(max_w * perc), 5);
+        } else {
+            u8g2_SetFont(d, UI_FONT_SMALL);
+            ui_draw_str_center(
+                d,
+                EOM_DISPLAY_WIDTH / 2,
+                value_y + 18,
+                i->input.flags.translate_title ? _(i->unit) : i->unit
+            );
+        }
     }
 
-    ui_draw_button_labels(d, _("BACK"), "", _("SAVE"));
-    ui_draw_button_disable(d, 0b010);
+    if (i->input.help != NULL && i->input.help[0] != '\0') {
+        ui_draw_button_labels(d, _("BACK"), _("HELP"), _("SAVE"));
+    } else {
+        ui_draw_button_labels(d, _("BACK"), "", _("SAVE"));
+        ui_draw_button_disable(d, 0b010);
+    }
 }
 
 void ui_input_handle_render(const ui_input_t* i, u8g2_t* d, UI_INPUT_ARG_TYPE arg) {
