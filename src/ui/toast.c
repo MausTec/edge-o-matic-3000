@@ -10,8 +10,11 @@
 
 static const char* TAG = "ui:toast";
 
+#define UI_TOAST_LINE_WIDTH 20
+
 static struct {
     char str[TOAST_MAX + 1];
+    const char* multiline_msg;
     uint8_t blocking;
 } current_toast;
 
@@ -23,6 +26,12 @@ void ui_toast(const char* fmt, ...) {
 
     ESP_LOGD(TAG, "Toast: \"%s\", non-blocking", current_toast.str);
 
+    current_toast.blocking = 0;
+}
+
+void ui_toast_multiline(const char* msg) {
+    ui_toast_clear();
+    current_toast.multiline_msg = msg;
     current_toast.blocking = 0;
 }
 
@@ -51,6 +60,7 @@ void ui_toast_blocking(const char* fmt, ...) {
 
 void ui_toast_clear(void) {
     current_toast.str[0] = '\0';
+    current_toast.multiline_msg = NULL;
     current_toast.blocking = 0;
 }
 
@@ -82,7 +92,7 @@ void ui_toast_draw_frame(u8g2_t* d, uint8_t margin, uint8_t start_x, uint8_t sta
 }
 
 void ui_toast_render(void) {
-    if (current_toast.str[0] == '\0') return;
+    if (!ui_toast_is_active()) return;
 
     // Line width = 18 char
     const int padding = 2;
@@ -95,10 +105,15 @@ void ui_toast_render(void) {
     u8g2_SetFontPosTop(display);
 
     int text_lines = 1;
-    for (int i = 0; i < strlen(current_toast.str); i++) {
-        if (current_toast.str[i] == '\n') {
-            text_lines++;
+
+    if (current_toast.multiline_msg == NULL) {
+        for (int i = 0; i < strlen(current_toast.str); i++) {
+            if (current_toast.str[i] == '\n') {
+                text_lines++;
+            }
         }
+    } else {
+        text_lines = 4;
     }
 
     // TODO: This is a clusterfuck of math, and on odd lined text is off-by-one
@@ -111,21 +126,64 @@ void ui_toast_render(void) {
 
     ui_toast_draw_frame(display, margin, start_x, start_y);
 
-    char* str = current_toast.str;
+    if (current_toast.multiline_msg == NULL) {
+        char* str = current_toast.str;
 
-    while (str != NULL && *str != '\0') {
-        char* tok = strchr(str, '\n');
-        if (tok != NULL) *tok = '\0';
+        while (str != NULL && *str != '\0') {
+            char* tok = strchr(str, '\n');
+            if (tok != NULL) *tok = '\0';
 
-        u8g2_DrawUTF8(display, start_x + margin + padding + 1, text_start_y, str);
+            u8g2_DrawUTF8(display, start_x + margin + padding + 1, text_start_y, str);
 
-        if (tok != NULL) {
-            *tok = '\n';
-            str = tok + 1;
-            text_start_y += 7 + padding;
-        } else {
-            break;
+            if (tok != NULL) {
+                *tok = '\n';
+                str = tok + 1;
+                text_start_y += 7 + padding;
+            } else {
+                break;
+            }
         }
+    } else {
+        const char* str = current_toast.multiline_msg;
+        char line[UI_TOAST_LINE_WIDTH + 1];
+
+        size_t idx = 0;
+        size_t space_idx = 0;
+        uint8_t col = 0;
+
+        do {
+            if (str[idx] == ' ') {
+                space_idx = idx;
+            }
+
+            if (str[idx] == '\n') {
+                space_idx = idx;
+                line[col] = '\0';
+                col = UI_TOAST_LINE_WIDTH;
+            }
+
+            else {
+                line[col] = str[idx];
+                line[col + 1] = '\0';
+                col++;
+            }
+
+            if (str[idx + 1] == '\0') {
+                space_idx = idx;
+                line[col] = '\0';
+                col = UI_TOAST_LINE_WIDTH;
+            }
+
+            if (col >= UI_TOAST_LINE_WIDTH) {
+                line[col - (idx - space_idx)] = '\0';
+                u8g2_DrawUTF8(display, start_x + margin + padding + 1, text_start_y, line);
+                text_start_y += 7 + padding;
+                col = 0;
+                idx = space_idx;
+            }
+
+            idx++;
+        } while (str[idx] != '\0');
     }
 
     if (!current_toast.blocking) {
@@ -144,7 +202,7 @@ void ui_toast_render(void) {
 }
 
 int ui_toast_is_active(void) {
-    return current_toast.str[0] != '\0';
+    return current_toast.multiline_msg != NULL || current_toast.str[0] != '\0';
 }
 
 int ui_toast_is_dismissable(void) {
@@ -152,5 +210,5 @@ int ui_toast_is_dismissable(void) {
 }
 
 const char* ui_toast_get_str(void) {
-    return current_toast.str;
+    return current_toast.multiline_msg == NULL ? current_toast.str : current_toast.multiline_msg;
 }

@@ -42,7 +42,7 @@ static void on_language_open(const ui_menu_t* m, UI_MENU_ARG_TYPE arg) {
 
 DYNAMIC_MENU(UI_LANGUAGE_MENU, "Language", on_language_open);
 
-static void on_config_save(int value, int final, UI_MENU_ARG_TYPE* arg) {
+void on_config_save(int value, int final, UI_MENU_ARG_TYPE* arg) {
     if (final) {
         ui_toast(_("Saved!"));
         config_enqueue_save(0);

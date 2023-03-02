@@ -165,7 +165,7 @@ void config_enqueue_save(long delay) {
                 return;
             }
 
-            ESP_LOGI(TAG, "Saving now from future save queue...\n");
+            ESP_LOGI(TAG, "Saving now from future save queue...");
             config_save_to_sd(Config._filename, &Config);
             api_broadcast_config();
             save_at_ms_tick = 0;

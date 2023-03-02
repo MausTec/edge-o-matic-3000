@@ -23,9 +23,16 @@ enum _config_def_operation {
 };
 
 #define CONFIG_DEFS                                                                                \
-    bool _config_defs(enum _config_def_operation operation, cJSON* root, config_t* cfg,            \
-                      const char* key, const char* in_val, char* out_val, size_t len,              \
-                      bool* restart_required)
+    bool _config_defs(                                                                             \
+        enum _config_def_operation operation,                                                      \
+        cJSON* root,                                                                               \
+        config_t* cfg,                                                                             \
+        const char* key,                                                                           \
+        const char* in_val,                                                                        \
+        char* out_val,                                                                             \
+        size_t len,                                                                                \
+        bool* restart_required                                                                     \
+    )
 
 #define CFG_STRING(name, default)                                                                  \
     {                                                                                              \
@@ -33,19 +40,18 @@ enum _config_def_operation {
             if (operation == CFG_SET || operation == CFG_MERGE) {                                  \
                 cJSON* item = cJSON_GetObjectItem(root, #name);                                    \
                 if (item != NULL || operation == CFG_SET)                                          \
-                    strncpy(cfg->name, item == NULL ? default : item->valuestring,                 \
-                            sizeof(cfg->name));                                                    \
+                    strncpy(                                                                       \
+                        cfg->name, item == NULL ? default : item->valuestring, sizeof(cfg->name)   \
+                    );                                                                             \
             } else {                                                                               \
                 cJSON_AddStringToObject(root, #name, cfg->name);                                   \
             }                                                                                      \
         } else if (key != NULL && !strcasecmp(key, #name)) {                                       \
             if (operation == CFG_GET) {                                                            \
-                if (out_val != NULL)                                                               \
-                    strlcpy(out_val, cfg->name, len);                                              \
+                if (out_val != NULL) strlcpy(out_val, cfg->name, len);                             \
                 return true;                                                                       \
             } else {                                                                               \
-                if (in_val != NULL)                                                                \
-                    strlcpy(cfg->name, in_val, sizeof(cfg->name));                                 \
+                if (in_val != NULL) strlcpy(cfg->name, in_val, sizeof(cfg->name));                 \
                 return true;                                                                       \
             }                                                                                      \
         }                                                                                          \
@@ -64,12 +70,10 @@ enum _config_def_operation {
             }                                                                                      \
         } else if (key != NULL && !strcasecmp(key, #name)) {                                       \
             if (operation == CFG_GET) {                                                            \
-                if (out_val != NULL)                                                               \
-                    snprintf(out_val, len, "%d", cfg->name);                                       \
+                if (out_val != NULL) snprintf(out_val, len, "%d", cfg->name);                      \
                 return true;                                                                       \
             } else {                                                                               \
-                if (in_val != NULL)                                                                \
-                    cfg->name = atoi(in_val);                                                      \
+                if (in_val != NULL) cfg->name = atoi(in_val);                                      \
                 return true;                                                                       \
             }                                                                                      \
         }                                                                                          \
@@ -87,12 +91,10 @@ enum _config_def_operation {
             }                                                                                      \
         } else if (key != NULL && !strcasecmp(key, #name)) {                                       \
             if (operation == CFG_GET) {                                                            \
-                if (out_val != NULL)                                                               \
-                    snprintf(out_val, len, "%d", (int)cfg->name);                                  \
+                if (out_val != NULL) snprintf(out_val, len, "%d", (int)cfg->name);                 \
                 return true;                                                                       \
             } else {                                                                               \
-                if (in_val != NULL)                                                                \
-                    cfg->name = (type)atoi(in_val);                                                \
+                if (in_val != NULL) cfg->name = (type)atoi(in_val);                                \
                 return true;                                                                       \
             }                                                                                      \
         }                                                                                          \
@@ -110,12 +112,10 @@ enum _config_def_operation {
             }                                                                                      \
         } else if (key != NULL && !strcasecmp(key, #name)) {                                       \
             if (operation == CFG_GET) {                                                            \
-                if (out_val != NULL)                                                               \
-                    strlcat(out_val, cfg->name ? "true" : "false", len);                           \
+                if (out_val != NULL) strlcat(out_val, cfg->name ? "true" : "false", len);          \
                 return true;                                                                       \
             } else {                                                                               \
-                if (in_val != NULL)                                                                \
-                    cfg->name = atob(in_val);                                                      \
+                if (in_val != NULL) cfg->name = atob(in_val);                                      \
                 return true;                                                                       \
             }                                                                                      \
         }                                                                                          \
