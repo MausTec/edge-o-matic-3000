@@ -88,15 +88,29 @@ typedef struct ui_input_select_option {
     void* value;
 } ui_input_select_option_t;
 
+typedef void (*ui_input_select_save_cb
+)(const ui_input_select_option_t* value, int final, UI_INPUT_ARG_TYPE arg);
+
 typedef struct ui_input_select {
     ui_input_t input;
     ui_input_select_option_t** options;
     size_t option_count;
+    ui_input_select_save_cb on_save;
 } ui_input_select_t;
 
 typedef struct ui_input_multiselect {
     ui_input_select_t select;
 } ui_input_multiselect_t;
+
+#define SelectInputValues(titlestr, pValue, pOptions, nOptions, saveCb)                            \
+    .input = { .title = titlestr,                                                                  \
+               .flags = { .translate_title = 1 },                                                  \
+               .help = NULL,                                                                       \
+               .type = INPUT_TYPE_SELECT },                                                        \
+    .options = pOptions, .option_count = nOptions, .on_save = saveCb
+
+#define SelectInput(titlestr, pValue, pOptions, nOptions, saveCb)                                  \
+    { SelectInputValues(titlestr, pValue, pOptions, nOptions, saveCb) }
 
 // Text Input
 
