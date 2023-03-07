@@ -78,7 +78,19 @@ typedef struct ui_input_numeric {
 
 typedef struct ui_input_toggle {
     ui_input_t input;
+    int* value;
+    ui_input_numeric_save_cb on_save;
 } ui_input_toggle_t;
+
+#define ToggleInputValues(titlestr, pValue, saveCb)                                                \
+    .input = { .title = titlestr,                                                                  \
+               .flags = { .translate_title = 1 },                                                  \
+               .help = NULL,                                                                       \
+               .type = INPUT_TYPE_TOGGLE },                                                        \
+    .value = pValue, .on_save = saveCb
+
+#define ToggleInput(titlestr, pValue, saveCb)                                                      \
+    { ToggleInputValues(titlestr, pValue, saveCb) }
 
 // Select Inputs
 

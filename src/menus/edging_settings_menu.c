@@ -3,7 +3,7 @@
 #include "ui/menu.h"
 #include "util/unit_str.h"
 
-void on_config_save(int value, int final, UI_MENU_ARG_TYPE* arg);
+void on_config_save(int value, int final, UI_MENU_ARG_TYPE arg);
 
 static const ui_input_select_option_t vibration_modes[] = {
     {

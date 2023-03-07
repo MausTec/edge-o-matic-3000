@@ -18,6 +18,13 @@ static void _set_value(const ui_input_t* i, int save, UI_INPUT_ARG_TYPE arg) {
         break;
     }
 
+    case INPUT_TYPE_TOGGLE: {
+        ui_input_toggle_t* input = (ui_input_toggle_t*)i;
+        if (save) *(input->value) = _numeric_value;
+        if (input->on_save != NULL) input->on_save(_numeric_value, save, arg);
+        break;
+    }
+
     default: return;
     }
 }
@@ -76,6 +83,20 @@ ui_render_flag_t ui_input_handle_encoder(const ui_input_t* i, int delta, UI_INPU
         return old_value == _numeric_value ? NORENDER : RENDER;
     }
 
+    case INPUT_TYPE_TOGGLE: {
+        int old_value = _numeric_value;
+        ui_input_toggle_t* input = (ui_input_toggle_t*)i;
+
+        if (delta < 0) {
+            _numeric_value = 0;
+        } else if (delta > 0) {
+            _numeric_value = 1;
+        }
+
+        if (input->on_save != NULL) input->on_save(_numeric_value, 0, arg);
+        return old_value == _numeric_value ? NORENDER : RENDER;
+    }
+
     default: return PASS;
     }
 
@@ -88,6 +109,12 @@ void ui_input_handle_open(const ui_input_t* i, UI_INPUT_ARG_TYPE arg) {
     switch (i->type) {
     case INPUT_TYPE_NUMERIC: {
         ui_input_numeric_t* input = (ui_input_numeric_t*)i;
+        _numeric_value = *input->value;
+        break;
+    }
+
+    case INPUT_TYPE_TOGGLE: {
+        ui_input_toggle_t* input = (ui_input_toggle_t*)i;
         _numeric_value = *input->value;
         break;
     }
@@ -155,12 +182,29 @@ void _render_numeric(const ui_input_numeric_t* i, u8g2_t* d, UI_INPUT_ARG_TYPE a
             );
         }
     }
+}
 
-    if (i->input.help != NULL && i->input.help[0] != '\0') {
-        ui_draw_button_labels(d, _("BACK"), _("HELP"), _("SAVE"));
+void _render_toggle(const ui_input_toggle_t* i, u8g2_t* d, UI_INPUT_ARG_TYPE arg) {
+    u8g2_SetFont(d, UI_FONT_DEFAULT);
+    u8g2_SetFontPosCenter(d);
+    const uint8_t value_y = 36;
+
+    ui_draw_str_center(d, (EOM_DISPLAY_WIDTH / 2) - 32, value_y, _("Off"));
+    ui_draw_str_center(d, (EOM_DISPLAY_WIDTH / 2) + 32, value_y, _("On"));
+
+    u8g2_DrawRFrame(d, (EOM_DISPLAY_WIDTH / 2) - 8, value_y - 3, 16, 6, 2);
+
+    if (_numeric_value == 0) {
+        u8g2_SetDrawColor(d, 0);
+        u8g2_DrawRFrame(d, (EOM_DISPLAY_WIDTH / 2) - 11, value_y - 5, 10, 10, 4);
+        u8g2_SetDrawColor(d, 1);
+        u8g2_DrawRBox(d, (EOM_DISPLAY_WIDTH / 2) - 10, value_y - 4, 8, 8, 3);
     } else {
-        ui_draw_button_labels(d, _("BACK"), "", _("SAVE"));
-        ui_draw_button_disable(d, 0b010);
+        u8g2_DrawFrame(d, (EOM_DISPLAY_WIDTH / 2) - 6, value_y - 1, 12, 2);
+        u8g2_SetDrawColor(d, 0);
+        u8g2_DrawRFrame(d, (EOM_DISPLAY_WIDTH / 2) + 1, value_y - 5, 10, 10, 4);
+        u8g2_SetDrawColor(d, 1);
+        u8g2_DrawRBox(d, (EOM_DISPLAY_WIDTH / 2) + 2, value_y - 4, 8, 8, 3);
     }
 }
 
@@ -184,7 +228,20 @@ void ui_input_handle_render(const ui_input_t* i, u8g2_t* d, UI_INPUT_ARG_TYPE ar
         break;
     }
 
+    case INPUT_TYPE_TOGGLE: {
+        ui_input_toggle_t* input = (ui_input_toggle_t*)i;
+        _render_toggle(input, d, arg);
+        break;
+    }
+
     default: return;
+    }
+
+    if (i->help != NULL && i->help[0] != '\0') {
+        ui_draw_button_labels(d, _("BACK"), _("HELP"), _("SAVE"));
+    } else {
+        ui_draw_button_labels(d, _("BACK"), "", _("SAVE"));
+        ui_draw_button_disable(d, 0b010);
     }
 }
 

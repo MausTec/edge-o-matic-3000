@@ -16,7 +16,6 @@
 // Legacy / C++
 #include "BluetoothServer.h"
 #include "Console.h"
-#include "Hardware.h"
 #include "UserInterface.h"
 #include "accessory_driver.h"
 #include "api/broadcast.h"
@@ -57,7 +56,6 @@ static void orgasm_task(void* args) {
 static void hal_task(void* args) {
     // for (;;) {
     eom_hal_tick();
-    Hardware::tick();
 
     // vTaskDelay(1);
     // }
@@ -145,6 +143,8 @@ extern "C" void app_main() {
     if (Config.wifi_on) {
         if (ESP_OK == wifi_manager_connect_to_ap(Config.wifi_ssid, Config.wifi_key)) {
             ui_set_icon(UI_ICON_WIFI, WIFI_ICON_WEAK_SIGNAL);
+        } else {
+            ui_set_icon(UI_ICON_WIFI, WIFI_ICON_DISCONNECTED);
         }
     }
 

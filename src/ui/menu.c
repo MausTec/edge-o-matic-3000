@@ -1,5 +1,6 @@
 #include "ui/menu.h"
 #include "esp_log.h"
+#include "ui/toast.h"
 #include "ui/ui.h"
 #include "util/i18n.h"
 #include <stdlib.h>
@@ -27,6 +28,14 @@ void ui_menu_cb_open_input(
     if (item == NULL) return;
     const ui_input_t* input = (const ui_input_t*)item->arg;
     ui_open_input(input, NULL);
+}
+
+void ui_menu_cb_input_help(
+    const ui_menu_t* m, const ui_menu_item_t* item, UI_MENU_ARG_TYPE menu_arg
+) {
+    if (item == NULL || item->arg == NULL) return;
+    const ui_input_t* input = (const ui_input_t*)item->arg;
+    ui_toast_multiline(input->help);
 }
 
 // Dynamic menu manipulation
@@ -141,12 +150,19 @@ ui_menu_item_t* ui_menu_add_menu(const ui_menu_t* m, const ui_menu_t* menu) {
 ui_menu_item_t* ui_menu_add_input(const ui_menu_t* m, const ui_input_t* input) {
     if (m == NULL || input == NULL) return NULL;
 
-    return ui_menu_add_item(
+    ui_menu_item_t* item = ui_menu_add_item(
         m,
         input->flags.translate_title ? _(input->title) : input->title,
         ui_menu_cb_open_input,
         (void*)input
     );
+
+    if (input->help != NULL) {
+        item->on_option = ui_menu_cb_input_help;
+        strlcpy(item->option_str, _("HELP"), UI_BUTTON_STR_MAX);
+    }
+
+    return item;
 }
 
 // Menu Lifecycle Callbacks
@@ -167,7 +183,12 @@ ui_render_flag_t ui_menu_handle_button(
     if (item == NULL) return PASS;
 
     if (button == EOM_HAL_BUTTON_MID) {
-        // menu button event
+        if (event == EOM_HAL_BUTTON_PRESS) {
+            if (item->on_option != NULL) {
+                item->on_option(m, item, arg);
+                return RENDER;
+            }
+        }
     } else if (button == EOM_HAL_BUTTON_OK || button == EOM_HAL_BUTTON_MENU) {
         if (event == EOM_HAL_BUTTON_PRESS) {
             if (item->on_select != NULL) {
@@ -294,6 +315,8 @@ void ui_menu_handle_render(const ui_menu_t* m, u8g2_t* d, UI_MENU_ARG_TYPE arg) 
             _render_menu_item(d, idx - offset, item->label, flags);
             idx++;
             node = node->next;
+
+            if (idx - offset > 5) break;
         }
 
         ui_draw_scrollbar(d, _index, m->dynamic_items->count, 5);
