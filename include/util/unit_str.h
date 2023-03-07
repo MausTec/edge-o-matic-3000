@@ -7,6 +7,7 @@ extern "C" {
 
 #define UNIT_MILLISECONDS "Milliseconds"
 #define UNIT_SECONDS "Seconds"
+#define UNIT_MINUTES "Minutes"
 #define UNIT_PERCENT "%"
 
 #ifdef __cplusplus

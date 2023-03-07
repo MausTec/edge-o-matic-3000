@@ -33,7 +33,7 @@ CONFIG_DEFS {
     CFG_NUMBER(screen_dim_seconds, 0);
     CFG_NUMBER(screen_timeout_seconds, 0);
     CFG_NUMBER(enable_screensaver, false);
-    CFG_STRING(language_file_name, "de.json");
+    CFG_STRING(language_file_name, "");
 
     // Orgasm Settings
     CFG_NUMBER(motor_max_speed, 128);

@@ -64,6 +64,14 @@ void ui_draw_scrollbar(u8g2_t* d, size_t index, size_t count, size_t window_size
 void ui_draw_button_labels(
     u8g2_t* d, const char* left_str, const char* mid_str, const char* right_str
 ) {
+    u8g2_SetDrawColor(d, 0);
+    u8g2_DrawBox(
+        d,
+        (EOM_DISPLAY_WIDTH / 3) * 0,
+        EOM_DISPLAY_HEIGHT - UI_BUTTON_HEIGHT - 1,
+        (EOM_DISPLAY_WIDTH),
+        UI_BUTTON_HEIGHT + 1
+    );
     u8g2_SetDrawColor(d, 1);
     u8g2_DrawBox(
         d,

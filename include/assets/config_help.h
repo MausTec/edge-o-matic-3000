@@ -7,7 +7,7 @@
 extern "C" {
 #endif
 
-// #define INCLUDE_HELP
+#define INCLUDE_HELP 1
 
 #ifdef INCLUDE_HELP
 #define _HELPSTR(str) str
