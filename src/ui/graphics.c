@@ -57,6 +57,8 @@ void ui_draw_scrollbar(u8g2_t* d, size_t index, size_t count, size_t window_size
     int bar_height = track_height / window_size;
     int offset_top = count > 1 ? (track_height - bar_height) * index / (count - 1) : 0;
 
+    u8g2_SetDrawColor(d, 0);
+    u8g2_DrawBox(d, EOM_DISPLAY_WIDTH - 3, title_bar_height + 1, 3, track_height);
     u8g2_SetDrawColor(d, 1);
     u8g2_DrawBox(d, EOM_DISPLAY_WIDTH - 2, title_bar_height + 1 + offset_top, 2, bar_height);
 }
