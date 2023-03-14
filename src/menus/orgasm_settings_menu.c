@@ -4,7 +4,7 @@
 #include "ui/menu.h"
 #include "util/unit_str.h"
 
-void on_config_save(int value, int final, UI_MENU_ARG_TYPE arg);
+void on_config_save(int value, int final, UI_INPUT_ARG_TYPE arg);
 
 static const ui_input_numeric_t EDGING_DURATION_INPUT = {
     UnsignedInputValues(
@@ -54,7 +54,7 @@ static const ui_input_numeric_t CLENCH_PRESSURE_SENSITIVITY_INPUT = {
     .input.help = CLENCH_PRESSURE_SENSITIVITY_HELP
 };
 
-static void on_open(const ui_menu_t* m, const void* arg) {
+static void on_open(const ui_menu_t* m, UI_MENU_ARG_TYPE arg) {
     ui_menu_add_input(m, (ui_input_t*)&EDGING_DURATION_INPUT);
     ui_menu_add_input(m, (ui_input_t*)&CLENCH_ORGASM_TIME_THRESHOLD_INPUT);
     ui_menu_add_input(m, (ui_input_t*)&POST_ORGASM_DURATION_SECONDS_INPUT);

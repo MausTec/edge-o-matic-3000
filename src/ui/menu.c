@@ -176,7 +176,7 @@ ui_render_flag_t ui_menu_handle_button(
             ui_close_menu();
             return RENDER;
         } else if (event == EOM_HAL_BUTTON_HOLD) {
-            ui_close_all_menu();
+            ui_close_all();
             return RENDER;
         }
     }

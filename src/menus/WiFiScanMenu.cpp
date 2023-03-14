@@ -54,7 +54,7 @@ static void startScan(UIMenu* menu) {
     menu->render();
 
     wifi_ap_record_t ap_info[MAX_SCAN_NETWORKS];
-    size_t count = MAX_SCAN_NETWORKS;
+    uint16_t count = MAX_SCAN_NETWORKS;
 
     esp_err_t err = wifi_manager_scan(ap_info, &count);
 

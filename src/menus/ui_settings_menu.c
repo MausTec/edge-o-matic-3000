@@ -42,21 +42,34 @@ static void on_language_open(const ui_menu_t* m, UI_MENU_ARG_TYPE arg) {
 
 DYNAMIC_MENU(UI_LANGUAGE_MENU, "Language", on_language_open);
 
-void on_config_save(int value, int final, UI_MENU_ARG_TYPE arg) {
+void on_config_save(int value, int final, UI_INPUT_ARG_TYPE arg) {
     if (final) {
-        ui_toast(_("Saved!"));
+        ui_toast_blocking(_("Saving..."));
         config_enqueue_save(0);
+        ui_toast(_("Saved!"));
     }
 }
 
-static ui_input_numeric_t SCREEN_DIM_INPUT =
-    UnsignedInput("Screen Dim Delay", &Config.screen_dim_seconds, "Seconds", on_config_save);
-static ui_input_numeric_t SCREEN_TIMEOUT_INPUT =
-    UnsignedInput("Screen Timeout", &Config.screen_timeout_seconds, "Seconds", on_config_save);
-static ui_input_numeric_t LED_BRIGHTNESS_INPUT =
-    UnsignedInput("LED Brightness", &Config.led_brightness, "%", on_config_save);
-static ui_input_numeric_t SCREENSAVER_INPUT =
-    ByteInput("Screensaver", &Config.enable_screensaver, "", on_config_save);
+static const ui_input_numeric_t SCREEN_DIM_INPUT = {
+    UnsignedInputValues("Screen Dim Delay", &Config.screen_dim_seconds, "Seconds", on_config_save),
+    .input.help = NULL
+};
+
+static const ui_input_numeric_t SCREEN_TIMEOUT_INPUT = {
+    UnsignedInputValues(
+        "Screen Timeout", &Config.screen_timeout_seconds, "Seconds", on_config_save
+    ),
+    .input.help = NULL
+};
+
+static const ui_input_byte_t LED_BRIGHTNESS_INPUT = {
+    ByteInputValues("LED Brightness", &Config.led_brightness, "%", on_config_save),
+    .input.help = NULL
+};
+
+static const ui_input_toggle_t SCREENSAVER_INPUT = {
+    ToggleInputValues("Screensaver", &Config.enable_screensaver, on_config_save), .input.help = NULL
+};
 
 static void on_open(const ui_menu_t* m, UI_MENU_ARG_TYPE arg) {
     ui_menu_add_menu(m, &UI_LANGUAGE_MENU);

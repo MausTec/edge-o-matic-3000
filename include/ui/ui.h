@@ -25,7 +25,6 @@ void ui_close_all_menu(void);
 
 void ui_open_input(const ui_input_t* input, void* arg);
 void ui_close_input(void);
-void ui_close_all_input(void);
 
 void ui_close_all(void);
 

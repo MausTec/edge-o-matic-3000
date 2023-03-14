@@ -3,9 +3,8 @@
 #include "system/websocket_handler.h"
 #include "version.h"
 
-
-static command_err_t cmd_system_restart(cJSON* command, cJSON* response,
-                                        websocket_client_t* client) {
+static command_err_t
+cmd_system_restart(cJSON* command, cJSON* response, websocket_client_t* client) {
     fflush(stdout);
     esp_restart();
     return CMD_NOT_FOUND;
@@ -16,7 +15,9 @@ static const websocket_command_t cmd_system_restart_s = {
     .func = &cmd_system_restart,
 };
 
-static command_err_t cmd_system_time(cJSON* command, cJSON* response) { return CMD_OK; }
+static command_err_t cmd_system_time(cJSON* command, cJSON* response, websocket_client_t* client) {
+    return CMD_OK;
+}
 
 static const websocket_command_t cmd_system_time_s = {
     .command = "time",
@@ -24,7 +25,7 @@ static const websocket_command_t cmd_system_time_s = {
 };
 
 static command_err_t cmd_system_info(cJSON* command, cJSON* response, websocket_client_t* client) {
-    char buf[64] = {0};
+    char buf[64] = { 0 };
     eom_hal_get_device_serial(buf, 64);
 
     cJSON_AddStringToObject(response, "device", "Edge-o-Matic 3000");
@@ -39,8 +40,8 @@ static const websocket_command_t cmd_system_info_s = {
     .func = &cmd_system_info,
 };
 
-static command_err_t cmd_system_stream_readings(cJSON* command, cJSON* response,
-                                                websocket_client_t* client) {
+static command_err_t
+cmd_system_stream_readings(cJSON* command, cJSON* response, websocket_client_t* client) {
     if (client != NULL) {
         client->broadcast_flags |= WS_BROADCAST_READINGS;
         client->broadcast_flags |= WS_BROADCAST_SYSTEM;

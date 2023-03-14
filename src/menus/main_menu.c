@@ -11,7 +11,7 @@ static const char* TAG = "main_menu";
 // todo: probably we can statically allocate this whole menu but right now let's just do a dynamic
 // allocator
 
-static void on_info(const ui_menu_t* m, const ui_menu_item_t* item, const void* menu_arg) {
+static void on_info(const ui_menu_t* m, const ui_menu_item_t* item, UI_MENU_ARG_TYPE menu_arg) {
     const char* serial = eom_hal_get_device_serial_const();
     const char* sha = strchr(VERSION, '-');
     const char* tag = strchr(VERSION, '+');
@@ -27,14 +27,16 @@ static void on_info(const ui_menu_t* m, const ui_menu_item_t* item, const void* 
     }
 }
 
-static void on_open(const ui_menu_t* m, const void* arg) {
+static void on_open(const ui_menu_t* m, UI_MENU_ARG_TYPE arg) {
 #ifdef EOM_BETA
     ui_menu_add_menu(m, &APPLICATIONS_MENU);
 #endif
     ui_menu_add_menu(m, &EDGING_SETTINGS_MENU);
     ui_menu_add_menu(m, &ORGASM_SETTINGS_MENU);
     ui_menu_add_menu(m, &UI_SETTINGS_MENU);
+#ifdef EOM_BETA
     ui_menu_add_menu(m, &USER_PROFILES_MENU);
+#endif
     ui_menu_add_menu(m, &NETWORKING_MENU);
     ui_menu_add_menu(m, &UPDATE_MENU);
     ui_menu_add_item(m, _("System Info"), on_info, NULL);
