@@ -7,6 +7,7 @@ extern "C" {
 
 #include "eom-hal.h"
 #include "ui/render.h"
+#include <stdbool.h>
 #include <stdint.h>
 
 #define UI_INPUT_ARG_TYPE const void*
@@ -17,6 +18,7 @@ typedef struct ui_input_render_flags {
 
 typedef enum ui_input_type {
     INPUT_TYPE_NUMERIC,
+    INPUT_TYPE_BYTE,
     INPUT_TYPE_TOGGLE,
     INPUT_TYPE_SELECT,
     INPUT_TYPE_MULTISELECT,
@@ -33,6 +35,7 @@ typedef struct ui_input {
 // Numeric Input
 
 typedef void (*ui_input_numeric_save_cb)(int value, int final, UI_INPUT_ARG_TYPE arg);
+typedef int (*ui_input_numeric_chart_getter_cb)(int value, int final, UI_INPUT_ARG_TYPE arg);
 
 typedef struct ui_input_numeric {
     ui_input_t input;
@@ -42,6 +45,7 @@ typedef struct ui_input_numeric {
     int max;
     int step;
     ui_input_numeric_save_cb on_save;
+    ui_input_numeric_chart_getter_cb chart_getter;
 } ui_input_numeric_t;
 
 #define IntegerInput(titlestr, pValue, unitstr, saveCb)                                            \
@@ -51,7 +55,7 @@ typedef struct ui_input_numeric {
                    .help = NULL,                                                                   \
                    .type = INPUT_TYPE_NUMERIC },                                                   \
         .unit = unitstr, .value = pValue, .min = INT_MIN, .max = INT_MAX, .step = 1,               \
-        .on_save = saveCb                                                                          \
+        .on_save = saveCb, .chart_getter = NULL                                                    \
     }
 
 #define UnsignedInputValues(titlestr, pValue, unitstr, saveCb)                                     \
@@ -59,17 +63,30 @@ typedef struct ui_input_numeric {
                .flags = { .translate_title = 1 },                                                  \
                .help = NULL,                                                                       \
                .type = INPUT_TYPE_NUMERIC },                                                       \
-    .unit = unitstr, .value = pValue, .min = 0, .max = INT_MAX, .step = 1, .on_save = saveCb
+    .unit = unitstr, .value = pValue, .min = 0, .max = INT_MAX, .step = 1, .on_save = saveCb,      \
+    .chart_getter = NULL
 
 #define UnsignedInput(titlestr, pValue, unitstr, saveCb)                                           \
     { UnsignedInputValues(titlestr, pValue, unitstr, saveCb) }
+
+typedef struct ui_input_byte {
+    ui_input_t input;
+    const char* unit;
+    uint8_t* value;
+    uint8_t min;
+    uint8_t max;
+    uint8_t step;
+    ui_input_numeric_save_cb on_save;
+    ui_input_numeric_chart_getter_cb chart_getter;
+} ui_input_byte_t;
 
 #define ByteInputValues(titlestr, pValue, unitstr, saveCb)                                         \
     .input = { .title = titlestr,                                                                  \
                .flags = { .translate_title = 1 },                                                  \
                .help = NULL,                                                                       \
-               .type = INPUT_TYPE_NUMERIC },                                                       \
-    .unit = unitstr, .value = pValue, .min = 0, .max = 0xFF, .step = 1, .on_save = saveCb
+               .type = INPUT_TYPE_BYTE },                                                          \
+    .unit = unitstr, .value = pValue, .min = 0, .max = 0xFF, .step = 1, .on_save = saveCb,         \
+    .chart_getter = NULL
 
 #define ByteInput(titlestr, pValue, unitstr, saveCb)                                               \
     { ByteInputValues(titlestr, pValue, unitstr, saveCb) }
@@ -78,7 +95,7 @@ typedef struct ui_input_numeric {
 
 typedef struct ui_input_toggle {
     ui_input_t input;
-    int* value;
+    bool* value;
     ui_input_numeric_save_cb on_save;
 } ui_input_toggle_t;
 
@@ -105,8 +122,9 @@ typedef void (*ui_input_select_save_cb
 
 typedef struct ui_input_select {
     ui_input_t input;
-    ui_input_select_option_t** options;
+    ui_input_select_option_t (*options)[];
     size_t option_count;
+    int* value;
     ui_input_select_save_cb on_save;
 } ui_input_select_t;
 
@@ -119,7 +137,7 @@ typedef struct ui_input_multiselect {
                .flags = { .translate_title = 1 },                                                  \
                .help = NULL,                                                                       \
                .type = INPUT_TYPE_SELECT },                                                        \
-    .options = pOptions, .option_count = nOptions, .on_save = saveCb
+    .options = pOptions, .option_count = nOptions, .on_save = saveCb, .value = pValue
 
 #define SelectInput(titlestr, pValue, pOptions, nOptions, saveCb)                                  \
     { SelectInputValues(titlestr, pValue, pOptions, nOptions, saveCb) }

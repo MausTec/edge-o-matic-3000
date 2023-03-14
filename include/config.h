@@ -10,7 +10,7 @@ extern "C" {
 #include <stdint.h>
 
 // SD card files:
-#define CONFIG_PATH_MAX 255
+#define CONFIG_PATH_MAX 64
 
 // This is just a default, others can be loaded after boot.
 #define CONFIG_FILENAME "/config.json"
@@ -65,7 +65,7 @@ struct config {
     int screen_dim_seconds;
     // Time, in seconds, before the screen turns off. 0 to disable.
     int screen_timeout_seconds;
-    uint8_t enable_screensaver;
+    bool enable_screensaver;
     char language_file_name[CONFIG_PATH_MAX + 1];
 
     //= Console
@@ -114,7 +114,7 @@ struct config {
     //= Vibration Output Mode
 
     // Vibration Mode for main vibrator control.
-    vibration_mode_t vibration_mode;
+    int vibration_mode;
 
     //= Post orgasm torure stuff
 

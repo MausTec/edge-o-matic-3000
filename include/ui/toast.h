@@ -86,7 +86,9 @@ int ui_toast_is_dismissable(void);
  * @param start_x
  * @param start_y
  */
-void ui_toast_draw_frame(u8g2_t* d, uint8_t margin, uint8_t start_x, uint8_t start_y);
+void ui_toast_draw_frame(
+    u8g2_t* d, uint8_t margin, uint8_t start_x, uint8_t start_y, uint8_t height
+);
 
 /**
  * @brief Returns the current toast string, if one is set.

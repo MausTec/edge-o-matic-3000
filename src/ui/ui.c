@@ -190,6 +190,11 @@ void ui_close_all_menu(void) {
     }
 }
 
+void ui_close_all(void) {
+    ui_close_input();
+    ui_close_all_menu();
+}
+
 /**
  * Mersenne prime hash calculation to quickly detect if the buffer ever changed.
  */

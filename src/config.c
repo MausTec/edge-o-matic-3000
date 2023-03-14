@@ -32,7 +32,7 @@ CONFIG_DEFS {
     CFG_NUMBER(led_brightness, 128);
     CFG_NUMBER(screen_dim_seconds, 0);
     CFG_NUMBER(screen_timeout_seconds, 0);
-    CFG_NUMBER(enable_screensaver, false);
+    CFG_BOOL(enable_screensaver, false);
     CFG_STRING(language_file_name, "");
 
     // Orgasm Settings

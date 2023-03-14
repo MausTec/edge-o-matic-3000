@@ -64,7 +64,9 @@ void ui_toast_clear(void) {
     current_toast.blocking = 0;
 }
 
-void ui_toast_draw_frame(u8g2_t* d, uint8_t margin, uint8_t start_x, uint8_t start_y) {
+void ui_toast_draw_frame(
+    u8g2_t* d, uint8_t margin, uint8_t start_x, uint8_t start_y, uint8_t height
+) {
     u8g2_SetDrawColor(d, 0);
 
     // Clear Border
@@ -76,9 +78,7 @@ void ui_toast_draw_frame(u8g2_t* d, uint8_t margin, uint8_t start_x, uint8_t sta
         }
     }
 
-    u8g2_DrawBox(
-        d, start_x, start_y, EOM_DISPLAY_WIDTH - (start_x * 2), EOM_DISPLAY_HEIGHT - (start_y * 2)
-    );
+    u8g2_DrawBox(d, start_x, start_y, EOM_DISPLAY_WIDTH - (start_x * 2), height);
 
     u8g2_SetDrawColor(d, 1);
 
@@ -87,7 +87,7 @@ void ui_toast_draw_frame(u8g2_t* d, uint8_t margin, uint8_t start_x, uint8_t sta
         start_x + margin,
         start_y + margin,
         EOM_DISPLAY_WIDTH - (start_x * 2) - (margin * 2),
-        EOM_DISPLAY_HEIGHT - (start_y * 2) - (margin * 2)
+        height - (margin * 2)
     );
 }
 
@@ -124,7 +124,7 @@ void ui_toast_render(void) {
     int end_y = EOM_DISPLAY_HEIGHT - start_y;
     int text_start_y = start_y + margin + padding + 1;
 
-    ui_toast_draw_frame(display, margin, start_x, start_y);
+    ui_toast_draw_frame(display, margin, start_x, start_y, (EOM_DISPLAY_HEIGHT - (start_y * 2)));
 
     if (current_toast.multiline_msg == NULL) {
         char* str = current_toast.str;
