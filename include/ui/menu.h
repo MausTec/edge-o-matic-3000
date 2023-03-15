@@ -12,6 +12,11 @@ extern "C" {
 #define UI_MENU_TITLE_MAX 64
 #define UI_MENU_ARG_TYPE void*
 
+#define MENU_ICON_CHECKBOX_OFF '\x04'
+#define MENU_ICON_RADIO_OFF '\x05'
+#define MENU_ICON_RADIO_ON '\x06'
+#define MENU_ICON_CHECKBOX_ON '\x07'
+
 struct ui_menu;
 struct ui_menu_item;
 
@@ -31,6 +36,7 @@ typedef struct ui_menu_item {
     char option_str[UI_BUTTON_STR_MAX];
     ui_menu_item_callback_t on_select;
     ui_menu_item_callback_t on_option;
+    ui_menu_item_callback_t on_render;
     void (*freer)(void*);
 } ui_menu_item_t;
 
