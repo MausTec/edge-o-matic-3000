@@ -116,7 +116,7 @@ void ui_open_page(const ui_page_t* p, void* arg) {
 }
 
 void ui_open_input(const ui_input_t* i, void* arg) {
-    ui_input_handle_close(i, arg);
+    ui_input_handle_close(UI.current_input, UI.current_input_arg);
 
     UI.current_input = i;
     UI.current_input_arg = arg;

@@ -29,7 +29,24 @@ void ui_menu_cb_open_input(
 ) {
     if (item == NULL) return;
     const ui_input_t* input = (const ui_input_t*)item->arg;
-    ui_open_input(input, NULL);
+    ui_open_input(input, (void*)item);
+}
+
+void ui_menu_cb_render_input(
+    const ui_menu_t* m, const ui_menu_item_t* item, UI_MENU_ARG_TYPE menu_arg
+) {
+    if (item == NULL || item->arg == NULL) return;
+    const ui_input_t* input = (const ui_input_t*)item->arg;
+
+    if (input->type == INPUT_TYPE_TOGGLE) {
+        const ui_input_toggle_t* i = (const ui_input_toggle_t*)input;
+        char* label = (char*)item->label;
+
+        if (*i->value)
+            label[0] = MENU_ICON_CHECKBOX_ON;
+        else
+            label[0] = MENU_ICON_CHECKBOX_OFF;
+    }
 }
 
 void ui_menu_cb_input_help(
@@ -119,6 +136,7 @@ ui_menu_item_t* ui_menu_add_item(
     item->arg = arg;
     item->on_select = on_select;
     item->on_option = NULL;
+    item->on_render = NULL;
     item->option_str[0] = '\0';
     item->select_str[0] = '\0';
     item->freer = NULL;
@@ -151,13 +169,31 @@ ui_menu_item_t* ui_menu_add_menu(const ui_menu_t* m, const ui_menu_t* menu) {
 
 ui_menu_item_t* ui_menu_add_input(const ui_menu_t* m, const ui_input_t* input) {
     if (m == NULL || input == NULL) return NULL;
+    const char* input_title = input->flags.translate_title ? _(input->title) : input->title;
+    char title[UI_MENU_TITLE_MAX];
 
-    ui_menu_item_t* item = ui_menu_add_item(
-        m,
-        input->flags.translate_title ? _(input->title) : input->title,
-        ui_menu_cb_open_input,
-        (void*)input
-    );
+    if (input->type == INPUT_TYPE_TOGGLE) {
+        ui_input_toggle_t* i = (ui_input_toggle_t*)input;
+        snprintf(
+            title,
+            UI_MENU_TITLE_MAX,
+            "%c %s",
+            *i->value ? MENU_ICON_CHECKBOX_ON : MENU_ICON_CHECKBOX_OFF,
+            input_title
+        );
+
+    } else {
+        strncpy(title, input_title, UI_MENU_TITLE_MAX);
+    }
+
+    ui_menu_item_t* item = ui_menu_add_item(m, title, ui_menu_cb_open_input, (void*)input);
+
+    strncpy(item->select_str, _("EDIT"), UI_BUTTON_STR_MAX);
+
+    if (input->type == INPUT_TYPE_TOGGLE) {
+        item->on_render = ui_menu_cb_render_input;
+        // here we could also add a toggle button instead of opening to toggle
+    }
 
     if (input->help != NULL) {
         item->on_option = ui_menu_cb_input_help;
@@ -290,30 +326,55 @@ _render_menu_item(u8g2_t* d, uint8_t y, const char* label, struct _menu_item_ren
     u8g2_SetFontPosTop(d);
     u8g2_SetDrawColor(d, 1);
 
+    char label_prefix = 0x00;
+
+    if (label[0] > 0x00 && label[0] < 0x10) {
+        label_prefix = label[0];
+        label++;
+    }
+
+    uint8_t text_x = 1;
+    uint8_t text_y = (10 * y) + 1;
+
+    if (label_prefix > 0x00) {
+        text_x = 7;
+    }
+
     if (flags.item_selected) {
-        u8g2_DrawBox(d, 0, 11 + (10 * y), EOM_DISPLAY_WIDTH - 3, 9);
+        u8g2_DrawBox(d, 0, 10 + text_y, EOM_DISPLAY_WIDTH - 3, 9);
         u8g2_SetDrawColor(d, 0);
 
         // Handle scrolling thing:
         size_t label_len = strlen(label);
 
         if (label_len < 20) {
-            u8g2_DrawUTF8(d, 1, 11 + (10 * y), label);
+            u8g2_DrawUTF8(d, text_x, 10 + text_y, label);
         } else {
             size_t offset = (_selected_char_idx / 6) % (label_len);
-            u8g2_DrawUTF8(d, 1 + (6 - (_selected_char_idx % 6)), 11 + (10 * y), label + offset);
+            u8g2_DrawUTF8(d, text_x + (6 - (_selected_char_idx % 6)), 10 + text_y, label + offset);
             u8g2_SetDrawColor(d, 1);
-            u8g2_DrawBox(d, 0, 11 + (10 * y), 7, 9);
+            u8g2_DrawBox(d, text_x - 1, 10 + text_y, 7, 9);
             u8g2_SetDrawColor(d, 0);
-            u8g2_DrawGlyph(d, 1, 11 + (10 * y), '<');
+            u8g2_DrawGlyph(d, text_x + 1, 10 + text_y, '<');
         }
     } else {
-        u8g2_DrawUTF8(d, 1, 11 + (10 * y), label);
+        u8g2_DrawUTF8(d, text_x, 10 + text_y, label);
+    }
+
+    u8g2_SetFont(d, UI_FONT_SMALL);
+
+    switch (label_prefix) {
+    case MENU_ICON_CHECKBOX_ON:
+        u8g2_DrawLine(d, 2, 12 + text_y, 6, 16 + text_y);
+        u8g2_DrawLine(d, 2, 16 + text_y, 6, 12 + text_y);
+        // fall through
+    case MENU_ICON_CHECKBOX_OFF: u8g2_DrawFrame(d, 1, 11 + text_y, 7, 7); break;
+    default: break;
     }
 
     if (flags.item_disabled && !flags.item_selected) {
         u8g2_SetDrawColor(d, 0);
-        ui_draw_shaded_rect(d, 0, 11 + (10 * y), EOM_DISPLAY_WIDTH - 3, 9, 0);
+        ui_draw_shaded_rect(d, 0, 10 + text_y, EOM_DISPLAY_WIDTH - 3, 9, 0);
     }
 }
 
@@ -335,9 +396,12 @@ void ui_menu_handle_render(const ui_menu_t* m, u8g2_t* d, UI_MENU_ARG_TYPE arg) 
         while (node != NULL) {
             if (idx >= offset) {
                 ui_menu_item_t* item = node->item;
-                struct _menu_item_render_flags flags = { .item_disabled =
-                                                             item->on_select == NULL ? 1 : 0,
-                                                         .item_selected = 0 };
+                struct _menu_item_render_flags flags = {
+                    .item_disabled = item->on_select == NULL ? 1 : 0,
+                    .item_selected = 0,
+                };
+
+                if (item->on_render != NULL) item->on_render(m, item, arg);
 
                 if (idx == _index) {
                     flags.item_selected = 1;

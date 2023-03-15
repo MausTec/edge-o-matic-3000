@@ -429,6 +429,8 @@ void ui_input_handle_render(const ui_input_t* i, u8g2_t* d, UI_INPUT_ARG_TYPE ar
 }
 
 void ui_input_handle_close(const ui_input_t* i, UI_INPUT_ARG_TYPE arg) {
+    if (i == NULL) return;
+
     switch (i->type) {
     case INPUT_TYPE_NUMERIC: {
         ui_input_numeric_t* input = (ui_input_numeric_t*)i;
