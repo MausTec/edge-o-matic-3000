@@ -34,7 +34,6 @@ void resetSD() {
 
     if (cardSize == -1) {
         ui_set_icon(UI_ICON_SD, -1);
-        printf("Card Mount Failed\n");
         config_load_default(&Config);
         return;
     }
@@ -84,7 +83,6 @@ static void loop_task(void* args) {
         // Update Icons
         if (wifi_manager_get_status() == WIFI_MANAGER_CONNECTED) {
             int8_t rssi = wifi_manager_get_rssi();
-            ESP_LOGI(TAG, "WiFi RSSI: %d", rssi);
             ui_set_icon(UI_ICON_WIFI, WIFI_ICON_STRONG_SIGNAL);
         } else {
             ui_set_icon(UI_ICON_WIFI, WIFI_ICON_DISCONNECTED);
@@ -150,9 +148,7 @@ extern "C" void app_main() {
 
     // Initialize Bluetooth
     if (Config.bt_on) {
-        printf("Starting up Bluetooth...\n");
         BT.begin();
-        printf("Now Discoverable!\n");
         BT.advertise();
         ui_set_icon(UI_ICON_BT, BT_ICON_ACTIVE);
     } else {

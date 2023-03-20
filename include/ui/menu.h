@@ -119,6 +119,9 @@ ui_render_flag_t ui_menu_handle_loop(const ui_menu_t* m, UI_MENU_ARG_TYPE arg);
 void ui_menu_handle_render(const ui_menu_t* m, u8g2_t* d, UI_MENU_ARG_TYPE arg);
 void ui_menu_handle_close(const ui_menu_t* m, UI_MENU_ARG_TYPE arg);
 
+void ui_menu_set_idx(size_t idx);
+size_t ui_menu_get_idx(void);
+
 #ifdef __cplusplus
 }
 #endif

@@ -76,7 +76,10 @@ static void on_open(const ui_menu_t* m, UI_MENU_ARG_TYPE arg) {
     ui_menu_add_input(m, (ui_input_t*)&SCREEN_DIM_INPUT);
     ui_menu_add_input(m, (ui_input_t*)&SCREEN_TIMEOUT_INPUT);
     // ui_menu_add_input(m, (ui_input_t*)&LED_BRIGHTNESS_INPUT);
+
+#ifdef EOM_BETA
     ui_menu_add_input(m, (ui_input_t*)&SCREENSAVER_INPUT);
+#endif
 }
 
 DYNAMIC_MENU(UI_SETTINGS_MENU, "UI Settings", on_open);
