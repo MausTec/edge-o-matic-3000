@@ -20,7 +20,7 @@ extern "C" {
 #define WIFI_KEY_MAX_LEN 64
 
 // Some Experiments
-#define EOM_BETA 1
+// #define EOM_BETA 1
 #define I18N_USE_CJSON_DICT 1
 
 // Vibration Modes

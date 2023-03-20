@@ -280,6 +280,14 @@ void ui_menu_handle_open(const ui_menu_t* m, UI_MENU_ARG_TYPE arg) {
     }
 }
 
+void ui_menu_set_idx(size_t idx) {
+    _index = idx;
+}
+
+size_t ui_menu_get_idx(void) {
+    return _index;
+}
+
 const ui_menu_item_t* ui_menu_get_nth_item(const ui_menu_t* m, size_t n) {
     if (m == NULL) return NULL;
 
@@ -337,7 +345,7 @@ _render_menu_item(u8g2_t* d, uint8_t y, const char* label, struct _menu_item_ren
     uint8_t text_y = (10 * y) + 1;
 
     if (label_prefix > 0x00) {
-        text_x = 7;
+        text_x = 8;
     }
 
     if (flags.item_selected) {
@@ -355,7 +363,7 @@ _render_menu_item(u8g2_t* d, uint8_t y, const char* label, struct _menu_item_ren
             u8g2_SetDrawColor(d, 1);
             u8g2_DrawBox(d, text_x - 1, 10 + text_y, 7, 9);
             u8g2_SetDrawColor(d, 0);
-            u8g2_DrawGlyph(d, text_x + 1, 10 + text_y, '<');
+            u8g2_DrawGlyph(d, text_x, 10 + text_y, '<');
         }
     } else {
         u8g2_DrawUTF8(d, text_x, 10 + text_y, label);

@@ -20,6 +20,7 @@ void ui_send_buffer(void);
 void ui_open_page(const ui_page_t* page, void* arg);
 
 void ui_open_menu(const ui_menu_t* menu, void* arg);
+void ui_reenter_menu(void);
 void ui_close_menu(void);
 void ui_close_all_menu(void);
 

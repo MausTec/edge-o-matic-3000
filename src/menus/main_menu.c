@@ -1,3 +1,4 @@
+#include "config.h"
 #include "esp_log.h"
 #include "menus/index.h"
 #include "ui/menu.h"

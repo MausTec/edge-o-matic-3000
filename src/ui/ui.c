@@ -11,6 +11,7 @@ static volatile struct ui_state {
 
     const ui_menu_t* menu_history[UI_MENU_HISTORY_DEPTH];
     void* menu_arg_history[UI_MENU_HISTORY_DEPTH];
+    size_t menu_idx_history[UI_MENU_HISTORY_DEPTH];
     size_t menu_history_depth;
 
     const ui_input_t* current_input;
@@ -151,15 +152,27 @@ void ui_open_menu(const ui_menu_t* menu, void* arg) {
     const ui_menu_t* current = UI.menu_history[UI.menu_history_depth];
 
     if (current != NULL) {
+        UI.menu_idx_history[UI.menu_history_depth] = ui_menu_get_idx();
         ui_menu_handle_close(current, UI.menu_arg_history[UI.menu_history_depth]);
     }
 
     UI.menu_history[new_idx] = menu;
     UI.menu_arg_history[new_idx] = arg;
+    UI.menu_idx_history[new_idx] = 0;
     UI.menu_history_depth = new_idx;
     UI.force_rerender = RENDER;
 
     ui_menu_handle_open(menu, arg);
+}
+
+void ui_reenter_menu(void) {
+    const ui_menu_t* current = UI.menu_history[UI.menu_history_depth];
+
+    if (current != NULL) {
+        UI.menu_idx_history[UI.menu_history_depth] = 0;
+        ui_menu_handle_close(current, UI.menu_arg_history[UI.menu_history_depth]);
+        ui_menu_handle_open(current, UI.menu_arg_history[UI.menu_history_depth]);
+    }
 }
 
 // this will automatically go back, if it needs to.
@@ -174,6 +187,7 @@ void ui_close_menu(void) {
 
     UI.menu_history[UI.menu_history_depth] = NULL;
     UI.menu_arg_history[UI.menu_history_depth] = NULL;
+    UI.menu_idx_history[UI.menu_history_depth] = 0;
     UI.menu_history_depth = new_idx;
     UI.force_rerender = RENDER;
 
@@ -181,6 +195,7 @@ void ui_close_menu(void) {
 
     if (menu != NULL) {
         ui_menu_handle_open(menu, UI.menu_arg_history[UI.menu_history_depth]);
+        ui_menu_set_idx(UI.menu_idx_history[UI.menu_history_depth]);
     }
 }
 
