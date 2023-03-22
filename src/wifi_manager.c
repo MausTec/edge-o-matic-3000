@@ -102,6 +102,11 @@ void wifi_manager_init(void) {
     sntp_init();
 }
 
+/** @todo Pelase actually implement me for the love of Yusuke Kitagawa. */
+void wifi_manager_deinit(void) {
+    wifi_manager_disconnect();
+}
+
 esp_err_t wifi_manager_connect_to_ap(const char* ssid, const char* key) {
     if (ssid[0] == '\0') {
         ESP_LOGW(TAG, "Connecting to AP requires SSID. Aborting.");

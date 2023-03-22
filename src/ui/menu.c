@@ -59,7 +59,7 @@ void ui_menu_cb_input_help(
 
 // Dynamic menu manipulation
 ui_menu_item_node_t*
-ui_menu_add_node(const ui_menu_t* m, ui_menu_item_t* item, UI_MENU_ARG_TYPE arg) {
+ui_menu_add_node(const ui_menu_t* m, const ui_menu_item_t* item, UI_MENU_ARG_TYPE arg) {
     if (m == NULL) return NULL;
 
     ui_menu_item_list_t* list = m->dynamic_items;
@@ -70,13 +70,18 @@ ui_menu_add_node(const ui_menu_t* m, ui_menu_item_t* item, UI_MENU_ARG_TYPE arg)
 
     node->item = item;
     node->next = NULL;
+    node->freer = NULL;
 
     if (list->first == NULL) {
         list->first = node;
-        list->last = node;
     } else {
-        list->last->next = node;
-        list->last = node;
+        ui_menu_item_node_t* ptr = list->first;
+        while (ptr != NULL && ptr->next != NULL) {
+            ptr = ptr->next;
+        }
+        if (ptr != NULL) {
+            ptr->next = node;
+        }
     }
 
     list->count++;
@@ -96,20 +101,18 @@ void ui_menu_clear(const ui_menu_t* m) {
         if (node->item && node->item->freer != NULL) {
             ESP_LOGD(TAG, "node->item->freer(%p) \"%s\"", node->item->arg, (char*)node->item->arg);
             node->item->freer(node->item->arg);
-            node->item->arg = NULL;
         }
 
         list->first = node->next;
         if (node->freer != NULL) {
             ESP_LOGD(TAG, "node->freer(%p)", node->item);
-            node->freer(node->item);
+            node->freer((void*)node->item);
         }
 
         ESP_LOGD(TAG, "free(%p)", node);
         free(node);
     }
 
-    list->last = NULL;
     list->count = 0;
     ESP_LOGD(TAG, "Menu cleared.");
 }
@@ -134,6 +137,7 @@ ui_menu_item_t* ui_menu_add_item(
 
     strncpy(item->label, label, UI_MENU_TITLE_MAX);
     item->arg = arg;
+    item->flags.translate_title = 0;
     item->on_select = on_select;
     item->on_option = NULL;
     item->on_render = NULL;
@@ -232,6 +236,9 @@ ui_render_flag_t ui_menu_handle_button(
             if (item->on_select != NULL) {
                 item->on_select(m, item, arg);
                 return RENDER;
+            } else {
+                ui_toast("%s", _("Option unavailable.\nPlease see manual."));
+                return RENDER;
             }
         }
     }
@@ -304,6 +311,81 @@ const ui_menu_item_t* ui_menu_get_nth_item(const ui_menu_t* m, size_t n) {
     return NULL;
 }
 
+void ui_menu_remove_item_at(const ui_menu_t* m, size_t idx) {
+    if (m == NULL || m->dynamic_items == NULL) return;
+    ESP_LOGD(TAG, "ui_menu_remove_item_at()");
+
+    size_t i = 0;
+    ui_menu_item_node_t* prev = NULL;
+    ui_menu_item_node_t* node = m->dynamic_items->first;
+
+    while (i < idx && node != NULL) {
+        i++;
+        prev = node;
+        node = node->next;
+    }
+
+    ESP_LOGD(TAG, "-> node = %p", node);
+
+    if (node == NULL) return;
+    ESP_LOGD(TAG, "-> label = %s", node->item->label);
+
+    m->dynamic_items->count--;
+
+    if (node == m->dynamic_items->first) {
+        m->dynamic_items->first = node->next;
+    }
+
+    if (prev != NULL) {
+        prev->next = node->next;
+    }
+
+    if (node->item != NULL && node->item->freer != NULL) {
+        ESP_LOGD(
+            TAG,
+            "node->item->freer<%p>(%p) \"%s\"",
+            node->item->freer,
+            node->item->arg,
+            (char*)node->item->arg
+        );
+        node->item->freer(node->item->arg);
+    }
+
+    if (node->freer != NULL) {
+        ESP_LOGD(TAG, "node->freer<%p>(%p)", node->freer, node->item);
+        node->freer((void*)node->item);
+    }
+
+    ESP_LOGD(TAG, "free(%p)", node);
+    free(node);
+}
+
+void ui_menu_add_item_at(const ui_menu_t* m, size_t idx, const ui_menu_item_t* item) {
+    if (m == NULL || m->dynamic_items == NULL || item == NULL) return;
+    ESP_LOGD(TAG, "ui_menu_add_item_at(%s)", item->label);
+
+    size_t i = 0;
+    ui_menu_item_node_t* prev = m->dynamic_items->first;
+
+    while (prev != NULL && prev->next != NULL && i < idx) {
+        prev = prev->next;
+    }
+
+    ui_menu_item_node_t* node = (ui_menu_item_node_t*)malloc(sizeof(ui_menu_item_node_t));
+    if (node == NULL) return;
+
+    node->item = item;
+    node->freer = NULL;
+
+    if (prev != NULL) {
+        node->next = prev->next;
+        prev->next = node;
+    } else {
+        node->next = m->dynamic_items->first;
+        m->dynamic_items->first = node;
+    }
+}
+
 const ui_menu_item_t* ui_menu_get_current_item(const ui_menu_t* m) {
     return ui_menu_get_nth_item(m, _index);
 }
@@ -369,6 +451,14 @@ _render_menu_item(u8g2_t* d, uint8_t y, const char* label, struct _menu_item_ren
         u8g2_DrawUTF8(d, text_x, 10 + text_y, label);
     }
 
+    if (flags.item_disabled) {
+        if (flags.item_selected) u8g2_SetDrawColor(d, 0);
+        // ui_draw_shaded_rect(d, 0, 10 + text_y, EOM_DISPLAY_WIDTH - 3, 9, 0);
+        int line_x2 = u8g2_GetUTF8Width(d, label) + text_x;
+        if (line_x2 > EOM_DISPLAY_WIDTH - 3) line_x2 = EOM_DISPLAY_WIDTH - 3;
+        u8g2_DrawLine(d, text_x + 4, 14 + text_y, line_x2, 14 + text_y);
+    }
+
     u8g2_SetFont(d, UI_FONT_SMALL);
 
     switch (label_prefix) {
@@ -378,11 +468,6 @@ _render_menu_item(u8g2_t* d, uint8_t y, const char* label, struct _menu_item_ren
         // fall through
     case MENU_ICON_CHECKBOX_OFF: u8g2_DrawFrame(d, 1, 11 + text_y, 7, 7); break;
     default: break;
-    }
-
-    if (flags.item_disabled && !flags.item_selected) {
-        u8g2_SetDrawColor(d, 0);
-        ui_draw_shaded_rect(d, 0, 10 + text_y, EOM_DISPLAY_WIDTH - 3, 9, 0);
     }
 }
 
@@ -403,7 +488,7 @@ void ui_menu_handle_render(const ui_menu_t* m, u8g2_t* d, UI_MENU_ARG_TYPE arg) 
 
         while (node != NULL) {
             if (idx >= offset) {
-                ui_menu_item_t* item = node->item;
+                const ui_menu_item_t* item = node->item;
                 struct _menu_item_render_flags flags = {
                     .item_disabled = item->on_select == NULL ? 1 : 0,
                     .item_selected = 0,

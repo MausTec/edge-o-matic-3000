@@ -18,6 +18,7 @@ enum wifi_manager_status {
 typedef enum wifi_manager_status wifi_manager_status_t;
 
 void wifi_manager_init(void);
+void wifi_manager_deinit(void);
 esp_err_t wifi_manager_connect_to_ap(const char* ssid, const char* key);
 void wifi_manager_disconnect(void);
 wifi_manager_status_t wifi_manager_get_status(void);
