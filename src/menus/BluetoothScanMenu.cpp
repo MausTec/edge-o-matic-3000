@@ -1,11 +1,11 @@
-#include "UserInterface.h"
-#include "UIMenu.h"
 #include "BluetoothDriver.h"
+#include "UIMenu.h"
+#include "UserInterface.h"
 #include "esp_log.h"
 
 #include <NimBLEDevice.h>
 
-static int scanTime = 30; //In seconds
+static int scanTime = 30; // In seconds
 static BLEScan* pBLEScan = nullptr;
 static bool scanning = false;
 static UIMenu* globalMenuPtr = nullptr;
@@ -18,13 +18,13 @@ static void stopScan(UIMenu*);
 class MyAdvertisedDeviceCallbacks : public BLEAdvertisedDeviceCallbacks {
     UIMenu* menuPtr = nullptr;
 
-public:
+  public:
     MyAdvertisedDeviceCallbacks(UIMenu* menu) {
         this->menuPtr = menu;
     }
 
     static void onConnect(UIMenu* menu, void* devicePtr) {
-        BLEAdvertisedDevice* device = (BLEAdvertisedDevice*) devicePtr;
+        BLEAdvertisedDevice* device = (BLEAdvertisedDevice*)devicePtr;
         ESP_LOGE(TAG, "Clicked Device: %s", device->getAddress().toString().c_str());
 
         UI.toastNow("Connecting...", -1, false);
@@ -43,11 +43,18 @@ public:
     }
 
     void onResult(BLEAdvertisedDevice* advertisedDevice) {
-        ESP_LOGI(TAG, "Advertised Device: %s (%p)", advertisedDevice->getAddress().toString().c_str(), advertisedDevice);
+        ESP_LOGI(
+            TAG,
+            "Advertised Device: %s (%p)",
+            advertisedDevice->getAddress().toString().c_str(),
+            advertisedDevice
+        );
 
         if (advertisedDevice->haveName()) {
             if (this->menuPtr->getIndexByArgument(advertisedDevice) < 0) {
-                this->menuPtr->addItem(advertisedDevice->getName().c_str(), &this->onConnect, advertisedDevice);
+                this->menuPtr->addItem(
+                    advertisedDevice->getName().c_str(), &this->onConnect, advertisedDevice
+                );
                 this->menuPtr->render();
             }
         }
@@ -79,16 +86,20 @@ static void addScanItem(UIMenu* menu) {
 
 static void startScan(UIMenu* menu) {
     scanning = true;
-    pBLEScan->clearResults();   // delete results fromBLEScan buffer to release memory
+    pBLEScan->clearResults(); // delete results fromBLEScan buffer to release memory
     freeMenuPtrs(menu);
     menu->initialize();
     menu->render();
 
-    pBLEScan->start(scanTime, [](BLEScanResults foundDevices) {
-        scanning = false;
-        addScanItem(globalMenuPtr);
-        globalMenuPtr->render();
-        }, false);
+    pBLEScan->start(
+        scanTime,
+        [](BLEScanResults foundDevices) {
+            scanning = false;
+            addScanItem(globalMenuPtr);
+            globalMenuPtr->render();
+        },
+        false
+    );
 }
 
 static void stopScan(UIMenu* menu) {
@@ -101,11 +112,11 @@ static void stopScan(UIMenu* menu) {
 }
 
 static void menuOpen(UIMenu* menu) {
-    pBLEScan = BLEDevice::getScan(); //create new scan
+    pBLEScan = BLEDevice::getScan(); // create new scan
     pBLEScan->setAdvertisedDeviceCallbacks(new MyAdvertisedDeviceCallbacks(menu));
-    pBLEScan->setActiveScan(true); //active scan uses more power, but get results faster
+    pBLEScan->setActiveScan(true); // active scan uses more power, but get results faster
     pBLEScan->setInterval(100);
-    pBLEScan->setWindow(99);  // less or equal setInterval value
+    pBLEScan->setWindow(99); // less or equal setInterval value
 
     // Default start scan:
     startScan(menu);
@@ -113,7 +124,7 @@ static void menuOpen(UIMenu* menu) {
 
 static void menuClose(UIMenu* menu) {
     pBLEScan->stop();
-    pBLEScan->clearResults();   // delete results fromBLEScan buffer to release memory
+    pBLEScan->clearResults(); // delete results fromBLEScan buffer to release memory
     scanning = false;
     freeMenuPtrs(menu);
     pBLEScan = nullptr;

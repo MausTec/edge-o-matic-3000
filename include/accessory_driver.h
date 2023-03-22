@@ -5,7 +5,7 @@
 extern "C" {
 #endif
 
-#include <stddef.h>
+#include <stdint.h>
 
 void accessory_driver_init(void);
 void accessory_driver_broadcast_speed(uint8_t speed);

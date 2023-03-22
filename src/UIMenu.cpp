@@ -9,6 +9,8 @@
 
 static const char* TAG = "UIMenu";
 
+UserInterface UI;
+
 UIMenu::UIMenu(const char* t, MenuCallback fn) {
     strlcpy(title, t, TITLE_SIZE);
     initializer = fn;
@@ -162,7 +164,8 @@ void UIMenu::addItemAt(size_t index, const char* text, MenuCallback cb) {
 
 void UIMenu::addItem(UIMenu* submenu, void* arg) {
     addItem(
-        submenu->title, [=](UIMenu*, void* argv) { UI.openMenu(submenu, true, true, argv); }, arg);
+        submenu->title, [=](UIMenu*, void* argv) { UI.openMenu(submenu, true, true, argv); }, arg
+    );
 }
 
 void UIMenu::addItem(std::string text, UIMenu* submenu, void* arg) {
@@ -172,7 +175,8 @@ void UIMenu::addItem(std::string text, UIMenu* submenu, void* arg) {
             ESP_LOGI(TAG, "Item added with argv=%p", argv);
             UI.openMenu(submenu, true, true, argv);
         },
-        arg);
+        arg
+    );
 }
 
 void UIMenu::addItem(const char* text, Page* page) {
@@ -236,17 +240,28 @@ void UIMenu::render() {
             int scroll_height = std::max(count, 4);
             int scroll_start_y;
             if (menu_item_count >= 1) {
-                scroll_start_y =
-                    floor((float)(scroll_track_height - scroll_height) *
-                          ((float)(current_item_position - 1) / (menu_item_count - 1)));
+                scroll_start_y = floor(
+                    (float)(scroll_track_height - scroll_height) *
+                    ((float)(current_item_position - 1) / (menu_item_count - 1))
+                );
             } else {
                 scroll_start_y = 0;
             }
 
-            UI.display->fillRect(SCREEN_WIDTH - 3, scroll_track_start_y - 1, 3,
-                                 scroll_track_height + 1, SSD1306_BLACK);
-            UI.display->fillRect(SCREEN_WIDTH - 2, scroll_track_start_y + scroll_start_y, 2,
-                                 scroll_height, SSD1306_WHITE);
+            UI.display->fillRect(
+                SCREEN_WIDTH - 3,
+                scroll_track_start_y - 1,
+                3,
+                scroll_track_height + 1,
+                SSD1306_BLACK
+            );
+            UI.display->fillRect(
+                SCREEN_WIDTH - 2,
+                scroll_track_start_y + scroll_start_y,
+                2,
+                scroll_height,
+                SSD1306_WHITE
+            );
         }
     }
 
@@ -286,7 +301,9 @@ void UIMenu::open(UIMenu* previous, bool save_history, void* arg) {
     render();
 }
 
-void UIMenu::setTitle(const char* text) { strncpy(this->title, text, TITLE_SIZE); }
+void UIMenu::setTitle(const char* text) {
+    strncpy(this->title, text, TITLE_SIZE);
+}
 
 UIMenu* UIMenu::close() {
     if (on_close != nullptr) {
@@ -350,8 +367,7 @@ int UIMenu::getIndexByArgument(void* arg) {
 
     while (p != nullptr) {
         idx++;
-        if (p->arg == arg)
-            return idx;
+        if (p->arg == arg) return idx;
         p = p->next;
     }
 
@@ -444,9 +460,13 @@ int UIMenu::getCurrentPosition() {
     return menu_item_position;
 }
 
-void UIMenu::onOpen(MenuCallback cb) { on_open = cb; }
+void UIMenu::onOpen(MenuCallback cb) {
+    on_open = cb;
+}
 
-void UIMenu::onClose(MenuCallback cb) { on_close = cb; }
+void UIMenu::onClose(MenuCallback cb) {
+    on_close = cb;
+}
 
 void UIMenu::rerender() {
     initialize(true);

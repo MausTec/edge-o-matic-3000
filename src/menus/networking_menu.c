@@ -1,4 +1,5 @@
 #include "assets/config_help.h"
+#include "bluetooth_driver.h"
 #include "config.h"
 #include "menus/common.h"
 #include "menus/index.h"
@@ -13,18 +14,25 @@
 static void on_wifi_state_save(int value, int final, UI_INPUT_ARG_TYPE arg) {
     if (!final) return;
 
-    on_config_save(value, final, arg);
-    ui_reenter_menu();
-
     if (!value) {
-        wifi_manager_disconnect();
+        wifi_manager_deinit();
     } else {
+        ui_toast_blocking("%s", _("Connecting..."));
         wifi_manager_init();
     }
+
+    on_config_save(value, final, arg);
+    ui_reenter_menu();
 }
 
 static void on_bluetooth_state_save(int value, int final, UI_INPUT_ARG_TYPE arg) {
     if (!final) return;
+
+    if (!value) {
+        bluetooth_driver_deinit();
+    } else {
+        bluetooth_driver_init();
+    }
 
     on_config_save(value, final, arg);
     ui_reenter_menu();
@@ -124,7 +132,7 @@ static void on_open(const ui_menu_t* m, UI_MENU_ARG_TYPE arg) {
             wifi_item->on_select = NULL;
         }
 
-        ui_menu_add_item(m, _("Pair New Device"), NULL, NULL);
+        ui_menu_add_menu(m, &BLUETOOTH_SCAN_MENU);
     }
 
     ui_menu_add_item(m, _("Connection Status"), on_connection_status, NULL);

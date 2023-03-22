@@ -9,7 +9,6 @@ extern "C" {
 #include <stdio.h>
 #include <string.h>
 
-
 enum command_err {
     CMD_FAIL = -1,
     CMD_OK = 0,
