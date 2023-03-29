@@ -1,7 +1,7 @@
 
 #include "accessory_driver.h"
 #include "api/broadcast.h"
-#include "bluetooth_driver.h"
+#include "bluetooth_manager.h"
 #include "config.h"
 #include "config_defs.h"
 #include "console.h"
@@ -16,7 +16,6 @@
 #include "version.h"
 #include "wifi_manager.h"
 #include <time.h>
-
 
 void loop(void);
 
@@ -141,7 +140,7 @@ void app_main() {
 
     // Initialize Bluetooth
     if (Config.bt_on) {
-        bluetooth_driver_init();
+        bluetooth_manager_init();
         ui_set_icon(UI_ICON_BT, BT_ICON_ACTIVE);
     } else {
         ui_set_icon(UI_ICON_BT, -1);

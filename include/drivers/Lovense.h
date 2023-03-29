@@ -8,28 +8,34 @@
 
 namespace BluetoothDriver {
     class Lovense : public Device {
-    public:
-        Lovense(const char *name, NimBLEClient *client, NimBLERemoteCharacteristic *rxChar, NimBLERemoteCharacteristic *txChar) : 
-            Device(name, client), rxChar(rxChar), txChar(txChar) {};
+      public:
+        Lovense(
+            const char* name,
+            NimBLEClient* client,
+            NimBLERemoteCharacteristic* rxChar,
+            NimBLERemoteCharacteristic* txChar
+        )
+            : Device(name, client), rxChar(rxChar), txChar(txChar){};
 
-        static Device* detect(NimBLEAdvertisedDevice *device, NimBLEClient *client, NimBLERemoteService *service);
+        static Device*
+        detect(NimBLEAdvertisedDevice* device, NimBLEClient* client, NimBLERemoteService* service);
 
         bool setSpeed(uint8_t speed) override;
 
-    protected:
-        bool send(const char *cmd);
-        bool sendf(const char *fmt, ...);
-        size_t read(char *buf, size_t len, bool waitForNotify);
-        
-        bool waitForNotify();
-        void onNotify(uint8_t *data, size_t len);
+      protected:
+        bool send(const char* cmd);
+        bool sendf(const char* fmt, ...);
+        size_t read(char* buf, size_t len, bool waitForNotify);
 
-    private:
-        NimBLERemoteCharacteristic *rxChar;
-        NimBLERemoteCharacteristic *txChar;
+        bool waitForNotify();
+        void onNotify(uint8_t* data, size_t len);
+
+      private:
+        NimBLERemoteCharacteristic* rxChar;
+        NimBLERemoteCharacteristic* txChar;
 
         bool notifyPending = false;
     };
-}
+} // namespace BluetoothDriver
 
 #endif

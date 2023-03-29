@@ -1,11 +1,12 @@
 #include "orgasm_control.h"
 #include "accessory_driver.h"
+#include "bluetooth_driver.h"
 #include "config.h"
 #include "eom-hal.h"
 #include "esp_log.h"
 #include "esp_timer.h"
-#include "ui/ui.h"
 #include "ui/toast.h"
+#include "ui/ui.h"
 #include "util/running_average.h"
 #include <math.h>
 #include <stdio.h>
@@ -85,18 +86,14 @@ void orgasm_control_init(void) {
 // Rename to get_vibration_mode_controller();
 static const vibration_mode_controller_t* orgasm_control_getVibrationMode() {
     switch (Config.vibration_mode) {
-    case Enhancement:
-        return &EnhancementController;
+    case Enhancement: return &EnhancementController;
 
     default:
-    case Depletion:
-        return &DepletionController;
+    case Depletion: return &DepletionController;
 
-    case Pattern:
-        return &PatternController;
+    case Pattern: return &PatternController;
 
-    case RampStop:
-        return &RampStopController;
+    case RampStop: return &RampStopController;
     }
 }
 
@@ -182,11 +179,11 @@ static void orgasm_control_updateArousal() {
 
     // Update accessories:
     accessory_driver_broadcast_arousal(arousal_state.arousal);
+    bluetooth_driver_broadcast_arousal(arousal_state.arousal);
 }
 
 static void orgasm_control_updateMotorSpeed() {
-    if (!output_state.control_motor)
-        return;
+    if (!output_state.control_motor) return;
 
     const vibration_mode_controller_t* controller = orgasm_control_getVibrationMode();
     controller->tick(output_state.motor_speed, arousal_state.arousal);
@@ -234,7 +231,10 @@ static void orgasm_control_updateMotorSpeed() {
 
     // Control motor if we are not manually doing so.
     if (output_state.control_motor) {
-        eom_hal_set_motor_speed(orgasm_control_getMotorSpeed());
+        uint8_t speed = orgasm_control_getMotorSpeed();
+        eom_hal_set_motor_speed(speed);
+        accessory_driver_broadcast_speed(speed);
+        bluetooth_driver_broadcast_speed(speed);
     }
 }
 
@@ -393,13 +393,14 @@ oc_bool_t orgasm_control_isRecording() {
 }
 
 void orgasm_control_tick() {
-    long update_frequency_ms = (1.0f / Config.update_frequency_hz) * 1000.0f;
+    unsigned long millis = esp_timer_get_time() / 1000UL;
+    unsigned long update_frequency_ms = (1.0f / Config.update_frequency_hz) * 1000.0f;
 
-    if ((esp_timer_get_time() / 1000UL) - arousal_state.last_update_ms > update_frequency_ms) {
+    if (millis - arousal_state.last_update_ms > update_frequency_ms) {
         orgasm_control_updateArousal();
         orgasm_control_updateEdgingTime();
         orgasm_control_updateMotorSpeed();
-        arousal_state.last_update_ms = (esp_timer_get_time() / 1000UL);
+        arousal_state.last_update_ms = millis;
 
         // Data for logfile or classic log.
         char data_csv[255];
@@ -449,8 +450,7 @@ int orgasm_control_getDenialCount() {
  * @return normalized motor speed byte
  */
 uint8_t orgasm_control_getMotorSpeed() {
-    if (output_state.motor_speed < 0)
-        return 0;
+    if (output_state.motor_speed < 0) return 0;
     if (output_state.motor_speed > 255)
         return 255;
     else
