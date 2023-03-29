@@ -1,6 +1,8 @@
 #include "ui/menu.h"
 #include "esp_log.h"
 #include "esp_timer.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/semphr.h"
 #include "ui/toast.h"
 #include "ui/ui.h"
 #include "util/i18n.h"
@@ -8,8 +10,10 @@
 #include <string.h>
 
 static const char* TAG = "ui:menu";
+
 static size_t _index = 0;
 static size_t _selected_char_idx = 0;
+static SemaphoreHandle_t _insert_mutex = NULL;
 
 void ui_menu_cb_open_page(
     const ui_menu_t* m, const ui_menu_item_t* item, UI_MENU_ARG_TYPE menu_arg
@@ -68,6 +72,8 @@ ui_menu_add_node(const ui_menu_t* m, const ui_menu_item_t* item, UI_MENU_ARG_TYP
     ui_menu_item_node_t* node = (ui_menu_item_node_t*)malloc(sizeof(ui_menu_item_node_t));
     if (node == NULL) return NULL;
 
+    if (xSemaphoreTake(_insert_mutex, portMAX_DELAY) != pdTRUE) return NULL;
+
     node->item = item;
     node->next = NULL;
     node->freer = NULL;
@@ -85,6 +91,8 @@ ui_menu_add_node(const ui_menu_t* m, const ui_menu_item_t* item, UI_MENU_ARG_TYP
     }
 
     list->count++;
+
+    xSemaphoreGive(_insert_mutex);
     return node;
 }
 
@@ -276,7 +284,12 @@ void ui_menu_add_static_items(const ui_menu_t* m) {
 }
 
 void ui_menu_handle_open(const ui_menu_t* m, UI_MENU_ARG_TYPE arg) {
+    if (_insert_mutex == NULL) {
+        _insert_mutex = xSemaphoreCreateMutex();
+    }
+
     if (m == NULL) return;
+
     _index = 0;
     _selected_char_idx = 0;
 
@@ -365,10 +378,12 @@ void ui_menu_add_item_at(const ui_menu_t* m, size_t idx, const ui_menu_item_t* i
     ESP_LOGD(TAG, "ui_menu_add_item_at(%s)", item->label);
 
     size_t i = 0;
-    ui_menu_item_node_t* prev = m->dynamic_items->first;
+    ui_menu_item_node_t* prev = NULL;
+    ui_menu_item_node_t* next = m->dynamic_items->first;
 
-    while (prev != NULL && prev->next != NULL && i < idx) {
-        prev = prev->next;
+    while (next != NULL && next->next != NULL && i < idx) {
+        prev = next;
+        next = next->next;
     }
 
     ui_menu_item_node_t* node = (ui_menu_item_node_t*)malloc(sizeof(ui_menu_item_node_t));
@@ -376,14 +391,22 @@ void ui_menu_add_item_at(const ui_menu_t* m, size_t idx, const ui_menu_item_t* i
 
     node->item = item;
     node->freer = NULL;
+    node->next = next;
 
     if (prev != NULL) {
-        node->next = prev->next;
         prev->next = node;
     } else {
-        node->next = m->dynamic_items->first;
         m->dynamic_items->first = node;
     }
+
+    m->dynamic_items->count++;
+}
+
+void ui_menu_replace_item_at(const ui_menu_t* m, size_t idx, const ui_menu_item_t* item) {
+    if (xSemaphoreTake(_insert_mutex, portMAX_DELAY) != pdTRUE) return;
+    ui_menu_remove_item_at(m, idx);
+    ui_menu_add_item_at(m, idx, item);
+    xSemaphoreGive(_insert_mutex);
 }
 
 const ui_menu_item_t* ui_menu_get_current_item(const ui_menu_t* m) {

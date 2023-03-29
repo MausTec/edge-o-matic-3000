@@ -1,4 +1,6 @@
+#include "accessory_driver.h"
 #include "assets.h"
+#include "bluetooth_driver.h"
 #include "esp_log.h"
 #include "esp_timer.h"
 #include "orgasm_control.h"
@@ -246,6 +248,9 @@ on_button(eom_hal_button_t button, eom_hal_button_event_t event, void* arg) {
 
         orgasm_control_controlMotor(OC_MANUAL_CONTROL);
         eom_hal_set_motor_speed(0x00);
+        accessory_driver_broadcast_speed(0x00);
+        bluetooth_driver_broadcast_speed(0x00);
+        // websocket_server_broadcast_speed(0x00);
     } else if (button == EOM_HAL_BUTTON_OK) {
         if (locked) return NORENDER;
 
@@ -272,7 +277,11 @@ static ui_render_flag_t on_encoder(int delta, void* arg) {
 
     if (mode == OC_MANUAL_CONTROL) {
         int speed = eom_hal_get_motor_speed() + delta;
-        eom_hal_set_motor_speed(speed > 0xFF ? 0xFF : (speed < 0x00 ? 0x00 : speed));
+        uint8_t speed_byte = speed > 0xFF ? 0xFF : (speed < 0x00 ? 0x00 : speed);
+        eom_hal_set_motor_speed(speed_byte);
+        accessory_driver_broadcast_speed(speed_byte);
+        bluetooth_driver_broadcast_speed(speed_byte);
+        // websocket_server_broadcast_speed(speed_byte);
         state.arousal_change_notice_ms = 0;
         state.speed_change_notice_ms = millis + CHANGE_NOTICE_DELAY_MS;
         return RENDER;

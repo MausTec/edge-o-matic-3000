@@ -121,6 +121,7 @@ void ui_menu_free(const ui_menu_t* m, ui_menu_item_free_callback_t free_cb);
 const ui_menu_item_t* ui_menu_get_nth_item(const ui_menu_t* m, size_t n);
 void ui_menu_remove_item_at(const ui_menu_t* m, size_t idx);
 void ui_menu_add_item_at(const ui_menu_t* m, size_t idx, const ui_menu_item_t* item);
+void ui_menu_replace_item_at(const ui_menu_t* m, size_t idx, const ui_menu_item_t* item);
 const ui_menu_item_t* ui_menu_get_current_item(const ui_menu_t* m);
 
 // Menu Lifecycle Callbacks

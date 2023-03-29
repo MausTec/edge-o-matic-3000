@@ -104,17 +104,38 @@ void ui_toast_render(void) {
     u8g2_SetFont(display, UI_FONT_SMALL);
     u8g2_SetFontPosTop(display);
 
+    const char* str =
+        current_toast.multiline_msg == NULL ? current_toast.str : current_toast.multiline_msg;
+
     int text_lines = 1;
 
-    if (current_toast.multiline_msg == NULL) {
-        for (int i = 0; i < strlen(current_toast.str); i++) {
+    {
+        size_t i = 0;
+        const char* line = str;
+        const char* space = str;
+
+        for (const char* ptr = str; *ptr != '\0'; ptr++) {
+            i++;
+
             if (current_toast.str[i] == '\n') {
+                i = 0;
                 text_lines++;
+            } else if (i > UI_TOAST_LINE_WIDTH) {
+                if (space != line) {
+                    ptr = space;
+                    line = ptr;
+                }
+
+                i = 0;
+                text_lines++;
+            } else if (*ptr == ' ') {
+                space = ptr;
             }
         }
-    } else {
-        text_lines = 4;
     }
+
+    ESP_LOGD(TAG, "Text Lines: %d", text_lines);
+    if (text_lines > 4) text_lines = 4;
 
     // TODO: This is a clusterfuck of math, and on odd lined text is off-by-one
     int start_y =
@@ -126,65 +147,45 @@ void ui_toast_render(void) {
 
     ui_toast_draw_frame(display, margin, start_x, start_y, (EOM_DISPLAY_HEIGHT - (start_y * 2)));
 
-    if (current_toast.multiline_msg == NULL) {
-        char* str = current_toast.str;
+    char line[UI_TOAST_LINE_WIDTH + 1];
 
-        while (str != NULL && *str != '\0') {
-            char* tok = strchr(str, '\n');
-            if (tok != NULL) *tok = '\0';
+    size_t idx = 0;
+    size_t space_idx = 0;
+    uint8_t col = 0;
 
-            u8g2_DrawUTF8(display, start_x + margin + padding + 1, text_start_y, str);
-
-            if (tok != NULL) {
-                *tok = '\n';
-                str = tok + 1;
-                text_start_y += 7 + padding;
-            } else {
-                break;
-            }
+    do {
+        if (str[idx] == ' ') {
+            space_idx = idx;
         }
-    } else {
-        const char* str = current_toast.multiline_msg;
-        char line[UI_TOAST_LINE_WIDTH + 1];
 
-        size_t idx = 0;
-        size_t space_idx = 0;
-        uint8_t col = 0;
+        if (str[idx] == '\n') {
+            space_idx = idx;
+            line[col] = '\0';
+            col = UI_TOAST_LINE_WIDTH;
+        }
 
-        do {
-            if (str[idx] == ' ') {
-                space_idx = idx;
-            }
+        else {
+            line[col] = str[idx];
+            line[col + 1] = '\0';
+            col++;
+        }
 
-            if (str[idx] == '\n') {
-                space_idx = idx;
-                line[col] = '\0';
-                col = UI_TOAST_LINE_WIDTH;
-            }
+        if (str[idx + 1] == '\0') {
+            space_idx = idx;
+            line[col] = '\0';
+            col = UI_TOAST_LINE_WIDTH;
+        }
 
-            else {
-                line[col] = str[idx];
-                line[col + 1] = '\0';
-                col++;
-            }
+        if (col >= UI_TOAST_LINE_WIDTH) {
+            line[col - (idx - space_idx)] = '\0';
+            u8g2_DrawUTF8(display, start_x + margin + padding + 1, text_start_y, line);
+            text_start_y += 7 + padding;
+            col = 0;
+            idx = space_idx;
+        }
 
-            if (str[idx + 1] == '\0') {
-                space_idx = idx;
-                line[col] = '\0';
-                col = UI_TOAST_LINE_WIDTH;
-            }
-
-            if (col >= UI_TOAST_LINE_WIDTH) {
-                line[col - (idx - space_idx)] = '\0';
-                u8g2_DrawUTF8(display, start_x + margin + padding + 1, text_start_y, line);
-                text_start_y += 7 + padding;
-                col = 0;
-                idx = space_idx;
-            }
-
-            idx++;
-        } while (str[idx] != '\0');
-    }
+        idx++;
+    } while (str[idx] != '\0');
 
     if (!current_toast.blocking) {
         // render press-any-key message

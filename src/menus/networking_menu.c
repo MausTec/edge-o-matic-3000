@@ -1,5 +1,5 @@
 #include "assets/config_help.h"
-#include "bluetooth_driver.h"
+#include "bluetooth_manager.h"
 #include "config.h"
 #include "menus/common.h"
 #include "menus/index.h"
@@ -29,9 +29,9 @@ static void on_bluetooth_state_save(int value, int final, UI_INPUT_ARG_TYPE arg)
     if (!final) return;
 
     if (!value) {
-        bluetooth_driver_deinit();
+        bluetooth_manager_deinit();
     } else {
-        bluetooth_driver_init();
+        bluetooth_manager_init();
     }
 
     on_config_save(value, final, arg);

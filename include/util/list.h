@@ -7,6 +7,13 @@
 extern "C" {
 #endif
 
+#define LIST_FOREACH(root, ptr) for (ptr = root; ptr != NULL; ptr = ptr->next)
+#define LIST_ADD(root, item)                                                                       \
+    {                                                                                              \
+        item->next = root;                                                                         \
+        root = item;                                                                               \
+    }
+
 struct list_node {
     void* data;
     struct list_node* next;
@@ -24,9 +31,9 @@ typedef struct list list_t;
 #define LIST_DEFAULT()                                                                             \
     { NULL, NULL }
 
-// #define list_foreach(list, type, item)                                                             
-//     for (type* item = NULL, *_ = NULL; _ == NULL; _ = 1)                                           
-//         for (list_node_t* ptr = list._first; ptr != NULL; ptr = ptr->next)                         
+// #define list_foreach(list, type, item)
+//     for (type* item = NULL, *_ = NULL; _ == NULL; _ = 1)
+//         for (list_node_t* ptr = list._first; ptr != NULL; ptr = ptr->next)
 //             if ((item = (type*)ptr->data) != NULL)
 
 #define list_foreach(list, item)                                                                   \
