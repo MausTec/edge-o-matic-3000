@@ -25,6 +25,7 @@ typedef enum bluetooth_driver_compatibility {
 typedef struct bluetooth_driver {
     bluetooth_driver_status_t (*connect)(peer_t* peer);
     void (*disconnect)(peer_t* peer);
+    void (*tick)(peer_t* peer);
     size_t (*get_name)(peer_t* peer, char* buffer, size_t len);
     bluetooth_driver_status_t (*get_status)(peer_t* peer);
     void (*set_speed)(peer_t* peer, uint8_t speed);
@@ -32,6 +33,7 @@ typedef struct bluetooth_driver {
 } bluetooth_driver_t;
 
 void bluetooth_driver_init(void);
+void bluetooth_driver_tick(void);
 void bluetooth_driver_broadcast_speed(uint8_t speed);
 void bluetooth_driver_broadcast_arousal(uint16_t arousal);
 
