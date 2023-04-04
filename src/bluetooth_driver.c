@@ -93,3 +93,16 @@ const bluetooth_driver_t* bluetooth_driver_find_for_peer(peer_t* peer) {
 
     return NULL;
 }
+
+void bluetooth_driver_init(void) {
+}
+
+void bluetooth_driver_tick(void) {
+    struct bt_driver_peer_node* node = _peers;
+
+    while (node != NULL) {
+        const bluetooth_driver_t* driver = node->peer.driver;
+        if (driver != NULL && driver->tick != NULL) driver->tick(&node->peer);
+        node = node->next;
+    }
+}

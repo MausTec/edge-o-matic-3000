@@ -3,11 +3,17 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/semphr.h"
 
+#define LOVENSE_CMD_MAX_LEN 32
+
 static const char* TAG = "drivers:lovense";
 
 static xSemaphoreHandle discover_sem;
 
 struct lovense_driver_state {
+    char pending_tx[LOVENSE_CMD_MAX_LEN];
+    int pending_len;
+    bool pending_tx_flag;
+    xSemaphoreHandle tx_mutex;
     xSemaphoreHandle notify_sem;
     struct ble_gatt_chr tx_chr;
     struct ble_gatt_chr rx_chr;
@@ -15,8 +21,56 @@ struct lovense_driver_state {
 
 static void set_speed(peer_t* peer, uint8_t speed);
 
-static bluetooth_driver_status_t connect(peer_t* peer) {
+static void sendf(peer_t* peer, const char* fmt, ...) {
+    struct lovense_driver_state* state = (struct lovense_driver_state*)peer->driver_state;
 
+    if (xSemaphoreTake(state->tx_mutex, portMAX_DELAY)) {
+        va_list argptr;
+        va_start(argptr, fmt);
+        state->pending_len = vsniprintf(state->pending_tx, LOVENSE_CMD_MAX_LEN, fmt, argptr);
+        va_end(argptr);
+        state->pending_tx_flag = true;
+        xSemaphoreGive(state->tx_mutex);
+    }
+}
+
+static int on_tx_status(
+    uint16_t conn_handle, const struct ble_gatt_error* error, struct ble_gatt_attr* attr, void* arg
+) {
+    peer_t* peer = (peer_t*)arg;
+    struct lovense_driver_state* state = (struct lovense_driver_state*)peer->driver_state;
+
+    ESP_LOGI(TAG, "ble_gattc_write returned on_tx_status: %d", error->status);
+    state->pending_tx_flag = false;
+    return 0;
+}
+
+static void tick(peer_t* peer) {
+    struct lovense_driver_state* state = (struct lovense_driver_state*)peer->driver_state;
+    if (state->pending_len == 0 || state->pending_tx_flag) return;
+
+    if (xSemaphoreTake(state->tx_mutex, portMAX_DELAY)) {
+        ESP_LOGI(TAG, "BLE Driver sendf: %s, %d bytes", state->pending_tx, state->pending_len);
+        char buffer[state->pending_len + 1];
+        int len = state->pending_len;
+        strcpy(buffer, state->pending_tx);
+        xSemaphoreGive(state->tx_mutex);
+
+        int rc = ble_gattc_write_flat(
+            peer->conn_handle, state->tx_chr.val_handle, buffer, len, on_tx_status, peer
+        );
+
+        if (rc == 0) {
+            ESP_LOGI(TAG, "Initiatated write: %d", rc);
+        } else {
+            ESP_LOGW(TAG, "Failed to write: %d", rc);
+        }
+    } else {
+        ESP_LOGE(TAG, "Timeout waiting for tx mutex!");
+    }
+}
+
+static bluetooth_driver_status_t connect(peer_t* peer) {
     return BT_DEVICE_CONNECTED;
 }
 
@@ -39,15 +93,10 @@ static bluetooth_driver_status_t get_status(peer_t* peer) {
 
 static void set_speed(peer_t* peer, uint8_t speed) {
     struct lovense_driver_state* state = (struct lovense_driver_state*)peer->driver_state;
+
     // Lovense takes speeds 0..20, and dividing by 13 with the 255 check is good enough
     uint8_t cmd_arg = speed == 255 ? 20 : speed / 13;
-
-    int rc = 0;
-    rc = bluetooth_driver_sendf(peer, &state->tx_chr, "Vibrate:%d", cmd_arg);
-
-    if (rc == 0) {
-        _wait_for_notify(peer);
-    }
+    sendf(peer, "Vibrate:%d", cmd_arg);
 }
 
 static void disconnect(peer_t* peer) {
@@ -79,6 +128,7 @@ static bluetooth_driver_compatibility_t discover(peer_t* peer) {
                 ESP_LOGI(TAG, "Write Char: %d", chr->chr.val_handle);
                 if (tx_chr == NULL) tx_chr = &chr->chr;
             }
+
             chr = chr->next;
         }
 
@@ -94,8 +144,12 @@ static bluetooth_driver_compatibility_t discover(peer_t* peer) {
         }
 
         state->notify_sem = xSemaphoreCreateBinary();
+        state->tx_mutex = xSemaphoreCreateMutex();
         state->tx_chr = *tx_chr;
         state->rx_chr = *rx_chr;
+        state->pending_tx_flag = false;
+        state->pending_tx[0] = '\0';
+        state->pending_len = 0;
         peer->driver_state = (void*)state;
 
         return BT_DRIVER_COMPATIBLE;
@@ -107,6 +161,7 @@ static bluetooth_driver_compatibility_t discover(peer_t* peer) {
 const bluetooth_driver_t LOVENSE_DRIVER = {
     .connect = connect,
     .disconnect = disconnect,
+    .tick = tick,
     .get_name = get_name,
     .get_status = get_status,
     .set_speed = set_speed,

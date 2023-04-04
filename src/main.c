@@ -1,6 +1,7 @@
 
 #include "accessory_driver.h"
 #include "api/broadcast.h"
+#include "bluetooth_driver.h"
 #include "bluetooth_manager.h"
 #include "config.h"
 #include "config_defs.h"
@@ -93,6 +94,13 @@ static void loop_task(void* args) {
     // }
 }
 
+static void accessory_driver_task(void* args) {
+    while (true) {
+        bluetooth_driver_tick();
+        vTaskDelay(1);
+    }
+}
+
 static void main_task(void* args) {
     console_ready();
     ui_open_page(&PAGE_EDGING_STATS, NULL);
@@ -113,6 +121,7 @@ void app_main() {
     http_server_init();
     wifi_manager_init();
     accessory_driver_init();
+    bluetooth_driver_init();
     orgasm_control_init();
     i18n_init();
 
@@ -146,5 +155,6 @@ void app_main() {
         ui_set_icon(UI_ICON_BT, -1);
     }
 
-    xTaskCreate(main_task, "MAIN", 1024 * 8, NULL, tskIDLE_PRIORITY, NULL);
+    xTaskCreate(main_task, "MAIN", 1024 * 8, NULL, tskIDLE_PRIORITY + 1, NULL);
+    xTaskCreate(accessory_driver_task, "ACCESSORY", 1024 * 4, NULL, tskIDLE_PRIORITY, NULL);
 }
