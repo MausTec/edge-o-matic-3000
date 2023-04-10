@@ -25,6 +25,6 @@ except subprocess.CalledProcessError as err:
     exit(1)
 
 if branch != "main" and branch != "master":
-    print("-DEOM_FW_VERSION='\"%s+%s\"'" % (revision, branch))
+    print("-DPROJECT_VER='\"%s+%s\"'" % (revision, branch))
 else:
-    print("-DEOM_FW_VERSION='\"%s\"'" % revision)
+    print("-DPROJECT_VER='\"%s\"'" % revision)

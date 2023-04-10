@@ -42,6 +42,16 @@ void ui_toast_multiline(const char* msg);
 void ui_toast_append(const char* fmt, ...);
 
 /**
+ * @brief This sets the progress of the current toast, or an indeterminate bar.
+ *
+ * If the current toast does not have a progress bar attached, this will append one.
+ *
+ * @param progress The current progress value
+ * @param max The maximum target value, or 0 for indeterminate progress
+ */
+void ui_toast_set_progress(int progress, int max);
+
+/**
  * @brief Adds a toast to the toasty queue which cannot be dismissed. Renders immediately.
  *
  * This will format and copy the string, so you can free up your buffer when you're done.
@@ -53,9 +63,23 @@ void ui_toast_append(const char* fmt, ...);
 void ui_toast_blocking(const char* fmt, ...);
 
 /**
+ * @brief Assign a callback for to call when closing this toast.
+ *
+ * @param cb Callback.
+ * @param arg Argument to give that callback aren't I so generous?
+ */
+void ui_toast_on_close(void (*cb)(void*), void* arg);
+
+/**
  * @brief Clears any active toasts.
  */
 void ui_toast_clear(void);
+
+/**
+ * @brief Call before clearing the toast. This will run the on_close arg.
+ *
+ */
+void ui_toast_handle_close(void);
 
 /**
  * @brief Renders the current toast, if one should be shown.

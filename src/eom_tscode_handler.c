@@ -9,7 +9,7 @@ void eom_tscode_install(void) {
     tscode_device_vendor_details_t dev_info = {
         .vendor = "Maus-Tec Electronics",
         .device = "Edge-o-Matic 3000",
-        .version = VERSION,
+        .version = EOM_VERSION,
     };
 
     tscode_register_vendor_details(&dev_info);

@@ -31,7 +31,7 @@ static command_err_t cmd_system_info(cJSON* command, cJSON* response, websocket_
     cJSON_AddStringToObject(response, "device", "Edge-o-Matic 3000");
     cJSON_AddStringToObject(response, "serial", buf);
     cJSON_AddStringToObject(response, "hwVersion", eom_hal_get_version());
-    cJSON_AddStringToObject(response, "fwVersion", VERSION);
+    cJSON_AddStringToObject(response, "fwVersion", EOM_VERSION);
     return CMD_OK;
 }
 

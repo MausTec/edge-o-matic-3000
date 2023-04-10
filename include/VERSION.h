@@ -5,11 +5,10 @@
 extern "C" {
 #endif
 
-extern const char* VERSION;
+extern const char* EOM_VERSION;
 
 #ifdef __cplusplus
 }
 #endif
 
 #endif
- 

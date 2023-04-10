@@ -1,30 +1,27 @@
 #include "wifi_manager.h"
-
-#include "system/http_server.h"
-
-#include <string.h>
-
-#include "freertos/FreeRTOS.h"
-#include "freertos/event_groups.h"
-
 #include "config.h"
 #include "esp_event.h"
 #include "esp_log.h"
 #include "esp_system.h"
 #include "esp_tls.h"
 #include "esp_wifi.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/event_groups.h"
+#include "lwip/err.h"
+#include "lwip/sys.h"
 #include "mdns.h"
 #include "nvs_flash.h"
 #include "sntp.h"
-
-#include "lwip/err.h"
-#include "lwip/sys.h"
+#include "system/http_server.h"
+#include <stdbool.h>
+#include <string.h>
 
 static const char* TAG = "wifi_manager";
 
 static EventGroupHandle_t s_wifi_event_group;
 static int s_retry_num = 0;
 static char s_wifi_ip_addr_str[20] = "";
+static bool s_initialized = false;
 static wifi_manager_status_t s_wifi_status = WIFI_MANAGER_DISCONNECTED;
 
 #define WIFI_MAX_CONNECTION_RETRY 5
@@ -71,6 +68,8 @@ event_handler(void* arg, esp_event_base_t event_base, int32_t event_id, void* ev
 }
 
 void wifi_manager_init(void) {
+    if (s_initialized) return;
+
     s_wifi_event_group = xEventGroupCreate();
     ESP_ERROR_CHECK(esp_netif_init());
     ESP_ERROR_CHECK(esp_tls_init_global_ca_store());
@@ -100,6 +99,8 @@ void wifi_manager_init(void) {
     sntp_setoperatingmode(SNTP_OPMODE_POLL);
     sntp_setservername(0, "pool.ntp.org");
     sntp_init();
+
+    s_initialized = true;
 }
 
 /** @todo Pelase actually implement me for the love of Yusuke Kitagawa. */
@@ -110,7 +111,7 @@ void wifi_manager_deinit(void) {
 esp_err_t wifi_manager_connect_to_ap(const char* ssid, const char* key) {
     if (ssid[0] == '\0') {
         ESP_LOGW(TAG, "Connecting to AP requires SSID. Aborting.");
-        return;
+        return ESP_ERR_INVALID_ARG;
     }
 
     wifi_config_t wifi_config = {
