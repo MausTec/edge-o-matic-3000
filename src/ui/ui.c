@@ -27,6 +27,7 @@ static void handle_button(eom_hal_button_t button, eom_hal_button_event_t event)
 
     if (ui_toast_is_active()) {
         if (ui_toast_is_dismissable()) {
+            ui_toast_handle_close();
             ui_toast_clear();
             UI.force_rerender = 1;
         }

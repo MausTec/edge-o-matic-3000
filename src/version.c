@@ -1,6 +1,6 @@
-const char* VERSION =
-#ifdef EOM_FW_VERSION
-    EOM_FW_VERSION
+const char* EOM_VERSION =
+#ifdef PROJECT_VER
+    PROJECT_VER
 #else
     "0.0.0"
 #endif

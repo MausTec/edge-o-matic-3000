@@ -14,10 +14,12 @@ static const char* TAG = "main_menu";
 
 static void on_info(const ui_menu_t* m, const ui_menu_item_t* item, UI_MENU_ARG_TYPE menu_arg) {
     const char* serial = eom_hal_get_device_serial_const();
-    const char* sha = strchr(VERSION, '-');
-    const char* tag = strchr(VERSION, '+');
+    const char* sha = strchr(EOM_VERSION, '-');
+    const char* tag = strchr(EOM_VERSION, '+');
 
-    ui_toast("S/N: %s\nVer: %.*s", serial, sha == NULL ? TOAST_MAX : sha - VERSION, VERSION);
+    ui_toast(
+        "S/N: %s\nVer: %.*s", serial, sha == NULL ? TOAST_MAX : sha - EOM_VERSION, EOM_VERSION
+    );
 
     if (sha != NULL) {
         ui_toast_append("SHA: %.*s", tag == NULL ? TOAST_MAX : tag - sha - 1, sha + 1);

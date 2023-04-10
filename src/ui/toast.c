@@ -12,27 +12,29 @@ static const char* TAG = "ui:toast";
 
 #define UI_TOAST_LINE_WIDTH 20
 
-static struct {
+static struct ui_toast {
     char str[TOAST_MAX + 1];
     const char* multiline_msg;
+    int8_t progress;
     uint8_t blocking;
+    void (*on_close)(void*);
+    void* on_close_arg;
 } current_toast;
 
 void ui_toast(const char* fmt, ...) {
+    ui_toast_clear();
+
     va_list args;
     va_start(args, fmt);
     vsnprintf(current_toast.str, TOAST_MAX, fmt, args);
     va_end(args);
 
     ESP_LOGD(TAG, "Toast: \"%s\", non-blocking", current_toast.str);
-
-    current_toast.blocking = 0;
 }
 
 void ui_toast_multiline(const char* msg) {
     ui_toast_clear();
     current_toast.multiline_msg = msg;
-    current_toast.blocking = 0;
 }
 
 void ui_toast_append(const char* fmt, ...) {
@@ -45,9 +47,39 @@ void ui_toast_append(const char* fmt, ...) {
 
     strlcat(current_toast.str, "\n", TOAST_MAX);
     strlcat(current_toast.str, buf, TOAST_MAX);
+    ui_toast_render();
+    ui_send_buffer();
+}
+
+void ui_toast_set_progress(int current, int total) {
+    static int8_t last_progress = -1;
+
+    if (total == 0) {
+        current_toast.progress = 0;
+        return;
+    }
+
+    int pct = (current * 100) / total;
+
+    if (pct > 100) {
+        pct = 100;
+    } else if (pct < 0) {
+        pct = 0;
+    }
+
+    current_toast.progress = pct;
+
+    if (current_toast.progress != last_progress) {
+        ESP_LOGD(TAG, "Progress updated: %d%%", current_toast.progress);
+        ui_toast_render();
+        ui_send_buffer();
+        last_progress = current_toast.progress;
+    }
 }
 
 void ui_toast_blocking(const char* fmt, ...) {
+    ui_toast_clear();
+
     va_list args;
     va_start(args, fmt);
     vsnprintf(current_toast.str, TOAST_MAX, fmt, args);
@@ -59,9 +91,28 @@ void ui_toast_blocking(const char* fmt, ...) {
 }
 
 void ui_toast_clear(void) {
+    ESP_LOGD(TAG, "Toast clear.");
     current_toast.str[0] = '\0';
     current_toast.multiline_msg = NULL;
     current_toast.blocking = 0;
+    current_toast.progress = -1;
+    current_toast.on_close = NULL;
+    current_toast.on_close_arg = NULL;
+}
+
+void ui_toast_on_close(void (*cb)(void*), void* arg) {
+    ESP_LOGD(TAG, "Toast on close register!");
+    current_toast.on_close = cb;
+    current_toast.on_close_arg = arg;
+}
+
+void ui_toast_handle_close(void) {
+    if (current_toast.on_close != NULL) {
+        ESP_LOGD(TAG, "Toast closing soon!");
+        current_toast.on_close(current_toast.on_close_arg);
+    } else {
+        ESP_LOGD(TAG, "No on close handler.");
+    }
 }
 
 void ui_toast_draw_frame(
@@ -137,6 +188,11 @@ void ui_toast_render(void) {
     ESP_LOGD(TAG, "Text Lines: %d", text_lines);
     if (text_lines > 4) text_lines = 4;
 
+    // Calculate progress bar line:
+    if (current_toast.progress != -1) {
+        text_lines += 1;
+    }
+
     // TODO: This is a clusterfuck of math, and on odd lined text is off-by-one
     int start_y =
         (EOM_DISPLAY_HEIGHT / 2) - (((7 + padding) * text_lines) / 2) - (padding / 2) - margin - 1;
@@ -186,6 +242,17 @@ void ui_toast_render(void) {
 
         idx++;
     } while (str[idx] != '\0');
+
+    if (current_toast.progress >= 0) {
+        int progress_x = start_x + margin + padding + 5;
+        int progress_y = text_start_y + 1;
+        int bar_width = EOM_DISPLAY_WIDTH - (2 * progress_x);
+
+        u8g2_DrawFrame(display, progress_x, progress_y, bar_width, 5);
+        u8g2_DrawBox(
+            display, progress_x, progress_y + 1, (bar_width * current_toast.progress) / 100, 3
+        );
+    }
 
     if (!current_toast.blocking) {
         // render press-any-key message

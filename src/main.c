@@ -18,8 +18,6 @@
 #include "wifi_manager.h"
 #include <time.h>
 
-void loop(void);
-
 static const char* TAG = "main";
 
 void resetSD() {
@@ -126,7 +124,7 @@ void app_main() {
     i18n_init();
 
     printf("Maus-Tec presents: Edge-o-Matic 3000\n");
-    printf("Version: %s\n", VERSION);
+    printf("Version: %s\n", EOM_VERSION);
     printf("EOM-HAL Version: %s\n", eom_hal_get_version());
 
     // Setup Hardware

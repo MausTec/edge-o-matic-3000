@@ -42,7 +42,7 @@ static command_err_t cmd_help(int argc, char** argv, console_t* console) {
     struct cmd_node* ptr = _first;
 
     if (argc == 0) {
-        fprintf(console->out, "Edge-o-Matic 3000, %s\n\nCOMMANDS\n", VERSION);
+        fprintf(console->out, "Edge-o-Matic 3000, %s\n\nCOMMANDS\n", EOM_VERSION);
     }
 
     while (ptr != NULL) {
