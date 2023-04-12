@@ -31,6 +31,16 @@ void bluetooth_driver_broadcast_arousal(uint16_t arousal) {
     }
 }
 
+void bluetooth_driver_enumerate_devices(bt_device_enumeration_cb_t cb, void* arg) {
+    struct bt_driver_peer_node* node = _peers;
+
+    while (node != NULL) {
+        const peer_t* peer = &node->peer;
+        if (peer != NULL && cb != NULL) cb(peer, arg);
+        node = node->next;
+    }
+}
+
 void bluetooth_driver_register_peer(peer_t* peer) {
     const bluetooth_driver_t* driver = peer->driver;
 

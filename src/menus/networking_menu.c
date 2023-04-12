@@ -137,6 +137,7 @@ static void on_open(const ui_menu_t* m, UI_MENU_ARG_TYPE arg) {
 
     ui_menu_add_item(m, _("Connection Status"), on_connection_status, NULL);
     ui_menu_add_menu(m, &ACCESSORY_PORT_MENU);
+    ui_menu_add_menu(m, &CONNECTED_ACCESSORIES_MENU);
 }
 
 DYNAMIC_MENU(NETWORKING_MENU, "Networking", on_open);

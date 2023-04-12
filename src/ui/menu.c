@@ -96,22 +96,30 @@ ui_menu_add_node(const ui_menu_t* m, const ui_menu_item_t* item, UI_MENU_ARG_TYP
     return node;
 }
 
-void ui_menu_clear(const ui_menu_t* m) {
+void ui_menu_clear_at(const ui_menu_t* m, size_t n) {
     if (m == NULL) return;
     ESP_LOGD(TAG, "ui_menu_clear(\"%s\")", m->title);
 
     ui_menu_item_list_t* list = m->dynamic_items;
+    ui_menu_item_node_t** ptr = &list->first;
     if (list == NULL) return;
 
-    while (list->first != NULL) {
-        ui_menu_item_node_t* node = list->first;
+    while (*ptr != NULL) {
+        // advance to offset:
+        if (n > 0) {
+            ptr = &(*ptr)->next;
+            n--;
+            continue;
+        }
+
+        ui_menu_item_node_t* node = *ptr;
 
         if (node->item && node->item->freer != NULL) {
             ESP_LOGD(TAG, "node->item->freer(%p) \"%s\"", node->item->arg, (char*)node->item->arg);
             node->item->freer(node->item->arg);
         }
 
-        list->first = node->next;
+        *ptr = node->next;
         if (node->freer != NULL) {
             ESP_LOGD(TAG, "node->freer(%p)", node->item);
             node->freer((void*)node->item);
@@ -119,10 +127,14 @@ void ui_menu_clear(const ui_menu_t* m) {
 
         ESP_LOGD(TAG, "free(%p)", node);
         free(node);
+        list->count--;
     }
 
-    list->count = 0;
     ESP_LOGD(TAG, "Menu cleared.");
+}
+
+void ui_menu_clear(const ui_menu_t* m) {
+    ui_menu_clear_at(m, 0);
 }
 
 void ui_menu_handle_close(const ui_menu_t* m, UI_MENU_ARG_TYPE arg) {
