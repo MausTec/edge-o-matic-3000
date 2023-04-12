@@ -116,6 +116,7 @@ ui_menu_item_t* ui_menu_add_page(const ui_menu_t* m, const ui_page_t* page);
 ui_menu_item_t* ui_menu_add_menu(const ui_menu_t* m, const ui_menu_t* menu);
 ui_menu_item_t* ui_menu_add_input(const ui_menu_t* m, const ui_input_t* input);
 void ui_menu_clear(const ui_menu_t* m);
+void ui_menu_clear_at(const ui_menu_t* m, size_t n);
 void ui_menu_free(const ui_menu_t* m, ui_menu_item_free_callback_t free_cb);
 
 const ui_menu_item_t* ui_menu_get_nth_item(const ui_menu_t* m, size_t n);

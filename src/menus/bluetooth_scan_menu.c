@@ -2,12 +2,12 @@
 #include "bluetooth_manager.h"
 #include "esp_log.h"
 #include "menus/common.h"
-#include "string.h"
 #include "ui/menu.h"
 #include "ui/toast.h"
 #include "ui/ui.h"
 #include "util/i18n.h"
 #include <stdbool.h>
+#include <string.h>
 
 static bool _scanning = false;
 static const char* TAG = "bluetooth_scan_menu";

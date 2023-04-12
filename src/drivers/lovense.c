@@ -6,7 +6,6 @@
 #define LOVENSE_CMD_MAX_LEN 32
 
 static const char* TAG = "drivers:lovense";
-
 static xSemaphoreHandle discover_sem;
 
 struct lovense_driver_state {
@@ -24,13 +23,15 @@ static void set_speed(peer_t* peer, uint8_t speed);
 static void sendf(peer_t* peer, const char* fmt, ...) {
     struct lovense_driver_state* state = (struct lovense_driver_state*)peer->driver_state;
 
-    if (xSemaphoreTake(state->tx_mutex, portMAX_DELAY)) {
+    if (xSemaphoreTake(state->tx_mutex, 1000UL / portTICK_RATE_MS)) {
         va_list argptr;
         va_start(argptr, fmt);
         state->pending_len = vsniprintf(state->pending_tx, LOVENSE_CMD_MAX_LEN, fmt, argptr);
         va_end(argptr);
-        state->pending_tx_flag = true;
+        ESP_LOGD(TAG, "sendf(%s)", state->pending_tx);
         xSemaphoreGive(state->tx_mutex);
+    } else {
+        ESP_LOGW(TAG, "Timeout waiting for TX mutex.");
     }
 }
 
@@ -41,7 +42,12 @@ static int on_tx_status(
     struct lovense_driver_state* state = (struct lovense_driver_state*)peer->driver_state;
 
     ESP_LOGI(TAG, "ble_gattc_write returned on_tx_status: %d", error->status);
-    state->pending_tx_flag = false;
+
+    if (error->status == 0) {
+        state->pending_tx_flag = false;
+        state->pending_len = 0;
+    }
+
     return 0;
 }
 
@@ -49,12 +55,15 @@ static void tick(peer_t* peer) {
     struct lovense_driver_state* state = (struct lovense_driver_state*)peer->driver_state;
     if (state->pending_len == 0 || state->pending_tx_flag) return;
 
-    if (xSemaphoreTake(state->tx_mutex, portMAX_DELAY)) {
+    if (xSemaphoreTake(state->tx_mutex, 1000UL / portTICK_RATE_MS)) {
         ESP_LOGI(TAG, "BLE Driver sendf: %s, %d bytes", state->pending_tx, state->pending_len);
         char buffer[state->pending_len + 1];
         int len = state->pending_len;
         strcpy(buffer, state->pending_tx);
         xSemaphoreGive(state->tx_mutex);
+
+        // The pending TX flag will block attempts to retry while an operation is in progress.
+        state->pending_tx_flag = true;
 
         int rc = ble_gattc_write_flat(
             peer->conn_handle, state->tx_chr.val_handle, buffer, len, on_tx_status, peer

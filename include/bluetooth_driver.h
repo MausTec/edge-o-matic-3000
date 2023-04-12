@@ -32,10 +32,13 @@ typedef struct bluetooth_driver {
     bluetooth_driver_compatibility_t (*discover)(peer_t* peer);
 } bluetooth_driver_t;
 
+typedef void (*bt_device_enumeration_cb_t)(peer_t* device, void* arg);
+
 void bluetooth_driver_init(void);
 void bluetooth_driver_tick(void);
 void bluetooth_driver_broadcast_speed(uint8_t speed);
 void bluetooth_driver_broadcast_arousal(uint16_t arousal);
+void bluetooth_driver_enumerate_devices(bt_device_enumeration_cb_t cb, void* arg);
 
 void bluetooth_driver_register_peer(peer_t* peer);
 void bluetooth_driver_unregister_peer(peer_t* peer);
