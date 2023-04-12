@@ -6,13 +6,13 @@
 	url = https://github.com/MausTec/ts-code.git
 [submodule "lib/mt-accessory-common"]
 	path = lib/mt-accessory-common
-	url = https://github.com/maustec/mt-accessory-common
+	url = https://github.com/MausTec/mt-accessory-common
 [submodule "components/u8g2"]
 	path = components/u8g2
 	url = https://github.com/olikraus/u8g2
 [submodule "lib/my_basic"]
 	path = lib/my_basic
-	url = https://github.com/paladin-t/my_basic
+	url = https://github.com/MausTec/my_basic_dist
 [submodule "lib/semver"]
 	path = lib/semver
 	url = https://github.com/h2non/semver.c
