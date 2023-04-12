@@ -247,7 +247,7 @@ namespace OrgasmControl {
       UI.toast("Error opening\nlogfile!");
     } else {
       recording_start_ms = millis();
-      logfile.println("millis,pressure,avg_pressure,arousal,motor_speed,sensitivity_threshold");
+      logfile.println("millis,pressure,avg_pressure,arousal,motor_speed,sensitivity_threshold,clench_pressure_threshold,clench_duration");
       UI.drawRecordIcon(1, 1500);
       UI.toast(String("Recording started:\n" + logfile_name).c_str());
     }
