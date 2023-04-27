@@ -101,7 +101,9 @@ static void accessory_driver_task(void* args) {
 
 static void main_task(void* args) {
     console_ready();
+    vTaskDelay(3000UL / portTICK_RATE_MS);
     ui_open_page(&PAGE_EDGING_STATS, NULL);
+    ui_reset_idle_timer();
 
     for (;;) {
         loop_task(NULL);
@@ -114,8 +116,8 @@ static void main_task(void* args) {
 void app_main() {
     eom_hal_init();
     ui_init();
+    resetSD(); // TODO: Make this storage_init();
     console_init();
-    resetSD();
     http_server_init();
     wifi_manager_init();
     accessory_driver_init();
@@ -127,10 +129,8 @@ void app_main() {
     printf("Version: %s\n", EOM_VERSION);
     printf("EOM-HAL Version: %s\n", eom_hal_get_version());
 
-    // Setup Hardware
-
     // Go to the splash page:
-    // Page::Go(&DebugPage, false);
+    ui_open_page(&SPLASH_PAGE, NULL);
 
     eom_hal_set_sensor_sensitivity(Config.sensor_sensitivity);
     eom_hal_set_encoder_brightness(Config.led_brightness);
@@ -153,7 +153,6 @@ void app_main() {
         ui_set_icon(UI_ICON_BT, -1);
     }
 
-    xTaskCreate(main_task, "MAIN", 1024 * 8, NULL, tskIDLE_PRIORITY + 1, NULL);
     xTaskCreate(accessory_driver_task, "ACCESSORY", 1024 * 4, NULL, tskIDLE_PRIORITY, NULL);
-    ui_reset_idle_timer();
+    xTaskCreate(main_task, "MAIN", 1024 * 8, NULL, tskIDLE_PRIORITY + 1, NULL);
 }
