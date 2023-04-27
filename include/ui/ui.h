@@ -28,6 +28,7 @@ void ui_open_input(const ui_input_t* input, void* arg);
 void ui_close_input(void);
 
 void ui_close_all(void);
+void ui_reset_idle_timer(void);
 
 #ifdef __cplusplus
 }
