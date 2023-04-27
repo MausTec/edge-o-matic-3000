@@ -1,5 +1,10 @@
 #include "ui/ui.h"
+#include "assets.h"
+#include "config.h"
 #include "esp_log.h"
+#include "esp_timer.h"
+#include "orgasm_control.h"
+#include "ui/graphics.h"
 #include "ui/toast.h"
 #include <string.h>
 
@@ -18,12 +23,31 @@ static volatile struct ui_state {
     void* current_input_arg;
 
     ui_render_flag_t force_rerender;
+    uint64_t last_input_ms;
+
+    enum {
+        UI_ACTIVE,
+        UI_IDLE,
+        UI_SCREENSAVER,
+    } idle_state;
 } UI;
 
 static uint8_t _initialized = 0;
 
+void ui_reset_idle_timer(void) {
+    UI.last_input_ms = esp_timer_get_time() / 1000UL;
+    u8g2_t* display = eom_hal_get_display_ptr();
+
+    if (UI.idle_state != UI_ACTIVE) {
+        u8g2_SetContrast(display, 255);
+        UI.idle_state = UI_ACTIVE;
+        ui_tick();
+    }
+}
+
 static void handle_button(eom_hal_button_t button, eom_hal_button_event_t event) {
     ui_render_flag_t rf = PASS;
+    ui_reset_idle_timer();
 
     if (ui_toast_is_active()) {
         if (ui_toast_is_dismissable()) {
@@ -60,6 +84,7 @@ static void handle_button(eom_hal_button_t button, eom_hal_button_event_t event)
 
 static void handle_encoder(int delta) {
     ui_render_flag_t rf = PASS;
+    ui_reset_idle_timer();
 
     // Toasts always eat encoder...
     if (ui_toast_is_active()) return;
@@ -94,6 +119,8 @@ void ui_init(void) {
     UI.menu_history_depth = 0;
     UI.current_input = NULL;
     UI.force_rerender = 0;
+    UI.last_input_ms = esp_timer_get_time() / 1000UL;
+    UI.idle_state = UI_ACTIVE;
 
     for (int i = 0; i < UI_MENU_HISTORY_DEPTH; i++) {
         UI.menu_history[i] = NULL;
@@ -239,9 +266,63 @@ void ui_send_buffer(void) {
     }
 }
 
+static void render_screensaver_frame() {
+    static const int pos_x_max = EOM_DISPLAY_WIDTH - 24;
+    static const int pos_y_max = EOM_DISPLAY_HEIGHT - 24;
+    static int16_t pos_x = 0;
+    static int16_t pos_y = 0;
+    static uint8_t direction = 0b11;
+    static long last_frame_ms = 0;
+    long millis = esp_timer_get_time() / 1000;
+    u8g2_t* display = eom_hal_get_display_ptr();
+
+    if (millis - last_frame_ms > (1000 / 20)) {
+        last_frame_ms = millis;
+        u8g2_ClearBuffer(display);
+        pos_x += (direction & 1) ? 1 : -1;
+        pos_y += (direction & 2) ? 1 : -1;
+
+        if (pos_x >= pos_x_max || pos_x <= 0) {
+            direction ^= 0b01;
+        }
+
+        if (pos_y >= pos_y_max || pos_y <= 0) {
+            direction ^= 0b10;
+        }
+
+        int pressure_icon = orgasm_control_getAveragePressure() / 4095;
+
+        u8g2_SetDrawColor(display, 1);
+        u8g2_DrawBitmap(display, pos_x, pos_y, 24 / 8, 24, PLUG_ICON[pressure_icon % 4]);
+        ui_send_buffer();
+    }
+}
+
 void ui_tick(void) {
     int rendered = 0;
     u8g2_t* display = eom_hal_get_display_ptr();
+    uint32_t millis = esp_timer_get_time() / 1000UL;
+
+    // Check idle
+    if (UI.idle_state != UI_IDLE && Config.screen_dim_seconds != 0 &&
+        millis - UI.last_input_ms > ((uint32_t)Config.screen_dim_seconds * 1000UL)) {
+        UI.idle_state = UI_IDLE;
+        u8g2_SetContrast(display, 0);
+    }
+
+    if (UI.idle_state != UI_SCREENSAVER && Config.screen_timeout_seconds != 0 &&
+        millis - UI.last_input_ms > ((uint32_t)Config.screen_timeout_seconds * 1000UL)) {
+        UI.idle_state = UI_SCREENSAVER;
+        u8g2_SetContrast(display, 0);
+        // ui_fade_to(0);
+    }
+
+    if (UI.idle_state == UI_SCREENSAVER) {
+        if (Config.enable_screensaver == true) {
+            render_screensaver_frame();
+        }
+        return;
+    }
 
     // Reset render conditions:
     u8g2_SetDrawColor(display, 1);
