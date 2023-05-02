@@ -29,8 +29,15 @@ typedef struct vibration_mode_controller {
 } vibration_mode_controller_t;
 
 // Helper Functions
+
+// Returns the increment per tick of a given span:
+//   increment_per_second = (target - start) / time_s
+//   increment_per_tick = increment_per_second / ticks_per_second
+//
 #define calculate_increment(start, target, time_s)                                                 \
-    ((time_s > 0) ? ((float)(target - start) / ((float)Config.update_frequency_hz)) : 0)
+    ((time_s > 0 && Config.update_frequency_hz > 0)                                                \
+         ? ((float)(target - start) / ((float)time_s)) / Config.update_frequency_hz                \
+         : 0)
 
 // Vibration Modes
 extern const vibration_mode_controller_t RampStopController;

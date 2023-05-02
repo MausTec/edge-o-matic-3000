@@ -18,8 +18,9 @@ static float start(void) {
 
 static float increment(void) {
     if (state.base_speed < Config.motor_max_speed) {
-        state.base_speed += calculate_increment(Config.motor_start_speed, Config.motor_max_speed,
-                                                Config.motor_ramp_time_s);
+        state.base_speed += calculate_increment(
+            Config.motor_start_speed, Config.motor_max_speed, Config.motor_ramp_time_s
+        );
     }
 
     float alter_perc = ((float)state.arousal / Config.sensitivity_threshold);
@@ -39,7 +40,9 @@ static void tick(float motor_speed, uint16_t arousal) {
     state.arousal = arousal;
 }
 
-static float stop(void) { return 0; }
+static float stop(void) {
+    return 0;
+}
 
 const vibration_mode_controller_t DepletionController = {
     .start = start,

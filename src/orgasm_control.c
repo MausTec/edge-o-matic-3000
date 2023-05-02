@@ -394,7 +394,7 @@ oc_bool_t orgasm_control_isRecording() {
 
 void orgasm_control_tick() {
     unsigned long millis = esp_timer_get_time() / 1000UL;
-    unsigned long update_frequency_ms = (1.0f / Config.update_frequency_hz) * 1000.0f;
+    unsigned long update_frequency_ms = 1000UL / Config.update_frequency_hz;
 
     if (millis - arousal_state.last_update_ms > update_frequency_ms) {
         orgasm_control_updateArousal();
@@ -495,8 +495,17 @@ void orgasm_control_controlMotor(orgasm_output_mode_t control) {
 }
 
 void orgasm_control_set_output_mode(orgasm_output_mode_t control) {
+    orgasm_output_mode_t old = output_state.output_mode;
     output_state.output_mode = control;
     output_state.control_motor = control != OC_MANUAL_CONTROL;
+
+    if (old == OC_MANUAL_CONTROL) {
+        const vibration_mode_controller_t* controller = orgasm_control_getVibrationMode();
+        controller->start();
+    } else if (control == OC_MANUAL_CONTROL) {
+        const vibration_mode_controller_t* controller = orgasm_control_getVibrationMode();
+        controller->stop();
+    }
 }
 
 void orgasm_control_pauseControl() {

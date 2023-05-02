@@ -9,11 +9,15 @@ static struct {
     uint16_t arousal;
 } state;
 
-static float start(void) { return Config.motor_start_speed; }
+static float start(void) {
+    state.motor_speed = Config.motor_start_speed;
+    return Config.motor_start_speed;
+}
 
 static float increment(void) {
-    float motor_increment = calculate_increment(Config.motor_start_speed, Config.motor_max_speed,
-                                                Config.motor_ramp_time_s);
+    float motor_increment = calculate_increment(
+        Config.motor_start_speed, Config.motor_max_speed, Config.motor_ramp_time_s
+    );
 
     if (state.motor_speed < (Config.motor_max_speed - motor_increment)) {
         return state.motor_speed + motor_increment;
@@ -27,7 +31,10 @@ static void tick(float motor_speed, uint16_t arousal) {
     state.arousal = arousal;
 }
 
-static float stop(void) { return 0.0f; }
+static float stop(void) {
+    state.motor_speed = 0.0f;
+    return 0.0f;
+}
 
 const vibration_mode_controller_t RampStopController = {
     .start = start,

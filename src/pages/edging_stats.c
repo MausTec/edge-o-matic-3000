@@ -70,10 +70,14 @@ static void _draw_buttons(u8g2_t* d, orgasm_output_mode_t mode) {
     if (orgasm_control_isMenuLocked()) {
         ui_draw_button_labels(d, btn1, _("LOCKED"), _("LOCKED"));
         ui_draw_button_disable(d, 0b011);
-    } else if (mode == OC_AUTOMAITC_CONTROL) {
-        ui_draw_button_labels(d, btn1, btn2, _("POST"));
     } else if (mode == OC_MANUAL_CONTROL) {
         ui_draw_button_labels(d, btn1, btn2, _("AUTO"));
+    } else if (mode == OC_AUTOMAITC_CONTROL) {
+        if (Config.use_post_orgasm == true) {
+            ui_draw_button_labels(d, btn1, btn2, _("POST"));
+        } else {
+            ui_draw_button_labels(d, btn1, btn2, _("MANUAL"));
+        }
     } else if (mode == OC_LOCKOUT_POST_MODE) {
         ui_draw_button_labels(d, btn1, btn2, _("MANUAL"));
     }
@@ -93,10 +97,10 @@ static void _draw_status(u8g2_t* d, orgasm_output_mode_t mode) {
 
 static void _draw_meters(u8g2_t* d, orgasm_output_mode_t mode) {
     if (mode == OC_MANUAL_CONTROL) {
-        ui_draw_bar_graph(d, 10, 'M', eom_hal_get_motor_speed(), 255);
+        ui_draw_bar_graph(d, 10, 'S', eom_hal_get_motor_speed(), 255);
     } else {
         ui_draw_shaded_bar_graph(
-            d, 10, 'M', eom_hal_get_motor_speed(), 255, Config.motor_max_speed
+            d, 10, 'S', eom_hal_get_motor_speed(), 255, Config.motor_max_speed
         );
     }
 
@@ -246,7 +250,7 @@ on_button(eom_hal_button_t button, eom_hal_button_event_t event, void* arg) {
     } else if (button == EOM_HAL_BUTTON_MID) {
         if (locked) return NORENDER;
 
-        orgasm_control_controlMotor(OC_MANUAL_CONTROL);
+        orgasm_control_set_output_mode(OC_MANUAL_CONTROL);
         eom_hal_set_motor_speed(0x00);
         accessory_driver_broadcast_speed(0x00);
         bluetooth_driver_broadcast_speed(0x00);
@@ -257,11 +261,15 @@ on_button(eom_hal_button_t button, eom_hal_button_event_t event, void* arg) {
         orgasm_output_mode_t mode = orgasm_control_get_output_mode();
 
         if (mode == OC_MANUAL_CONTROL) {
-            orgasm_control_controlMotor(OC_AUTOMAITC_CONTROL);
+            orgasm_control_set_output_mode(OC_AUTOMAITC_CONTROL);
         } else if (mode == OC_AUTOMAITC_CONTROL) {
-            orgasm_control_controlMotor(OC_LOCKOUT_POST_MODE);
+            if (Config.use_post_orgasm == true) {
+                orgasm_control_set_output_mode(OC_LOCKOUT_POST_MODE);
+            } else {
+                orgasm_control_set_output_mode(OC_MANUAL_CONTROL);
+            }
         } else {
-            orgasm_control_controlMotor(OC_MANUAL_CONTROL);
+            orgasm_control_set_output_mode(OC_MANUAL_CONTROL);
         }
     } else {
         return PASS;
