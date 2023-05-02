@@ -25,11 +25,11 @@ and is automatically generated. Here is a quick summary of config variables:
 |---|----|---|---|
 |`wifi_ssid`|String|""|Your WiFi SSID.|
 |`wifi_key`|String|""|Your WiFi Password.|
-|`wifi_on`|Boolean|false|True to enable WiFi / Websocket server.|
+|`wifi_on`|Boolean|false|Enable WiFi and the Websocket server. Cannot be enabled if AzureFang is on.|
 |`bt_display_name`|String|"Edge-o-Matic 3000"|AzureFang* device name, you might wanna change this.|
-|`bt_on`|Boolean|false|True to enable the AzureFang connection.|
-|`force_bt_coex`|Boolean|false|True to force AzureFang and WiFi at the same time**.|
-|`led_brightness`|Byte|128|LED Ring max brightness, only for NoGasm+.|
+|`bt_on`|Boolean|false|Enable AzureFang connectivity. Cannot be enabled if WiFi is on.|
+|`force_bt_coex`|Boolean|false|Force AzureFang and WiFi at the same time**.|
+|`led_brightness`|Byte|128|Status LED maximum brightness.|
 |`websocket_port`|Int|80|Port to listen for incoming Websocket connections.|
 |`use_ssl`|Boolean|false|Enable SSL server, which will eat all your RAM!|
 |`hostname`|String|"eom3k"|Local hostname for your device.|
