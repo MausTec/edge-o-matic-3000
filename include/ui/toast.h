@@ -6,6 +6,7 @@ extern "C" {
 #endif
 
 #include "u8g2.h"
+#include "ui/ui.h"
 #include <stdint.h>
 
 #define TOAST_MAX 256
@@ -85,6 +86,14 @@ void ui_toast_handle_close(void);
  * @brief Renders the current toast, if one should be shown.
  */
 void ui_toast_render(void);
+
+/**
+ * @brief Scrolls the currently active toast.
+ *
+ * @param delta
+ * @return ui_render_flag_t
+ */
+ui_render_flag_t ui_toast_scroll(int delta);
 
 /**
  * @brief Checks if a toast is currently active and rendering.
