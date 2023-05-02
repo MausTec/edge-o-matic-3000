@@ -51,6 +51,7 @@ void ui_page_handle_close(const ui_page_t* p, void* arg);
 
 extern const ui_page_t PAGE_SNAKE;
 extern const ui_page_t PAGE_EDGING_STATS;
+extern const ui_page_t EDGING_CHART_PAGE;
 extern const ui_page_t PAGE_APP_RUNNER;
 extern const ui_page_t SPLASH_PAGE;
 

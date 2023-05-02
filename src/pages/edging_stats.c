@@ -4,6 +4,7 @@
 #include "esp_log.h"
 #include "esp_timer.h"
 #include "orgasm_control.h"
+#include "ui/toast.h"
 #include "ui/ui.h"
 #include "util/i18n.h"
 #include <math.h>
@@ -22,6 +23,17 @@ static struct {
 } state;
 
 static void on_open(void* arg) {
+    // ui_toast_multiline(
+    //     "Richter: Die monster. You don't belong in this world!\n\n"
+    //     "Dracula: It was not by my hand that I am once again given flesh. I was called here by "
+    //     "humans who wish to pay me tribute.\n\n"
+    //     "Richter: Tribute!?! You steal men's souls and make them your slaves!\n\n"
+    //     "Dracula: Perhaps the same could be said of all religions...\n\n"
+    //     "Richter: Your words are as empty as your soul! Mankind ill needs a savior such as
+    //     you!\n\n" "Dracula: What is a man? (throws his wine glass to the floor) A miserable
+    //     little pile of " "secrets. But enough talk... Have at you!\n\n" "Belmont:
+    //     alsdjf;lskdfj;alskdjf;laskdjf;alskdjf;alksdjflsdkf <3"
+    // );
 }
 
 static ui_render_flag_t on_loop(void* arg) {
@@ -246,7 +258,7 @@ on_button(eom_hal_button_t button, eom_hal_button_event_t event, void* arg) {
     if (event != EOM_HAL_BUTTON_PRESS) return PASS;
 
     if (button == EOM_HAL_BUTTON_BACK) {
-        // ui open chart
+        ui_open_page(&EDGING_CHART_PAGE, NULL);
     } else if (button == EOM_HAL_BUTTON_MID) {
         if (locked) return NORENDER;
 

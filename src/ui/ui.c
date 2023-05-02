@@ -87,7 +87,13 @@ static void handle_encoder(int delta) {
     ui_reset_idle_timer();
 
     // Toasts always eat encoder...
-    if (ui_toast_is_active()) return;
+    if (ui_toast_is_active()) {
+        if (ui_toast_scroll(delta) == RENDER) {
+            UI.force_rerender = 1;
+        }
+
+        return;
+    }
 
     if (UI.current_input != NULL) {
         const ui_input_t* i = UI.current_input;

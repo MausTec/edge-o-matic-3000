@@ -19,6 +19,8 @@ static struct ui_toast {
     uint8_t blocking;
     void (*on_close)(void*);
     void* on_close_arg;
+    int start_line;
+    int text_lines;
 } current_toast;
 
 void ui_toast(const char* fmt, ...) {
@@ -98,6 +100,20 @@ void ui_toast_clear(void) {
     current_toast.progress = -1;
     current_toast.on_close = NULL;
     current_toast.on_close_arg = NULL;
+    current_toast.start_line = 0;
+    current_toast.text_lines = 0;
+}
+
+ui_render_flag_t ui_toast_scroll(int delta) {
+    size_t old = current_toast.start_line;
+    current_toast.start_line += delta;
+
+    if (current_toast.start_line > current_toast.text_lines - 4)
+        current_toast.start_line = current_toast.text_lines - 4;
+
+    if (current_toast.start_line < 0) current_toast.start_line = 0;
+
+    return current_toast.start_line == old ? NORENDER : RENDER;
 }
 
 void ui_toast_on_close(void (*cb)(void*), void* arg) {
@@ -142,6 +158,66 @@ void ui_toast_draw_frame(
     );
 }
 
+typedef void (*text_wrap_cb_t)(const char* start, size_t len, size_t line, void* arg);
+
+static size_t text_wrap(size_t col, const char* text, text_wrap_cb_t cb, void* cb_arg) {
+    size_t text_lines = 0;
+    size_t i = 0;
+    const char* line = text;
+    const char* space = text;
+
+    for (const char* ptr = text; *ptr != '\0'; ptr++) {
+        i++;
+
+        if (*ptr == '\n') {
+            if (cb != NULL) cb(line, ptr - line, text_lines, cb_arg);
+
+            i = 0;
+            text_lines++;
+            line = ptr + 1;
+            space = line;
+        } else if (i > col) {
+            if (space != line) {
+                if (cb != NULL) cb(line, space - line, text_lines, cb_arg);
+
+                ptr = space;
+                line = ptr;
+            } else {
+                if (cb != NULL) cb(line, ptr - line, text_lines, cb_arg);
+            }
+
+            i = 0;
+            text_lines++;
+        } else if (*ptr == ' ') {
+            space = ptr + 1;
+        }
+    }
+
+    if (*line != '\0' && cb != NULL) cb(line, strlen(line), text_lines, cb_arg);
+
+    return text_lines + 1;
+}
+
+struct toast_line_cb_arg {
+    u8g2_t* display;
+    int x;
+    int* y;
+};
+
+static void ui_toast_render_line(const char* start, size_t len, size_t i, void* arg) {
+    static char line[UI_TOAST_LINE_WIDTH + 1];
+
+    if (i - current_toast.start_line > 3 || i < current_toast.start_line) return;
+
+    struct toast_line_cb_arg* cbarg = (struct toast_line_cb_arg*)arg;
+
+    memcpy(line, start, len);
+    line[len] = '\0';
+
+    u8g2_DrawUTF8(cbarg->display, cbarg->x, *cbarg->y, line);
+    *cbarg->y += 9;
+}
+
 void ui_toast_render(void) {
     if (!ui_toast_is_active()) return;
 
@@ -158,31 +234,11 @@ void ui_toast_render(void) {
     const char* str =
         current_toast.multiline_msg == NULL ? current_toast.str : current_toast.multiline_msg;
 
-    int text_lines = 1;
+    size_t total_lines = text_wrap(UI_TOAST_LINE_WIDTH, str, NULL, NULL);
+    size_t text_lines = total_lines;
 
-    {
-        size_t i = 0;
-        const char* line = str;
-        const char* space = str;
-
-        for (const char* ptr = str; *ptr != '\0'; ptr++) {
-            i++;
-
-            if (current_toast.str[i] == '\n') {
-                i = 0;
-                text_lines++;
-            } else if (i > UI_TOAST_LINE_WIDTH) {
-                if (space != line) {
-                    ptr = space;
-                    line = ptr;
-                }
-
-                i = 0;
-                text_lines++;
-            } else if (*ptr == ' ') {
-                space = ptr;
-            }
-        }
+    if (current_toast.text_lines == 0) {
+        current_toast.text_lines = total_lines;
     }
 
     ESP_LOGD(TAG, "Text Lines: %d", text_lines);
@@ -203,45 +259,13 @@ void ui_toast_render(void) {
 
     ui_toast_draw_frame(display, margin, start_x, start_y, (EOM_DISPLAY_HEIGHT - (start_y * 2)));
 
-    char line[UI_TOAST_LINE_WIDTH + 1];
+    struct toast_line_cb_arg cb_args = {
+        .display = display,
+        .x = start_x + margin + padding + 1,
+        .y = &text_start_y,
+    };
 
-    size_t idx = 0;
-    size_t space_idx = 0;
-    uint8_t col = 0;
-
-    do {
-        if (str[idx] == ' ') {
-            space_idx = idx;
-        }
-
-        if (str[idx] == '\n') {
-            space_idx = idx;
-            line[col] = '\0';
-            col = UI_TOAST_LINE_WIDTH;
-        }
-
-        else {
-            line[col] = str[idx];
-            line[col + 1] = '\0';
-            col++;
-        }
-
-        if (str[idx + 1] == '\0') {
-            space_idx = idx;
-            line[col] = '\0';
-            col = UI_TOAST_LINE_WIDTH;
-        }
-
-        if (col >= UI_TOAST_LINE_WIDTH) {
-            line[col - (idx - space_idx)] = '\0';
-            u8g2_DrawUTF8(display, start_x + margin + padding + 1, text_start_y, line);
-            text_start_y += 7 + padding;
-            col = 0;
-            idx = space_idx;
-        }
-
-        idx++;
-    } while (str[idx] != '\0');
+    text_wrap(UI_TOAST_LINE_WIDTH, str, ui_toast_render_line, &cb_args);
 
     if (current_toast.progress >= 0) {
         int progress_x = start_x + margin + padding + 5;
@@ -252,6 +276,10 @@ void ui_toast_render(void) {
         u8g2_DrawBox(
             display, progress_x, progress_y + 1, (bar_width * current_toast.progress) / 100, 3
         );
+    }
+
+    if (total_lines > text_lines) {
+        ui_draw_scrollbar(display, current_toast.start_line, total_lines, text_lines);
     }
 
     if (!current_toast.blocking) {
