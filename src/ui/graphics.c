@@ -101,9 +101,12 @@ void ui_draw_button_labels(
     u8g2_SetFontPosBaseline(d);
     u8g2_SetFont(d, UI_FONT_SMALL);
 
-    ui_draw_str_center(d, ((EOM_DISPLAY_WIDTH / 6) * 1) + 0, EOM_DISPLAY_HEIGHT - 1, left_str);
-    ui_draw_str_center(d, ((EOM_DISPLAY_WIDTH / 6) * 3) + 1, EOM_DISPLAY_HEIGHT - 1, mid_str);
-    ui_draw_str_center(d, ((EOM_DISPLAY_WIDTH / 6) * 5) + 2, EOM_DISPLAY_HEIGHT - 1, right_str);
+    if (left_str != NULL)
+        ui_draw_str_center(d, ((EOM_DISPLAY_WIDTH / 6) * 1) + 0, EOM_DISPLAY_HEIGHT - 1, left_str);
+    if (mid_str != NULL)
+        ui_draw_str_center(d, ((EOM_DISPLAY_WIDTH / 6) * 3) + 1, EOM_DISPLAY_HEIGHT - 1, mid_str);
+    if (right_str != NULL)
+        ui_draw_str_center(d, ((EOM_DISPLAY_WIDTH / 6) * 5) + 2, EOM_DISPLAY_HEIGHT - 1, right_str);
 }
 
 /**
