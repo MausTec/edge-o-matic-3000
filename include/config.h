@@ -13,7 +13,7 @@ extern "C" {
 #define CONFIG_PATH_MAX 64
 
 // This is just a default, others can be loaded after boot.
-#define CONFIG_FILENAME "/config.json"
+static const char* CONFIG_FILENAME = "/config.json";
 
 // String Lengths
 #define WIFI_SSID_MAX_LEN 64
@@ -22,6 +22,10 @@ extern "C" {
 // Some Experiments
 // #define EOM_BETA 1
 #define I18N_USE_CJSON_DICT 1
+
+// System Defaults
+static const char* REMOTE_UPDATE_URL =
+    "http://us-central1-maustec-io.cloudfunctions.net/gh-release-embedded-bridge";
 
 // Vibration Modes
 // See vibration_mode_controller.h for more.
@@ -136,6 +140,11 @@ struct config {
     bool edge_menu_lock;
     // Deny access to menu starting after orgasm detected
     bool post_orgasm_menu_lock;
+
+    //= Internal System Configuration (Update only if you know what you're doing)
+
+    // Remote update server URL. You may change this to OTA update other versions.
+    char* remote_update_url;
 };
 
 typedef struct config config_t;

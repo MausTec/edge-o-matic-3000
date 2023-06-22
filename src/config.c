@@ -62,6 +62,9 @@ CONFIG_DEFS {
     CFG_BOOL(edge_menu_lock, false);
     CFG_NUMBER(max_clench_duration, 100);
 
+    // Internal system things, only edit if you know what you're doing.
+    CFG_STRING_PTR(remote_update_url, REMOTE_UPDATE_URL)
+
     // Please just leave this here and don't ask questions.
     return false;
 }

@@ -230,7 +230,7 @@ esp_err_t update_manager_update_from_web(um_progress_callback_t* progress_cb, vo
     };
 
     esp_http_client_config_t data_config = {
-        .url = REMOTE_UPDATE_URL,
+        .url = Config.remote_update_url,
         .event_handler = _http_event_handler,
         .user_data = &callback_data,
     };
@@ -324,17 +324,21 @@ esp_err_t update_manager_check_latest_version(semver_t* version) {
         .size = &size,
     };
 
+    char* url = NULL;
+    asiprintf(&url, "%s/%s", Config.remote_update_url, "version.txt");
+
     esp_http_client_config_t config = {
-        .url = REMOTE_UPDATE_URL "/version.txt",
+        .url = url,
         .user_data = &callback_data,
         .event_handler = _http_event_handler,
     };
 
-    ESP_LOGI(TAG, "Checking for OTA updates: %s", REMOTE_UPDATE_URL "/version.txt");
+    ESP_LOGI(TAG, "Checking for OTA updates: %s", config.url);
 
     esp_http_client_handle_t client = esp_http_client_init(&config);
 
     esp_err_t err = esp_http_client_perform(client);
+    free(url);
 
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "HTTP GET failed: %s", esp_err_to_name(err));

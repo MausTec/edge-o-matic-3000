@@ -57,6 +57,34 @@ enum _config_def_operation {
         }                                                                                          \
     }
 
+#define CFG_STRING_PTR(name, default)                                                              \
+    {                                                                                              \
+        if (root != NULL) {                                                                        \
+            if (operation == CFG_SET || operation == CFG_MERGE) {                                  \
+                cJSON* item = cJSON_GetObjectItem(root, #name);                                    \
+                if (item != NULL || operation == CFG_SET) {                                        \
+                    /* intentional cstring pointer comparison */                                   \
+                    if (cfg->name != default) free(cfg->name);                                     \
+                    asiprintf(&cfg->name, "%s", item == NULL ? default : item->valuestring);       \
+                }                                                                                  \
+            } else {                                                                               \
+                cJSON_AddStringToObject(root, #name, cfg->name);                                   \
+            }                                                                                      \
+        } else if (key != NULL && !strcasecmp(key, #name)) {                                       \
+            if (operation == CFG_GET) {                                                            \
+                if (out_val != NULL) strlcpy(out_val, cfg->name, len);                             \
+                return true;                                                                       \
+            } else {                                                                               \
+                if (in_val != NULL) {                                                              \
+                    /* intentional cstring pointer comparison */                                   \
+                    if (cfg->name != default) free(cfg->name);                                     \
+                    asiprintf(&cfg->name, "%s", in_val);                                           \
+                }                                                                                  \
+                return true;                                                                       \
+            }                                                                                      \
+        }                                                                                          \
+    }
+
 #define CFG_NUMBER(name, default)                                                                  \
     {                                                                                              \
         if (root != NULL) {                                                                        \
