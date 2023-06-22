@@ -8,10 +8,6 @@ extern "C" {
 #include "esp_err.h"
 #include "semver.h"
 
-#define REMOTE_UPDATE_URL                                                                          \
-    "http://us-central1-maustec-io.cloudfunctions.net/gh-release-embedded-bridge"
-#define UPDATE_FILENAME "update.bin"
-
 enum um_update_status {
     UM_UPDATE_NOT_CHECKED,
     UM_UPDATE_AVAILABLE,
