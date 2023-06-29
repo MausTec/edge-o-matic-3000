@@ -3,6 +3,8 @@ REM This is an example application for the Edge-o-Matic 3000
 import "@application"
 import "@toast"
 
+print "start"
+
 class Point
 	var px = 0
 	var py = 0
@@ -12,6 +14,8 @@ class Point
 		py = y
 	enddef
 endclass
+
+print "Point defined."
 
 class Snake
 	dim points(10)
@@ -23,17 +27,14 @@ class Snake
 	enddef
 endclass
 
-' TODO: Implement the superclass Application for this to provide useful stubs.
-' class SnakeGame(Application)
-class SnakeGame
-	def setup()
-		toast("Application Setup!")
-	enddef
+print "Snake defined."
 
-	def loop()
-		print "loop"
-	enddef
-endclass
+def setup()
+	toast("Application Setup!")
+enddef
 
-let app = new(SnakeGame)
-start(app)
+def loop()
+	print "loop"
+enddef
+
+start

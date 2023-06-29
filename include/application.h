@@ -21,6 +21,7 @@ typedef enum {
     APP_NO_ENTRYPOINT,
     APP_START_NO_MEMORY,
     APP_NOT_LOADED,
+    APP_NO_INTERPRETER,
 } app_err_t;
 
 typedef struct {
@@ -32,6 +33,9 @@ typedef struct {
     TaskHandle_t task;
     uint32_t stack_depth;
     app_err_t status;
+    mb_value_t fn_open;
+    mb_value_t fn_close;
+    mb_value_t fn_loop;
 } application_t;
 
 app_err_t application_load(const char* filename, application_t** app);
