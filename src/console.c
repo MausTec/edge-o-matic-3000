@@ -1,28 +1,23 @@
 #include "console.h"
-
 #include "SDHelper.h"
-
+#include "commands/index.h"
 #include "config.h"
 #include "config_defs.h"
-
-#include <stdio.h>
-#include <string.h>
-#include <sys/stat.h>
-
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-
-#include "commands/index.h"
 #include "driver/uart.h"
 #include "eom-hal.h"
 #include "eom_tscode_handler.h"
 #include "esp_console.h"
 #include "esp_vfs_dev.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
 #include "linenoise/linenoise.h"
+#include "my_basic.h"
 #include "tscode.h"
 #include "version.h"
-
-#include "my_basic.h"
+#include <ctype.h>
+#include <stdio.h>
+#include <string.h>
+#include <sys/stat.h>
 
 #define PROMPT "eom:%s> "
 #define ARGV_MAX 16
@@ -155,6 +150,7 @@ static void console_task(void* args) {
 
     console_t uart_console = {
         .out = stdout,
+        .in = stdin,
         .err = -1,
     };
 
@@ -255,6 +251,48 @@ void console_register_command(const command_t* command) {
 
 void console_ready(void) {
     xTaskCreate(&console_idle_task, "con_idle", 1024 * 2, NULL, tskIDLE_PRIORITY, NULL);
+}
+
+void console_receive_file(const char* filename, console_t* console) {
+    FILE* file = fopen(filename, "wb");
+    long size = -1;
+
+    if (file) {
+        int c = 0xFF;
+        int x = 0;
+        char hex[2] = { 0, 0 };
+
+        fprintf(console->out, ">>>SENDHEX:%s\n", filename);
+
+        while ((c = fgetc(console->in)) != EOF) {
+            if (!isprint(c)) {
+                if (c == '\n' && x++ >= 2)
+                    break;
+                else
+                    continue;
+            }
+            x = 0;
+
+            if ((c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F') || (c >= '0' && c <= '9')) {
+                if (hex[0] == 0x00) {
+                    hex[0] = c;
+                } else {
+                    hex[1] = c;
+                    uint8_t a = (hex[0] <= '9') ? hex[0] - '0' : (hex[0] & 0x7) + 9;
+                    uint8_t b = (hex[1] <= '9') ? hex[1] - '0' : (hex[1] & 0x7) + 9;
+                    b += (a << 4);
+
+                    if (ftell(file) >= 64) fprintf(console->out, "\n");
+                    fprintf(console->out, "%02X", b);
+                    fwrite(&b, 1, 1, file);
+                    hex[0] = 0x00;
+                }
+            }
+        }
+
+        fprintf(console->out, "\n<<<RECV:%ld\n", ftell(file));
+        fclose(file);
+    }
 }
 
 void console_send_file(const char* filename, console_t* console) {

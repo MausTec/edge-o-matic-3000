@@ -2,8 +2,7 @@ REM This is an example application for the Edge-o-Matic 3000
 
 import "@application"
 import "@toast"
-
-print "start"
+import "@graphics"
 
 class Point
 	var px = 0
@@ -15,8 +14,6 @@ class Point
 	enddef
 endclass
 
-print "Point defined."
-
 class Snake
 	dim points(10)
 
@@ -25,16 +22,37 @@ class Snake
 		point.assign(x, y)
 		push(points, point)
 	enddef
+
+	def render()
+	enddef
 endclass
 
-print "Snake defined."
+class SnakeGame
+	var snake = new(Snake)
+	var score = 0
+	var food = new(Point)
 
-def setup()
-	toast("Application Setup!")
-enddef
+	def start()
+		food.assign(64, 32)
+	enddef
+
+	def render()
+		snake.render()
+		draw_pixel(food.x, food.y, 1);
+		display_buffer()
+	enddef
+	
+	def tick()
+	enddef
+endclass
+
+let Game = new(SnakeGame)
+Game.start()
 
 def loop()
-	print "loop"
+	Game.tick()
+	Game.render()
+	return nil
 enddef
 
 start

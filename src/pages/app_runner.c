@@ -33,12 +33,12 @@ ui_render_flag_t on_loop(void* arg) {
     if (!arg) return NORENDER;
     application_t* app = (application_t*)arg;
 
-    mb_value_t ret;
-    mb_value_t args[] = {};
+    // mb_value_t ret;
+    // mb_value_t args[] = {};
 
-    mb_check(
-        mb_eval_routine(app->interpreter, app->interpreter_context, app->fn_loop, args, 0, &ret)
-    );
+    // mb_check(
+    //     mb_eval_routine(app->interpreter, app->interpreter_context, app->fn_loop, args, 0, &ret)
+    // );
 
     return PASS;
 }

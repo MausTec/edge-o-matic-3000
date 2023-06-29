@@ -33,17 +33,12 @@ static void app_run_task(void* arg) {
         const char* file = NULL;
         int pos = 0;
         unsigned short row = 0, col = 0;
+
         mb_error_e er = mb_get_last_error(app->interpreter, &file, &pos, &row, &col);
-        ESP_LOGE(
-            TAG,
-            "Basic Error: %d, %s in %s:%d:%d (%d)",
-            er,
-            mb_get_error_desc(er),
-            file,
-            row,
-            col,
-            pos
-        );
+        const char* err_str = mb_get_error_desc(er);
+        ESP_LOGE(TAG, "Basic Error: %s", err_str);
+        ESP_LOGE(TAG, "AT %s:%d:%d (%d)", file == NULL ? "-" : file, row, col, pos);
+
         app->status = APP_START_NO_MEMORY;
     }
 
