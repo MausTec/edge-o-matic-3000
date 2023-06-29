@@ -241,16 +241,15 @@ app_err_t application_start_background(application_t* app) {
 }
 
 app_err_t application_start(application_t* app) {
-    if (app->interpreter == NULL) return APP_FILE_NOT_FOUND;
+    if (app->interpreter == NULL) return APP_NO_INTERPRETER;
 
     ESP_LOGI(TAG, "Running app immediately...");
 
     app->status = APP_OK;
-    int mb_err = mb_run(app->interpreter, false);
+    int mb_err = mb_run(app->interpreter, true);
+    ESP_LOGE(TAG, "Basic returned: %d, interpreter: %p", mb_err, app->interpreter);
 
     if (mb_err != MB_FUNC_OK) {
-        ESP_LOGE(TAG, "Basic returned: %d, interpreter: %p", mb_err, app->interpreter);
-
         const char* file = NULL;
         int pos = 0;
         unsigned short row = 0, col = 0;

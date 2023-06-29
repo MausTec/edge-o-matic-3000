@@ -24,3 +24,4 @@ tmp/
 __pycache__/
 
 *.old.DS_Store
+.DS_Store

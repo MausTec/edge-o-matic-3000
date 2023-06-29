@@ -1,11 +1,14 @@
 #include "application.h"
 #include "eom-hal.h"
+#include "esp_log.h"
 #include "ui/toast.h"
 #include "ui/ui.h"
 #include "util/i18n.h"
 #include <dirent.h>
 #include <stdio.h>
 #include <string.h>
+
+static const char* TAG = "applications_menu";
 
 static void on_app_load(const ui_menu_t* m, const ui_menu_item_t* item, UI_MENU_ARG_TYPE menu_arg) {
     if (item == NULL) return;
@@ -17,10 +20,18 @@ static void on_app_load(const ui_menu_t* m, const ui_menu_item_t* item, UI_MENU_
 
     if (err == APP_OK) {
         ui_toast(_("Loaded"));
-        ui_open_page(&PAGE_APP_RUNNER, app);
+        application_start(app);
+
+        if (err == APP_OK) {
+            ESP_LOGI(TAG, "Application started and routine returned.");
+            ui_close_all();
+            return;
+        }
+
+        ui_toast(_("App Start Error!\nERR %d"), err);
 
     } else {
-        ui_toast(_("App Load Error: %d"), err);
+        ui_toast(_("App Load Error:\nERR %d"), err);
     }
 }
 
