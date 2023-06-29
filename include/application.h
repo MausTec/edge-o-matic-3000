@@ -40,6 +40,7 @@ typedef struct {
 
 app_err_t application_load(const char* filename, application_t** app);
 app_err_t application_start(application_t* app);
+app_err_t application_start_background(application_t* app);
 app_err_t application_kill(application_t* app);
 application_t* application_find_by_interpreter(struct mb_interpreter_t* bas);
 void app_dispose(application_t* app);

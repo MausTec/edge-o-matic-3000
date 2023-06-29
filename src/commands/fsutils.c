@@ -70,21 +70,14 @@ static command_err_t cmd_ls(int argc, char** argv, console_t* console) {
     if (d) {
         fprintf(console->out, "Directory contents of %s:\n\n", path);
         while ((dir = readdir(d)) != NULL) {
-            if (dir->d_name[0] == '.')
-                continue;
+            if (dir->d_name[0] == '.') continue;
 
             char dt = '?';
 
             switch (dir->d_type) {
-            case DT_REG:
-                dt = '-';
-                break;
-            case DT_DIR:
-                dt = 'd';
-                break;
-            default:
-                dt = '?';
-                break;
+            case DT_REG: dt = '-'; break;
+            case DT_DIR: dt = 'd'; break;
+            default: dt = '?'; break;
             }
 
             fprintf(console->out, "%c  %s\n", dt, dir->d_name);
@@ -284,12 +277,10 @@ static command_err_t cmd_load(int argc, char** argv, console_t* console) {
     basic_api_register_all(bas);
 
     mb_err = mb_load_file(bas, path);
-    if (mb_err != MB_FUNC_OK)
-        goto cleanup;
+    if (mb_err != MB_FUNC_OK) goto cleanup;
 
     mb_err = mb_run(bas, true);
-    if (mb_err != MB_FUNC_OK)
-        goto cleanup;
+    if (mb_err != MB_FUNC_OK) goto cleanup;
 
 cleanup:
     if (mb_err != MB_FUNC_OK) {
@@ -330,6 +321,25 @@ static const command_t cmd_fget_s = {
     .subcommands = { NULL },
 };
 
+static command_err_t cmd_fput(int argc, char** argv, console_t* console) {
+    if (argc != 1) {
+        return CMD_ARG_ERR;
+    }
+
+    char path[PATH_MAX + 1] = { 0 };
+    SDHelper_getRelativePath(path, PATH_MAX, argv[0], console);
+    console_receive_file(path, console);
+    return CMD_OK;
+}
+
+static const command_t cmd_fput_s = {
+    .command = "fput",
+    .help = "Upload a file to the SD card",
+    .alias = '\0',
+    .func = &cmd_fput,
+    .subcommands = { NULL },
+};
+
 void commands_register_fsutils(void) {
     console_register_command(&cmd_cd_s);
     console_register_command(&cmd_ls_s);
@@ -338,5 +348,6 @@ void commands_register_fsutils(void) {
     console_register_command(&cmd_rm_s);
     console_register_command(&cmd_cat_s);
     console_register_command(&cmd_fget_s);
+    console_register_command(&cmd_fput_s);
     console_register_command(&cmd_load_s);
 }

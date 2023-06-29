@@ -20,7 +20,7 @@ static void on_app_load(const ui_menu_t* m, const ui_menu_item_t* item, UI_MENU_
 
     if (err == APP_OK) {
         ui_toast(_("Loaded"));
-        application_start(app);
+        application_start_background(app);
 
         if (err == APP_OK) {
             ESP_LOGI(TAG, "Application started and routine returned.");

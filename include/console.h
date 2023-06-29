@@ -23,6 +23,7 @@ typedef enum command_err command_err_t;
 struct console {
     char cwd[PATH_MAX + 1];
     FILE* out;
+    FILE* in;
     command_err_t err;
 };
 
@@ -44,6 +45,7 @@ void console_init(void);
 void console_ready(void);
 void console_handle_message(char* line, char* out, size_t len);
 void console_send_file(const char* filename, console_t* console);
+void console_receive_file(const char* filename, console_t* console);
 void console_register_command(const command_t* command);
 void console_run_command(int argc, char** argv, console_t* console);
 int console_cd(const char* path);

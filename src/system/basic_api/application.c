@@ -26,19 +26,22 @@ static int _start_foreground_app(struct mb_interpreter_t* s, void** l) {
 
     mb_check(mb_get_routine(s, l, "LOOP", &app->fn_loop));
     ESP_LOGI(TAG, "fn_loop=%d", app->fn_loop.type);
-    mb_check(mb_get_routine(s, l, "OPEN", &app->fn_open));
-    ESP_LOGI(TAG, "fn_open=%d", app->fn_open.type);
-    mb_check(mb_get_routine(s, l, "CLOSE", &app->fn_close));
-    ESP_LOGI(TAG, "fn_close=%d", app->fn_close.type);
-
-    mb_value_t ret;
-    mb_value_t args[] = {};
-
-    mb_check(
-        mb_eval_routine(app->interpreter, app->interpreter_context, app->fn_loop, args, 0, &ret)
-    );
 
     ui_open_page(&PAGE_APP_RUNNER, app);
+
+    // Main app loop:
+    for (;;) {
+        mb_value_t ret;
+        mb_value_t args[] = {};
+        mb_check(mb_eval_routine(s, l, app->fn_loop, args, 0, &ret));
+
+        if (ret.type != MB_DT_NIL) {
+            ESP_LOGI(TAG, "fn loop returned=%d", ret.type);
+            break;
+        }
+
+        vTaskDelay(1);
+    }
 
     return MB_FUNC_OK;
 }
