@@ -54,20 +54,21 @@ bool Nobra::sendf(const char* fmt, ...) {
     return send(cmd);
 }
 
-Device* Nobra::detect(NimBLEAdvertisedDevice* device, NimBLEClient* client, NimBLERemoteService* service) {
-    std::vector<NimBLERemoteCharacteristic*> *chars = service->getCharacteristics(true);
-    NimBLERemoteCharacteristic *writeChar = nullptr;
+Device*
+Nobra::detect(NimBLEAdvertisedDevice* device, NimBLEClient* client, NimBLERemoteService* service) {
+    std::vector<NimBLERemoteCharacteristic*>* chars = service->getCharacteristics(true);
+    NimBLERemoteCharacteristic* writeChar = nullptr;
 
     for (NimBLERemoteCharacteristic* c : *chars) {
         if (c->canWriteNoResponse()) {
             writeChar = c;
         }
     }
-    const char *deviceName = device->getName().c_str();
+    const char* deviceName = device->getName().c_str();
     bool writeCharacteristicFound = writeChar != nullptr;
     bool looksLikeNobra = std::string(deviceName).find("NobraControl") != std::string::npos;
     if (writeCharacteristicFound && looksLikeNobra) {
-        Nobra *nobraDevice = new Nobra(deviceName, client, writeChar);
-        return (BluetoothDriver::Device *)nobraDevice;
+        Nobra* nobraDevice = new Nobra(deviceName, client, writeChar);
+        return (BluetoothDriver::Device*)nobraDevice;
     }
 }
