@@ -1,14 +1,54 @@
 #ifndef __SDHelper_h
 #define __SDHelper_h
 
-#include <Arduino.h>
-#include <SD.h>
-#include <ArduinoJson.h>
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-namespace SDHelper {
-  void printDirectory(File dir, int numTabs, String &out);
-  void printDirectoryJson(File dir, JsonVariant files);
-  void printFile(File file, String &out);
+#include "cJSON.h"
+#include "console.h"
+#include "esp_vfs.h"
+#include <stddef.h>
+#include <stdio.h>
+
+
+/**
+ *  @deprecated Use PATH_MAX
+ */
+#define SD_MAX_DIR_LENGTH PATH_MAX
+
+/**
+ * Fills *buf with an absolute path to *path, prefixing the mount point of the SD card as defined
+ * by the hardware driver.
+ *
+ * @returns Populated size of the resulting buffer. If len == 0 or *buf is NULL, the size will be
+ *          calculated but no assignments made.
+ */
+size_t SDHelper_getAbsolutePath(char* buf, size_t len, const char* path);
+
+/**
+ *
+ */
+size_t SDHelper_getRelativePath(char* path, size_t len, const char* argv, console_t* console);
+
+/**
+ * Joins a path suffix *path to the path in *buf, up to len characters.
+ *
+ * @returns Populated size of the resulting buffer. If len == 0 or *buf is NULL, the size will be
+ *          calculated but no assignments made.
+ */
+size_t SDHelper_join(char* buf, size_t len, const char* path);
+
+FILE* SDHelper_open(const char* filename, const char* mode);
+
+void SDHelper_printDirectory(DIR* dir, int numTabs, char* out, size_t len);
+void SDHelper_printDirectoryJson(DIR* dir, cJSON* files);
+void SDHelper_logDirectory(const char* path);
+void SDHelper_logFile(const char* path);
+void SDHelper_printFile(FILE* file, char* out, size_t len);
+
+#ifdef __cplusplus
 }
+#endif
 
 #endif

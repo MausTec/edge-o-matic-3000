@@ -23,39 +23,40 @@ and is automatically generated. Here is a quick summary of config variables:
 
 |Key|Type|Default|Note|
 |---|----|---|---|
-|`wifi_ssid`|String|""|Your WiFi SSID|
+|`wifi_ssid`|String|""|Your WiFi SSID.|
 |`wifi_key`|String|""|Your WiFi Password.|
-|`wifi_on`|Boolean|false|True to enable WiFi / Websocket server.|
+|`wifi_on`|Boolean|false|Enable WiFi and the Websocket server. Cannot be enabled if AzureFang is on.|
 |`bt_display_name`|String|"Edge-o-Matic 3000"|AzureFang* device name, you might wanna change this.|
-|`bt_on`|Boolean|false|True to enable the AzureFang connection.|
-|`force_bt_coex`|Boolean|false|True to force AzureFang and WiFi at the same time**.|
-|`led_brightness`|Byte|128|LED Ring max brightness, only for NoGasm+.|
+|`bt_on`|Boolean|false|Enable AzureFang connectivity. Cannot be enabled if WiFi is on.|
+|`force_bt_coex`|Boolean|false|Force AzureFang and WiFi at the same time**.|
+|`led_brightness`|Byte|128|Status LED maximum brightness.|
 |`websocket_port`|Int|80|Port to listen for incoming Websocket connections.|
 |`use_ssl`|Boolean|false|Enable SSL server, which will eat all your RAM!|
 |`hostname`|String|"eom3k"|Local hostname for your device.|
 |`motor_start_speed`|Byte|10|The minimum speed the motor will start at in automatic mode.|
 |`motor_max_speed`|Byte|128|Maximum speed for the motor in auto-ramp mode.|
-|`motor_ramp_time_s`|Int|30|The time it takes for the motor to reach `motor_max_speed` in auto ramp mode.|
+|`motor_ramp_time_s`|Int|30|The time it takes for the motor to reach Motor Max Speed in automatic mode.|
 |`edge_delay`|Int|10000|Minimum time (ms) after edge detection before resuming stimulation.|
 |`max_additional_delay`|Int|10000|Maximum time (ms) that can be added to the edge delay before resuming stimulation. A random number will be picked between 0 and this setting each cycle. 0 to disable.|
 |`minimum_on_time`|Int|1000|Time (ms) after stimulation starts before edge detection is resumed.|
 |`screen_dim_seconds`|Int|10|Time, in seconds, before the screen dims. 0 to disable.|
 |`screen_timeout_seconds`|Int|0|Time, in seconds, before the screen turns off. 0 to disable.|
 |`pressure_smoothing`|Byte|5|Number of samples to take an average of. Higher results in lag and lower resolution!|
-|`classic_serial`|Boolean|false|Output classic NoGasm values over serial for backwards compatibility.|
-|`sensitivity_threshold`|Int|600|The arousal threshold for orgasm detection. Lower = sooner cutoff.|
+|`classic_serial`|Boolean|false|Output continuous stream of arousal data over serial for backwards compatibility with other software.|
+|`sensitivity_threshold`|Int|600|The arousal threshold for orgasm detection. Lower values stop sooner.|
 |`update_frequency_hz`|Int|50|Update frequency for pressure readings and arousal steps. Higher = crash your serial monitor.|
-|`sensor_sensitivity`|Byte|128|Analog pressure prescaling. Adjust this until the pressure is ~60-70%|
+|`sensor_sensitivity`|Byte|128|Analog pressure prescaling. Please see instruction manual.|
 |`use_average_values`|Boolean|false|Use average values when calculating arousal. This smooths noisy data.|
 |`vibration_mode`|VibrationMode|RampStop|Vibration Mode for main vibrator control.|
-|`clench_pressure_sensitivity`|Int|200|Threshold over arousal to detect a clench : Lower values increase sensitivity|
-|`clench_threshold_2_orgasm`|Int|35|Threshold variable that is tick counts of clench to detect orgasm|
-|`clench_detector_in_edging`|Boolean|false|Use the clench detector to adjust Arousal|
-|`auto_edging_duration_minutes`|Int|30|How long to edge before permiting an orgasm|
-|`post_orgasm_duration_seconds`|Int|10|How long to stimulate after orgasm detected|
-|`edge_menu_lock`|Boolean|false|Deny access to menu starting in the edging session|
-|`post_orgasm_menu_lock`|Boolean|false|Deny access to menu starting after orgasm detected|
-|`max_clench_duration`|Int|100|Duration the clench detector can raise arousal if clench detector turned on in edging session|
+|`use_post_orgasm`|Boolean|false|Use post-orgasm torture mode and functionality.|
+|`clench_pressure_sensitivity`|Int|200|Minimum additional Arousal level to detect clench. See manual.|
+|`clench_threshold_2_orgasm`|Int|35|Threshold variable that is tick counts of clench to detect orgasm. See manual.|
+|`clench_detector_in_edging`|Boolean|false|Use the clench detector to adjust Arousal. See manual.|
+|`auto_edging_duration_minutes`|Int|30|How long to edge before permiting an orgasm.|
+|`post_orgasm_duration_seconds`|Int|10|How long to stimulate after orgasm detected.|
+|`edge_menu_lock`|Boolean|false|Deny access to menu starting in the edging session.|
+|`post_orgasm_menu_lock`|Boolean|false|Deny access to menu starting after orgasm detected.|
+|`max_clench_duration`|Int|100|Duration the clench detector can raise arousal if clench detector turned on in edging session.|
 
 
 \* AzureFang refers to a common wireless technology that is blue and involves chewing face-rocks. However, the
