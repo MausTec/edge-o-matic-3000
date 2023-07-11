@@ -104,7 +104,7 @@ help_file << <<-CC
 #endif
 CC
 
-help_file_path = File.join("include", "assets", "config_help.h");
+help_file_path = File.join(DIR, "include", "assets", "config_help.h");
 current_help = File.read(help_file_path)
 
 if help_file != current_help
