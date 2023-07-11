@@ -1,15 +1,15 @@
 # Edge-o-Matic 3000 - An Automated Orgasm Denial Device
 
-This code is an ESP32 rewrite of the core NoGasm project by Rhoboto: [github.com/nogasm/nogasm](https://github.com/nogasm/nogasm)
-
 Using an inflatable butt plug to detect pressure changes indicative of pelvic floor contractions, this
 software, and associated hardware, is used to detect when the user is approaching orgasm and control
 stimulation accordingly. The net result: automated edging and orgasm denial.
 
 ## Web UI
 
-Edge-o-Matic 3000, NoGasm Plus, and Edge-o-Matic AiO devices both support a Websocket connection and a Web UI. The current Web UI can be accessed
+Edge-o-Matic 3000 devices support a WebSocket communication channel to be used on a web UI. The current Web UI can be accessed
 at [nogasm-ui.maustec.io](http://nogasm-ui.maustec.io). The source code is at [github.com/maustec/nogasm-ui](https://github.com/maustec/nogasm-ui).
+For control outside your Local Area Network, please consider a port-forwarding software such as Ngrok. You will have to permit insecure content
+for that domain within Chrome to be able to connect your device while the page is loaded over HTTPS. This cannot be done automatically for you.
 
 ## WebSocket API
 
