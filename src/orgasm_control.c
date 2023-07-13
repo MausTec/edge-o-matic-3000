@@ -5,6 +5,7 @@
 #include "eom-hal.h"
 #include "esp_log.h"
 #include "esp_timer.h"
+#include "system/websocket_handler.h"
 #include "ui/toast.h"
 #include "ui/ui.h"
 #include "util/running_average.h"
@@ -185,8 +186,11 @@ static void orgasm_control_updateArousal() {
     } // END of clench detector
 
     // Update accessories:
-    accessory_driver_broadcast_arousal(arousal_state.arousal);
-    bluetooth_driver_broadcast_arousal(arousal_state.arousal);
+    if (arousal_state.update_flag) {
+        accessory_driver_broadcast_arousal(arousal_state.arousal);
+        bluetooth_driver_broadcast_arousal(arousal_state.arousal);
+        // websocket_driver_broadcast_arousal(arousal_state.arousal);
+    }
 }
 
 static void orgasm_control_updateMotorSpeed() {
