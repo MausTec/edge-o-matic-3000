@@ -5,6 +5,7 @@
 #include "eom-hal.h"
 #include "esp_log.h"
 #include "esp_timer.h"
+#include "system/websocket_handler.h"
 #include "ui/toast.h"
 #include "ui/ui.h"
 #include "util/running_average.h"
@@ -67,7 +68,7 @@ static struct {
 
 #define update_check(variable, value)                                                              \
     {                                                                                              \
-        if (variable != value) {                                                                   \
+        if (variable != (value)) {                                                                 \
             ESP_LOGD(TAG, "updated: %s = %s", #variable, #value);                                  \
             variable = value;                                                                      \
             arousal_state.update_flag = ocTRUE;                                                    \
@@ -111,18 +112,25 @@ static void orgasm_control_updateArousal() {
     long p_avg = running_avergae_get_average(arousal_state.average);
     long p_check = Config.use_average_values ? p_avg : arousal_state.pressure_value;
 
-    // Increment arousal:
-    if (p_check < arousal_state.last_value) {     // falling edge of peak
-        if (p_check > arousal_state.peak_start) { // first tick past peak?
-            if (p_check - arousal_state.peak_start >=
+    // Increment arousal
+    if (p_check < arousal_state.last_value) {                      // falling edge of peak
+        if (arousal_state.last_value > arousal_state.peak_start) { // first tick past peak?
+            if (arousal_state.last_value - arousal_state.peak_start >=
                 Config.sensitivity_threshold / 10) { // big peak
+
                 update_check(
                     arousal_state.arousal,
-                    arousal_state.arousal + p_check - arousal_state.peak_start
+                    arousal_state.arousal + (arousal_state.last_value - arousal_state.peak_start)
                 );
+
+                arousal_state.peak_start = p_check;
             }
         }
-        arousal_state.peak_start = p_check;
+
+        if (p_check < arousal_state.peak_start) {
+            // run this value down to a new minimum after a peak detected.
+            arousal_state.peak_start = p_check;
+        }
     }
 
     arousal_state.last_value = p_check;
@@ -178,8 +186,11 @@ static void orgasm_control_updateArousal() {
     } // END of clench detector
 
     // Update accessories:
-    accessory_driver_broadcast_arousal(arousal_state.arousal);
-    bluetooth_driver_broadcast_arousal(arousal_state.arousal);
+    if (arousal_state.update_flag) {
+        accessory_driver_broadcast_arousal(arousal_state.arousal);
+        bluetooth_driver_broadcast_arousal(arousal_state.arousal);
+        // websocket_driver_broadcast_arousal(arousal_state.arousal);
+    }
 }
 
 static void orgasm_control_updateMotorSpeed() {
