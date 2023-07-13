@@ -111,18 +111,20 @@ static void orgasm_control_updateArousal() {
     long p_avg = running_avergae_get_average(arousal_state.average);
     long p_check = Config.use_average_values ? p_avg : arousal_state.pressure_value;
 
-    // Increment arousal:
-    if (p_check < arousal_state.last_value) {     // falling edge of peak
-        if (p_check > arousal_state.peak_start) { // first tick past peak?
-            if (p_check - arousal_state.peak_start >=
+    // Increment arousal
+    if (p_check < arousal_state.last_value) {                      // falling edge of peak
+        if (arousal_state.last_value > arousal_state.peak_start) { // first tick past peak?
+            if (arousal_state.last_value - arousal_state.peak_start >=
                 Config.sensitivity_threshold / 10) { // big peak
-                update_check(
-                    arousal_state.arousal,
-                    arousal_state.arousal + p_check - arousal_state.peak_start
-                );
+                arousal_state.arousal += arousal_state.last_value - arousal_state.peak_start;
+                arousal_state.peak_start = p_check;
             }
         }
-        arousal_state.peak_start = p_check;
+
+        if (p_check < arousal_state.peak_start) {
+            // run this value down to a new minimum after a peak detected.
+            arousal_state.peak_start = p_check;
+        }
     }
 
     arousal_state.last_value = p_check;
