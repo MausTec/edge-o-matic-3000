@@ -12,13 +12,13 @@ jobs:
 
     steps:
     - name: Checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         submodules: recursive
         fetch-depth: "0"
     
     - name: Cache pip
-      uses: actions/cache@v2
+      uses: actions/cache@v3
       with:
         path: ~/.cache/pip
         key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
@@ -26,13 +26,13 @@ jobs:
           ${{ runner.os }}-pip-
           
     - name: Cache PlatformIO
-      uses: actions/cache@v2
+      uses: actions/cache@v3
       with:
         path: ~/.platformio
         key: ${{ runner.os }}-${{ hashFiles('**/lockfiles') }}
 
     - name: Setup Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v3
 
     - name: Install PlatformIO
       run: |
@@ -57,7 +57,7 @@ jobs:
       run: cp .pio/build/esp32dev/firmware.bin update.bin
       
     - name: Upload Firmware
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         path: update.bin
         if-no-files-found: error

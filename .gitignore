@@ -23,6 +23,5 @@ tmp/
 *.code-workspace
 __pycache__/
 
-*.old
-.ruby-version
-
+*.old.DS_Store
+.DS_Store
