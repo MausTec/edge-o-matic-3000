@@ -116,7 +116,12 @@ static void orgasm_control_updateArousal() {
         if (arousal_state.last_value > arousal_state.peak_start) { // first tick past peak?
             if (arousal_state.last_value - arousal_state.peak_start >=
                 Config.sensitivity_threshold / 10) { // big peak
-                arousal_state.arousal += arousal_state.last_value - arousal_state.peak_start;
+
+                update_check(
+                    arousal_state.arousal,
+                    arousal_state.arousal += arousal_state.last_value - arousal_state.peak_start
+                );
+
                 arousal_state.peak_start = p_check;
             }
         }
