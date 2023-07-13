@@ -1,0 +1,45 @@
+{
+    "match": {
+        "vid": 1,
+        "pid": 1,
+        "serial": null,
+        "driver": "gpio"
+    },
+    "config": {
+        "displayName": "Bell Ringer",
+        "gpio": {
+            "0": {
+                "mode": "OUTPUT",
+                "level": "LOW"
+            }
+        }
+    },
+    "functions": {
+        "@high": {
+            "setPin": {
+                "pin": 0,
+                "level": "HIGH"
+            }
+        },
+        "@low": {
+            "setPin": {
+                "pin": 0,
+                "level": "LOW"
+            }
+        },
+        "@pulse": [
+            "@high",
+            {
+                "delay": {
+                    "ms": "1000",
+                    "then": "@low"
+                }
+            }
+        ]
+    },
+    "events": {
+        "edgeDetect": [
+            "@pulse"
+        ]
+    }
+}
