@@ -8,10 +8,12 @@
 #include "system/websocket_handler.h"
 #include "ui/toast.h"
 #include "ui/ui.h"
+#include "util/i18n.h"
 #include "util/running_average.h"
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
 
 static const char* TAG = "orgasm_control";
 
@@ -361,42 +363,51 @@ void orgasm_control_startRecording() {
         orgasm_control_stopRecording();
     }
 
-    ui_toast_blocking("Preapring\nrecording...");
+    ui_toast_blocking("%s", _("Preapring recording..."));
 
-    // struct tm timeinfo;
-    // char filename_date[16];
-    // if (!WiFiHelper::connected() || !getLocalTime(&timeinfo)) {
-    //   Serial.println("Failed to obtain time");
-    //   sprintf(filename_date, "%d", (esp_timer_get_time()/1000UL));
-    // } else {
-    //   strftime(filename_date, 16, "%Y%m%d-%H%M%S", &timeinfo);
-    // }
+    time_t now;
+    struct tm timeinfo;
+    char filename_date[32];
+    time(&now);
 
-    // std::string logfile_name = "/log-";
-    // logfile_name += filename_date;
-    // logfile_name += ".csv";
-    // ESP_LOGI(TAG, "Opening logfile: %s", logfile_name.c_str());
-    // logfile = SD.open(logfile_name, FILE_WRITE);
+    if (!localtime_r(&now, &timeinfo)) {
+        ESP_LOGE(TAG, "Failed to obtain time");
+        sniprintf(filename_date, 32, "%lld", (esp_timer_get_time() / 1000UL));
+    } else {
+        strftime(filename_date, 32, "%Y%m%d-%H%M%S", &timeinfo);
+    }
 
-    // if (!logfile) {
-    //   Serial.println("Couldn't open logfile to save!" + std::to_string(logfile));
-    //   UI.toast("Error opening\nlogfile!");
-    // } else {
-    //   recording_start_ms = (esp_timer_get_time()/1000UL);
-    //   logfile.println("millis,pressure,avg_pressure,arousal,motor_speed,sensitivity_threshold");
-    //   UI.drawRecordIcon(1, 1500);
-    //   UI.toast(std::to_string("Recording started:\n" + logfile_name).c_str());
-    // }
+    char* logfile_name = NULL;
+    asiprintf(&logfile_name, "/log-%s.csv", filename_date);
+
+    ESP_LOGI(TAG, "Opening logfile: %s", logfile_name);
+    logger_state.logfile = fopen(logfile_name, "w+");
+
+    if (!logger_state.logfile) {
+        ESP_LOGE(TAG, "Couldn't open logfile to save! (%s)", logfile_name);
+        ui_toast("%s", _("Error opening logfile!"));
+    } else {
+        logger_state.recording_start_ms = (esp_timer_get_time() / 1000UL);
+
+        fprintf(
+            logger_state.logfile,
+            "millis,pressure,avg_pressure,arousal,motor_speed,sensitivity_threshold,"
+            "clench_pressure_threshold,clench_duration"
+        );
+
+        ui_set_icon(UI_ICON_RECORD, RECORD_ICON_RECORDING);
+        ui_toast(_("Recording started:\n%s"), logfile_name);
+    }
 }
 
 void orgasm_control_stopRecording() {
-    // if (logfile != NULL) {
-    //     UI.toastNow("Stopping...", 0);
-    //     ESP_LOGI(TAG, "Closing logfile.");
-    //     fclose(logfile);
-    //     UI.drawRecordIcon(0);
-    //     UI.toast("Recording stopped.");
-    // }
+    if (logger_state.logfile != NULL) {
+        ui_toast_blocking("%s", _("Stopping..."));
+        ESP_LOGI(TAG, "Closing logfile.");
+        fclose(logger_state.logfile);
+        ui_set_icon(UI_ICON_RECORD, -1);
+        ui_toast("%s", _("Recording stopped."));
+    }
 }
 
 oc_bool_t orgasm_control_isRecording() {
