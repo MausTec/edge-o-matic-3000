@@ -68,7 +68,7 @@ static struct {
 
 #define update_check(variable, value)                                                              \
     {                                                                                              \
-        if (variable != value) {                                                                   \
+        if (variable != (value)) {                                                                 \
             ESP_LOGD(TAG, "updated: %s = %s", #variable, #value);                                  \
             variable = value;                                                                      \
             arousal_state.update_flag = ocTRUE;                                                    \
@@ -120,7 +120,7 @@ static void orgasm_control_updateArousal() {
 
                 update_check(
                     arousal_state.arousal,
-                    arousal_state.arousal += arousal_state.last_value - arousal_state.peak_start
+                    arousal_state.arousal + (arousal_state.last_value - arousal_state.peak_start)
                 );
 
                 arousal_state.peak_start = p_check;
