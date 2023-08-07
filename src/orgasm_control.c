@@ -442,6 +442,14 @@ void orgasm_control_clear_update_flag(void) {
 }
 
 int orgasm_control_getDenialCount() {
+    std::ifstream total_edges("totalEdges.txt");
+
+	if (arousal_state.denial_count < total_edges) 
+	{
+		std::ofstream out_file("totalEdges.txt", std::ios_base::trunc);
+		out_file << arousal_state.denial_count;
+	}
+
     return arousal_state.denial_count;
 }
 
