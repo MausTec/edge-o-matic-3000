@@ -17,6 +17,7 @@ typedef enum orgasm_output_mode {
     OC_ORGASM_MODE,
     OC_LOCKOUT_POST_MODE,
     _OC_MODE_MAX,
+    _OC_MODE_ERROR = -1
 } orgasm_output_mode_t;
 
 typedef enum oc_bool {
@@ -49,7 +50,7 @@ void orgasm_control_resumeControl(void);
 
 orgasm_output_mode_t orgasm_control_get_output_mode(void);
 void orgasm_control_set_output_mode(orgasm_output_mode_t mode);
-const char *orgasm_control_get_output_mode_str(void);
+const char* orgasm_control_get_output_mode_str(void);
 orgasm_output_mode_t orgasm_control_str_to_output_mode(const char* str);
 
 // Recording Control

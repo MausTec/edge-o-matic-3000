@@ -347,7 +347,7 @@ const char* orgasm_control_get_output_mode_str(void) {
 
 orgasm_output_mode_t orgasm_control_str_to_output_mode(const char* str) {
     for (int i = 0; i < _OC_MODE_MAX; i++) {
-        if (!strcmp(str, orgasm_output_mode_str[i])) {
+        if (!strcasecmp(str, orgasm_output_mode_str[i])) {
             return (orgasm_output_mode_t)i;
         }
     }
