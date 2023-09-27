@@ -3,6 +3,8 @@
 #include "config.h"
 #include "esp_log.h"
 #include "esp_timer.h"
+#include "freeRTOS/FreeRTOS.h"
+#include "freertos/task.h"
 #include "orgasm_control.h"
 #include "ui/graphics.h"
 #include "ui/toast.h"
@@ -304,6 +306,14 @@ static void render_screensaver_frame() {
     }
 }
 
+void ui_fade_to(u8g2_t* d, uint8_t color) {
+    for (int i = 4; i > 0; i--) {
+        ui_draw_pattern_fill(d, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, i);
+        ui_send_buffer();
+        vTaskDelay(100UL / portTICK_PERIOD_MS);
+    }
+}
+
 void ui_tick(void) {
     int rendered = 0;
     u8g2_t* display = eom_hal_get_display_ptr();
@@ -320,7 +330,7 @@ void ui_tick(void) {
         millis - UI.last_input_ms > ((uint32_t)Config.screen_timeout_seconds * 1000UL)) {
         UI.idle_state = UI_SCREENSAVER;
         u8g2_SetContrast(display, 0);
-        // ui_fade_to(0);
+        ui_fade_to(display, 0);
     }
 
     if (UI.idle_state == UI_SCREENSAVER) {

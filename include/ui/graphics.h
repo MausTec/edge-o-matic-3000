@@ -44,6 +44,9 @@ void ui_draw_shaded_bar_graph_with_peak(
 );
 
 void ui_draw_shaded_rect(u8g2_t* d, uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint8_t color);
+void ui_draw_pattern_fill(
+    u8g2_t* d, uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint8_t color, uint8_t pattern_mod
+);
 
 void ui_draw_scrollbar(u8g2_t* d, size_t index, size_t count, size_t window_size);
 
