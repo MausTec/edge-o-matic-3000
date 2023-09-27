@@ -101,10 +101,12 @@ void i18n_miss(const char* key) {
 #ifdef I18N_USE_CJSON_DICT
     cJSON_AddStringToObject(language, key, "");
 
+#ifdef I18N_WRITE_BACK_UNKNOWN_KEYS
     if (Config.language_file_name[0] != '\0') {
-        ESP_LOGW(TAG, "I18N MISS: \"%s\"", key);
+        ESP_LOGD(TAG, "I18N MISS: \"%s\"", key);
         i18n_dump();
     }
+#endif
 #else
     hashmap_insert(dict, key, "");
 #endif
