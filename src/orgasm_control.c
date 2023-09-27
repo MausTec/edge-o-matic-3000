@@ -523,10 +523,10 @@ void orgasm_control_set_output_mode(orgasm_output_mode_t control) {
 
     if (old == OC_MANUAL_CONTROL) {
         const vibration_mode_controller_t* controller = orgasm_control_getVibrationMode();
-        controller->start();
+        output_state.motor_speed = controller->start();
     } else if (control == OC_MANUAL_CONTROL) {
         const vibration_mode_controller_t* controller = orgasm_control_getVibrationMode();
-        controller->stop();
+        output_state.motor_speed = controller->stop();
     }
 }
 
