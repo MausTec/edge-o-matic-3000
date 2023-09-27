@@ -40,10 +40,12 @@ static void on_bluetooth_state_save(int value, int final, UI_INPUT_ARG_TYPE arg)
 
 static void
 on_connection_status(const ui_menu_t* m, const ui_menu_item_t* item, UI_MENU_ARG_TYPE arg) {
-    if (wifi_manager_get_status() == WIFI_MANAGER_CONNECTED) {
-        ui_toast("%s\nIP: %s", _("Wifi Connected"), wifi_manager_get_local_ip());
+    if (!Config.wifi_on) {
+        ui_toast("%s", _("WiFi Not Enabled"));
+    } else if (wifi_manager_get_status() == WIFI_MANAGER_CONNECTED) {
+        ui_toast("%s\nIP: %s", _("WiFi Connected"), wifi_manager_get_local_ip());
     } else {
-        ui_toast("%s", _("WiFi Disconnected"));
+        ui_toast("%s", _("WiFi Not Connected"));
     }
 
     if (Config.bt_on) {

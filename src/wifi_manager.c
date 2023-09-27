@@ -91,6 +91,9 @@ void wifi_manager_init(void) {
         IP_EVENT, IP_EVENT_STA_GOT_IP, &event_handler, NULL, &instance_got_ip
     ));
 
+    // Don't save WiFi creds.
+    esp_wifi_set_storage(WIFI_STORAGE_RAM);
+
     // initialize wifi with default config
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
     ESP_ERROR_CHECK(esp_wifi_start());
