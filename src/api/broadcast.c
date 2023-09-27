@@ -2,6 +2,7 @@
 #include "cJSON.h"
 #include "config_defs.h"
 #include "eom-hal.h"
+#include "esp_timer.h"
 #include "orgasm_control.h"
 #include "system/websocket_handler.h"
 

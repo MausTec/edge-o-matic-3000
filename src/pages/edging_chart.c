@@ -3,6 +3,7 @@
 #include "assets.h"
 #include "eom-hal.h"
 #include "esp_log.h"
+#include "esp_timer.h"
 #include "orgasm_control.h"
 #include "ui/graphics.h"
 #include "ui/page.h"

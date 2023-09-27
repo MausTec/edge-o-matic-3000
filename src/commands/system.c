@@ -2,6 +2,9 @@
 #include "console.h"
 #include "eom-hal.h"
 #include "esp_system.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "freertos/task_snapshot.h"
 #include "system/screenshot.h"
 
 static command_err_t cmd_system_restart(int argc, char** argv, console_t* console) {
@@ -52,8 +55,7 @@ static command_err_t cmd_system_color(int argc, char** argv, console_t* console)
         eom_hal_set_encoder_color(color);
     } else if (argc == 1) {
         char* ptr = argv[0];
-        if (ptr[0] == '#')
-            ptr++;
+        if (ptr[0] == '#') ptr++;
 
         uint32_t color_hex = strtol(ptr, NULL, 16);
         eom_hal_color_t color = {
@@ -100,8 +102,6 @@ static const command_t cmd_system_screenshot_s = {
     .subcommands = { NULL },
 };
 
-
-
 static command_err_t cmd_system_tasklist(int argc, char** argv, console_t* console) {
     size_t n = uxTaskGetNumberOfTasks();
     TaskHandle_t th = NULL;
@@ -116,16 +116,27 @@ static command_err_t cmd_system_tasklist(int argc, char** argv, console_t* conso
         size_t highw = 0;
         vTaskGetInfo(th, &status, &highw, eInvalid);
         waste += highw;
-        fprintf(console->out, "%-3d %-20s %-6d %02d\n", i, status.pcTaskName, highw, status.eCurrentState);
+        fprintf(
+            console->out,
+            "%-3d %-20s %-6d %02d\n",
+            i,
+            status.pcTaskName,
+            highw,
+            status.eCurrentState
+        );
     }
 
     fprintf(console->out, "-------------------------------\n");
-    fprintf(console->out, "Wasted memory: %d\n", waste); 
+    fprintf(console->out, "Wasted memory: %d\n", waste);
 
-    fprintf(console->out, "Heap used: %d/%d (%02f) (%d bytes free, max %d)\n", 
-        heap_caps_get_total_size(MALLOC_CAP_8BIT) - heap_caps_get_free_size(MALLOC_CAP_8BIT), 
+    fprintf(
+        console->out,
+        "Heap used: %d/%d (%02f) (%d bytes free, max %d)\n",
+        heap_caps_get_total_size(MALLOC_CAP_8BIT) - heap_caps_get_free_size(MALLOC_CAP_8BIT),
         heap_caps_get_total_size(MALLOC_CAP_8BIT),
-        (1.0f - ((float) heap_caps_get_free_size(MALLOC_CAP_8BIT) / heap_caps_get_total_size(MALLOC_CAP_8BIT))) * 100,
+        (1.0f - ((float)heap_caps_get_free_size(MALLOC_CAP_8BIT) /
+                 heap_caps_get_total_size(MALLOC_CAP_8BIT))) *
+            100,
         heap_caps_get_free_size(MALLOC_CAP_8BIT),
         heap_caps_get_largest_free_block(MALLOC_CAP_8BIT)
     );
@@ -156,4 +167,6 @@ static const command_t cmd_system_s = {
     },
 };
 
-void commands_register_system(void) { console_register_command(&cmd_system_s); }
+void commands_register_system(void) {
+    console_register_command(&cmd_system_s);
+}

@@ -80,8 +80,9 @@ void websocket_register_command(const websocket_command_t* command) {
     }
 }
 
-void websocket_run_command(const char* command, cJSON* data, cJSON* response,
-                           websocket_client_t* client) {
+void websocket_run_command(
+    const char* command, cJSON* data, cJSON* response, websocket_client_t* client
+) {
     ESP_LOGD(TAG, "Running command: %s", command);
 
     websocket_command_t* cmd = NULL;
@@ -146,7 +147,9 @@ esp_err_t websocket_open_fd(httpd_handle_t hd, int sockfd) {
 }
 
 void websocket_close_fd(httpd_handle_t hd, int sockfd) {
-    ESP_LOGI(TAG, "websocket_close_fd(hd: %p, sockfd: %d)", hd, sockfd);
+    ESP_LOGI(TAG, "SKIP websocket_close_fd(hd: %p, sockfd: %d)", hd, sockfd);
+    return;
+    // ESP_LOGI(TAG, "task: %s, hwmk: %d bytes", )
     websocket_client_t* client = NULL;
     list_foreach(_client_list, client) {
         if (client->fd == sockfd) {
@@ -222,8 +225,7 @@ esp_err_t websocket_handler(httpd_req_t* req) {
             ret = httpd_ws_send_frame(req, &resp_pkt);
         }
 
-        if (command != NULL)
-            cJSON_Delete(command);
+        if (command != NULL) cJSON_Delete(command);
 
         cJSON_Delete(response);
         cJSON_free(resp_pkt.payload);
@@ -234,9 +236,10 @@ esp_err_t websocket_handler(httpd_req_t* req) {
     }
 
 cleanup:
-    if (buf != NULL)
-        free(buf);
+    if (buf != NULL) free(buf);
     return ret;
 }
 
-esp_err_t websocket_connect_to_bridge(const char* address, int port) { return ESP_FAIL; }
+esp_err_t websocket_connect_to_bridge(const char* address, int port) {
+    return ESP_FAIL;
+}

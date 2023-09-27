@@ -101,7 +101,7 @@ static void accessory_driver_task(void* args) {
 
 static void main_task(void* args) {
     console_ready();
-    vTaskDelay(3000UL / portTICK_RATE_MS);
+    vTaskDelay(3000UL / portTICK_PERIOD_MS);
     ui_open_page(&PAGE_EDGING_STATS, NULL);
     ui_reset_idle_timer();
 
