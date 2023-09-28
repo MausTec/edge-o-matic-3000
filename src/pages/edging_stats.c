@@ -139,7 +139,7 @@ static void _draw_speed_change(u8g2_t* d) {
 }
 
 static void _draw_arousal_change(u8g2_t* d) {
-    char msg[15];
+    char msg[16];
     snprintf(msg, sizeof(msg), _("Threshold: %d"), orgasm_control_get_arousal_threshold());
 
     u8g2_SetFont(d, UI_FONT_DEFAULT);

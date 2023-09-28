@@ -497,7 +497,7 @@ void orgasm_control_increment_arousal_threshold(int threshold) {
 
 void orgasm_control_set_arousal_threshold(int threshold) {
     Config.sensitivity_threshold = threshold >= 0 ? threshold : 0;
-    config_enqueue_save(30);
+    config_enqueue_save(300);
 }
 
 int orgasm_control_get_arousal_threshold(void) {

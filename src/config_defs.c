@@ -157,7 +157,7 @@ void config_enqueue_save(long delay) {
 
     if (delay > 0) {
         // Queue a future save:
-        save_at_ms_tick = delay > save_at_ms_tick ? delay : save_at_ms_tick;
+        save_at_ms_tick = millis + delay;
     } else {
         if (delay == 0 || (save_at_ms_tick > 0 && save_at_ms_tick < millis)) {
             if (Config._filename[0] == '\0') {
@@ -165,7 +165,14 @@ void config_enqueue_save(long delay) {
                 return;
             }
 
-            ESP_LOGI(TAG, "Saving now from future save queue...");
+            ESP_LOGI(
+                TAG,
+                "Saving now from future save queue... (delay=%ld, at=%ld, ms=%ld)",
+                delay,
+                save_at_ms_tick,
+                millis
+            );
+
             config_save_to_sd(Config._filename, &Config);
             api_broadcast_config();
             save_at_ms_tick = 0;
