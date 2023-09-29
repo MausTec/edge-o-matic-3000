@@ -97,7 +97,7 @@ static void on_close(void* arg) {
 
 static ui_render_flag_t
 on_button(eom_hal_button_t button, eom_hal_button_event_t event, void* arg) {
-    if (event != EOM_HAL_BUTTON_PRESS && button != EOM_HAL_BUTTON_BACK) return PASS;
+    if (event != EOM_HAL_BUTTON_PRESS || button != EOM_HAL_BUTTON_BACK) return PASS;
     ui_open_page(&PAGE_EDGING_STATS, NULL);
     return NORENDER;
 }

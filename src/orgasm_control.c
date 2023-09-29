@@ -192,6 +192,13 @@ static void orgasm_control_updateArousal() {
         accessory_driver_broadcast_arousal(arousal_state.arousal);
         bluetooth_driver_broadcast_arousal(arousal_state.arousal);
         // websocket_driver_broadcast_arousal(arousal_state.arousal);
+
+        // Update LED for Arousal Color
+        if (output_state.output_mode == OC_AUTOMAITC_CONTROL) {
+            float arousal_perc = orgasm_control_getArousalPercent() * 255.0f;
+            if (arousal_perc > 255.0f) arousal_perc = 255.0f;
+            eom_hal_set_encoder_rgb(arousal_perc, 255 - arousal_perc, 0);
+        }
     }
 }
 
@@ -528,6 +535,12 @@ void orgasm_control_set_output_mode(orgasm_output_mode_t control) {
         const vibration_mode_controller_t* controller = orgasm_control_getVibrationMode();
         output_state.motor_speed = controller->stop();
     }
+
+    eom_hal_set_encoder_rgb(
+        (control + 1) & 0x04 ? 0xFF : 0x00,
+        (control + 1) & 0x02 ? 0xFF : 0x00,
+        (control + 1) & 0x01 ? 0xFF : 0x00
+    );
 }
 
 void orgasm_control_pauseControl() {

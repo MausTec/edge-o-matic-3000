@@ -101,9 +101,9 @@ static void accessory_driver_task(void* args) {
 
 static void main_task(void* args) {
     console_ready();
-    vTaskDelay(3000UL / portTICK_RATE_MS);
     ui_open_page(&PAGE_EDGING_STATS, NULL);
     ui_reset_idle_timer();
+    orgasm_control_set_output_mode(OC_MANUAL_CONTROL);
 
     for (;;) {
         loop_task(NULL);
@@ -114,6 +114,8 @@ static void main_task(void* args) {
 }
 
 void app_main() {
+    TickType_t boot_tick = xTaskGetTickCount();
+
     eom_hal_init();
     ui_init();
     resetSD(); // TODO: Make this storage_init();
@@ -125,6 +127,12 @@ void app_main() {
     orgasm_control_init();
     i18n_init();
 
+    // Red = preboot
+    eom_hal_set_sensor_sensitivity(Config.sensor_sensitivity);
+    eom_hal_set_encoder_brightness(Config.led_brightness);
+    eom_hal_set_encoder_rgb(255, 0, 0);
+
+    // Welcome Preamble
     printf("Maus-Tec presents: Edge-o-Matic 3000\n");
     printf("Version: %s\n", EOM_VERSION);
     printf("EOM-HAL Version: %s\n", eom_hal_get_version());
@@ -132,9 +140,9 @@ void app_main() {
     // Go to the splash page:
     ui_open_page(&SPLASH_PAGE, NULL);
 
-    eom_hal_set_sensor_sensitivity(Config.sensor_sensitivity);
-    eom_hal_set_encoder_brightness(Config.led_brightness);
-    eom_hal_set_encoder_rgb(255, 0, 0);
+    // Green = prepare Networking
+    vTaskDelayUntil(&boot_tick, 1000UL / portTICK_PERIOD_MS);
+    eom_hal_set_encoder_rgb(0, 255, 0);
 
     // Initialize WiFi
     if (Config.wifi_on) {
@@ -145,6 +153,10 @@ void app_main() {
         }
     }
 
+    // Blue = prepare Bluetooth
+    vTaskDelayUntil(&boot_tick, 1000UL / portTICK_PERIOD_MS);
+    eom_hal_set_encoder_rgb(0, 0, 255);
+
     // Initialize Bluetooth
     if (Config.bt_on) {
         bluetooth_manager_init();
@@ -152,6 +164,10 @@ void app_main() {
     } else {
         ui_set_icon(UI_ICON_BT, -1);
     }
+
+    // Final delay on encoder colors.
+    vTaskDelayUntil(&boot_tick, 1000UL / portTICK_PERIOD_MS);
+    ui_fade_to(0x00);
 
     xTaskCreate(accessory_driver_task, "ACCESSORY", 1024 * 4, NULL, tskIDLE_PRIORITY, NULL);
     xTaskCreate(main_task, "MAIN", 1024 * 8, NULL, tskIDLE_PRIORITY + 1, NULL);

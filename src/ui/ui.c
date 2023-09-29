@@ -306,7 +306,8 @@ static void render_screensaver_frame() {
     }
 }
 
-void ui_fade_to(u8g2_t* d, uint8_t color) {
+void ui_fade_to(uint8_t color) {
+    u8g2_t* d = eom_hal_get_display_ptr();
     for (int i = 4; i > 0; i--) {
         ui_draw_pattern_fill(d, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, i);
         ui_send_buffer();
@@ -330,7 +331,7 @@ void ui_tick(void) {
         millis - UI.last_input_ms > ((uint32_t)Config.screen_timeout_seconds * 1000UL)) {
         UI.idle_state = UI_SCREENSAVER;
         u8g2_SetContrast(display, 0);
-        ui_fade_to(display, 0);
+        ui_fade_to(0);
     }
 
     if (UI.idle_state == UI_SCREENSAVER) {

@@ -44,9 +44,13 @@ DYNAMIC_MENU(UI_LANGUAGE_MENU, "Language", on_language_open);
 
 void on_config_save(int value, int final, UI_INPUT_ARG_TYPE arg) {
     if (final) {
-        ui_toast_blocking(_("Saving..."));
-        config_enqueue_save(0);
-        ui_toast(_("Saved!"));
+        if (eom_hal_get_sd_size_bytes() > 0) {
+            ui_toast_blocking(_("Saving..."));
+            config_enqueue_save(0);
+            ui_toast(_("Saved!"));
+        } else {
+            ui_toast(_("Temporary Change, no SD card inserted."));
+        }
     }
 }
 
