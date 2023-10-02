@@ -258,7 +258,10 @@ esp_err_t config_load_from_sd(const char* path, config_t* cfg) {
 }
 
 esp_err_t config_save_to_sd(const char* path, config_t* cfg) {
-    if (eom_hal_get_sd_size_bytes() > 0) return ESP_ERR_NO_MEM;
+    if (eom_hal_get_sd_size_bytes() <= 0) {
+        ESP_LOGW(TAG, "Request to save to SD without SD present.");
+        return ESP_ERR_NO_MEM;
+    }
 
     cJSON* root = cJSON_CreateObject();
     struct stat st;

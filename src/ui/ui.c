@@ -52,7 +52,7 @@ static void handle_button(eom_hal_button_t button, eom_hal_button_event_t event)
     ui_reset_idle_timer();
 
     if (ui_toast_is_active()) {
-        if (ui_toast_is_dismissable()) {
+        if (ui_toast_is_dismissable() && event == EOM_HAL_BUTTON_PRESS) {
             ui_toast_handle_close();
             ui_toast_clear();
             UI.force_rerender = 1;
@@ -321,7 +321,7 @@ void ui_tick(void) {
     uint32_t millis = esp_timer_get_time() / 1000UL;
 
     // Check idle
-    if (UI.idle_state != UI_IDLE && Config.screen_dim_seconds != 0 &&
+    if (UI.idle_state == UI_ACTIVE && Config.screen_dim_seconds != 0 &&
         millis - UI.last_input_ms > ((uint32_t)Config.screen_dim_seconds * 1000UL)) {
         UI.idle_state = UI_IDLE;
         u8g2_SetContrast(display, 0);
