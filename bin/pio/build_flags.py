@@ -6,7 +6,7 @@ branch = ""
 
 try:
     revision = (
-        subprocess.check_output(["git", "describe", "--tags", "--abbrev=5"], stderr=subprocess.STDOUT)
+        subprocess.check_output(["git", "describe", "--tags", "--abbrev=1"], stderr=subprocess.STDOUT)
         .strip()
         .decode("utf-8")
     )
@@ -25,6 +25,6 @@ except subprocess.CalledProcessError as err:
     exit(1)
 
 if branch != "main" and branch != "master":
-    print("-DPROJECT_VER='\"%s+%s\"'" % (revision, branch))
+    print("-DEOM_FW_VERSION='\"%s+%s\"'" % (revision, branch))
 else:
-    print("-DPROJECT_VER='\"%s\"'" % revision)
+    print("-DEOM_FW_VERSION='\"%s\"'" % revision)

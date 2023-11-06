@@ -137,14 +137,6 @@ class ESPTool
     serial&.close rescue nil
   end
 
-  def put_file(local_path, remote_path)
-    serial = Serial.new(@port, @baud)
-    serial.write("fput \"#{remote_path}\"\n")
-    read_serial(serial, /^>>>SENDHEX:\s+/)
-    puts "Sending to #{$1}"
-    serial.close
-  end
-
 private
   def build_opts_array(options={})
     opts_array = []

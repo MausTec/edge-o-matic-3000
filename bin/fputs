@@ -1,5 +1,0 @@
-#!/usr/bin/env ruby
-
-require_relative "lib/esptool.rb"
-esp = ESPTool.new(Dir["/dev/tty.usb*"][0])
-puts esp.put_file(ARGV[0], ARGV[1])
