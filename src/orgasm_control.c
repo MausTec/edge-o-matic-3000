@@ -60,9 +60,9 @@ static struct {
     int clench_duration;
 
     // Autoedging Time and Post-Orgasm varables
-    long auto_edging_start_millis;
-    long post_orgasm_start_millis;
-    long post_orgasm_duration_millis;
+    unsigned long auto_edging_start_millis;
+    unsigned long post_orgasm_start_millis;
+    unsigned long post_orgasm_duration_millis;
     oc_bool_t menu_is_locked;
     oc_bool_t detected_orgasm;
     int post_orgasm_duration_seconds;
@@ -160,7 +160,7 @@ static void orgasm_control_updateArousal() {
 
         // ajust arousal if Clench_detector in Edge is turned on
         if (Config.clench_detector_in_edging) {
-            if (post_orgasm_state.clench_duration > (Config.clench_threshold_2_orgasm / 2)) {
+            if (post_orgasm_state.clench_duration > (Config.clench_time_threshold)) {
                 arousal_state.arousal += 5;
                 arousal_state.update_flag = ocTRUE;
             }

@@ -55,6 +55,7 @@ CONFIG_DEFS {
     CFG_BOOL(use_post_orgasm, false);
     CFG_NUMBER(clench_pressure_sensitivity, 200);
     CFG_NUMBER(clench_threshold_2_orgasm, 35);
+    CFG_NUMBER(clench_time_threshold, 30);
     CFG_BOOL(clench_detector_in_edging, false);
     CFG_NUMBER(auto_edging_duration_minutes, 30);
     CFG_NUMBER(post_orgasm_duration_seconds, 10);
