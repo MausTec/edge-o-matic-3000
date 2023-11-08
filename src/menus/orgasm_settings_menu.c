@@ -14,12 +14,20 @@ static const ui_input_numeric_t EDGING_DURATION_INPUT = {
     .input.help = AUTO_EDGING_DURATION_MINUTES_HELP
 };
 
-// Todo: Refactor this to ms, not ticks. Ticks is kinda deprecated a whole lot.
+//// Todo: Refactor this to ms, not ticks. Ticks is kinda deprecated a whole lot.
+//static const ui_input_numeric_t CLENCH_ORGASM_TIME_THRESHOLD_INPUT = {
+//    UnsignedInputValues(
+//        "Clench Time to Orgasm", &Config.clench_threshold_2_orgasm, "Ticks*", on_config_save
+//    ),
+//    .max = 300, // this is actually Config.max_clench_duration but you know, c'est la vie
+//    .input.help = CLENCH_THRESHOLD_2_ORGASM_HELP
+//};
+
 static const ui_input_numeric_t CLENCH_ORGASM_TIME_THRESHOLD_INPUT = {
     UnsignedInputValues(
-        "Clench Time to Orgasm", &Config.clench_threshold_2_orgasm, "Ticks*", on_config_save
+        "Clench Time to Orgasm", &Config.clench_threshold_2_orgasm_ms, UNIT_MILLISECONDS, on_config_save
     ),
-    .max = 300, // this is actually Config.max_clench_duration but you know, c'est la vie
+    .max = 5000, // this is actually Config.max_clench_duration but you know, c'est la vie
     .input.help = CLENCH_THRESHOLD_2_ORGASM_HELP
 };
 

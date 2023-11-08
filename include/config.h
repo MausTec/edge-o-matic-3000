@@ -128,10 +128,16 @@ struct config {
     int clench_pressure_sensitivity;
     // Duration the clench detector can raise arousal if clench detector turned on in edging session
     int max_clench_duration;
+    // Duration the clench detector can raise arousal if clench detector turned on in edging session
+    int max_clench_duration_ms;
     // Threshold variable that is tick counts of clench to detect orgasm
     int clench_threshold_2_orgasm;
+    // Threshold variable that is milliseconds counts of clench to detect orgasm
+    int clench_threshold_2_orgasm_ms;
     // Threshold variable that is tick counts to detect a clench 
     int clench_time_threshold;
+    // Threshold variable that is milliseconds counts to detect a clench 
+    int clench_time_threshold_ms;
     // Use the clench detector to adjust Arousal
     bool clench_detector_in_edging;
     // How long to edge before permiting an orgasm
