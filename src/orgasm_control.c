@@ -179,7 +179,7 @@ static void orgasm_control_updateArousal() {
 
         // when not clenching lower clench time and decay clench threshold
     } else {
-        if (output_state.motor_speed > 0){  // decay only if not in a denial period
+        if (output_state.motor_speed > 0 || output_state.output_mode == OC_MANUAL_CONTROL ){  // decay only in Manual mode or if not in a denial period
             post_orgasm_state.clench_start_millis = current_time;
             post_orgasm_state.clench_duration_millis -= 150; //ms
 
