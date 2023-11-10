@@ -136,7 +136,7 @@ struct config {
     int clench_threshold_2_orgasm_ms;
     // Threshold variable that is tick counts to detect a clench 
     int clench_time_threshold;
-    // Threshold variable that is milliseconds counts to detect a clench 
+    // Threshold variable that is milliseconds counts to detect the start of clench 
     int clench_time_threshold_ms;
     // Use the clench detector to adjust Arousal
     bool clench_detector_in_edging;

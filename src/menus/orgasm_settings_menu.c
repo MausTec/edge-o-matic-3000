@@ -20,7 +20,7 @@ static const ui_input_numeric_t CLENCH_ORGASM_TIME_THRESHOLD_INPUT = {
     ),
     .max = 5000, // 5000ms (5 sec) max to detect orgasm
     .step = 100,
-    .input.help = CLENCH_THRESHOLD_2_ORGASM_HELP
+    .input.help = CLENCH_THRESHOLD_2_ORGASM_MS_HELP
 };
 
 static const ui_input_numeric_t POST_ORGASM_DURATION_SECONDS_INPUT = {
