@@ -34,6 +34,7 @@ CONFIG_DEFS {
     CFG_NUMBER(screen_timeout_seconds, 0);
     CFG_BOOL(enable_screensaver, false);
     CFG_STRING(language_file_name, "");
+    CFG_BOOL(reverse_menu_scroll, false);
 
     // Orgasm Settings
     CFG_NUMBER(motor_max_speed, 128);

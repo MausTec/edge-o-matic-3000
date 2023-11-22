@@ -1,4 +1,5 @@
 #include "ui/menu.h"
+#include "config.h"
 #include "esp_log.h"
 #include "esp_timer.h"
 #include "freertos/FreeRTOS.h"
@@ -269,6 +270,8 @@ ui_render_flag_t ui_menu_handle_button(
 ui_render_flag_t ui_menu_handle_encoder(const ui_menu_t* m, int delta, UI_MENU_ARG_TYPE arg) {
     if (m == NULL) return PASS;
     if (m->dynamic_items == NULL) return NORENDER;
+
+    if (Config.reverse_menu_scroll) delta = 0 - delta;
 
     // disable menu acceleration
     delta = delta > 0 ? 1 : delta == 0 ? 0 : -1;
