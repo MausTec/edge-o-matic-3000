@@ -5,12 +5,15 @@
 #include "eom-hal.h"
 #include "esp_log.h"
 #include "esp_timer.h"
+#include "system/websocket_handler.h"
 #include "ui/toast.h"
 #include "ui/ui.h"
+#include "util/i18n.h"
 #include "util/running_average.h"
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
 
 static const char* TAG = "orgasm_control";
 
@@ -67,7 +70,7 @@ static struct {
 
 #define update_check(variable, value)                                                              \
     {                                                                                              \
-        if (variable != value) {                                                                   \
+        if (variable != (value)) {                                                                 \
             ESP_LOGD(TAG, "updated: %s = %s", #variable, #value);                                  \
             variable = value;                                                                      \
             arousal_state.update_flag = ocTRUE;                                                    \
@@ -111,18 +114,25 @@ static void orgasm_control_updateArousal() {
     long p_avg = running_avergae_get_average(arousal_state.average);
     long p_check = Config.use_average_values ? p_avg : arousal_state.pressure_value;
 
-    // Increment arousal:
-    if (p_check < arousal_state.last_value) {     // falling edge of peak
-        if (p_check > arousal_state.peak_start) { // first tick past peak?
-            if (p_check - arousal_state.peak_start >=
+    // Increment arousal
+    if (p_check < arousal_state.last_value) {                      // falling edge of peak
+        if (arousal_state.last_value > arousal_state.peak_start) { // first tick past peak?
+            if (arousal_state.last_value - arousal_state.peak_start >=
                 Config.sensitivity_threshold / 10) { // big peak
+
                 update_check(
                     arousal_state.arousal,
-                    arousal_state.arousal + p_check - arousal_state.peak_start
+                    arousal_state.arousal + (arousal_state.last_value - arousal_state.peak_start)
                 );
+
+                arousal_state.peak_start = p_check;
             }
         }
-        arousal_state.peak_start = p_check;
+
+        if (p_check < arousal_state.peak_start) {
+            // run this value down to a new minimum after a peak detected.
+            arousal_state.peak_start = p_check;
+        }
     }
 
     arousal_state.last_value = p_check;
@@ -178,8 +188,18 @@ static void orgasm_control_updateArousal() {
     } // END of clench detector
 
     // Update accessories:
-    accessory_driver_broadcast_arousal(arousal_state.arousal);
-    bluetooth_driver_broadcast_arousal(arousal_state.arousal);
+    if (arousal_state.update_flag) {
+        accessory_driver_broadcast_arousal(arousal_state.arousal);
+        bluetooth_driver_broadcast_arousal(arousal_state.arousal);
+        // websocket_driver_broadcast_arousal(arousal_state.arousal);
+
+        // Update LED for Arousal Color
+        if (output_state.output_mode == OC_AUTOMAITC_CONTROL) {
+            float arousal_perc = orgasm_control_getArousalPercent() * 255.0f;
+            if (arousal_perc > 255.0f) arousal_perc = 255.0f;
+            eom_hal_set_encoder_rgb(arousal_perc, 255 - arousal_perc, 0);
+        }
+    }
 }
 
 static void orgasm_control_updateMotorSpeed() {
@@ -334,7 +354,7 @@ const char* orgasm_control_get_output_mode_str(void) {
 
 orgasm_output_mode_t orgasm_control_str_to_output_mode(const char* str) {
     for (int i = 0; i < _OC_MODE_MAX; i++) {
-        if (!strcmp(str, orgasm_output_mode_str[i])) {
+        if (!strcasecmp(str, orgasm_output_mode_str[i])) {
             return (orgasm_output_mode_t)i;
         }
     }
@@ -350,42 +370,51 @@ void orgasm_control_startRecording() {
         orgasm_control_stopRecording();
     }
 
-    ui_toast_blocking("Preapring\nrecording...");
+    ui_toast_blocking("%s", _("Preapring recording..."));
 
-    // struct tm timeinfo;
-    // char filename_date[16];
-    // if (!WiFiHelper::connected() || !getLocalTime(&timeinfo)) {
-    //   Serial.println("Failed to obtain time");
-    //   sprintf(filename_date, "%d", (esp_timer_get_time()/1000UL));
-    // } else {
-    //   strftime(filename_date, 16, "%Y%m%d-%H%M%S", &timeinfo);
-    // }
+    time_t now;
+    struct tm timeinfo;
+    char filename_date[32];
+    time(&now);
 
-    // std::string logfile_name = "/log-";
-    // logfile_name += filename_date;
-    // logfile_name += ".csv";
-    // ESP_LOGI(TAG, "Opening logfile: %s", logfile_name.c_str());
-    // logfile = SD.open(logfile_name, FILE_WRITE);
+    if (!localtime_r(&now, &timeinfo)) {
+        ESP_LOGE(TAG, "Failed to obtain time");
+        sniprintf(filename_date, 32, "%lld", (esp_timer_get_time() / 1000UL));
+    } else {
+        strftime(filename_date, 32, "%Y%m%d-%H%M%S", &timeinfo);
+    }
 
-    // if (!logfile) {
-    //   Serial.println("Couldn't open logfile to save!" + std::to_string(logfile));
-    //   UI.toast("Error opening\nlogfile!");
-    // } else {
-    //   recording_start_ms = (esp_timer_get_time()/1000UL);
-    //   logfile.println("millis,pressure,avg_pressure,arousal,motor_speed,sensitivity_threshold");
-    //   UI.drawRecordIcon(1, 1500);
-    //   UI.toast(std::to_string("Recording started:\n" + logfile_name).c_str());
-    // }
+    char* logfile_name = NULL;
+    asiprintf(&logfile_name, "/log-%s.csv", filename_date);
+
+    ESP_LOGI(TAG, "Opening logfile: %s", logfile_name);
+    logger_state.logfile = fopen(logfile_name, "w+");
+
+    if (!logger_state.logfile) {
+        ESP_LOGE(TAG, "Couldn't open logfile to save! (%s)", logfile_name);
+        ui_toast("%s", _("Error opening logfile!"));
+    } else {
+        logger_state.recording_start_ms = (esp_timer_get_time() / 1000UL);
+
+        fprintf(
+            logger_state.logfile,
+            "millis,pressure,avg_pressure,arousal,motor_speed,sensitivity_threshold,"
+            "clench_pressure_threshold,clench_duration"
+        );
+
+        ui_set_icon(UI_ICON_RECORD, RECORD_ICON_RECORDING);
+        ui_toast(_("Recording started:\n%s"), logfile_name);
+    }
 }
 
 void orgasm_control_stopRecording() {
-    // if (logfile != NULL) {
-    //     UI.toastNow("Stopping...", 0);
-    //     ESP_LOGI(TAG, "Closing logfile.");
-    //     fclose(logfile);
-    //     UI.drawRecordIcon(0);
-    //     UI.toast("Recording stopped.");
-    // }
+    if (logger_state.logfile != NULL) {
+        ui_toast_blocking("%s", _("Stopping..."));
+        ESP_LOGI(TAG, "Closing logfile.");
+        fclose(logger_state.logfile);
+        ui_set_icon(UI_ICON_RECORD, -1);
+        ui_toast("%s", _("Recording stopped."));
+    }
 }
 
 oc_bool_t orgasm_control_isRecording() {
@@ -475,7 +504,7 @@ void orgasm_control_increment_arousal_threshold(int threshold) {
 
 void orgasm_control_set_arousal_threshold(int threshold) {
     Config.sensitivity_threshold = threshold >= 0 ? threshold : 0;
-    config_enqueue_save(30);
+    config_enqueue_save(300);
 }
 
 int orgasm_control_get_arousal_threshold(void) {
@@ -501,11 +530,17 @@ void orgasm_control_set_output_mode(orgasm_output_mode_t control) {
 
     if (old == OC_MANUAL_CONTROL) {
         const vibration_mode_controller_t* controller = orgasm_control_getVibrationMode();
-        controller->start();
+        output_state.motor_speed = controller->start();
     } else if (control == OC_MANUAL_CONTROL) {
         const vibration_mode_controller_t* controller = orgasm_control_getVibrationMode();
-        controller->stop();
+        output_state.motor_speed = controller->stop();
     }
+
+    eom_hal_set_encoder_rgb(
+        (control + 1) & 0x04 ? 0xFF : 0x00,
+        (control + 1) & 0x02 ? 0xFF : 0x00,
+        (control + 1) & 0x01 ? 0xFF : 0x00
+    );
 }
 
 void orgasm_control_pauseControl() {

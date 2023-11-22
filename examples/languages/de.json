@@ -1,18 +1,22 @@
 {
-    "CHART": "DIAG",
-    "STOP": "STOPPEN",
-    "AUTO": "AUTO",
-    "Manual": "Manuell",
-    "Pres: %s": "Drük: %s",
-    "Sens: %s": "Empf: %s",
-    "Denied": "Bestritten",
-    "Edging Settings": "Kanteneinstellungen",
-    "Orgasm Settings": "Orgasmus-Einstellungen",
-    "UI Settings": "UI-Einstellungen",
-    "User Profiles": "Benutzerprofil",
-    "Networking": "Netzwerk",
-    "Update": "Aktualisieren",
-    "System Info": "Systeminformationen",
-    "BACK": "ZURÜCK",
-    "ENTER": "EINGEBEN"
+    "language": "Deutsch",
+    "code": "DE",
+    "keys": {
+        "CHART": "DIAG",
+        "STOP": "STOPPEN",
+        "AUTO": "AUTO",
+        "Manual": "Manuell",
+        "Pres: %s": "Drük: %s",
+        "Sens: %s": "Empf: %s",
+        "Denied": "Bestritten",
+        "Edging Settings": "Kanteneinstellungen",
+        "Orgasm Settings": "Orgasmus-Einstellungen",
+        "UI Settings": "UI-Einstellungen",
+        "User Profiles": "Benutzerprofil",
+        "Networking": "Netzwerk",
+        "Update": "Aktualisieren",
+        "System Info": "Systeminformationen",
+        "BACK": "ZURÜCK",
+        "ENTER": "EINGEBEN"
+    }
 }

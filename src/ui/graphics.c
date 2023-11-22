@@ -39,12 +39,30 @@ uint8_t ui_draw_str_center(u8g2_t* d, uint8_t cx, uint8_t y, const char* str) {
     return width;
 }
 
+uint8_t ui_draw_str_right(u8g2_t* d, uint8_t rx, uint8_t y, const char* str) {
+    u8g2_uint_t width = u8g2_GetUTF8Width(d, str);
+    u8g2_DrawUTF8(d, rx - (width), y, str);
+    return width;
+}
+
 void ui_draw_shaded_rect(u8g2_t* d, uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint8_t color) {
     u8g2_SetDrawColor(d, color);
 
     for (int i = 0; i < w; i++) {
         for (int j = 0; j < h; j++) {
             if ((i + j) % 2 == 0) u8g2_DrawPixel(d, x + i, y + j);
+        }
+    }
+}
+
+void ui_draw_pattern_fill(
+    u8g2_t* d, uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint8_t color, uint8_t pattern_mod
+) {
+    u8g2_SetDrawColor(d, color);
+
+    for (int i = 0; i < w; i++) {
+        for (int j = 0; j < h; j++) {
+            if ((i + j) % pattern_mod == 0) u8g2_DrawPixel(d, x + i, y + j);
         }
     }
 }

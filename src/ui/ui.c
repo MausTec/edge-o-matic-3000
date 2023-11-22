@@ -3,6 +3,8 @@
 #include "config.h"
 #include "esp_log.h"
 #include "esp_timer.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
 #include "orgasm_control.h"
 #include "ui/graphics.h"
 #include "ui/toast.h"
@@ -50,7 +52,7 @@ static void handle_button(eom_hal_button_t button, eom_hal_button_event_t event)
     ui_reset_idle_timer();
 
     if (ui_toast_is_active()) {
-        if (ui_toast_is_dismissable()) {
+        if (ui_toast_is_dismissable() && event == EOM_HAL_BUTTON_PRESS) {
             ui_toast_handle_close();
             ui_toast_clear();
             UI.force_rerender = 1;
@@ -304,13 +306,22 @@ static void render_screensaver_frame() {
     }
 }
 
+void ui_fade_to(uint8_t color) {
+    u8g2_t* d = eom_hal_get_display_ptr();
+    for (int i = 4; i > 0; i--) {
+        ui_draw_pattern_fill(d, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, i);
+        ui_send_buffer();
+        vTaskDelay(100UL / portTICK_PERIOD_MS);
+    }
+}
+
 void ui_tick(void) {
     int rendered = 0;
     u8g2_t* display = eom_hal_get_display_ptr();
     uint32_t millis = esp_timer_get_time() / 1000UL;
 
     // Check idle
-    if (UI.idle_state != UI_IDLE && Config.screen_dim_seconds != 0 &&
+    if (UI.idle_state == UI_ACTIVE && Config.screen_dim_seconds != 0 &&
         millis - UI.last_input_ms > ((uint32_t)Config.screen_dim_seconds * 1000UL)) {
         UI.idle_state = UI_IDLE;
         u8g2_SetContrast(display, 0);
@@ -320,7 +331,7 @@ void ui_tick(void) {
         millis - UI.last_input_ms > ((uint32_t)Config.screen_timeout_seconds * 1000UL)) {
         UI.idle_state = UI_SCREENSAVER;
         u8g2_SetContrast(display, 0);
-        // ui_fade_to(0);
+        ui_fade_to(0);
     }
 
     if (UI.idle_state == UI_SCREENSAVER) {

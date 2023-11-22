@@ -108,6 +108,20 @@ static void _draw_status(u8g2_t* d, orgasm_output_mode_t mode) {
     }
 }
 
+float _get_arousal_bar_max(void) {
+    static int last_sens_thresh = 0;
+    static float last_arousal_max = 0;
+
+    // Memoize to prevent recalculating on renders.
+    if (Config.sensitivity_threshold != last_sens_thresh) {
+        last_sens_thresh = Config.sensitivity_threshold;
+        last_arousal_max =
+            pow10f(ceilf(log10f(Config.sensitivity_threshold * 1.10f) * 4.0f) / 4.0f);
+    }
+
+    return last_arousal_max;
+}
+
 static void _draw_meters(u8g2_t* d, orgasm_output_mode_t mode) {
     if (mode == OC_MANUAL_CONTROL) {
         ui_draw_bar_graph(d, 10, 'S', eom_hal_get_motor_speed(), 255);
@@ -117,12 +131,13 @@ static void _draw_meters(u8g2_t* d, orgasm_output_mode_t mode) {
         );
     }
 
+    // Arousal Bar
     ui_draw_shaded_bar_graph_with_peak(
         d,
         EOM_DISPLAY_HEIGHT - 18,
         'A',
         orgasm_control_getArousal(),
-        Config.sensitivity_threshold * 1.5,
+        _get_arousal_bar_max(),
         Config.sensitivity_threshold,
         state.arousal_peak
     );
@@ -140,7 +155,7 @@ static void _draw_speed_change(u8g2_t* d) {
 }
 
 static void _draw_arousal_change(u8g2_t* d) {
-    char msg[15];
+    char msg[16];
     snprintf(msg, sizeof(msg), _("Threshold: %d"), orgasm_control_get_arousal_threshold());
 
     u8g2_SetFont(d, UI_FONT_DEFAULT);

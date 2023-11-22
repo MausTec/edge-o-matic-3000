@@ -29,6 +29,7 @@ void ui_close_input(void);
 
 void ui_close_all(void);
 void ui_reset_idle_timer(void);
+void ui_fade_to(uint8_t color);
 
 #ifdef __cplusplus
 }

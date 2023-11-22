@@ -90,7 +90,7 @@ int fs_strcmp_ext(const char* path, const char* extension) {
 size_t fs_write_file(const char* path, const char* data) {
     if (path == NULL || data == NULL) return 0;
 
-    ESP_LOGI(TAG, "fs_write_file(\"%s\", \"%s\")", path, data);
+    ESP_LOGD(TAG, "fs_write_file(\"%s\", \"%s\")", path, data);
     FILE* fp;
     size_t len = 0;
 
