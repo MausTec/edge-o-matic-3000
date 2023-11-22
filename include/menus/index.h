@@ -23,6 +23,8 @@ extern const ui_menu_t ACCESSORY_PORT_MENU;
 extern const ui_menu_t BLUETOOTH_SCAN_MENU;
 extern const ui_menu_t CONNECTED_ACCESSORIES_MENU;
 
+extern const ui_menu_t EDGING_MODE_MENU;
+
 #ifdef __cplusplus
 }
 #endif

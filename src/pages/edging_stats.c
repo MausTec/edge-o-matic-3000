@@ -3,6 +3,7 @@
 #include "bluetooth_driver.h"
 #include "esp_log.h"
 #include "esp_timer.h"
+#include "menus/index.h"
 #include "orgasm_control.h"
 #include "ui/toast.h"
 #include "ui/ui.h"
@@ -76,7 +77,7 @@ static ui_render_flag_t on_loop(void* arg) {
 }
 
 static void _draw_buttons(u8g2_t* d, orgasm_output_mode_t mode) {
-    const char* btn1 = _("CHART");
+    const char* btn1 = _("MENU");
     const char* btn2 = _("STOP");
 
     if (orgasm_control_isMenuLocked()) {
@@ -258,7 +259,7 @@ on_button(eom_hal_button_t button, eom_hal_button_event_t event, void* arg) {
     if (event != EOM_HAL_BUTTON_PRESS) return PASS;
 
     if (button == EOM_HAL_BUTTON_BACK) {
-        ui_open_page(&EDGING_CHART_PAGE, NULL);
+        ui_open_menu(&EDGING_MODE_MENU, NULL);
     } else if (button == EOM_HAL_BUTTON_MID) {
         if (locked) return NORENDER;
 
