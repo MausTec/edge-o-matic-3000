@@ -76,6 +76,8 @@ struct config {
     int screen_timeout_seconds;
     bool enable_screensaver;
     char language_file_name[CONFIG_PATH_MAX + 1];
+    // Reverse the scroll direction in menus.
+    bool reverse_menu_scroll;
 
     //= Console
 
