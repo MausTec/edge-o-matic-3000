@@ -22,6 +22,34 @@ enum _config_def_operation {
     CFG_MERGE
 };
 
+typedef enum migration_result {
+    MIGRATION_COMPLETE,
+    MIGRATION_NOT_RUN,
+    MIGRATION_CURRENT,
+    MIGRATION_ERR_TOO_NEW,
+    MIGRATION_ERR_BAD_DATA
+} migration_result_t;
+
+#define START_MIGRATION()                                                                          \
+    cJSON* root_version = cJSON_GetObjectItem(root, "$version");                                   \
+    int current_version = root_version == NULL ? 0 : root_version->valueint;                       \
+    if (current_version == SYSTEM_CONFIG_FILE_VERSION) return MIGRATION_NOT_RUN;                   \
+    if (current_version > SYSTEM_CONFIG_FILE_VERSION) return MIGRATION_ERR_TOO_NEW;
+
+#define MIGRATE(version)                                                                           \
+    if (current_version < version) {                                                               \
+        migration_result_t res = migrate_to_##version(root);                                       \
+        if (res != MIGRATION_COMPLETE) return res;                                                 \
+        current_version = version;                                                                 \
+        cJSON_SetIntValue(root_version, version);                                                  \
+    }
+
+#define END_MIGRATION()                                                                            \
+    if (current_version == SYSTEM_CONFIG_FILE_VERSION)                                             \
+        return MIGRATION_COMPLETE;                                                                 \
+    else                                                                                           \
+        return MIGRATION_ERR_BAD_DATA;
+
 #define CONFIG_DEFS                                                                                \
     bool _config_defs(                                                                             \
         enum _config_def_operation operation,                                                      \
@@ -159,6 +187,7 @@ void config_load_default(config_t* cfg);
 void config_to_json(cJSON* root, config_t* cfg);
 void json_to_config(cJSON* root, config_t* cfg);
 void json_to_config_merge(cJSON* root, config_t* cfg);
+migration_result_t config_system_migrate(cJSON* root);
 
 #ifdef __cplusplus
 }
