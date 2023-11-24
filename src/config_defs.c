@@ -1,19 +1,18 @@
 #include "config_defs.h"
-#include "config.h"
-#include <stddef.h>
-#include <stdio.h>
-#include <string.h>
-#include <sys/stat.h>
-
 #include "SDHelper.h"
+#include "api/broadcast.h"
+#include "config.h"
 #include "eom-hal.h"
 #include "esp_err.h"
 #include "esp_log.h"
 #include "nvs.h"
-
-#include "api/broadcast.h"
-
 #include "polyfill.h"
+#include "ui/toast.h"
+#include "util/i18n.h"
+#include <stddef.h>
+#include <stdio.h>
+#include <string.h>
+#include <sys/stat.h>
 
 #define MAX_FILE_PATH_LEN 120
 
@@ -67,7 +66,7 @@ esp_err_t config_init(void) {
 defaults:
     if (nvs) nvs_close(nvs);
 
-    if (err == ESP_ERR_NVS_NOT_FOUND) {
+    if (err == ESP_ERR_NVS_NOT_FOUND || err == ESP_ERR_NOT_FOUND) {
         char path[CONFIG_PATH_MAX + 1] = { 0 };
         SDHelper_getAbsolutePath(path, CONFIG_PATH_MAX, CONFIG_FILENAME);
         err = config_load_from_sd(path, &Config);
@@ -80,6 +79,7 @@ defaults:
             esp_err_to_name(err)
         );
         config_load_default(&Config);
+        ui_toast("%s", _("Configuration not found. Default settings will be used."));
     }
 
     return err;
@@ -103,6 +103,9 @@ void config_deserialize(config_t* cfg, const char* buf) {
 // get_config_to_json
 void config_to_json(cJSON* root, config_t* cfg) {
     _config_defs(CFG_GET, root, cfg, NULL, NULL, NULL, 0, NULL);
+
+    // Add version information:
+    cJSON_AddNumberToObject(root, "$version", cfg->_version);
 }
 
 static void _validate_config(config_t* cfg) {
@@ -116,14 +119,46 @@ static void _validate_config(config_t* cfg) {
     eom_hal_set_sensor_sensitivity(cfg->sensor_sensitivity);
 }
 
+static void _migrate_config(cJSON* root) {
+    migration_result_t ret = config_system_migrate(root);
+    ESP_LOGI(TAG, "Config migrated with status: %d", ret);
+
+    switch (ret) {
+    case MIGRATION_COMPLETE:
+        config_enqueue_save(1);
+        ui_toast("%s", _("Your config file has updated to work with this version."));
+        return;
+
+    case MIGRATION_ERR_TOO_NEW:
+        ui_toast(
+            "%s",
+            _("Your config file was created with a newer firmware version and cannot be used.")
+        );
+        break;
+
+    case MIGRATION_ERR_BAD_DATA:
+        ui_toast(
+            "%s", _("There was an error updating your config file to work with this version.")
+        );
+        break;
+
+    default: return;
+    }
+}
+
 // set_config_from_json
 void json_to_config(cJSON* root, config_t* cfg) {
+    _migrate_config(root);
     _config_defs(CFG_SET, root, cfg, NULL, NULL, NULL, 0, NULL);
     _validate_config(cfg);
+
+    cJSON* root_version = cJSON_GetObjectItem(root, "$version");
+    if (root_version != NULL) cfg->_version = root_version->valueint;
 }
 
 // merge_config_from_json
 void json_to_config_merge(cJSON* root, config_t* cfg) {
+    _migrate_config(root);
     _config_defs(CFG_MERGE, root, cfg, NULL, NULL, NULL, 0, NULL);
     _validate_config(cfg);
 }
@@ -162,6 +197,7 @@ void config_enqueue_save(long delay) {
         if (delay == 0 || (save_at_ms_tick > 0 && save_at_ms_tick < millis)) {
             if (Config._filename[0] == '\0') {
                 ESP_LOGW(TAG, "Attempt to save config without a _filename!");
+                save_at_ms_tick = 0;
                 return;
             }
 
@@ -315,6 +351,7 @@ esp_err_t config_save_to_sd(const char* path, config_t* cfg) {
 void config_load_default(config_t* cfg) {
     ESP_LOGI(TAG, "Loading default config...");
     cJSON* root = cJSON_CreateObject();
+    cJSON_AddNumberToObject(root, "$version", SYSTEM_CONFIG_FILE_VERSION);
     json_to_config(root, cfg);
     SDHelper_getAbsolutePath(cfg->_filename, CONFIG_PATH_MAX, CONFIG_FILENAME);
     cJSON_Delete(root);
