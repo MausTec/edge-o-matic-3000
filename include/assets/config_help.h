@@ -39,6 +39,7 @@ extern "C" {
 #define MINIMUM_ON_TIME_HELP _HELPSTR("Time (ms) after stimulation starts before edge detection is resumed.")
 #define SCREEN_DIM_SECONDS_HELP _HELPSTR("Time, in seconds, before the screen dims. 0 to disable.")
 #define SCREEN_TIMEOUT_SECONDS_HELP _HELPSTR("Time, in seconds, before the screen turns off. 0 to disable.")
+#define REVERSE_MENU_SCROLL_HELP _HELPSTR("Reverse the direction of the scroll wheel when navigating menus.")
 #define PRESSURE_SMOOTHING_HELP _HELPSTR("Number of samples to take an average of. Higher results in lag and lower resolution!")
 #define CLASSIC_SERIAL_HELP _HELPSTR("Output continuous stream of arousal data over serial for backwards compatibility with other software.")
 #define SENSITIVITY_THRESHOLD_HELP _HELPSTR("The arousal threshold for orgasm detection. Lower values stop sooner.")

@@ -3,7 +3,7 @@
 #include "config.h"
 #include "esp_log.h"
 #include "esp_timer.h"
-#include "freeRTOS/FreeRTOS.h"
+#include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "orgasm_control.h"
 #include "ui/graphics.h"

@@ -41,8 +41,13 @@ typedef enum vibration_mode vibration_mode_t;
  * in config.c!
  */
 
+// Increment this if you need to trigger a migration on the system config file.
+// Your migration should be defined in config_migrations.c
+#define SYSTEM_CONFIG_FILE_VERSION 1
+
 struct config {
     // Private Things, do not erase!
+    int _version;
     char _filename[CONFIG_PATH_MAX + 1];
 
     //= Networking
@@ -71,6 +76,8 @@ struct config {
     int screen_timeout_seconds;
     bool enable_screensaver;
     char language_file_name[CONFIG_PATH_MAX + 1];
+    // Reverse the scroll direction in menus.
+    bool reverse_menu_scroll;
 
     //= Console
 

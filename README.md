@@ -41,6 +41,7 @@ and is automatically generated. Here is a quick summary of config variables:
 |`minimum_on_time`|Int|1000|Time (ms) after stimulation starts before edge detection is resumed.|
 |`screen_dim_seconds`|Int|10|Time, in seconds, before the screen dims. 0 to disable.|
 |`screen_timeout_seconds`|Int|0|Time, in seconds, before the screen turns off. 0 to disable.|
+|`reverse_menu_scroll`|Boolean|false|Reverse the direction of the scroll wheel when navigating menus.|
 |`pressure_smoothing`|Byte|5|Number of samples to take an average of. Higher results in lag and lower resolution!|
 |`classic_serial`|Boolean|false|Output continuous stream of arousal data over serial for backwards compatibility with other software.|
 |`sensitivity_threshold`|Int|600|The arousal threshold for orgasm detection. Lower values stop sooner.|

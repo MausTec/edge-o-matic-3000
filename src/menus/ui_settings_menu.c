@@ -43,12 +43,18 @@ static const ui_input_toggle_t SCREENSAVER_INPUT = {
     ToggleInputValues("Screensaver", &Config.enable_screensaver, on_config_save), .input.help = NULL
 };
 
+static const ui_input_toggle_t REVERSE_MENU_SCROLL_INPUT = {
+    ToggleInputValues("Reverse Menu Scroll", &Config.reverse_menu_scroll, on_config_save),
+    .input.help = REVERSE_MENU_SCROLL_HELP,
+};
+
 static void on_open(const ui_menu_t* m, UI_MENU_ARG_TYPE arg) {
     ui_menu_add_menu(m, &UI_LANGUAGE_MENU);
     ui_menu_add_input(m, (ui_input_t*)&SCREEN_DIM_INPUT);
     ui_menu_add_input(m, (ui_input_t*)&SCREEN_TIMEOUT_INPUT);
     ui_menu_add_input(m, (ui_input_t*)&LED_BRIGHTNESS_INPUT);
     ui_menu_add_input(m, (ui_input_t*)&SCREENSAVER_INPUT);
+    ui_menu_add_input(m, (ui_input_t*)&REVERSE_MENU_SCROLL_INPUT);
 }
 
 DYNAMIC_MENU(UI_SETTINGS_MENU, "UI Settings", on_open);

@@ -2,10 +2,7 @@
 #include "config_defs.h"
 #include <string.h>
 
-// Initialize the global Config struct with its private members:
-config_t Config = {
-    ._filename = "",
-};
+config_t Config = { ._filename = "", ._version = 0 };
 
 CONFIG_DEFS {
     // WiFi Settings
@@ -34,6 +31,7 @@ CONFIG_DEFS {
     CFG_NUMBER(screen_timeout_seconds, 0);
     CFG_BOOL(enable_screensaver, false);
     CFG_STRING(language_file_name, "");
+    CFG_BOOL(reverse_menu_scroll, false);
 
     // Orgasm Settings
     CFG_NUMBER(motor_max_speed, 128);
