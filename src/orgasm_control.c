@@ -155,7 +155,7 @@ static void orgasm_control_updateArousal() {
         post_orgasm_state.clench_duration_millis = current_time - post_orgasm_state.clench_start_millis;
 
         // Orgasm detected
-        if (post_orgasm_state.clench_duration_millis >= Config.clench_threshold_2_orgasm_ms &&
+        if (post_orgasm_state.clench_duration_millis >= Config.clench_time_to_orgasm_ms &&
             orgasm_control_isPermitOrgasmReached()) {
             post_orgasm_state.detected_orgasm = ocTRUE;
             post_orgasm_state.clench_duration = 0;

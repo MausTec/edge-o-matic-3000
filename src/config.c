@@ -52,16 +52,13 @@ CONFIG_DEFS {
     // Post-Orgasm Torture
     CFG_BOOL(use_post_orgasm, false);
     CFG_NUMBER(clench_pressure_sensitivity, 200);
-    CFG_NUMBER(clench_threshold_2_orgasm, 35);
-    CFG_NUMBER(clench_threshold_2_orgasm_ms, 1500);
-    CFG_NUMBER(clench_time_threshold, 30);
+    CFG_NUMBER(clench_time_to_orgasm_ms, 1500);
     CFG_NUMBER(clench_time_threshold_ms, 900);
     CFG_BOOL(clench_detector_in_edging, false);
     CFG_NUMBER(auto_edging_duration_minutes, 30);
     CFG_NUMBER(post_orgasm_duration_seconds, 10);
     CFG_BOOL(post_orgasm_menu_lock, false);
     CFG_BOOL(edge_menu_lock, false);
-    CFG_NUMBER(max_clench_duration, 100);
     CFG_NUMBER(max_clench_duration_ms, 3000);
 
     // Internal system things, only edit if you know what you're doing.

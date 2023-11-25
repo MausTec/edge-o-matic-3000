@@ -51,7 +51,7 @@ and is automatically generated. Here is a quick summary of config variables:
 |`vibration_mode`|VibrationMode|RampStop|Vibration Mode for main vibrator control.|
 |`use_post_orgasm`|Boolean|false|Use post-orgasm torture mode and functionality.|
 |`clench_pressure_sensitivity`|Int|200|Minimum additional Arousal level to detect clench. See manual.|
-|`clench_threshold_2_orgasm_ms`|Int|1500|Threshold variable that is milliseconds count of clench to detect orgasm. See manual.|
+|`clench_time_to_orgasm_ms`|Int|1500|Threshold variable that is milliseconds count of clench to detect orgasm. See manual.|
 |`clench_detector_in_edging`|Boolean|false|Use the clench detector to adjust Arousal. See manual.|
 |`auto_edging_duration_minutes`|Int|30|How long to edge before permiting an orgasm.|
 |`post_orgasm_duration_seconds`|Int|10|How long to stimulate after orgasm detected.|

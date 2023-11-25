@@ -16,7 +16,7 @@ static const ui_input_numeric_t EDGING_DURATION_INPUT = {
 
 static const ui_input_numeric_t CLENCH_ORGASM_TIME_THRESHOLD_INPUT = {
     UnsignedInputValues(
-        "Clench Time to Orgasm", &Config.clench_threshold_2_orgasm_ms, UNIT_MILLISECONDS, on_config_save
+        "Clench Time to Orgasm", &Config.clench_time_to_orgasm_ms, UNIT_MILLISECONDS, on_config_save
     ),
     .max = 5000, // 5000ms (5 sec) max to detect orgasm
     .step = 100,
