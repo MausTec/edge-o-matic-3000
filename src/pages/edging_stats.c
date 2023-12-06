@@ -91,7 +91,7 @@ static void _draw_buttons(u8g2_t* d, orgasm_output_mode_t mode) {
         } else {
             ui_draw_button_labels(d, btn1, btn2, _("MANUAL"));
         }
-    } else if (mode == OC_LOCKOUT_POST_MODE) {
+    } else if (mode == OC_ORGASM_MODE) {
         ui_draw_button_labels(d, btn1, btn2, _("MANUAL"));
     }
 }
@@ -101,7 +101,7 @@ static void _draw_status(u8g2_t* d, orgasm_output_mode_t mode) {
         ui_draw_status(d, _("Auto Edging"));
     } else if (mode == OC_MANUAL_CONTROL) {
         ui_draw_status(d, _("Manual"));
-    } else if (mode == OC_LOCKOUT_POST_MODE) {
+    } else if (mode == OC_ORGASM_MODE) {
         ui_draw_status(d, _("Edging+Orgasm"));
     } else {
         ui_draw_status(d, "---");
@@ -292,7 +292,7 @@ on_button(eom_hal_button_t button, eom_hal_button_event_t event, void* arg) {
             orgasm_control_set_output_mode(OC_AUTOMAITC_CONTROL);
         } else if (mode == OC_AUTOMAITC_CONTROL) {
             if (Config.use_post_orgasm == true) {
-                orgasm_control_set_output_mode(OC_LOCKOUT_POST_MODE);
+                orgasm_control_set_output_mode(OC_ORGASM_MODE);
             } else {
                 orgasm_control_set_output_mode(OC_MANUAL_CONTROL);
             }
@@ -323,7 +323,7 @@ static ui_render_flag_t on_encoder(int delta, void* arg) {
         return RENDER;
     }
 
-    if (mode == OC_AUTOMAITC_CONTROL) {
+    if (mode != OC_MANUAL_CONTROL) {
         orgasm_control_increment_arousal_threshold(delta);
         state.speed_change_notice_ms = 0;
         state.arousal_change_notice_ms = millis + CHANGE_NOTICE_DELAY_MS;
