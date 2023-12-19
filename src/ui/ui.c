@@ -7,7 +7,9 @@
 #include "freertos/task.h"
 #include "orgasm_control.h"
 #include "ui/graphics.h"
+#include "ui/screenshot.h"
 #include "ui/toast.h"
+#include "util/i18n.h"
 #include <string.h>
 
 static const char* TAG = "UI";
@@ -50,7 +52,24 @@ void ui_reset_idle_timer(void) {
 static void handle_button(eom_hal_button_t button, eom_hal_button_event_t event) {
     ui_render_flag_t rf = PASS;
     ui_reset_idle_timer();
+    u8g2_t* display = eom_hal_get_display_ptr();
 
+    // Handle Screenshots / Debug Control (Menu + Other)
+    if (button == EOM_HAL_BUTTON_MENU && event == EOM_HAL_BUTTON_HOLD) {
+        uint8_t down = eom_hal_get_button_state() & (~EOM_HAL_BUTTON_MENU);
+        if (down) { // another button was held with it
+            ESP_LOGI(TAG, "Button state was: %d", down);
+
+            if (down == EOM_HAL_BUTTON_BACK) {
+                ui_screenshot_save(NULL);
+                ui_toast("%s", _("Screenshot saved."));
+            }
+
+            return;
+        }
+    }
+
+    // Handle Toast Clearing
     if (ui_toast_is_active()) {
         if (ui_toast_is_dismissable() && event == EOM_HAL_BUTTON_PRESS) {
             ui_toast_handle_close();
@@ -61,6 +80,7 @@ static void handle_button(eom_hal_button_t button, eom_hal_button_event_t event)
         return;
     }
 
+    // Forward to active UI
     if (UI.current_input != NULL) {
         const ui_input_t* i = UI.current_input;
         void* arg = UI.current_input_arg;

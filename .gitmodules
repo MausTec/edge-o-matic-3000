@@ -16,3 +16,6 @@
 [submodule "lib/semver"]
 	path = lib/semver
 	url = https://github.com/h2non/semver.c
+[submodule "lib/tlibmp"]
+	path = lib/tlibmp
+	url = https://github.com/yeonzi/tlibmp
