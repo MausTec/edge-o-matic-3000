@@ -27,13 +27,16 @@ migration_result_t migrate_to_1(cJSON* root) {
     return MIGRATION_COMPLETE;
 }
 
-// this has worked on my system - B4benm-69.
+/**
+ * Rename "clench_threshold_2_orgasm" to "clench_time_to_orgasm_ms" and change value unit
+ * from ticks to ms.
+ */
 migration_result_t migrate_to_2(cJSON* root) {
     cJSON* old = cJSON_GetObjectItem(root, "clench_threshold_2_orgasm");
     if (old == NULL) return MIGRATION_COMPLETE;
 
     // my tests to validate this has shown a 30 to 1 ratio
-    int value_ms = old->valueint * 30; // i think this was the tick rate? 
+    int value_ms = old->valueint * 30; // i think this was the tick rate?
     cJSON* new = cJSON_AddNumberToObject(root, "clench_time_to_orgasm_ms", value_ms);
 
     if (new == NULL) return MIGRATION_ERR_BAD_DATA;
@@ -47,6 +50,7 @@ migration_result_t config_system_migrate(cJSON* root) {
 
     // List all migration calls below, in numeric order:
     MIGRATE(1);
+    MIGRATE(2);
 
     END_MIGRATION();
 }
