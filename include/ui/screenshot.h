@@ -8,17 +8,22 @@ extern "C" {
 #endif
 
 /**
- * @brief Save a screenshot to a file as an XBMP file.
- *
- * This is not thread safe, but the implementation might end up with a mutex in it to be sure. You
- * can blame u8g2's lack of a user pointer in the screenshot write function call. Consider this...
- * Schrödinger's Thread Safety. It is and is not until it crashes and the core dump can be observed.
+ * @brief Save a screenshot to a file as an BMP file.
  *
  * @param filename Path to the resulting file, absolute, plz. This can be NULL, btw, in which case a
  * filename will be generated.
  * @return size_t Size of the data written to the file. If this is 0 you may have an issue.
  */
 size_t ui_screenshot_save(const char* filename);
+
+/**
+ * @brief Save a screenshot to a temporary file and write out the generated filename as above.
+ *
+ * @param filename Destination pointer to filename buffer
+ * @param len maximum write size of the buffer
+ * @return size_t Nothing right now.
+ */
+size_t ui_screenshot_save_p(char* filename, size_t len);
 
 #ifdef __cplusplus
 }
