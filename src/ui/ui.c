@@ -55,14 +55,15 @@ static void handle_button(eom_hal_button_t button, eom_hal_button_event_t event)
     u8g2_t* display = eom_hal_get_display_ptr();
 
     // Handle Screenshots / Debug Control (Menu + Other)
-    if (button == EOM_HAL_BUTTON_MENU && event == EOM_HAL_BUTTON_HOLD) {
-        uint8_t down = eom_hal_get_button_state() & (~EOM_HAL_BUTTON_MENU);
-        if (down) { // another button was held with it
-            ESP_LOGI(TAG, "Button state was: %d", down);
+    if (event == EOM_HAL_BUTTON_HOLD) {
+        uint8_t down = eom_hal_get_button_state() & (~button);
 
-            if (down == EOM_HAL_BUTTON_BACK) {
-                ui_screenshot_save(NULL);
-                ui_toast("%s", _("Screenshot saved."));
+        if (down) { // Multi-Button Combo
+            if (button == EOM_HAL_BUTTON_MENU) {
+                if (down == EOM_HAL_BUTTON_BACK) {
+                    ui_screenshot_save(NULL);
+                    ui_toast("%s", _("Screenshot saved."));
+                }
             }
 
             return;
