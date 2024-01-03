@@ -111,7 +111,7 @@ esp_err_t _http_event_handler(esp_http_client_event_t* evt) {
         if (*(cb->buffer) != NULL) {
             // Response is accumulated in output_buffer. Uncomment the below line to print the
             // accumulated response
-            ESP_LOG_BUFFER_HEXDUMP(TAG, *(cb->buffer), output_len, ESP_LOG_INFO);
+            // ESP_LOG_BUFFER_HEXDUMP(TAG, *(cb->buffer), output_len, ESP_LOG_INFO);
             (*(cb->buffer))[output_len] = '\0';
         }
 
@@ -222,6 +222,15 @@ esp_err_t update_manager_update_from_web(um_progress_callback_t* progress_cb, vo
     int size = 0;
     esp_err_t err = ESP_OK;
 
+    char* url = NULL;
+    asiprintf(
+        &url,
+        "%s?current_version=%s&device_serial=%s",
+        Config.remote_update_url,
+        EOM_VERSION,
+        eom_hal_get_device_serial_const()
+    );
+
     struct um_progress_cb_data callback_data = {
         .cb = progress_cb,
         .arg = cb_arg,
@@ -238,6 +247,7 @@ esp_err_t update_manager_update_from_web(um_progress_callback_t* progress_cb, vo
     esp_http_client_handle_t client = esp_http_client_init(&data_config);
 
     err = esp_http_client_perform(client);
+    free(url);
 
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "HTTP GET failed: %s", esp_err_to_name(err));
@@ -276,7 +286,7 @@ esp_err_t update_manager_update_from_web(um_progress_callback_t* progress_cb, vo
 
     cJSON* assets = cJSON_GetObjectItem(data, "assets");
     cJSON* cursor = NULL;
-    char* url = NULL;
+    url = NULL;
 
     cJSON_ArrayForEach(cursor, assets) {
         if (cJSON_HasObjectItem(cursor, "role") && cJSON_HasObjectItem(cursor, "url")) {
@@ -325,7 +335,14 @@ esp_err_t update_manager_check_latest_version(semver_t* version) {
     };
 
     char* url = NULL;
-    asiprintf(&url, "%s/%s", Config.remote_update_url, "version.txt");
+    asiprintf(
+        &url,
+        "%s/%s?current_version=%s&device_serial=%s",
+        Config.remote_update_url,
+        "version.txt",
+        EOM_VERSION,
+        eom_hal_get_device_serial_const()
+    );
 
     esp_http_client_config_t config = {
         .url = url,
@@ -347,7 +364,7 @@ esp_err_t update_manager_check_latest_version(semver_t* version) {
     }
 
     ESP_LOGI(TAG, "Got %d bytes", size);
-    ESP_LOG_BUFFER_HEXDUMP(TAG, buffer, size, ESP_LOG_INFO);
+    // ESP_LOG_BUFFER_HEXDUMP(TAG, buffer, size, ESP_LOG_INFO);
 
     char version_str[40] = "";
 
