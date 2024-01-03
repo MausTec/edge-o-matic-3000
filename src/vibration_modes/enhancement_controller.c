@@ -11,9 +11,13 @@ static struct {
     oc_bool_t stopped;
 } state;
 
-static float start(void) { return Config.motor_start_speed; }
+static float start(void) {
+    return Config.motor_start_speed;
+}
 
 static float increment(void) {
+    if (Config.sensitivity_threshold == 0) return 1.0;
+
     if (state.stopped) {
         return state.motor_speed +
                calculate_increment(Config.motor_max_speed, 0, Config.edge_delay);

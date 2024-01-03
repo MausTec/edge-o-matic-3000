@@ -1,6 +1,9 @@
 #include "config.h"
 #include "config_defs.h"
+#include "esp_log.h"
 #include <string.h>
+
+static const char* TAG = "config";
 
 config_t Config = { ._filename = "", ._version = 0 };
 

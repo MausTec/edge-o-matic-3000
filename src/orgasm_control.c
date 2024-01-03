@@ -152,7 +152,8 @@ static void orgasm_control_updateArousal() {
 
     // Start counting clench time if pressure over threshold
     if (p_check >= post_orgasm_state.clench_pressure_threshold) {
-        post_orgasm_state.clench_duration_millis = current_time - post_orgasm_state.clench_start_millis;
+        post_orgasm_state.clench_duration_millis =
+            current_time - post_orgasm_state.clench_start_millis;
 
         // Orgasm detected
         if (post_orgasm_state.clench_duration_millis >= Config.clench_time_to_orgasm_ms &&
@@ -171,17 +172,21 @@ static void orgasm_control_updateArousal() {
 
         // desensitize clench threshold when clench too long. this is to stop arousal from going up
         if (post_orgasm_state.clench_duration_millis >= Config.max_clench_duration_ms &&
-            !orgasm_control_isPermitOrgasmReached()) { // Allow higher clench duration when orgasm permitted
+            !orgasm_control_isPermitOrgasmReached(
+            )) { // Allow higher clench duration when orgasm permitted
             post_orgasm_state.clench_pressure_threshold += 10;
-//            post_orgasm_state.clench_pressure_threshold += 100000; // desensitize enough to reduce clench cheating
-            post_orgasm_state.clench_duration_millis = Config.max_clench_duration_ms; //ms
+            //            post_orgasm_state.clench_pressure_threshold += 100000; // desensitize
+            //            enough to reduce clench cheating
+            post_orgasm_state.clench_duration_millis = Config.max_clench_duration_ms; // ms
         }
 
         // when not clenching lower clench time and decay clench threshold
     } else {
-        if (output_state.motor_speed > 0 || output_state.output_mode == OC_MANUAL_CONTROL ){  // decay only in Manual mode or if not in a denial period
+        if (output_state.motor_speed > 0 ||
+            output_state.output_mode ==
+                OC_MANUAL_CONTROL) { // decay only in Manual mode or if not in a denial period
             post_orgasm_state.clench_start_millis = current_time;
-            post_orgasm_state.clench_duration_millis -= 150; //ms
+            post_orgasm_state.clench_duration_millis -= 150; // ms
 
             if (post_orgasm_state.clench_duration_millis <= 0) {
                 post_orgasm_state.clench_duration_millis = 0;
@@ -430,6 +435,8 @@ oc_bool_t orgasm_control_isRecording() {
 }
 
 void orgasm_control_tick() {
+    if (Config.update_frequency_hz == 0) return;
+
     unsigned long millis = esp_timer_get_time() / 1000UL;
     unsigned long update_frequency_ms = 1000UL / Config.update_frequency_hz;
 
@@ -503,6 +510,7 @@ uint16_t orgasm_control_getArousal() {
 }
 
 float orgasm_control_getArousalPercent() {
+    if (Config.sensitivity_threshold == 0) return 1.0;
     return (float)arousal_state.arousal / Config.sensitivity_threshold;
 }
 

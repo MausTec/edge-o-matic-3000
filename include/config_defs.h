@@ -82,6 +82,10 @@ typedef enum migration_result {
                 if (in_val != NULL) strlcpy(cfg->name, in_val, sizeof(cfg->name));                 \
                 return true;                                                                       \
             }                                                                                      \
+        } else {                                                                                   \
+            if (operation == CFG_SET) {                                                            \
+                strlcpy(cfg->name, default, sizeof(cfg->name));                                    \
+            }                                                                                      \
         }                                                                                          \
     }
 
@@ -93,7 +97,10 @@ typedef enum migration_result {
                 if (item != NULL || operation == CFG_SET) {                                        \
                     /* intentional cstring pointer comparison */                                   \
                     if (cfg->name != default) free(cfg->name);                                     \
-                    asiprintf(&cfg->name, "%s", item == NULL ? default : item->valuestring);       \
+                    if (item == NULL)                                                              \
+                        cfg->name = default;                                                       \
+                    else                                                                           \
+                        asiprintf(&cfg->name, "%s", item->valuestring);                            \
                 }                                                                                  \
             } else {                                                                               \
                 cJSON_AddStringToObject(root, #name, cfg->name);                                   \
@@ -109,6 +116,11 @@ typedef enum migration_result {
                     asiprintf(&cfg->name, "%s", in_val);                                           \
                 }                                                                                  \
                 return true;                                                                       \
+            }                                                                                      \
+        } else {                                                                                   \
+            if (operation == CFG_SET) {                                                            \
+                if (cfg->name != default) free(cfg->name);                                         \
+                cfg->name = default;                                                               \
             }                                                                                      \
         }                                                                                          \
     }
@@ -132,6 +144,10 @@ typedef enum migration_result {
                 if (in_val != NULL) cfg->name = atoi(in_val);                                      \
                 return true;                                                                       \
             }                                                                                      \
+        } else {                                                                                   \
+            if (operation == CFG_SET) {                                                            \
+                cfg->name = default;                                                               \
+            }                                                                                      \
         }                                                                                          \
     }
 
@@ -152,6 +168,10 @@ typedef enum migration_result {
             } else {                                                                               \
                 if (in_val != NULL) cfg->name = (type)atoi(in_val);                                \
                 return true;                                                                       \
+            }                                                                                      \
+        } else {                                                                                   \
+            if (operation == CFG_SET) {                                                            \
+                cfg->name = default;                                                               \
             }                                                                                      \
         }                                                                                          \
     }
@@ -174,13 +194,17 @@ typedef enum migration_result {
                 if (in_val != NULL) cfg->name = atob(in_val);                                      \
                 return true;                                                                       \
             }                                                                                      \
+        } else {                                                                                   \
+            if (operation == CFG_SET) {                                                            \
+                cfg->name = default;                                                               \
+            }                                                                                      \
         }                                                                                          \
     }
 
 bool atob(const char* a);
 esp_err_t config_init(void);
 void config_serialize(config_t* cfg, char* buf, size_t buflen);
-void config_deserialize(config_t* cfg, const char* buf);
+esp_err_t config_deserialize(config_t* cfg, const char* buf);
 esp_err_t config_load_from_sd(const char* filename, config_t* cfg);
 esp_err_t config_save_to_sd(const char* filename, config_t* cfg);
 void config_load_default(config_t* cfg);

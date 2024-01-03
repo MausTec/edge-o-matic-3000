@@ -9,6 +9,8 @@
 #include "polyfill.h"
 #include "ui/toast.h"
 #include "util/i18n.h"
+#include <freertos/FreeRTOS.h>
+#include <freertos/semphr.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <string.h>
@@ -20,6 +22,9 @@
 #define NVS_LAST_CONFIG_FILE "_filename"
 
 static const char* TAG = "config_defs";
+
+static StaticSemaphore_t sFileMutexStatic;
+static SemaphoreHandle_t sFileMutex = NULL;
 
 extern CONFIG_DEFS;
 
@@ -50,6 +55,11 @@ esp_err_t config_init(void) {
     esp_err_t err;
     nvs_handle_t nvs;
 
+    ESP_LOGI(TAG, "Initializing Config access.");
+
+    // Initialize semaphore
+    sFileMutex = xSemaphoreCreateMutexStatic(&sFileMutexStatic);
+
     err = nvs_open(NVS_NAMESPACE, NVS_READONLY, &nvs);
     if (err != ESP_OK) goto defaults;
 
@@ -78,8 +88,14 @@ defaults:
             "Trouble loading previous config file, falling back to default: %s\n",
             esp_err_to_name(err)
         );
+
         config_load_default(&Config);
-        ui_toast("%s", _("Configuration not found. Default settings will be used."));
+
+        if (err == ESP_ERR_INVALID_ARG) {
+            ui_toast("%s", _("Configuration file corrupt. Default values will be used."));
+        } else {
+            ui_toast("%s", _("Configuration not found. Default values will be used."));
+        }
     }
 
     return err;
@@ -94,10 +110,13 @@ void config_serialize(config_t* cfg, char* buf, size_t buflen) {
 }
 
 // set_config_from_string
-void config_deserialize(config_t* cfg, const char* buf) {
+esp_err_t config_deserialize(config_t* cfg, const char* buf) {
+    esp_err_t err = ESP_OK;
     cJSON* root = cJSON_Parse(buf);
+    if (root == NULL) err = ESP_ERR_INVALID_ARG;
     json_to_config(root, cfg);
     cJSON_Delete(root);
+    return err;
 }
 
 // get_config_to_json
@@ -232,7 +251,19 @@ bool atob(const char* a) {
 // Here There Be Dragons
 
 esp_err_t config_load_from_sd(const char* path, config_t* cfg) {
-    FILE* f = fopen(path, "r");
+    esp_err_t err = ESP_OK;
+    FILE* f = NULL;
+    long fsize;
+    char* buffer = NULL;
+    size_t result;
+
+    if (!xSemaphoreTake(sFileMutex, portMAX_DELAY)) {
+        ESP_LOGW(TAG, "Failed to take file lock for config load.");
+        err = ESP_ERR_TIMEOUT;
+        goto cleanup;
+    }
+
+    f = fopen(path, "r");
 
     // Sometimes the first file read fails:
     if (!f) {
@@ -241,16 +272,14 @@ esp_err_t config_load_from_sd(const char* path, config_t* cfg) {
 
     if (!f) {
         ESP_LOGW(TAG, "File does not exist: %s", path);
-        return ESP_ERR_NOT_FOUND;
+        err = ESP_ERR_NOT_FOUND;
+        goto cleanup;
     }
-
-    long fsize;
-    char* buffer;
-    size_t result;
 
     if (f == NULL) {
         ESP_LOGE(TAG, "Failed to open file for reading: %s", path);
-        return ESP_FAIL;
+        err = ESP_FAIL;
+        goto cleanup;
     }
 
     fseek(f, 0, SEEK_END);
@@ -261,24 +290,27 @@ esp_err_t config_load_from_sd(const char* path, config_t* cfg) {
     buffer = (char*)malloc(fsize + 1);
 
     if (!buffer) {
-        fclose(f);
         ESP_LOGE(TAG, "Failed to allocate memory for file: %s", path);
-        return ESP_FAIL;
+        err = ESP_FAIL;
+        goto cleanup;
     }
 
     result = fread(buffer, 1, fsize, f);
     buffer[fsize] = '\0';
 
     if (result != fsize) {
-        free(buffer);
-        fclose(f);
         ESP_LOGE(TAG, "Failed to read file: %s", path);
-        return ESP_FAIL;
+        err = ESP_FAIL;
+        goto cleanup;
     }
 
     ESP_LOGD(TAG, "Loaded %ld bytes from %s\n%s", fsize, path, buffer);
 
-    config_deserialize(cfg, buffer);
+    err = config_deserialize(cfg, buffer);
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "Error deserializing config file.");
+        goto cleanup;
+    }
 
     // Update config path:
     strlcpy(cfg->_filename, path, CONFIG_PATH_MAX);
@@ -287,16 +319,23 @@ esp_err_t config_load_from_sd(const char* path, config_t* cfg) {
         _store_last_filename();
     }
 
-    fclose(f);
-    free(buffer);
+cleanup:
+    if (f) fclose(f);
+    if (buffer) free(buffer);
+    xSemaphoreGive(sFileMutex);
 
-    return ESP_OK;
+    return err;
 }
 
 esp_err_t config_save_to_sd(const char* path, config_t* cfg) {
     if (eom_hal_get_sd_size_bytes() <= 0) {
         ESP_LOGW(TAG, "Request to save to SD without SD present.");
         return ESP_ERR_NO_MEM;
+    }
+
+    if (!xSemaphoreTake(sFileMutex, portMAX_DELAY)) {
+        ESP_LOGW(TAG, "Failed to take file lock for config save.");
+        return ESP_ERR_TIMEOUT;
     }
 
     cJSON* root = cJSON_CreateObject();
@@ -314,6 +353,7 @@ esp_err_t config_save_to_sd(const char* path, config_t* cfg) {
 
         if (rename(path, bak_path) != 0) {
             ESP_LOGE(TAG, "Failed to rename %s to %s", path, bak_path);
+            xSemaphoreGive(sFileMutex);
             return ESP_FAIL;
         }
     }
@@ -322,6 +362,7 @@ esp_err_t config_save_to_sd(const char* path, config_t* cfg) {
 
     if (f == NULL) {
         ESP_LOGE(TAG, "Failed to open file for writing: %s", path);
+        xSemaphoreGive(sFileMutex);
         return ESP_FAIL;
     }
 
@@ -344,6 +385,7 @@ esp_err_t config_save_to_sd(const char* path, config_t* cfg) {
 
     cJSON_Delete(root);
     cJSON_free(json);
+    xSemaphoreGive(sFileMutex);
 
     return ESP_OK;
 }
