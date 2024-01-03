@@ -204,7 +204,7 @@ typedef enum migration_result {
 bool atob(const char* a);
 esp_err_t config_init(void);
 void config_serialize(config_t* cfg, char* buf, size_t buflen);
-void config_deserialize(config_t* cfg, const char* buf);
+esp_err_t config_deserialize(config_t* cfg, const char* buf);
 esp_err_t config_load_from_sd(const char* filename, config_t* cfg);
 esp_err_t config_save_to_sd(const char* filename, config_t* cfg);
 void config_load_default(config_t* cfg);

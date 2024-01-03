@@ -17,6 +17,8 @@ static float start(void) {
 }
 
 static float increment(void) {
+    if (Config.sensitivity_threshold == 0) return 0.0;
+
     if (state.base_speed < Config.motor_max_speed) {
         state.base_speed += calculate_increment(
             Config.motor_start_speed, Config.motor_max_speed, Config.motor_ramp_time_s
