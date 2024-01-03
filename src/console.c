@@ -19,10 +19,6 @@
 #include <string.h>
 #include <sys/stat.h>
 
-#define PROMPT "eom:%s> "
-#define ARGV_MAX 16
-#define CMDLINE_MAX 256
-
 static const char* TAG = "console";
 static esp_console_repl_t* _repl = NULL;
 static char _history_file[SD_MAX_DIR_LENGTH + 1] = { 0 };
@@ -359,20 +355,60 @@ void console_run_command(int argc, char** argv, console_t* console) {
 
     struct cmd_node* ptr = _first;
     bool aliased = strlen(argv[0]) == 1;
+    FILE* old_stdout = console->out;
 
-    while (ptr != NULL) {
-        if ((aliased && argv[0][0] == ptr->command->alias) ||
-            !strcasecmp(argv[0], ptr->command->command)) {
-            if (ptr->command->subcommands[0] != NULL) {
-                err = _console_run_subcommands(ptr->command, argc - 1, argv + 1, console);
-            } else if (ptr->command->func != NULL) {
-                err = ptr->command->func(argc - 1, argv + 1, console);
+    // Check for output redirection:
+    for (size_t i = 0; i < argc; i++) {
+        if (!strcmp(argv[i], ">") || !strcmp(argv[i], ">>")) {
+            argc -= 2;
+            if (argc < 1) {
+                fprintf(console->out, "ERROR: Redirection without command or file.\n");
+                err = CMD_ARG_ERR;
+                break;
             }
 
-            break;
-        }
+            const char* filepath = argv[i + 1];
+            if (filepath == NULL || filepath[0] == '\0') {
+                fprintf(console->out, "ERROR: Redirection without file.\n");
+                err = CMD_ARG_ERR;
+                break;
+            }
 
-        ptr = ptr->next;
+            char path[PATH_MAX + 1] = { 0 };
+            SDHelper_getRelativePath(path, PATH_MAX, filepath, console);
+
+            fprintf(console->out, "Redirecting output to: %s\n", path);
+            console->out = fopen(path, argv[i][1] == '>' ? "a+" : "w+");
+            if (console->out == NULL) {
+                console->out = old_stdout;
+                fprintf(console->out, "ERROR: Unable to open file for redirection.\n");
+                err = CMD_ARG_ERR;
+                break;
+            }
+        }
+    }
+
+    if (err == CMD_NOT_FOUND) {
+        while (ptr != NULL) {
+            if ((aliased && argv[0][0] == ptr->command->alias) ||
+                !strcasecmp(argv[0], ptr->command->command)) {
+                if (ptr->command->subcommands[0] != NULL) {
+                    err = _console_run_subcommands(ptr->command, argc - 1, argv + 1, console);
+                } else if (ptr->command->func != NULL) {
+                    err = ptr->command->func(argc - 1, argv + 1, console);
+                }
+
+                break;
+            }
+
+            ptr = ptr->next;
+        }
+    }
+
+    // Restore console redirection:
+    if (console->out != old_stdout) {
+        if (console->out != stdout) fclose(console->out);
+        console->out = old_stdout;
     }
 
     if (err == CMD_ARG_ERR) {
