@@ -15,7 +15,6 @@ typedef enum orgasm_output_mode {
     OC_MANUAL_CONTROL,
     OC_AUTOMAITC_CONTROL,
     OC_ORGASM_MODE,
-    OC_LOCKOUT_POST_MODE,
     _OC_MODE_MAX,
     _OC_MODE_ERROR = -1
 } orgasm_output_mode_t;
