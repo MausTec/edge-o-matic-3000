@@ -19,6 +19,10 @@ static SemaphoreHandle_t _insert_mutex = NULL;
 void ui_menu_cb_open_page(
     const ui_menu_t* m, const ui_menu_item_t* item, UI_MENU_ARG_TYPE menu_arg
 ) {
+    if (item == NULL) return;
+    const ui_page_t* page = (const ui_page_t*)item->arg;
+    ui_open_page(page, NULL);
+    ui_close_all_menu();
 }
 
 void ui_menu_cb_open_menu(
@@ -178,7 +182,9 @@ ui_menu_item_t* ui_menu_add_item(
 }
 
 ui_menu_item_t* ui_menu_add_page(const ui_menu_t* m, const ui_page_t* page) {
-    return NULL;
+    if (m == NULL || page == NULL) return NULL;
+
+    return ui_menu_add_item(m, _(page->title), ui_menu_cb_open_page, (void*)page);
 }
 
 ui_menu_item_t* ui_menu_add_menu(const ui_menu_t* m, const ui_menu_t* menu) {

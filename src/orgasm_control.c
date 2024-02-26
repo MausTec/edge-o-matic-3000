@@ -21,7 +21,6 @@ static const char* orgasm_output_mode_str[] = {
     "MANUAL_CONTROL",
     "AUTOMAITC_CONTROL",
     "ORGASM_MODE",
-    "LOCKOUT_POST_MODE",
 };
 
 static struct {
@@ -343,8 +342,12 @@ static void orgasm_control_updateEdgingTime() { // Edging+Orgasm timer
             }
         }
     }
-
-    eom_hal_set_motor_speed(orgasm_control_getMotorSpeed());
+    if (orgasm_control_isPermitOrgasmReached() || orgasm_control_isPostOrgasmReached()) {
+        uint8_t speed = orgasm_control_getMotorSpeed();
+        eom_hal_set_motor_speed(speed);
+        accessory_driver_broadcast_speed(speed);
+        bluetooth_driver_broadcast_speed(speed);
+    }
 }
 
 void orgasm_control_twitchDetect() {
@@ -398,7 +401,12 @@ void orgasm_control_startRecording() {
     }
 
     char* logfile_name = NULL;
-    asiprintf(&logfile_name, "/log-%s.csv", filename_date);
+    asiprintf(&logfile_name, "%s/log-%s.csv", eom_hal_get_sd_mount_point(), filename_date);
+
+    if (!logfile_name) {
+        ESP_LOGE(TAG, "Logfile filename buffer issues.");
+        ui_toast("%s", _("Error opening logfile!"));
+    }
 
     ESP_LOGI(TAG, "Opening logfile: %s", logfile_name);
     logger_state.logfile = fopen(logfile_name, "w+");
@@ -416,8 +424,11 @@ void orgasm_control_startRecording() {
         );
 
         ui_set_icon(UI_ICON_RECORD, RECORD_ICON_RECORDING);
-        ui_toast(_("Recording started:\n%s"), logfile_name);
+        char* fntok = basename(logfile_name);
+        ui_toast(_("Recording started:\n%s"), fntok);
     }
+
+    free(logfile_name);
 }
 
 void orgasm_control_stopRecording() {
@@ -425,13 +436,14 @@ void orgasm_control_stopRecording() {
         ui_toast_blocking("%s", _("Stopping..."));
         ESP_LOGI(TAG, "Closing logfile.");
         fclose(logger_state.logfile);
+        logger_state.logfile = NULL;
         ui_set_icon(UI_ICON_RECORD, -1);
         ui_toast("%s", _("Recording stopped."));
     }
 }
 
 oc_bool_t orgasm_control_isRecording() {
-    return (oc_bool_t)logger_state.logfile;
+    return (oc_bool_t) !!logger_state.logfile;
 }
 
 void orgasm_control_tick() {

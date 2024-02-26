@@ -93,6 +93,7 @@ end
 # Always compile on tag.
 if opts[:compile] || opts[:tag]
   if opts[:pio]
+    puts `pio run -t clean`
     puts `pio run`
   else
     ino_file = opts[:ino_file]
