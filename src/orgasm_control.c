@@ -342,8 +342,12 @@ static void orgasm_control_updateEdgingTime() { // Edging+Orgasm timer
             }
         }
     }
-
-    eom_hal_set_motor_speed(orgasm_control_getMotorSpeed());
+    if (orgasm_control_isPermitOrgasmReached() || orgasm_control_isPostOrgasmReached()) {
+        uint8_t speed = orgasm_control_getMotorSpeed();
+        eom_hal_set_motor_speed(speed);
+        accessory_driver_broadcast_speed(speed);
+        bluetooth_driver_broadcast_speed(speed);
+    }
 }
 
 void orgasm_control_twitchDetect() {
