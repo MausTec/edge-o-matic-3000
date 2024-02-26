@@ -57,6 +57,7 @@ extern "C" {
 #define POST_ORGASM_MENU_LOCK_HELP _HELPSTR("Deny access to menu starting after orgasm detected.")
 #define MAX_CLENCH_DURATION_MS_HELP _HELPSTR("Duration the clench detector can raise arousal if clench detector turned on in edging session.")
 #define CLENCH_TIME_THRESHOLD_MS_HELP _HELPSTR("Threshold variable that is milliseconds counts to detect the start of clench.")
+#define USE_DENIAL_COUNT_IN_SENSITIVITY_HELP _HELPSTR("Use denial count to increase sensitivity to edging. Reduces to risk of Oups over time.")
 
 #ifdef __cplusplus
 }

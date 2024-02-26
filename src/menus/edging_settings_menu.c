@@ -110,6 +110,11 @@ static const ui_input_byte_t SENSOR_SENSITIVITY_INPUT = {
     .chart_getter = get_sensor_reading
 };
 
+static const ui_input_toggle_t USE_DENIAL_COUNT_IN_SENSITIVITY_INPUT = {
+    ToggleInputValues("Use Denial Count in Sensitivity", &Config.use_denial_count_in_sensitivity, on_config_save),
+    .input.help = USE_DENIAL_COUNT_IN_SENSITIVITY_HELP
+};
+
 static void on_open(const ui_menu_t* m, UI_MENU_ARG_TYPE arg) {
     ui_menu_add_input(m, (ui_input_t*)&VIBRATION_MODE_INPUT);
     ui_menu_add_input(m, (ui_input_t*)&MOTOR_MAX_SPEED_INPUT);
@@ -120,6 +125,7 @@ static void on_open(const ui_menu_t* m, UI_MENU_ARG_TYPE arg) {
     ui_menu_add_input(m, (ui_input_t*)&MINIMUM_ON_TIME_INPUT);
     ui_menu_add_input(m, (ui_input_t*)&AROUSAL_LIMIT_INPUT);
     ui_menu_add_input(m, (ui_input_t*)&SENSOR_SENSITIVITY_INPUT);
+    ui_menu_add_input(m, (ui_input_t*)&USE_DENIAL_COUNT_IN_SENSITIVITY_INPUT);
 }
 
 DYNAMIC_MENU(EDGING_SETTINGS_MENU, "Edging Settings", on_open);

@@ -59,6 +59,7 @@ and is automatically generated. Here is a quick summary of config variables:
 |`post_orgasm_menu_lock`|Boolean|false|Deny access to menu starting after orgasm detected.|
 |`max_clench_duration_ms`|Int|3000|Duration the clench detector can raise arousal if clench detector turned on in edging session.|
 |`clench_time_threshold_ms`|Int|900|Threshold variable that is milliseconds counts to detect the start of clench.|
+|`use_denial_count_in_sensitivity`|Boolean|false|Use denial count to increase sensitivity to edging. Reduces to risk of Oups over time.|
 
 
 \* AzureFang refers to a common wireless technology that is blue and involves chewing face-rocks. However, the
