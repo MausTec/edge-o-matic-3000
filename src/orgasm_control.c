@@ -21,7 +21,6 @@ static const char* orgasm_output_mode_str[] = {
     "MANUAL_CONTROL",
     "AUTOMAITC_CONTROL",
     "ORGASM_MODE",
-    "LOCKOUT_POST_MODE",
 };
 
 static struct {
