@@ -188,7 +188,7 @@ static size_t text_wrap(size_t col, const char* text, text_wrap_cb_t cb, void* c
 
             i = 0;
             text_lines++;
-        } else if (*ptr == ' ') {
+        } else if (*ptr == ' ' || *ptr == '-') {
             space = ptr + 1;
         }
     }
