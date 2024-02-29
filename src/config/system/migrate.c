@@ -54,10 +54,10 @@ migration_result_t migrate_to_3(cJSON* root) {
 
     // migrate old value
     if (cJSON_IsTrue(old) == 0) {
-        cJSON* new = cJSON_AddBoolToObject(root,"use_orgasm_modes", true);
+        cJSON* new = cJSON_AddBoolToObject(root,"use_orgasm_modes", false);
         if (new == NULL) return MIGRATION_ERR_BAD_DATA;
     } else {
-        cJSON* new = cJSON_AddBoolToObject(root,"use_orgasm_modes", false);
+        cJSON* new = cJSON_AddBoolToObject(root,"use_orgasm_modes", true);
         if (new == NULL) return MIGRATION_ERR_BAD_DATA;
     }
 
