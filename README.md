@@ -49,7 +49,7 @@ and is automatically generated. Here is a quick summary of config variables:
 |`sensor_sensitivity`|Byte|128|Analog pressure prescaling. Please see instruction manual.|
 |`use_average_values`|Boolean|false|Use average values when calculating arousal. This smooths noisy data.|
 |`vibration_mode`|VibrationMode|RampStop|Vibration Mode for main vibrator control.|
-|`use_post_orgasm`|Boolean|false|Use post-orgasm torture mode and functionality.|
+|`use_orgasm_modes`|Boolean|false|Use orgasm and post-orgasm torture modes and functionality.|
 |`clench_pressure_sensitivity`|Int|200|Minimum additional Arousal level to detect clench. See manual.|
 |`clench_time_to_orgasm_ms`|Int|1500|Threshold variable that is milliseconds count of clench to detect orgasm. See manual.|
 |`clench_detector_in_edging`|Boolean|false|Use the clench detector to adjust Arousal. See manual.|

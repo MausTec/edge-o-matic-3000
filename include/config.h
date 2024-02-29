@@ -129,8 +129,8 @@ struct config {
 
     //= Post orgasm torure stuff
 
-    // Use post-orgasm torture mode and functionality.
-    bool use_post_orgasm;
+    // Use orgasm and post-orgasm torture mode and functionality.
+    bool use_orgasm_modes;
     // Threshold over arousal to detect a clench : Lower values increase sensitivity
     int clench_pressure_sensitivity;
     // Duration the clench detector can raise arousal if clench detector turned on in edging session

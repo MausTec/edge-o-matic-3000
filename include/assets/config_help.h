@@ -47,7 +47,7 @@ extern "C" {
 #define SENSOR_SENSITIVITY_HELP _HELPSTR("Analog pressure prescaling. Please see instruction manual.")
 #define USE_AVERAGE_VALUES_HELP _HELPSTR("Use average values when calculating arousal. This smooths noisy data.")
 #define VIBRATION_MODE_HELP _HELPSTR("Vibration Mode for main vibrator control.")
-#define USE_POST_ORGASM_HELP _HELPSTR("Use post-orgasm torture mode and functionality.")
+#define USE_ORGASM_MODES_HELP _HELPSTR("Use orgasm and post-orgasm torture modes and functionality.")
 #define CLENCH_PRESSURE_SENSITIVITY_HELP _HELPSTR("Minimum additional Arousal level to detect clench. See manual.")
 #define CLENCH_TIME_TO_ORGASM_MS_HELP _HELPSTR("Threshold variable that is milliseconds count of clench to detect orgasm. See manual.")
 #define CLENCH_DETECTOR_IN_EDGING_HELP _HELPSTR("Use the clench detector to adjust Arousal. See manual.")

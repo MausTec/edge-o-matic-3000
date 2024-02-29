@@ -53,7 +53,7 @@ CONFIG_DEFS {
     CFG_ENUM(vibration_mode, vibration_mode_t, RampStop);
 
     // Post-Orgasm Torture
-    CFG_BOOL(use_post_orgasm, false);
+    CFG_BOOL(use_orgasm_modes, false);
     CFG_NUMBER(clench_pressure_sensitivity, 200);
     CFG_NUMBER(clench_time_to_orgasm_ms, 1500);
     CFG_NUMBER(clench_time_threshold_ms, 900);

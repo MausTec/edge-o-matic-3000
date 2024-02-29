@@ -45,12 +45,35 @@ migration_result_t migrate_to_2(cJSON* root) {
     return MIGRATION_COMPLETE;
 }
 
+/**
+ * Rename "use_post_orgasm" to "use_orgasm_modes"
+ */
+migration_result_t migrate_to_3(cJSON* root) {
+    cJSON* old  = cJSON_GetObjectItemCaseSensitive(root, "use_post_orgasm");
+    if (old == NULL) return MIGRATION_COMPLETE;
+
+    // migrate old value
+    if (cJSON_IsTrue(old) == 0) {
+        cJSON* new = cJSON_AddBoolToObject(root,"use_orgasm_modes", true);
+        if (new == NULL) return MIGRATION_ERR_BAD_DATA;
+    } else {
+        cJSON* new = cJSON_AddBoolToObject(root,"use_orgasm_modes", false);
+        if (new == NULL) return MIGRATION_ERR_BAD_DATA;
+    }
+
+    cJSON_DeleteItemFromObject(root, "use_post_orgasm");
+    cJSON_Delete(root);
+
+    return MIGRATION_COMPLETE;
+}
+
 migration_result_t config_system_migrate(cJSON* root) {
     START_MIGRATION();
 
     // List all migration calls below, in numeric order:
     MIGRATE(1);
     MIGRATE(2);
+    MIGRATE(3);
 
     END_MIGRATION();
 }
