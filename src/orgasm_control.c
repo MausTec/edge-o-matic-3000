@@ -67,6 +67,10 @@ static struct {
     oc_bool_t menu_is_locked;
     oc_bool_t detected_orgasm;
     int post_orgasm_duration_seconds;
+    uint8_t edge_count_to_orgasm;
+    to_orgasm_mode_t to_orgasm_mode;
+    uint8_t auto_edging_duration_minutes;
+    bool random_orgasm_triggers;
 } post_orgasm_state;
 
 #define update_check(variable, value)                                                              \
@@ -83,7 +87,8 @@ void orgasm_control_init(void) {
     output_state.vibration_mode = Config.vibration_mode;
     output_state.edge_time_out = 10000;
     post_orgasm_state.clench_pressure_threshold = 4096;
-
+    post_orgasm_state.edge_count_to_orgasm = Config.denials_count_to_orgasm;
+    post_orgasm_state.to_orgasm_mode = Config.to_orgasm_mode;
     running_average_init(&arousal_state.average, Config.pressure_smoothing);
 }
 
@@ -275,6 +280,9 @@ static void orgasm_control_updateEdgingTime() { // Edging+Orgasm timer
     if (output_state.output_mode == OC_MANUAL_CONTROL) {
         post_orgasm_state.menu_is_locked = ocFALSE;
         post_orgasm_state.post_orgasm_duration_seconds = Config.post_orgasm_duration_seconds;
+        post_orgasm_state.detected_orgasm = ocFALSE;
+        post_orgasm_state.to_orgasm_mode = Config.to_orgasm_mode;
+        post_orgasm_state.random_orgasm_triggers = Config.random_orgasm_triggers;
         return;
     }
 
@@ -282,6 +290,28 @@ static void orgasm_control_updateEdgingTime() { // Edging+Orgasm timer
     if (output_state.output_mode != OC_ORGASM_MODE) {
         post_orgasm_state.auto_edging_start_millis = (esp_timer_get_time() / 1000UL);
         post_orgasm_state.post_orgasm_start_millis = 0;
+        
+        if ( post_orgasm_state.to_orgasm_mode == Random_mode ) {
+           post_orgasm_state.to_orgasm_mode = random() % 2;
+        } else if (post_orgasm_state.to_orgasm_mode == Milk_o_matic) {
+            post_orgasm_state.to_orgasm_mode = Denial_count;
+        }
+        post_orgasm_state.edge_count_to_orgasm = arousal_state.denial_count + Config.denials_count_to_orgasm;
+        post_orgasm_state.auto_edging_duration_minutes = Config.auto_edging_duration_minutes;
+    } else {
+        // Orgasm mode started
+        // Randomize timer and denial_count to orgasm. 
+        if (post_orgasm_state.random_orgasm_triggers) {
+            // Only run once afer start of session
+            post_orgasm_state.random_orgasm_triggers = false ;
+            int min_count = round( Config.denials_count_to_orgasm / 2 );
+            int min_edge_time = round( Config.auto_edging_duration_minutes / 2 );
+
+            post_orgasm_state.edge_count_to_orgasm = arousal_state.denial_count + 
+                min_count + rand() % (Config.denials_count_to_orgasm - min_count);
+            post_orgasm_state.auto_edging_duration_minutes = 
+                min_edge_time + rand() % (Config.auto_edging_duration_minutes - min_edge_time );
+        }
     }
 
     // Lock Menu if turned on. and in Edging_orgasm mode
@@ -332,9 +362,36 @@ static void orgasm_control_updateEdgingTime() { // Edging+Orgasm timer
                                                post_orgasm_state.post_orgasm_duration_millis)) {
             output_state.motor_speed = Config.motor_max_speed;
         } else {                                  // Post_orgasm timer reached
-            if (output_state.motor_speed >= 10) { // Ramp down motor speed to 0
-                output_state.motor_speed = output_state.motor_speed - 10;
-            } else {
+            if (output_state.motor_speed > 0) { // Ramp down motor speed to 0
+                output_state.motor_speed = output_state.motor_speed - 1;
+            } else if ( Config.to_orgasm_mode == Milk_o_matic ) {
+                // The motor has been turnned off but this is Milk-O-Matic orgasm mode. Prepare for next round.
+                output_state.motor_speed = 0;
+                eom_hal_set_encoder_rgb(255, 0, 127);
+                
+                // now give a break before restarting edging
+                if (esp_timer_get_time() / 1000UL > post_orgasm_state.post_orgasm_start_millis +
+                                                    post_orgasm_state.post_orgasm_duration_millis +
+                                                    (Config.milk_o_matic_rest_duration_seconds * 1000)) 
+                {
+                    // Rest period is finished. Reset variables for next round
+                    post_orgasm_state.auto_edging_start_millis = (esp_timer_get_time() / 1000UL);
+                    post_orgasm_state.post_orgasm_start_millis = 0;
+                    post_orgasm_state.to_orgasm_mode = Denial_count;
+                    post_orgasm_state.detected_orgasm = ocFALSE;
+                    post_orgasm_state.menu_is_locked = ocFALSE;
+                    
+                    // Set the new denial count limit to reach before next orgasm
+                    // Randomize denial_count if turned on
+                    if (Config.random_orgasm_triggers) {
+                        // re-enable calculation of random for next round
+                        post_orgasm_state.random_orgasm_triggers = true;
+                    } else {
+                        post_orgasm_state.edge_count_to_orgasm = arousal_state.denial_count + Config.denials_count_to_orgasm;
+                    }
+                    orgasm_control_resumeControl();
+                }
+            } else { // This is a normmal edge+orgasm session, turn everything off
                 post_orgasm_state.menu_is_locked = ocFALSE;
                 post_orgasm_state.detected_orgasm = ocFALSE;
                 output_state.motor_speed = 0;
@@ -589,13 +646,24 @@ void orgasm_control_permitOrgasmNow(int seconds) {
 }
 
 oc_bool_t orgasm_control_isPermitOrgasmReached() {
-    // Detect if edging time has passed
-    if ((esp_timer_get_time() / 1000UL) > (post_orgasm_state.auto_edging_start_millis +
-                                           (Config.auto_edging_duration_minutes * 60 * 1000))) {
-        return ocTRUE;
+    if (post_orgasm_state.to_orgasm_mode == Timer ){
+        // Detect if edging time has passed
+        if ((esp_timer_get_time() / 1000UL) > (post_orgasm_state.auto_edging_start_millis +
+                                               (post_orgasm_state.auto_edging_duration_minutes * 60 * 1000))) {
+            return ocTRUE;
+        } else {
+            return ocFALSE;
+        }
+    } else if (post_orgasm_state.to_orgasm_mode == Denial_count ) {
+        if (arousal_state.denial_count >= post_orgasm_state.edge_count_to_orgasm) {
+            return ocTRUE;
+        } else {
+            return ocFALSE;
+        }
     } else {
         return ocFALSE;
     }
+
 }
 
 oc_bool_t orgasm_control_isPostOrgasmReached() {

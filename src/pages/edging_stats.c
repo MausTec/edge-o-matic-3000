@@ -86,7 +86,7 @@ static void _draw_buttons(u8g2_t* d, orgasm_output_mode_t mode) {
     } else if (mode == OC_MANUAL_CONTROL) {
         ui_draw_button_labels(d, btn1, btn2, _("AUTO"));
     } else if (mode == OC_AUTOMAITC_CONTROL) {
-        if (Config.use_post_orgasm == true) {
+        if (Config.use_orgasm_modes == true) {
             ui_draw_button_labels(d, btn1, btn2, _("POST"));
         } else {
             ui_draw_button_labels(d, btn1, btn2, _("MANUAL"));
@@ -291,7 +291,7 @@ on_button(eom_hal_button_t button, eom_hal_button_event_t event, void* arg) {
         if (mode == OC_MANUAL_CONTROL) {
             orgasm_control_set_output_mode(OC_AUTOMAITC_CONTROL);
         } else if (mode == OC_AUTOMAITC_CONTROL) {
-            if (Config.use_post_orgasm == true) {
+            if (Config.use_orgasm_modes == true) {
                 orgasm_control_set_output_mode(OC_ORGASM_MODE);
             } else {
                 orgasm_control_set_output_mode(OC_MANUAL_CONTROL);

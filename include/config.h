@@ -34,6 +34,13 @@ enum vibration_mode { RampStop = 1, Depletion = 2, Enhancement = 3, Pattern = 4,
 
 typedef enum vibration_mode vibration_mode_t;
 
+// To orgasm Modes
+// See vibration_mode_controller.h for more.
+
+enum to_orgasm_mode { Timer = 0, Denial_count = 1, Milk_o_matic = 2, Random_mode = 3 };
+
+typedef enum to_orgasm_mode to_orgasm_mode_t;
+
 /**
  * Main Configuration Struct!
  *
@@ -129,8 +136,8 @@ struct config {
 
     //= Post orgasm torure stuff
 
-    // Use post-orgasm torture mode and functionality.
-    bool use_post_orgasm;
+    // Use orgasm and post-orgasm torture mode and functionality.
+    bool use_orgasm_modes;
     // Threshold over arousal to detect a clench : Lower values increase sensitivity
     int clench_pressure_sensitivity;
     // Duration the clench detector can raise arousal if clench detector turned on in edging session
@@ -149,6 +156,19 @@ struct config {
     bool edge_menu_lock;
     // Deny access to menu starting after orgasm detected
     bool post_orgasm_menu_lock;
+    // Edging needed to permit orgasm (Max value if ramdom selected).
+    int denials_count_to_orgasm;
+    // milk_o_matic rest period in seconds before restart edge+orgasm
+    int milk_o_matic_rest_duration_seconds;
+    // random timer and denial_count to orgasm from set values. minimum is 1/2
+    bool random_orgasm_triggers;
+    
+    
+    // Timer : default original mode
+    // Edge_count will permit orgasm after # denial reached
+    // Milk-O-Matic will restart edge+orgasm indefenetly and randomly choose Timer or edge_count at each loop
+    // Random choose Timer or Edge_count at start of session
+    int to_orgasm_mode;
 
     //= Internal System Configuration (Update only if you know what you're doing)
 

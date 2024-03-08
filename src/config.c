@@ -48,12 +48,16 @@ CONFIG_DEFS {
     CFG_NUMBER(update_frequency_hz, 50);
     CFG_NUMBER(sensor_sensitivity, 128);
     CFG_BOOL(use_average_values, false);
+    CFG_NUMBER(denials_count_to_orgasm, 10);
+    CFG_NUMBER(milk_o_matic_rest_duration_seconds, 60);
+    CFG_ENUM(to_orgasm_mode, to_orgasm_mode_t, Timer);
+    CFG_BOOL(random_orgasm_triggers, false);
 
     // Vibration Settings
     CFG_ENUM(vibration_mode, vibration_mode_t, RampStop);
 
     // Post-Orgasm Torture
-    CFG_BOOL(use_post_orgasm, false);
+    CFG_BOOL(use_orgasm_modes, false);
     CFG_NUMBER(clench_pressure_sensitivity, 200);
     CFG_NUMBER(clench_time_to_orgasm_ms, 1500);
     CFG_NUMBER(clench_time_threshold_ms, 900);

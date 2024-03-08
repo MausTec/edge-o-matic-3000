@@ -47,7 +47,7 @@ extern "C" {
 #define SENSOR_SENSITIVITY_HELP _HELPSTR("Analog pressure prescaling. Please see instruction manual.")
 #define USE_AVERAGE_VALUES_HELP _HELPSTR("Use average values when calculating arousal. This smooths noisy data.")
 #define VIBRATION_MODE_HELP _HELPSTR("Vibration Mode for main vibrator control.")
-#define USE_POST_ORGASM_HELP _HELPSTR("Use post-orgasm torture mode and functionality.")
+#define USE_ORGASM_MODES_HELP _HELPSTR("Use orgasm and post-orgasm torture modes and functionality.")
 #define CLENCH_PRESSURE_SENSITIVITY_HELP _HELPSTR("Minimum additional Arousal level to detect clench. See manual.")
 #define CLENCH_TIME_TO_ORGASM_MS_HELP _HELPSTR("Threshold variable that is milliseconds count of clench to detect orgasm. See manual.")
 #define CLENCH_DETECTOR_IN_EDGING_HELP _HELPSTR("Use the clench detector to adjust Arousal. See manual.")
@@ -57,6 +57,10 @@ extern "C" {
 #define POST_ORGASM_MENU_LOCK_HELP _HELPSTR("Deny access to menu starting after orgasm detected.")
 #define MAX_CLENCH_DURATION_MS_HELP _HELPSTR("Duration the clench detector can raise arousal if clench detector turned on in edging session.")
 #define CLENCH_TIME_THRESHOLD_MS_HELP _HELPSTR("Threshold variable that is milliseconds counts to detect the start of clench.")
+#define DENIALS_COUNT_TO_ORGASM_HELP _HELPSTR("How many denials before permiting an orgasm, if this mode is chosen.")
+#define MILK_O_MATIC_REST_DURATION_SECONDS_HELP _HELPSTR("How long to rest before restarting an other round of Denial_count edging.")
+#define RANDOM_ORGASM_TRIGGERS_HELP _HELPSTR("Randomize Edge timer and Denial count to minimum of 1/2 of their values.")
+#define TO_ORGASM_MODE_HELP _HELPSTR("Timer, Denial_count and Milk-O-Matic. Random is a choice between Timer and Denial_count. See documentation for more details.")
 
 #ifdef __cplusplus
 }
