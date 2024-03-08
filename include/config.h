@@ -37,7 +37,7 @@ typedef enum vibration_mode vibration_mode_t;
 // To orgasm Modes
 // See vibration_mode_controller.h for more.
 
-enum to_orgasm_mode { Timer = 0, Denial_count = 1, Milk_o_matic = 2, Random_mode = 3 };
+enum to_orgasm_mode { Denial_count = 0, Timer = 1, Milk_o_matic = 2, Random_mode = 3 };
 
 typedef enum to_orgasm_mode to_orgasm_mode_t;
 
@@ -162,6 +162,8 @@ struct config {
     int milk_o_matic_rest_duration_seconds;
     // random timer and denial_count to orgasm from set values. minimum is 1/2
     bool random_orgasm_triggers;
+    // how many orgasms before stopping in milk-o-matic
+    int max_orgasms;
     
     
     // Timer : default original mode

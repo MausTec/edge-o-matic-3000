@@ -63,6 +63,7 @@ and is automatically generated. Here is a quick summary of config variables:
 |`milk_o_matic_rest_duration_seconds`|Int|60|How long to rest before restarting an other round of Denial_count edging.|
 |`random_orgasm_triggers`|Boolean|false|Randomize Edge timer and Denial count to minimum of 1/2 of their values.|
 |`to_orgasm_mode`|OrgasmMode|Timer|Timer, Denial_count and Milk-O-Matic. Random is a choice between Timer and Denial_count. See documentation for more details.|
+|`max_orgasms`|Int|4|Milk-o-matic maximum orgasms before turning off|
 
 
 \* AzureFang refers to a common wireless technology that is blue and involves chewing face-rocks. However, the
@@ -84,10 +85,10 @@ and is automatically generated. Here is a quick summary of config variables:
 ### Orgasm Modes:
 |ID|Name|Description|
 |---|---|
-|0|Timer|How long to edge before permiting an orgasm. Value set with - "Edge Duration Minutes" in the Orgasm Menu|
-|1|Denial_count|How many Denials before permiting an orgasm. Value set with - "Denials to permit orgasm" in the Orgasm Menu|
+|0|Denial_count|How many Denials before permiting an orgasm. Value set with - "Denials to permit orgasm" in the Orgasm Menu|
+|1|Timer|How long to edge before permiting an orgasm. Value set with - "Edge Duration Minutes" in the Orgasm Menu|
 |2|Milk_o_matic|Cycles in Denial_count mode after each orgasm. Repeats until switched off|
-|3|Random_mode|Random choice Timer or Denial_count before orgasm.|
+|3|Random_mode|Random choice Timer or milk-o-matic before orgasm. For best result choose "Edge Duration Minutes" = 60 min and "Denials to permit orgasm" = 20. the idea is not knowing if you will have an 1 hours tease or multiple orgasm within that same 1 hour. Max_orgasms stops the session after it's reached.|
 
 ### post_orgasm_duration_seconds:
 |Seconds|Description|

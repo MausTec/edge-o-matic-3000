@@ -61,6 +61,7 @@ extern "C" {
 #define MILK_O_MATIC_REST_DURATION_SECONDS_HELP _HELPSTR("How long to rest before restarting an other round of Denial_count edging.")
 #define RANDOM_ORGASM_TRIGGERS_HELP _HELPSTR("Randomize Edge timer and Denial count to minimum of 1/2 of their values.")
 #define TO_ORGASM_MODE_HELP _HELPSTR("Timer, Denial_count and Milk-O-Matic. Random is a choice between Timer and Denial_count. See documentation for more details.")
+#define MAX_ORGASMS_HELP _HELPSTR("Milk-o-matic maximum orgasms before turning off")
 
 #ifdef __cplusplus
 }

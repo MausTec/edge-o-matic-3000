@@ -120,6 +120,15 @@ static const ui_input_toggle_t RANDOM_ORGASM_TRIGGERS_INPUT = {
     .input.help = RANDOM_ORGASM_TRIGGERS_HELP
 };
 
+static const ui_input_numeric_t MAX_ORGASMS_INPUT = {
+    UnsignedInputValues(
+        "MILK-O-MATIC max orgasms", &Config.max_orgasms, "", on_config_save
+    ),
+    .max = 255,
+    .step = 1,
+    .input.help = MAX_ORGASMS_HELP
+};
+
 static void on_open(const ui_menu_t* m, UI_MENU_ARG_TYPE arg) {
     ui_menu_add_input(m, (ui_input_t*)&USE_ORGASM_MODES_INPUT);
     ui_menu_add_input(m, (ui_input_t*)&TO_ORGASM_MODE_INPUT);
@@ -132,6 +141,7 @@ static void on_open(const ui_menu_t* m, UI_MENU_ARG_TYPE arg) {
     ui_menu_add_input(m, (ui_input_t*)&CLENCH_DETECTOR_IN_EDGING_INPUT);
     ui_menu_add_input(m, (ui_input_t*)&CLENCH_PRESSURE_SENSITIVITY_INPUT);
     ui_menu_add_input(m, (ui_input_t*)&MILK_O_MATIC_REST_DURATION_INPUT);
+    ui_menu_add_input(m, (ui_input_t*)&MAX_ORGASMS_INPUT);
     ui_menu_add_input(m, (ui_input_t*)&RANDOM_ORGASM_TRIGGERS_INPUT);
 }
 
