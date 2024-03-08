@@ -333,8 +333,8 @@ static void orgasm_control_updateEdgingTime() { // Edging+Orgasm timer
                                                post_orgasm_state.post_orgasm_duration_millis)) {
             output_state.motor_speed = Config.motor_max_speed;
         } else {                                  // Post_orgasm timer reached
-            if (output_state.motor_speed >= 10) { // Ramp down motor speed to 0
-                output_state.motor_speed = output_state.motor_speed - 10;
+            if (output_state.motor_speed > 0) { // Ramp down motor speed to 0
+                output_state.motor_speed = output_state.motor_speed - 1;
             } else {
                 post_orgasm_state.menu_is_locked = ocFALSE;
                 post_orgasm_state.detected_orgasm = ocFALSE;
