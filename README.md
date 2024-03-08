@@ -62,8 +62,8 @@ and is automatically generated. Here is a quick summary of config variables:
 |`denials_count_to_orgasm`|Int|10|How many denials before permiting an orgasm, if this mode is chosen.|
 |`milk_o_matic_rest_duration_seconds`|Int|60|How long to rest before restarting an other round of Denial_count edging.|
 |`random_orgasm_triggers`|Boolean|false|Randomize Edge timer and Denial count to minimum of 1/2 of their values.|
-|`to_orgasm_mode`|OrgasmMode|Timer|Timer, Denial_count and Milk-O-Matic. Random is a choice between Timer and Denial_count. See documentation for more details.|
-|`max_orgasms`|Int|4|Milk-o-matic maximum orgasms before turning off|
+|`to_orgasm_mode`|OrgasmMode|Timer|Timer, Denial_count and Milk-O-Matic. Random is a choice between Timer and Milk-o-matic. See documentation for more details.|
+|`max_orgasms`|Int|4|Milk-o-matic maximum orgasms before turning off.|
 
 
 \* AzureFang refers to a common wireless technology that is blue and involves chewing face-rocks. However, the
