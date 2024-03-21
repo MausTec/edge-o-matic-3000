@@ -233,7 +233,8 @@ static void orgasm_control_updateMotorSpeed() {
     if (!time_out_over) {
         orgasm_control_twitchDetect();
 
-    } else if (arousal_state.arousal > Config.sensitivity_threshold &&
+    } else if (arousal_state.arousal > 
+               (Config.sensitivity_threshold - ( Config.use_denial_count_in_sensitivity * arousal_state.denial_count)) &&
                output_state.motor_speed > 0 && on_time > Config.minimum_on_time) {
         // The motor_speed check above, btw, is so we only hit this once per peak.
         // Set the motor speed to 0, set stop time, and determine the new additional random time.

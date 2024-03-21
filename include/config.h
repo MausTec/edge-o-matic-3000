@@ -121,7 +121,8 @@ struct config {
     uint8_t sensor_sensitivity;
     // Use average values when calculating arousal. This smooths noisy data.
     bool use_average_values;
-
+    // Use denial count to increase sensitivity to edging. Reduces to risk of Oups over time
+    bool use_denial_count_in_sensitivity;
     //= Vibration Output Mode
 
     // Vibration Mode for main vibrator control.
