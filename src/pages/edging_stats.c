@@ -5,6 +5,7 @@
 #include "esp_timer.h"
 #include "menus/index.h"
 #include "orgasm_control.h"
+#include "system/event_manager.h"
 #include "ui/toast.h"
 #include "ui/ui.h"
 #include "util/i18n.h"
@@ -314,10 +315,13 @@ static ui_render_flag_t on_encoder(int delta, void* arg) {
     if (mode == OC_MANUAL_CONTROL) {
         int speed = eom_hal_get_motor_speed() + delta;
         uint8_t speed_byte = speed > 0xFF ? 0xFF : (speed < 0x00 ? 0x00 : speed);
+
         eom_hal_set_motor_speed(speed_byte);
+        event_manager_dispatch(EVT_SPEED_CHANGE, NULL, speed_byte);
         accessory_driver_broadcast_speed(speed_byte);
         bluetooth_driver_broadcast_speed(speed_byte);
         // websocket_server_broadcast_speed(speed_byte);
+
         state.arousal_change_notice_ms = 0;
         state.speed_change_notice_ms = millis + CHANGE_NOTICE_DELAY_MS;
         return RENDER;
