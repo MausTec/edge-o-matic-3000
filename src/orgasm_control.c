@@ -332,17 +332,21 @@ static void orgasm_control_updateEdgingTime() { // Edging+Orgasm timer
                                                post_orgasm_state.post_orgasm_duration_millis)) {
             output_state.motor_speed = Config.motor_max_speed;
         } else {                                  // Post_orgasm timer reached
-            if (output_state.motor_speed >= 10) { // Ramp down motor speed to 0
-                output_state.motor_speed = output_state.motor_speed - 10;
+            if (output_state.motor_speed > 0) { // Ramp down motor speed to 0
+                output_state.motor_speed = output_state.motor_speed - 1;
             } else {
                 post_orgasm_state.menu_is_locked = ocFALSE;
                 post_orgasm_state.detected_orgasm = ocFALSE;
                 output_state.motor_speed = 0;
+                eom_hal_set_motor_speed(output_state.motor_speed);
+                accessory_driver_broadcast_speed(output_state.motor_speed);
+                bluetooth_driver_broadcast_speed(output_state.motor_speed);
                 orgasm_control_set_output_mode(OC_MANUAL_CONTROL);
             }
         }
     }
-    if (orgasm_control_isPermitOrgasmReached() || orgasm_control_isPostOrgasmReached()) {
+    // Control output while motor control is paused
+    if (output_state.control_motor == OC_MANUAL_CONTROL) {
         uint8_t speed = orgasm_control_getMotorSpeed();
         eom_hal_set_motor_speed(speed);
         accessory_driver_broadcast_speed(speed);
