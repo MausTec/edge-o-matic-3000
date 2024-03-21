@@ -56,13 +56,14 @@ static const ui_input_byte_t MOTOR_START_SPEED_INPUT = {
 
 static const ui_input_numeric_t MOTOR_RAMP_TIME_INPUT = {
     UnsignedInputValues("Motor Ramp Time", &Config.motor_ramp_time_s, UNIT_SECONDS, on_config_save),
-    .max = 120,
+    .max = 255,
     .step = 5,
     .input.help = MOTOR_RAMP_TIME_S_HELP
 };
 
 static const ui_input_numeric_t EDGE_DELAY_INPUT = {
     UnsignedInputValues("Edge Delay", &Config.edge_delay, UNIT_MILLISECONDS, on_config_save),
+    .max = 15000,
     .step = 100,
     .input.help = EDGE_DELAY_HELP
 };
@@ -71,7 +72,7 @@ static const ui_input_numeric_t MAX_ADDITIONAL_DELAY_INPUT = {
     UnsignedInputValues(
         "Max Additional Delay", &Config.max_additional_delay, UNIT_MILLISECONDS, on_config_save
     ),
-    .max = 6000,
+    .max = 30000,
     .step = 100,
     .input.help = MAX_ADDITIONAL_DELAY_HELP
 };
@@ -87,7 +88,7 @@ static const ui_input_numeric_t MINIMUM_ON_TIME_INPUT = {
 
 static const ui_input_numeric_t AROUSAL_LIMIT_INPUT = {
     UnsignedInputValues("Arousal Limit", &Config.sensitivity_threshold, "", on_config_save),
-    .max = 1023,
+    .max = 2048,
     .input.help = SENSITIVITY_THRESHOLD_HELP
 };
 
