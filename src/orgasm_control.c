@@ -45,6 +45,7 @@ static struct {
     uint8_t control_motor;
     uint8_t prev_control_motor;
     float motor_speed;
+    float motor_increment;
 } output_state;
 
 static struct {
@@ -83,6 +84,7 @@ void orgasm_control_init(void) {
     output_state.vibration_mode = Config.vibration_mode;
     output_state.edge_time_out = 10000;
     post_orgasm_state.clench_pressure_threshold = 4096;
+    output_state.motor_increment = calculate_increment(Config.motor_start_speed, Config.motor_max_speed, Config.motor_ramp_time_s);
 
     running_average_init(&arousal_state.average, Config.pressure_smoothing);
 }
@@ -298,6 +300,8 @@ static void orgasm_control_updateEdgingTime() { // Edging+Orgasm timer
     if (orgasm_control_isPermitOrgasmReached() && !orgasm_control_isPostOrgasmReached()) {
         if (output_state.control_motor) {
             orgasm_control_pauseControl(); // make sure orgasm is now possible
+            // Calculate motor increment once, from here to end of post orgasm
+            output_state.motor_increment = calculate_increment(Config.motor_start_speed, Config.motor_max_speed, Config.motor_ramp_time_s);
         }
 
         // now detect the orgasm to start post orgasm torture timer
@@ -314,13 +318,10 @@ static void orgasm_control_updateEdgingTime() { // Edging+Orgasm timer
             eom_hal_set_encoder_rgb(0, 255, 0);
         }
 
-        // raise motor speed to max speep. protect not to go higher than max
-        if (output_state.motor_speed <= (Config.motor_max_speed - calculate_increment(
-                Config.motor_start_speed, Config.motor_max_speed, Config.motor_ramp_time_s))
+        // raise motor speed to max speed. protect not to go higher than max
+        if (output_state.motor_speed <= (Config.motor_max_speed - output_state.motor_increment)
             ) {
-            output_state.motor_speed += calculate_increment(
-                Config.motor_start_speed, Config.motor_max_speed, Config.motor_ramp_time_s
-            );
+            update_check(output_state.motor_speed, output_state.motor_speed + output_state.motor_increment)
         } else {
             update_check(output_state.motor_speed, Config.motor_max_speed);
         }
@@ -330,24 +331,24 @@ static void orgasm_control_updateEdgingTime() { // Edging+Orgasm timer
     if (orgasm_control_isPostOrgasmReached()) {
         post_orgasm_state.post_orgasm_duration_millis =
             (post_orgasm_state.post_orgasm_duration_seconds * 1000);
-
+        
         // Detect if within post orgasm session
         if ((esp_timer_get_time() / 1000UL) < (post_orgasm_state.post_orgasm_start_millis +
                                                post_orgasm_state.post_orgasm_duration_millis)) {
-            if (output_state.motor_speed <= (Config.motor_max_speed - calculate_increment(
-                    Config.motor_start_speed, Config.motor_max_speed, Config.motor_ramp_time_s))
+            // continue to raise motor to max speed
+            if (output_state.motor_speed <= (Config.motor_max_speed - output_state.motor_increment)
                 ) {
-                output_state.motor_speed += calculate_increment(
-                    Config.motor_start_speed, Config.motor_max_speed, Config.motor_ramp_time_s
-                );
+                update_check(output_state.motor_speed, output_state.motor_speed + output_state.motor_increment)
+            } else {
+                update_check(output_state.motor_speed, Config.motor_max_speed);
             }
-        } else {                                  // Post_orgasm timer reached
+        } else {                                // Post_orgasm timer reached
             if (output_state.motor_speed > 0) { // Ramp down motor speed to 0
-                output_state.motor_speed = output_state.motor_speed - 1;
+                update_check(output_state.motor_speed, output_state.motor_speed - 1)
             } else {
                 post_orgasm_state.menu_is_locked = ocFALSE;
                 post_orgasm_state.detected_orgasm = ocFALSE;
-                output_state.motor_speed = 0;
+                update_check(output_state.motor_speed, 0)
                 eom_hal_set_motor_speed(output_state.motor_speed);
                 accessory_driver_broadcast_speed(output_state.motor_speed);
                 bluetooth_driver_broadcast_speed(output_state.motor_speed);
