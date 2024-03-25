@@ -5,6 +5,7 @@
 #include "eom-hal.h"
 #include "esp_log.h"
 #include "esp_timer.h"
+#include "system/event_manager.h"
 #include "system/websocket_handler.h"
 #include "ui/toast.h"
 #include "ui/ui.h"
@@ -78,6 +79,20 @@ static struct {
         }                                                                                          \
     }
 
+/**
+ * @brief Simplified method to set speed, which also handles broadcasting the event.
+ * @param speed
+ */
+static void _set_speed(uint8_t speed) {
+    static uint8_t last_speed = 0;
+    if (speed == last_speed) return;
+    last_speed = speed;
+
+    eom_hal_set_motor_speed(speed);
+    event_manager_dispatch(EVT_SPEED_CHANGE, NULL, speed);
+    bluetooth_driver_broadcast_speed(speed);
+}
+
 void orgasm_control_init(void) {
     output_state.output_mode = OC_MANUAL_CONTROL;
     output_state.vibration_mode = Config.vibration_mode;
@@ -110,7 +125,7 @@ static void orgasm_control_updateArousal() {
     update_check(arousal_state.arousal, arousal_state.arousal * 0.99);
 
     // Acquire new pressure and take average:
-    update_check(arousal_state.pressure_value, eom_hal_get_pressure_reading());
+    arousal_state.pressure_value = eom_hal_get_pressure_reading();
     running_average_add_value(arousal_state.average, arousal_state.pressure_value);
     long p_avg = running_avergae_get_average(arousal_state.average);
     long p_check = Config.use_average_values ? p_avg : arousal_state.pressure_value;
@@ -201,7 +216,7 @@ static void orgasm_control_updateArousal() {
 
     // Update accessories:
     if (arousal_state.update_flag) {
-        accessory_driver_broadcast_arousal(arousal_state.arousal);
+        event_manager_dispatch(EVT_AROUSAL_CHANGE, NULL, arousal_state.arousal);
         bluetooth_driver_broadcast_arousal(arousal_state.arousal);
         // websocket_driver_broadcast_arousal(arousal_state.arousal);
 
@@ -243,6 +258,8 @@ static void orgasm_control_updateMotorSpeed() {
         arousal_state.denial_count++;
         arousal_state.update_flag = ocTRUE;
 
+        event_manager_dispatch(EVT_ORGASM_DENIAL, NULL, arousal_state.denial_count);
+
         // If Max Additional Delay is not disabled, caculate a new delay every time the motor is
         // stopped.
         if (Config.max_additional_delay != 0) {
@@ -264,9 +281,7 @@ static void orgasm_control_updateMotorSpeed() {
     // Control motor if we are not manually doing so.
     if (output_state.control_motor) {
         uint8_t speed = orgasm_control_getMotorSpeed();
-        eom_hal_set_motor_speed(speed);
-        accessory_driver_broadcast_speed(speed);
-        bluetooth_driver_broadcast_speed(speed);
+        _set_speed(speed);
     }
 }
 
@@ -331,16 +346,14 @@ static void orgasm_control_updateEdgingTime() { // Edging+Orgasm timer
         if ((esp_timer_get_time() / 1000UL) < (post_orgasm_state.post_orgasm_start_millis +
                                                post_orgasm_state.post_orgasm_duration_millis)) {
             output_state.motor_speed = Config.motor_max_speed;
-        } else {                                  // Post_orgasm timer reached
+        } else {                                // Post_orgasm timer reached
             if (output_state.motor_speed > 0) { // Ramp down motor speed to 0
                 output_state.motor_speed = output_state.motor_speed - 1;
             } else {
                 post_orgasm_state.menu_is_locked = ocFALSE;
                 post_orgasm_state.detected_orgasm = ocFALSE;
                 output_state.motor_speed = 0;
-                eom_hal_set_motor_speed(output_state.motor_speed);
-                accessory_driver_broadcast_speed(output_state.motor_speed);
-                bluetooth_driver_broadcast_speed(output_state.motor_speed);
+                _set_speed(output_state.motor_speed);
                 orgasm_control_set_output_mode(OC_MANUAL_CONTROL);
             }
         }
@@ -348,9 +361,7 @@ static void orgasm_control_updateEdgingTime() { // Edging+Orgasm timer
     // Control output while motor control is paused
     if (output_state.control_motor == OC_MANUAL_CONTROL) {
         uint8_t speed = orgasm_control_getMotorSpeed();
-        eom_hal_set_motor_speed(speed);
-        accessory_driver_broadcast_speed(speed);
-        bluetooth_driver_broadcast_speed(speed);
+        _set_speed(speed);
     }
 }
 
@@ -555,24 +566,27 @@ void orgasm_control_controlMotor(orgasm_output_mode_t control) {
     orgasm_control_set_output_mode(control);
 }
 
-void orgasm_control_set_output_mode(orgasm_output_mode_t control) {
+void orgasm_control_set_output_mode(orgasm_output_mode_t mode) {
     orgasm_output_mode_t old = output_state.output_mode;
-    output_state.output_mode = control;
-    output_state.control_motor = control != OC_MANUAL_CONTROL;
+    output_state.output_mode = mode;
+    output_state.control_motor = mode != OC_MANUAL_CONTROL;
 
     if (old == OC_MANUAL_CONTROL) {
         const vibration_mode_controller_t* controller = orgasm_control_getVibrationMode();
         output_state.motor_speed = controller->start();
-    } else if (control == OC_MANUAL_CONTROL) {
+    } else if (mode == OC_MANUAL_CONTROL) {
         const vibration_mode_controller_t* controller = orgasm_control_getVibrationMode();
         output_state.motor_speed = controller->stop();
     }
 
+    // TODO: This is handled by the UI rendering process, I think??
     eom_hal_set_encoder_rgb(
-        (control + 1) & 0x04 ? 0xFF : 0x00,
-        (control + 1) & 0x02 ? 0xFF : 0x00,
-        (control + 1) & 0x01 ? 0xFF : 0x00
+        (mode + 1) & 0x04 ? 0xFF : 0x00,
+        (mode + 1) & 0x02 ? 0xFF : 0x00,
+        (mode + 1) & 0x01 ? 0xFF : 0x00
     );
+
+    event_manager_dispatch(EVT_MODE_SET, NULL, mode);
 }
 
 void orgasm_control_pauseControl() {
