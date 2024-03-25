@@ -281,7 +281,7 @@ on_button(eom_hal_button_t button, eom_hal_button_event_t event, void* arg) {
 
         orgasm_control_set_output_mode(OC_MANUAL_CONTROL);
         eom_hal_set_motor_speed(0x00);
-        accessory_driver_broadcast_speed(0x00);
+        event_manager_dispatch(EVT_SPEED_CHANGE, NULL, 0);
         bluetooth_driver_broadcast_speed(0x00);
         // websocket_server_broadcast_speed(0x00);
     } else if (button == EOM_HAL_BUTTON_OK) {
@@ -318,7 +318,6 @@ static ui_render_flag_t on_encoder(int delta, void* arg) {
 
         eom_hal_set_motor_speed(speed_byte);
         event_manager_dispatch(EVT_SPEED_CHANGE, NULL, speed_byte);
-        accessory_driver_broadcast_speed(speed_byte);
         bluetooth_driver_broadcast_speed(speed_byte);
         // websocket_server_broadcast_speed(speed_byte);
 

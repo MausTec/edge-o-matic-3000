@@ -90,7 +90,6 @@ static void _set_speed(uint8_t speed) {
 
     eom_hal_set_motor_speed(speed);
     event_manager_dispatch(EVT_SPEED_CHANGE, NULL, speed);
-    accessory_driver_broadcast_speed(speed);
     bluetooth_driver_broadcast_speed(speed);
 }
 
@@ -218,7 +217,6 @@ static void orgasm_control_updateArousal() {
     // Update accessories:
     if (arousal_state.update_flag) {
         event_manager_dispatch(EVT_AROUSAL_CHANGE, NULL, arousal_state.arousal);
-        accessory_driver_broadcast_arousal(arousal_state.arousal);
         bluetooth_driver_broadcast_arousal(arousal_state.arousal);
         // websocket_driver_broadcast_arousal(arousal_state.arousal);
 
