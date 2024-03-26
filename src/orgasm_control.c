@@ -32,7 +32,6 @@ static struct {
     uint16_t peak_start;
     uint16_t arousal;
     uint8_t update_flag;
-    uint8_t denial_count;
 } arousal_state;
 
 static struct {
@@ -255,10 +254,9 @@ static void orgasm_control_updateMotorSpeed() {
         output_state.motor_speed = controller->stop();
         output_state.motor_stop_time = (esp_timer_get_time() / 1000UL);
         output_state.motor_start_time = 0;
-        arousal_state.denial_count++;
         arousal_state.update_flag = ocTRUE;
 
-        event_manager_dispatch(EVT_ORGASM_DENIAL, NULL, arousal_state.denial_count);
+        event_manager_dispatch(EVT_ORGASM_DENIAL, NULL, 0);
 
         // If Max Additional Delay is not disabled, caculate a new delay every time the motor is
         // stopped.
@@ -510,10 +508,6 @@ oc_bool_t orgasm_control_updated() {
 
 void orgasm_control_clear_update_flag(void) {
     arousal_state.update_flag = ocFALSE;
-}
-
-int orgasm_control_getDenialCount() {
-    return arousal_state.denial_count;
 }
 
 /**
