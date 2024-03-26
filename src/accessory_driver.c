@@ -85,4 +85,5 @@ void accessory_driver_init(void) {
     maus_bus_init(&config);
 
     event_manager_register_handler(EVT_SPEED_CHANGE, _evt_speed_change, NULL);
+    event_manager_register_handler(EVT_AROUSAL_CHANGE, _evt_arousal_change, NULL);
 }
