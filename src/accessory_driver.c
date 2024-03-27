@@ -26,7 +26,7 @@ static void _device_speed_cb(
 ) {
     uint8_t speed = *((uint8_t*)ptr);
 
-    if (driver->transmit != NULL) {
+    if (driver->uart != NULL && driver->uart->transmit != NULL) {
         if (device->features.tscode) {
             ESP_LOGI(TAG, "Transmitting a TS-code speed command.");
 
@@ -43,7 +43,7 @@ static void _device_speed_cb(
             ESP_LOGI(TAG, "    -> Serialized: %s", buffer);
             tscode_dispose_command(&cmd);
 
-            driver->transmit((uint8_t*)buffer, strlen(buffer));
+            driver->uart->transmit((uint8_t*)buffer, strlen(buffer));
         }
     }
 }
