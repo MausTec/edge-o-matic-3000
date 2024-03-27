@@ -16,13 +16,26 @@
 
 static const char* TAG = "page:edging_stats";
 
-static struct {
+volatile static struct {
     uint16_t arousal_peak;
     uint64_t arousal_peak_last_ms;
     uint64_t arousal_peak_update_ms;
     uint64_t speed_change_notice_ms;
     uint64_t arousal_change_notice_ms;
-} state;
+    uint8_t denial_count;
+    event_handler_node_t* _h_denial;
+} state = { 0 };
+
+static void _evt_orgasm_denial(
+    const char* evt, EVENT_HANDLER_ARG_TYPE eap, int eai, EVENT_HANDLER_ARG_TYPE hap
+) {
+    state.denial_count += 1;
+}
+
+// This is exposed for external linkage.
+void edging_stats_page_reset_denial_count(void) {
+    state.denial_count = 0;
+}
 
 static void on_open(void* arg) {
     // ui_toast_multiline(
@@ -36,6 +49,17 @@ static void on_open(void* arg) {
     //     little pile of " "secrets. But enough talk... Have at you!\n\n" "Belmont:
     //     alsdjf;lskdfj;alskdjf;laskdjf;alskdjf;alksdjflsdkf <3"
     // );
+
+    // Register the orgasm denial counter, and keep it registered. It'll keep ticking while we're in
+    // this page, until we can find a way to allow the edging_chart and edging_stats page to
+    // maintain a shared state between them.
+    //
+    // This requires a notion of page state, probably, which would be nice.
+    //
+    if (state._h_denial == NULL) {
+        state._h_denial =
+            event_manager_register_handler(EVT_ORGASM_DENIAL, &_evt_orgasm_denial, NULL);
+    }
 }
 
 static ui_render_flag_t on_loop(void* arg) {
@@ -224,12 +248,11 @@ static void _draw_pressure_icon(u8g2_t* d) {
 }
 
 static void _draw_denial_count(u8g2_t* d) {
-    int denial = orgasm_control_getDenialCount();
     const uint8_t MID_HEIGHT = 20;
     const uint8_t DENIAL_WIDTH = 41;
     char denial_str[4];
 
-    snprintf(denial_str, 4, "%03d", denial);
+    snprintf(denial_str, 4, "%03d", state.denial_count);
 
     u8g2_SetDrawColor(d, 1);
     u8g2_DrawVLine(
