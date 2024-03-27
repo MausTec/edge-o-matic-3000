@@ -540,7 +540,9 @@ void orgasm_control_increment_arousal_threshold(int threshold) {
 }
 
 void orgasm_control_set_arousal_threshold(int threshold) {
-    Config.sensitivity_threshold = threshold >= 0 ? threshold : 0;
+    // Sensitivity threshold of 0 prevents horrible issues from happening.
+    // It also prevents confusing the customers, which is a big win I'd say.
+    Config.sensitivity_threshold = threshold >= 10 ? threshold : 10;
     config_enqueue_save(300);
 }
 

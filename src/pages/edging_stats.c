@@ -141,7 +141,8 @@ float _get_arousal_bar_max(void) {
     if (Config.sensitivity_threshold != last_sens_thresh) {
         last_sens_thresh = Config.sensitivity_threshold;
         last_arousal_max =
-            pow10f(ceilf(log10f(Config.sensitivity_threshold * 1.10f) * 4.0f) / 4.0f);
+            pow10f(ceilf(log10f(Config.sensitivity_threshold * 1.10f) * 2.0f) / 2.0f);
+        if (last_arousal_max < 100) last_arousal_max = 100;
     }
 
     return last_arousal_max;
