@@ -319,7 +319,7 @@ static void render_screensaver_frame() {
             direction ^= 0b10;
         }
 
-        int pressure_icon = orgasm_control_getAveragePressure() / 4095;
+        int pressure_icon = orgasm_control_get_average_pressure() / 4095;
 
         u8g2_SetDrawColor(display, 1);
         u8g2_DrawBitmap(display, pos_x, pos_y, 24 / 8, 24, PLUG_ICON[pressure_icon % 4]);
