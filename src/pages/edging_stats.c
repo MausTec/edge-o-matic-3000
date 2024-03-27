@@ -20,7 +20,6 @@ volatile static struct {
     uint16_t arousal_peak;
     uint64_t arousal_peak_last_ms;
     uint64_t arousal_peak_update_ms;
-    uint64_t speed_change_notice_ms;
     uint64_t arousal_change_notice_ms;
     uint8_t denial_count;
     event_handler_node_t* _h_denial;
@@ -88,11 +87,6 @@ static ui_render_flag_t on_loop(void* arg) {
     }
 
     // Clear notices
-    if (state.speed_change_notice_ms > 0 && millis > state.speed_change_notice_ms) {
-        state.speed_change_notice_ms = 0;
-        render = RENDER;
-    }
-
     if (state.arousal_change_notice_ms > 0 && millis > state.arousal_change_notice_ms) {
         state.arousal_change_notice_ms = 0;
         render = RENDER;
@@ -279,9 +273,7 @@ static void on_render(u8g2_t* d, void* arg) {
     _draw_status(d, mode);
     _draw_meters(d, mode);
 
-    if (state.speed_change_notice_ms > 0) {
-        _draw_speed_change(d);
-    } else if (state.arousal_change_notice_ms > 0) {
+    if (state.arousal_change_notice_ms > 0) {
         _draw_arousal_change(d);
     } else {
         _draw_pressure_icon(d);
@@ -344,15 +336,11 @@ static ui_render_flag_t on_encoder(int delta, void* arg) {
         event_manager_dispatch(EVT_SPEED_CHANGE, NULL, speed_byte);
         bluetooth_driver_broadcast_speed(speed_byte);
         // websocket_server_broadcast_speed(speed_byte);
-
-        state.arousal_change_notice_ms = 0;
-        state.speed_change_notice_ms = millis + CHANGE_NOTICE_DELAY_MS;
         return RENDER;
     }
 
     if (mode != OC_MANUAL_CONTROL) {
         orgasm_control_increment_arousal_threshold(delta);
-        state.speed_change_notice_ms = 0;
         state.arousal_change_notice_ms = millis + CHANGE_NOTICE_DELAY_MS;
         return RENDER;
     }
