@@ -70,7 +70,7 @@ static ui_render_flag_t on_loop(void* arg) {
         orgasm_control_clear_update_flag();
 
         // Update Arousal Peak
-        uint16_t arousal = orgasm_control_getArousal();
+        uint16_t arousal = orgasm_control_get_arousal();
 
         if (arousal > state.arousal_peak) {
             state.arousal_peak = arousal;
@@ -105,7 +105,7 @@ static void _draw_buttons(u8g2_t* d, orgasm_output_mode_t mode) {
     const char* btn1 = _("MENU");
     const char* btn2 = _("STOP");
 
-    if (orgasm_control_isMenuLocked()) {
+    if (orgasm_control_is_menu_locked()) {
         ui_draw_button_labels(d, btn1, _("LOCKED"), _("LOCKED"));
         ui_draw_button_disable(d, 0b011);
     } else if (mode == OC_MANUAL_CONTROL) {
@@ -161,7 +161,7 @@ static void _draw_meters(u8g2_t* d, orgasm_output_mode_t mode) {
         d,
         EOM_DISPLAY_HEIGHT - 18,
         'A',
-        orgasm_control_getArousal(),
+        orgasm_control_get_arousal(),
         _get_arousal_bar_max(),
         Config.sensitivity_threshold,
         state.arousal_peak
@@ -195,7 +195,7 @@ static void _draw_pressure_icon(u8g2_t* d) {
     const uint8_t MID_HEIGHT = 20;
     const uint8_t BAR_LEFT = 26;
 
-    uint16_t pressure = orgasm_control_getLastPressure();
+    uint16_t pressure = orgasm_control_get_last_pressure();
     uint8_t pressure_idx = pressure / (PRESSURE_MAX / 4);
     float pressure_pct = (float)pressure / PRESSURE_MAX;
     float sensitivity_pct = (float)Config.sensor_sensitivity / 255.0f;
@@ -293,7 +293,7 @@ static void on_close(void* arg) {
 
 static ui_render_flag_t
 on_button(eom_hal_button_t button, eom_hal_button_event_t event, void* arg) {
-    oc_bool_t locked = orgasm_control_isMenuLocked();
+    oc_bool_t locked = orgasm_control_is_menu_locked();
 
     if (event != EOM_HAL_BUTTON_PRESS) return PASS;
 
@@ -331,7 +331,7 @@ on_button(eom_hal_button_t button, eom_hal_button_event_t event, void* arg) {
 }
 
 static ui_render_flag_t on_encoder(int delta, void* arg) {
-    oc_bool_t locked = orgasm_control_isMenuLocked();
+    oc_bool_t locked = orgasm_control_is_menu_locked();
     orgasm_output_mode_t mode = orgasm_control_get_output_mode();
     uint64_t millis = esp_timer_get_time() / 1000UL;
 
