@@ -3,9 +3,13 @@
 #include "config.h"
 #include "esp_log.h"
 #include "esp_timer.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
 #include "orgasm_control.h"
 #include "ui/graphics.h"
+#include "ui/screenshot.h"
 #include "ui/toast.h"
+#include "util/i18n.h"
 #include <string.h>
 
 static const char* TAG = "UI";
@@ -48,9 +52,27 @@ void ui_reset_idle_timer(void) {
 static void handle_button(eom_hal_button_t button, eom_hal_button_event_t event) {
     ui_render_flag_t rf = PASS;
     ui_reset_idle_timer();
+    u8g2_t* display = eom_hal_get_display_ptr();
 
+    // Handle Screenshots / Debug Control (Menu + Other)
+    if (event == EOM_HAL_BUTTON_HOLD) {
+        uint8_t down = eom_hal_get_button_state() & (~button);
+
+        if (down) { // Multi-Button Combo
+            if (button == EOM_HAL_BUTTON_MENU) {
+                if (down == EOM_HAL_BUTTON_BACK) {
+                    ui_screenshot_save(NULL);
+                    ui_toast("%s", _("Screenshot saved."));
+                }
+            }
+
+            return;
+        }
+    }
+
+    // Handle Toast Clearing
     if (ui_toast_is_active()) {
-        if (ui_toast_is_dismissable()) {
+        if (ui_toast_is_dismissable() && event == EOM_HAL_BUTTON_PRESS) {
             ui_toast_handle_close();
             ui_toast_clear();
             UI.force_rerender = 1;
@@ -59,6 +81,7 @@ static void handle_button(eom_hal_button_t button, eom_hal_button_event_t event)
         return;
     }
 
+    // Forward to active UI
     if (UI.current_input != NULL) {
         const ui_input_t* i = UI.current_input;
         void* arg = UI.current_input_arg;
@@ -296,11 +319,20 @@ static void render_screensaver_frame() {
             direction ^= 0b10;
         }
 
-        int pressure_icon = orgasm_control_getAveragePressure() / 4095;
+        int pressure_icon = orgasm_control_get_average_pressure() / 4095;
 
         u8g2_SetDrawColor(display, 1);
         u8g2_DrawBitmap(display, pos_x, pos_y, 24 / 8, 24, PLUG_ICON[pressure_icon % 4]);
         ui_send_buffer();
+    }
+}
+
+void ui_fade_to(uint8_t color) {
+    u8g2_t* d = eom_hal_get_display_ptr();
+    for (int i = 4; i > 0; i--) {
+        ui_draw_pattern_fill(d, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, i);
+        ui_send_buffer();
+        vTaskDelay(100UL / portTICK_PERIOD_MS);
     }
 }
 
@@ -310,7 +342,7 @@ void ui_tick(void) {
     uint32_t millis = esp_timer_get_time() / 1000UL;
 
     // Check idle
-    if (UI.idle_state != UI_IDLE && Config.screen_dim_seconds != 0 &&
+    if (UI.idle_state == UI_ACTIVE && Config.screen_dim_seconds != 0 &&
         millis - UI.last_input_ms > ((uint32_t)Config.screen_dim_seconds * 1000UL)) {
         UI.idle_state = UI_IDLE;
         u8g2_SetContrast(display, 0);
@@ -320,7 +352,7 @@ void ui_tick(void) {
         millis - UI.last_input_ms > ((uint32_t)Config.screen_timeout_seconds * 1000UL)) {
         UI.idle_state = UI_SCREENSAVER;
         u8g2_SetContrast(display, 0);
-        // ui_fade_to(0);
+        ui_fade_to(0);
     }
 
     if (UI.idle_state == UI_SCREENSAVER) {

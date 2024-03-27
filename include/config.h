@@ -20,7 +20,7 @@ static const char* CONFIG_FILENAME = "/config.json";
 #define WIFI_KEY_MAX_LEN 64
 
 // Some Experiments
-#define EOM_BETA 1
+// #define EOM_BETA 1
 #define I18N_USE_CJSON_DICT 1
 
 // System Defaults
@@ -41,8 +41,13 @@ typedef enum vibration_mode vibration_mode_t;
  * in config.c!
  */
 
+// Increment this if you need to trigger a migration on the system config file.
+// Your migration should be defined in config_migrations.c
+#define SYSTEM_CONFIG_FILE_VERSION 2
+
 struct config {
     // Private Things, do not erase!
+    int _version;
     char _filename[CONFIG_PATH_MAX + 1];
 
     //= Networking
@@ -71,6 +76,8 @@ struct config {
     int screen_timeout_seconds;
     bool enable_screensaver;
     char language_file_name[CONFIG_PATH_MAX + 1];
+    // Reverse the scroll direction in menus.
+    bool reverse_menu_scroll;
 
     //= Console
 
@@ -127,9 +134,11 @@ struct config {
     // Threshold over arousal to detect a clench : Lower values increase sensitivity
     int clench_pressure_sensitivity;
     // Duration the clench detector can raise arousal if clench detector turned on in edging session
-    int max_clench_duration;
-    // Threshold variable that is tick counts of clench to detect orgasm
-    int clench_threshold_2_orgasm;
+    int max_clench_duration_ms;
+    // Threshold variable that is milliseconds counts of clench to detect orgasm
+    int clench_time_to_orgasm_ms;
+    // Threshold variable that is milliseconds counts to detect the start of clench
+    int clench_time_threshold_ms;
     // Use the clench detector to adjust Arousal
     bool clench_detector_in_edging;
     // How long to edge before permiting an orgasm

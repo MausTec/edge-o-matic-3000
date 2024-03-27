@@ -22,6 +22,34 @@ enum _config_def_operation {
     CFG_MERGE
 };
 
+typedef enum migration_result {
+    MIGRATION_COMPLETE,
+    MIGRATION_NOT_RUN,
+    MIGRATION_CURRENT,
+    MIGRATION_ERR_TOO_NEW,
+    MIGRATION_ERR_BAD_DATA
+} migration_result_t;
+
+#define START_MIGRATION()                                                                          \
+    cJSON* root_version = cJSON_GetObjectItem(root, "$version");                                   \
+    int current_version = root_version == NULL ? 0 : root_version->valueint;                       \
+    if (current_version == SYSTEM_CONFIG_FILE_VERSION) return MIGRATION_NOT_RUN;                   \
+    if (current_version > SYSTEM_CONFIG_FILE_VERSION) return MIGRATION_ERR_TOO_NEW;
+
+#define MIGRATE(version)                                                                           \
+    if (current_version < version) {                                                               \
+        migration_result_t res = migrate_to_##version(root);                                       \
+        if (res != MIGRATION_COMPLETE) return res;                                                 \
+        current_version = version;                                                                 \
+        cJSON_SetIntValue(root_version, version);                                                  \
+    }
+
+#define END_MIGRATION()                                                                            \
+    if (current_version == SYSTEM_CONFIG_FILE_VERSION)                                             \
+        return MIGRATION_COMPLETE;                                                                 \
+    else                                                                                           \
+        return MIGRATION_ERR_BAD_DATA;
+
 #define CONFIG_DEFS                                                                                \
     bool _config_defs(                                                                             \
         enum _config_def_operation operation,                                                      \
@@ -54,6 +82,10 @@ enum _config_def_operation {
                 if (in_val != NULL) strlcpy(cfg->name, in_val, sizeof(cfg->name));                 \
                 return true;                                                                       \
             }                                                                                      \
+        } else {                                                                                   \
+            if (operation == CFG_SET) {                                                            \
+                strlcpy(cfg->name, default, sizeof(cfg->name));                                    \
+            }                                                                                      \
         }                                                                                          \
     }
 
@@ -65,7 +97,10 @@ enum _config_def_operation {
                 if (item != NULL || operation == CFG_SET) {                                        \
                     /* intentional cstring pointer comparison */                                   \
                     if (cfg->name != default) free(cfg->name);                                     \
-                    asiprintf(&cfg->name, "%s", item == NULL ? default : item->valuestring);       \
+                    if (item == NULL)                                                              \
+                        cfg->name = default;                                                       \
+                    else                                                                           \
+                        asiprintf(&cfg->name, "%s", item->valuestring);                            \
                 }                                                                                  \
             } else {                                                                               \
                 cJSON_AddStringToObject(root, #name, cfg->name);                                   \
@@ -81,6 +116,11 @@ enum _config_def_operation {
                     asiprintf(&cfg->name, "%s", in_val);                                           \
                 }                                                                                  \
                 return true;                                                                       \
+            }                                                                                      \
+        } else {                                                                                   \
+            if (operation == CFG_SET) {                                                            \
+                if (cfg->name != default) free(cfg->name);                                         \
+                cfg->name = default;                                                               \
             }                                                                                      \
         }                                                                                          \
     }
@@ -104,6 +144,10 @@ enum _config_def_operation {
                 if (in_val != NULL) cfg->name = atoi(in_val);                                      \
                 return true;                                                                       \
             }                                                                                      \
+        } else {                                                                                   \
+            if (operation == CFG_SET) {                                                            \
+                cfg->name = default;                                                               \
+            }                                                                                      \
         }                                                                                          \
     }
 
@@ -124,6 +168,10 @@ enum _config_def_operation {
             } else {                                                                               \
                 if (in_val != NULL) cfg->name = (type)atoi(in_val);                                \
                 return true;                                                                       \
+            }                                                                                      \
+        } else {                                                                                   \
+            if (operation == CFG_SET) {                                                            \
+                cfg->name = default;                                                               \
             }                                                                                      \
         }                                                                                          \
     }
@@ -146,19 +194,24 @@ enum _config_def_operation {
                 if (in_val != NULL) cfg->name = atob(in_val);                                      \
                 return true;                                                                       \
             }                                                                                      \
+        } else {                                                                                   \
+            if (operation == CFG_SET) {                                                            \
+                cfg->name = default;                                                               \
+            }                                                                                      \
         }                                                                                          \
     }
 
 bool atob(const char* a);
 esp_err_t config_init(void);
 void config_serialize(config_t* cfg, char* buf, size_t buflen);
-void config_deserialize(config_t* cfg, const char* buf);
+esp_err_t config_deserialize(config_t* cfg, const char* buf);
 esp_err_t config_load_from_sd(const char* filename, config_t* cfg);
 esp_err_t config_save_to_sd(const char* filename, config_t* cfg);
 void config_load_default(config_t* cfg);
 void config_to_json(cJSON* root, config_t* cfg);
 void json_to_config(cJSON* root, config_t* cfg);
 void json_to_config_merge(cJSON* root, config_t* cfg);
+migration_result_t config_system_migrate(cJSON* root);
 
 #ifdef __cplusplus
 }

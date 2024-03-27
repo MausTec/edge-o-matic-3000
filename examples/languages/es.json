@@ -1,18 +1,22 @@
 {
-    "CHART": "CUADRO",
-    "STOP": "DETENER",
-    "AUTO": "AUTO",
-    "Manual": "Manual",
-    "Pres: %s": "Pres: %s",
-    "Sens: %s": "Sens: %s",
-    "Denied": "Denegado",
-    "Edging Settings": "Conf de Bordes",
-    "Orgasm Settings": "Conf del Orgasmo",
-    "UI Settings": "Conf de UI",
-    "User Profiles": "Perfiles de Usuario",
-    "Networking": "Redes",
-    "Update": "Actualizar",
-    "System Info": "Información del Sistema",
-    "BACK": "ATRÁS",
-    "ENTER": "INGRESAR"
+    "language": "Español",
+    "code": "ES",
+    "keys": {
+        "CHART": "CUADRO",
+        "STOP": "DETENER",
+        "AUTO": "AUTO",
+        "Manual": "Manual",
+        "Pres: %s": "Pres: %s",
+        "Sens: %s": "Sens: %s",
+        "Denied": "Denegado",
+        "Edging Settings": "Conf de Bordes",
+        "Orgasm Settings": "Conf del Orgasmo",
+        "UI Settings": "Conf de UI",
+        "User Profiles": "Perfiles de Usuario",
+        "Networking": "Redes",
+        "Update": "Actualizar",
+        "System Info": "Información del Sistema",
+        "BACK": "ATRÁS",
+        "ENTER": "INGRESAR"
+    }
 }

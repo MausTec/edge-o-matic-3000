@@ -7,9 +7,11 @@ stimulation accordingly. The net result: automated edging and orgasm denial.
 ## Web UI
 
 Edge-o-Matic 3000 devices support a WebSocket communication channel to be used on a web UI. The current Web UI can be accessed
-at [nogasm-ui.maustec.io](http://nogasm-ui.maustec.io). The source code is at [github.com/maustec/nogasm-ui](https://github.com/maustec/nogasm-ui).
+at [link.maustec.io](http://link.maustec.io).
 For control outside your Local Area Network, please consider a port-forwarding software such as Ngrok. You will have to permit insecure content
 for that domain within Chrome to be able to connect your device while the page is loaded over HTTPS. This cannot be done automatically for you.
+A remote bridge for Maus-Link compatible devices is in development and should be released Q4 2024. This will allow internet control of genuine
+Maus-Tec products.
 
 ## WebSocket API
 
@@ -41,6 +43,7 @@ and is automatically generated. Here is a quick summary of config variables:
 |`minimum_on_time`|Int|1000|Time (ms) after stimulation starts before edge detection is resumed.|
 |`screen_dim_seconds`|Int|10|Time, in seconds, before the screen dims. 0 to disable.|
 |`screen_timeout_seconds`|Int|0|Time, in seconds, before the screen turns off. 0 to disable.|
+|`reverse_menu_scroll`|Boolean|false|Reverse the direction of the scroll wheel when navigating menus.|
 |`pressure_smoothing`|Byte|5|Number of samples to take an average of. Higher results in lag and lower resolution!|
 |`classic_serial`|Boolean|false|Output continuous stream of arousal data over serial for backwards compatibility with other software.|
 |`sensitivity_threshold`|Int|600|The arousal threshold for orgasm detection. Lower values stop sooner.|
@@ -50,13 +53,14 @@ and is automatically generated. Here is a quick summary of config variables:
 |`vibration_mode`|VibrationMode|RampStop|Vibration Mode for main vibrator control.|
 |`use_post_orgasm`|Boolean|false|Use post-orgasm torture mode and functionality.|
 |`clench_pressure_sensitivity`|Int|200|Minimum additional Arousal level to detect clench. See manual.|
-|`clench_threshold_2_orgasm`|Int|35|Threshold variable that is tick counts of clench to detect orgasm. See manual.|
+|`clench_time_to_orgasm_ms`|Int|1500|Threshold variable that is milliseconds count of clench to detect orgasm. See manual.|
 |`clench_detector_in_edging`|Boolean|false|Use the clench detector to adjust Arousal. See manual.|
 |`auto_edging_duration_minutes`|Int|30|How long to edge before permiting an orgasm.|
 |`post_orgasm_duration_seconds`|Int|10|How long to stimulate after orgasm detected.|
 |`edge_menu_lock`|Boolean|false|Deny access to menu starting in the edging session.|
 |`post_orgasm_menu_lock`|Boolean|false|Deny access to menu starting after orgasm detected.|
-|`max_clench_duration`|Int|100|Duration the clench detector can raise arousal if clench detector turned on in edging session.|
+|`max_clench_duration_ms`|Int|3000|Duration the clench detector can raise arousal if clench detector turned on in edging session.|
+|`clench_time_threshold_ms`|Int|900|Threshold variable that is milliseconds counts to detect the start of clench.|
 
 
 \* AzureFang refers to a common wireless technology that is blue and involves chewing face-rocks. However, the
@@ -82,37 +86,26 @@ and is automatically generated. Here is a quick summary of config variables:
 |5-15|Turn off stimulation after amount of seconds - Normal orgasm|
 |16-4095|Turn off stimulation after amount of seconds - Post orgasm Torture|
 
+Post-Orgasm and clench detector modules are community contributed features. While we will do our best to provide support
+for these, we kindly request that you ask questions related to this in Discord under Firmware Development and not
+Customer Support. Thank you for your understanding.
+
 ## Hardware
 
 Hardware builds for this project can be purchased from Maus-Tec Electronics, at [maustec.io/eom](https://maustec.io/eom).
 
 Hardware development and assembly helps keep pizza in the freezer and a roof over the head of the maintainer.
 Your support helps a small business grow into something neat, and ensures future devices like this can continue
-to be produced.
+to be produced. Genuine hardware purchases also ensure continued maintenance and support can be provided for the project.
 
 The User Guide for the hardware can be downloaded at [doc/Edge-o-Matic_UserGuide.docx](doc/Edge-o-Matic_UserGuide.docx).
 
-Information for emulating the hardware, including a breadboard-friendly pinout for the ESP32, will be available once again
-following a rewrite of the hardware layer of this code to align with current production units and variances in part availability.
-All production units shipped are compatible with the main code branch here on GitHub.
-
 ### That RJ45 Jack
 
-**The RJ45 Jack IS NOT ETHERNET!** That is a balanced twisted pair extension of the I2C bus on the controller, and is available
-as a convenience for future development, dongles, and accessories. It carries +5V and SDA+/-, SCL+/- signals. You must use an
-I2C redriver IC or compatible module to interface with this. Additionaly, this is terminated at 100ohm assuming standard CAT5.
-[We recommend SparkFun's BOB-14589](https://www.digikey.com/product-detail/en/sparkfun-electronics/BOB-14589/1568-1873-ND/9351349).
-
-|Pin|Signal|
-|---|---|
-|1|`SCL-`|
-|2|`SCL+`|
-|3|NC|
-|4|`+5V`|
-|5|`GND`|
-|6|NC|
-|7|`SDA-`|
-|8|`SDA+`|
+**The RJ45 Jack IS NOT ETHERNET!** This is the Maus-Bus Accessory Port, used to connect various Maus-Bus compatible devices
+to build up a network of accessories and dongles to customize your play experience. Please only connect authorized Maus-Bus
+accessories to this port. Unauthorized or counterfeit devices can damage your Edge-o-Matic. Do not connect it to an ethernet
+jack. This is not for internet.
 
 # Contributions
 
@@ -120,3 +113,11 @@ Any changes to configuration values should be linted. Run `ruby bin/config_lint.
 and structs for consistency.
 
 Thanks for readin'!
+
+
+
+---
+
+Maus-Bus and Maus-Link are trademarks of Maus-Tec LLC. Edge-o-Matic is a registered trademark of Maus-Tec LLC. If you are
+a 3rd party hardware manufacturer looking to certify your Maus-Bus connected device for use with the Edge-o-Matic, we 
+encourage you to contact info@maustec.io and our friendly customer support robot will be glad to assist!

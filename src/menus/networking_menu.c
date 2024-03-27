@@ -11,6 +11,8 @@
 #include "wifi_manager.h"
 #include <stdio.h>
 
+#define WIFI_TIMEOUT_TICKS 1000
+
 static void on_wifi_state_save(int value, int final, UI_INPUT_ARG_TYPE arg) {
     if (!final) return;
 
@@ -40,10 +42,12 @@ static void on_bluetooth_state_save(int value, int final, UI_INPUT_ARG_TYPE arg)
 
 static void
 on_connection_status(const ui_menu_t* m, const ui_menu_item_t* item, UI_MENU_ARG_TYPE arg) {
-    if (wifi_manager_get_status() == WIFI_MANAGER_CONNECTED) {
-        ui_toast("%s\nIP: %s", _("Wifi Connected"), wifi_manager_get_local_ip());
+    if (!Config.wifi_on) {
+        ui_toast("%s", _("WiFi Not Enabled"));
+    } else if (wifi_manager_get_status() == WIFI_MANAGER_CONNECTED) {
+        ui_toast("%s\nIP: %s", _("WiFi Connected"), wifi_manager_get_local_ip());
     } else {
-        ui_toast("%s", _("WiFi Disconnected"));
+        ui_toast("%s", _("WiFi Not Connected"));
     }
 
     if (Config.bt_on) {
@@ -63,14 +67,16 @@ on_default_wifi_connect(const ui_menu_t* m, const ui_menu_item_t* item, UI_MENU_
         if (err == ESP_OK) {
             int ticks_wait = 0;
 
-            while (wifi_manager_get_status() != WIFI_MANAGER_CONNECTED && ticks_wait < 100) {
+            while (wifi_manager_get_status() != WIFI_MANAGER_CONNECTED &&
+                   ticks_wait < WIFI_TIMEOUT_TICKS) {
                 vTaskDelay(1);
                 ticks_wait++;
                 if (ticks_wait % 10 == 0) ui_toast_append(".");
             }
 
             if (wifi_manager_get_status() != WIFI_MANAGER_CONNECTED) {
-                err = ticks_wait >= 100 ? ESP_ERR_WIFI_TIMEOUT : ESP_ERR_WIFI_NOT_CONNECT;
+                err = ticks_wait >= WIFI_TIMEOUT_TICKS ? ESP_ERR_WIFI_TIMEOUT
+                                                       : ESP_ERR_WIFI_NOT_CONNECT;
             }
         }
 
@@ -78,7 +84,17 @@ on_default_wifi_connect(const ui_menu_t* m, const ui_menu_item_t* item, UI_MENU_
             ui_toast(_("Connected!"));
             ui_reenter_menu();
         } else {
-            ui_toast(_("Failed to connect:\n%s"), esp_err_to_name(err));
+            char* errstr = NULL;
+
+            if (err == ESP_ERR_WIFI_TIMEOUT) {
+                errstr = _("WiFi connection took too long, gave up.");
+            } else if (err == ESP_ERR_WIFI_NOT_CONNECT) {
+                errstr = _("WiFi connection unstable?");
+            } else {
+                errstr = esp_err_to_name(err);
+            }
+
+            ui_toast(_("Failed to connect:\n%s"), errstr);
         }
     }
 }

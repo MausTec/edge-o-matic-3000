@@ -1,11 +1,11 @@
 #include "config.h"
 #include "config_defs.h"
+#include "esp_log.h"
 #include <string.h>
 
-// Initialize the global Config struct with its private members:
-config_t Config = {
-    ._filename = "",
-};
+static const char* TAG = "config";
+
+config_t Config = { ._filename = "", ._version = 0 };
 
 CONFIG_DEFS {
     // WiFi Settings
@@ -34,6 +34,7 @@ CONFIG_DEFS {
     CFG_NUMBER(screen_timeout_seconds, 0);
     CFG_BOOL(enable_screensaver, false);
     CFG_STRING(language_file_name, "");
+    CFG_BOOL(reverse_menu_scroll, false);
 
     // Orgasm Settings
     CFG_NUMBER(motor_max_speed, 128);
@@ -54,13 +55,14 @@ CONFIG_DEFS {
     // Post-Orgasm Torture
     CFG_BOOL(use_post_orgasm, false);
     CFG_NUMBER(clench_pressure_sensitivity, 200);
-    CFG_NUMBER(clench_threshold_2_orgasm, 35);
+    CFG_NUMBER(clench_time_to_orgasm_ms, 1500);
+    CFG_NUMBER(clench_time_threshold_ms, 900);
     CFG_BOOL(clench_detector_in_edging, false);
     CFG_NUMBER(auto_edging_duration_minutes, 30);
     CFG_NUMBER(post_orgasm_duration_seconds, 10);
     CFG_BOOL(post_orgasm_menu_lock, false);
     CFG_BOOL(edge_menu_lock, false);
-    CFG_NUMBER(max_clench_duration, 100);
+    CFG_NUMBER(max_clench_duration_ms, 3000);
 
     // Internal system things, only edit if you know what you're doing.
     CFG_STRING_PTR(remote_update_url, REMOTE_UPDATE_URL)

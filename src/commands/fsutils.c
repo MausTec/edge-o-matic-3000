@@ -1,15 +1,14 @@
+#include "SDHelper.h"
+#include "application.h"
+#include "basic_api.h"
 #include "commands/index.h"
 #include "console.h"
-
-#include "SDHelper.h"
+#include "esp_console.h"
 #include "esp_vfs.h"
+#include "my_basic.h"
 #include <errno.h>
 #include <stdio.h>
 #include <sys/stat.h>
-
-#include "application.h"
-#include "basic_api.h"
-#include "my_basic.h"
 
 static void _mkpath(char* path, const char* argv, console_t* console) {
     if (argv != NULL) {
@@ -340,6 +339,64 @@ static const command_t cmd_fput_s = {
     .subcommands = { NULL },
 };
 
+static command_err_t cmd_echo(int argc, char** argv, console_t* console) {
+    for (int i = 0; i < argc; i++) {
+        fprintf(console->out, "%s\n", argv[i]);
+    }
+    return CMD_OK;
+}
+
+static const command_t cmd_echo_s = {
+    .command = "echo",
+    .help = "Simply prints text back to you",
+    .alias = 'e',
+    .func = &cmd_echo,
+    .subcommands = { NULL },
+};
+
+static command_err_t cmd_run(int argc, char** argv, console_t* console) {
+    if (argc == 0) {
+        return CMD_ARG_ERR;
+    }
+
+    char path[PATH_MAX + 1] = { 0 };
+    SDHelper_getRelativePath(path, PATH_MAX, argv[argc - 1], console);
+
+    FILE* f = fopen(path, "r");
+    if (!f) {
+        fprintf(console->out, "No such file or directory: %s\n", path);
+        return CMD_FAIL;
+    }
+
+    int c;
+    size_t idx = 0;
+    char line[LINE_MAX] = { 0 };
+    int lineptr = 0;
+    while ((c = fgetc(f)) != EOF) {
+        if (c == '\n') {
+            char* argv[ARGV_MAX] = { 0 };
+            int argc = esp_console_split_argv(line, argv, ARGV_MAX);
+            console_run_command(argc, argv, console);
+        }
+
+        if (lineptr < LINE_MAX - 2) {
+            line[lineptr] = c;
+            line[lineptr + 1] = '\0';
+        }
+    }
+
+    fclose(f);
+    return CMD_OK;
+}
+
+static const command_t cmd_run_s = {
+    .command = "run",
+    .help = "Runs commands from a batch file",
+    .alias = '.',
+    .func = &cmd_run,
+    .subcommands = { NULL },
+};
+
 void commands_register_fsutils(void) {
     console_register_command(&cmd_cd_s);
     console_register_command(&cmd_ls_s);
@@ -350,4 +407,9 @@ void commands_register_fsutils(void) {
     console_register_command(&cmd_fget_s);
     console_register_command(&cmd_fput_s);
     console_register_command(&cmd_load_s);
+    console_register_command(&cmd_echo_s);
+
+    // This causes a stack overflow, and much like other run commands, should
+    // probably actually be executed in a subtask.
+    // console_register_command(&cmd_run_s);
 }

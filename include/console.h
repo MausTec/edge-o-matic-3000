@@ -9,6 +9,10 @@ extern "C" {
 #include <stdio.h>
 #include <string.h>
 
+#define PROMPT "eom:%s> "
+#define ARGV_MAX 16
+#define CMDLINE_MAX 256
+
 enum command_err {
     CMD_FAIL = -1,
     CMD_OK = 0,

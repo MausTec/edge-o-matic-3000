@@ -39,6 +39,7 @@ extern "C" {
 #define MINIMUM_ON_TIME_HELP _HELPSTR("Time (ms) after stimulation starts before edge detection is resumed.")
 #define SCREEN_DIM_SECONDS_HELP _HELPSTR("Time, in seconds, before the screen dims. 0 to disable.")
 #define SCREEN_TIMEOUT_SECONDS_HELP _HELPSTR("Time, in seconds, before the screen turns off. 0 to disable.")
+#define REVERSE_MENU_SCROLL_HELP _HELPSTR("Reverse the direction of the scroll wheel when navigating menus.")
 #define PRESSURE_SMOOTHING_HELP _HELPSTR("Number of samples to take an average of. Higher results in lag and lower resolution!")
 #define CLASSIC_SERIAL_HELP _HELPSTR("Output continuous stream of arousal data over serial for backwards compatibility with other software.")
 #define SENSITIVITY_THRESHOLD_HELP _HELPSTR("The arousal threshold for orgasm detection. Lower values stop sooner.")
@@ -48,13 +49,14 @@ extern "C" {
 #define VIBRATION_MODE_HELP _HELPSTR("Vibration Mode for main vibrator control.")
 #define USE_POST_ORGASM_HELP _HELPSTR("Use post-orgasm torture mode and functionality.")
 #define CLENCH_PRESSURE_SENSITIVITY_HELP _HELPSTR("Minimum additional Arousal level to detect clench. See manual.")
-#define CLENCH_THRESHOLD_2_ORGASM_HELP _HELPSTR("Threshold variable that is tick counts of clench to detect orgasm. See manual.")
+#define CLENCH_TIME_TO_ORGASM_MS_HELP _HELPSTR("Threshold variable that is milliseconds count of clench to detect orgasm. See manual.")
 #define CLENCH_DETECTOR_IN_EDGING_HELP _HELPSTR("Use the clench detector to adjust Arousal. See manual.")
 #define AUTO_EDGING_DURATION_MINUTES_HELP _HELPSTR("How long to edge before permiting an orgasm.")
 #define POST_ORGASM_DURATION_SECONDS_HELP _HELPSTR("How long to stimulate after orgasm detected.")
 #define EDGE_MENU_LOCK_HELP _HELPSTR("Deny access to menu starting in the edging session.")
 #define POST_ORGASM_MENU_LOCK_HELP _HELPSTR("Deny access to menu starting after orgasm detected.")
-#define MAX_CLENCH_DURATION_HELP _HELPSTR("Duration the clench detector can raise arousal if clench detector turned on in edging session.")
+#define MAX_CLENCH_DURATION_MS_HELP _HELPSTR("Duration the clench detector can raise arousal if clench detector turned on in edging session.")
+#define CLENCH_TIME_THRESHOLD_MS_HELP _HELPSTR("Threshold variable that is milliseconds counts to detect the start of clench.")
 
 #ifdef __cplusplus
 }

@@ -5,12 +5,16 @@ require 'json'
 file = File.read(ARGV[0])
 json = JSON.parse(file)
 translated = {}
-lang = File.basename(ARGV[0], '.json')
 
-json.each do |key, _|
+json['keys'].each do |key, _|
     puts "Translating \"#{key}\"..."
-    translated[key] = `trans -b en:#{lang} \"#{key}\"`.strip
+    translated[key] = `trans -b en:#{json['code'].downcase} \"#{key}\"`.strip
 end
 
-final = JSON.pretty_generate(translated)
+final = JSON.pretty_generate({
+    language: json['language'],
+    code: json['code'],
+    keys: translated
+})
+
 puts final

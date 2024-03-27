@@ -3,7 +3,9 @@
 #include "bluetooth_driver.h"
 #include "esp_log.h"
 #include "esp_timer.h"
+#include "menus/index.h"
 #include "orgasm_control.h"
+#include "system/event_manager.h"
 #include "ui/toast.h"
 #include "ui/ui.h"
 #include "util/i18n.h"
@@ -14,13 +16,26 @@
 
 static const char* TAG = "page:edging_stats";
 
-static struct {
+volatile static struct {
     uint16_t arousal_peak;
     uint64_t arousal_peak_last_ms;
     uint64_t arousal_peak_update_ms;
     uint64_t speed_change_notice_ms;
     uint64_t arousal_change_notice_ms;
-} state;
+    uint8_t denial_count;
+    event_handler_node_t* _h_denial;
+} state = { 0 };
+
+static void _evt_orgasm_denial(
+    const char* evt, EVENT_HANDLER_ARG_TYPE eap, int eai, EVENT_HANDLER_ARG_TYPE hap
+) {
+    state.denial_count += 1;
+}
+
+// This is exposed for external linkage.
+void edging_stats_page_reset_denial_count(void) {
+    state.denial_count = 0;
+}
 
 static void on_open(void* arg) {
     // ui_toast_multiline(
@@ -34,6 +49,17 @@ static void on_open(void* arg) {
     //     little pile of " "secrets. But enough talk... Have at you!\n\n" "Belmont:
     //     alsdjf;lskdfj;alskdjf;laskdjf;alskdjf;alksdjflsdkf <3"
     // );
+
+    // Register the orgasm denial counter, and keep it registered. It'll keep ticking while we're in
+    // this page, until we can find a way to allow the edging_chart and edging_stats page to
+    // maintain a shared state between them.
+    //
+    // This requires a notion of page state, probably, which would be nice.
+    //
+    if (state._h_denial == NULL) {
+        state._h_denial =
+            event_manager_register_handler(EVT_ORGASM_DENIAL, &_evt_orgasm_denial, NULL);
+    }
 }
 
 static ui_render_flag_t on_loop(void* arg) {
@@ -44,7 +70,7 @@ static ui_render_flag_t on_loop(void* arg) {
         orgasm_control_clear_update_flag();
 
         // Update Arousal Peak
-        uint16_t arousal = orgasm_control_getArousal();
+        uint16_t arousal = orgasm_control_get_arousal();
 
         if (arousal > state.arousal_peak) {
             state.arousal_peak = arousal;
@@ -76,10 +102,10 @@ static ui_render_flag_t on_loop(void* arg) {
 }
 
 static void _draw_buttons(u8g2_t* d, orgasm_output_mode_t mode) {
-    const char* btn1 = _("CHART");
+    const char* btn1 = _("MENU");
     const char* btn2 = _("STOP");
 
-    if (orgasm_control_isMenuLocked()) {
+    if (orgasm_control_is_menu_locked()) {
         ui_draw_button_labels(d, btn1, _("LOCKED"), _("LOCKED"));
         ui_draw_button_disable(d, 0b011);
     } else if (mode == OC_MANUAL_CONTROL) {
@@ -90,7 +116,7 @@ static void _draw_buttons(u8g2_t* d, orgasm_output_mode_t mode) {
         } else {
             ui_draw_button_labels(d, btn1, btn2, _("MANUAL"));
         }
-    } else if (mode == OC_LOCKOUT_POST_MODE) {
+    } else if (mode == OC_ORGASM_MODE) {
         ui_draw_button_labels(d, btn1, btn2, _("MANUAL"));
     }
 }
@@ -100,11 +126,26 @@ static void _draw_status(u8g2_t* d, orgasm_output_mode_t mode) {
         ui_draw_status(d, _("Auto Edging"));
     } else if (mode == OC_MANUAL_CONTROL) {
         ui_draw_status(d, _("Manual"));
-    } else if (mode == OC_LOCKOUT_POST_MODE) {
+    } else if (mode == OC_ORGASM_MODE) {
         ui_draw_status(d, _("Edging+Orgasm"));
     } else {
         ui_draw_status(d, "---");
     }
+}
+
+float _get_arousal_bar_max(void) {
+    static int last_sens_thresh = 0;
+    static float last_arousal_max = 0;
+
+    // Memoize to prevent recalculating on renders.
+    if (Config.sensitivity_threshold != last_sens_thresh) {
+        last_sens_thresh = Config.sensitivity_threshold;
+        last_arousal_max =
+            pow10f(ceilf(log10f(Config.sensitivity_threshold * 1.10f) * 2.0f) / 2.0f);
+        if (last_arousal_max < 100) last_arousal_max = 100;
+    }
+
+    return last_arousal_max;
 }
 
 static void _draw_meters(u8g2_t* d, orgasm_output_mode_t mode) {
@@ -116,12 +157,13 @@ static void _draw_meters(u8g2_t* d, orgasm_output_mode_t mode) {
         );
     }
 
+    // Arousal Bar
     ui_draw_shaded_bar_graph_with_peak(
         d,
         EOM_DISPLAY_HEIGHT - 18,
         'A',
-        orgasm_control_getArousal(),
-        Config.sensitivity_threshold * 1.5,
+        orgasm_control_get_arousal(),
+        _get_arousal_bar_max(),
         Config.sensitivity_threshold,
         state.arousal_peak
     );
@@ -139,7 +181,7 @@ static void _draw_speed_change(u8g2_t* d) {
 }
 
 static void _draw_arousal_change(u8g2_t* d) {
-    char msg[15];
+    char msg[16];
     snprintf(msg, sizeof(msg), _("Threshold: %d"), orgasm_control_get_arousal_threshold());
 
     u8g2_SetFont(d, UI_FONT_DEFAULT);
@@ -154,7 +196,7 @@ static void _draw_pressure_icon(u8g2_t* d) {
     const uint8_t MID_HEIGHT = 20;
     const uint8_t BAR_LEFT = 26;
 
-    uint16_t pressure = orgasm_control_getLastPressure();
+    uint16_t pressure = orgasm_control_get_last_pressure();
     uint8_t pressure_idx = pressure / (PRESSURE_MAX / 4);
     float pressure_pct = (float)pressure / PRESSURE_MAX;
     float sensitivity_pct = (float)Config.sensor_sensitivity / 255.0f;
@@ -207,12 +249,11 @@ static void _draw_pressure_icon(u8g2_t* d) {
 }
 
 static void _draw_denial_count(u8g2_t* d) {
-    int denial = orgasm_control_getDenialCount();
     const uint8_t MID_HEIGHT = 20;
     const uint8_t DENIAL_WIDTH = 41;
     char denial_str[4];
 
-    snprintf(denial_str, 4, "%03d", denial);
+    snprintf(denial_str, 4, "%03d", state.denial_count);
 
     u8g2_SetDrawColor(d, 1);
     u8g2_DrawVLine(
@@ -253,18 +294,18 @@ static void on_close(void* arg) {
 
 static ui_render_flag_t
 on_button(eom_hal_button_t button, eom_hal_button_event_t event, void* arg) {
-    oc_bool_t locked = orgasm_control_isMenuLocked();
+    oc_bool_t locked = orgasm_control_is_menu_locked();
 
     if (event != EOM_HAL_BUTTON_PRESS) return PASS;
 
     if (button == EOM_HAL_BUTTON_BACK) {
-        ui_open_page(&EDGING_CHART_PAGE, NULL);
+        ui_open_menu(&EDGING_MODE_MENU, NULL);
     } else if (button == EOM_HAL_BUTTON_MID) {
         if (locked) return NORENDER;
 
         orgasm_control_set_output_mode(OC_MANUAL_CONTROL);
         eom_hal_set_motor_speed(0x00);
-        accessory_driver_broadcast_speed(0x00);
+        event_manager_dispatch(EVT_SPEED_CHANGE, NULL, 0);
         bluetooth_driver_broadcast_speed(0x00);
         // websocket_server_broadcast_speed(0x00);
     } else if (button == EOM_HAL_BUTTON_OK) {
@@ -276,7 +317,7 @@ on_button(eom_hal_button_t button, eom_hal_button_event_t event, void* arg) {
             orgasm_control_set_output_mode(OC_AUTOMAITC_CONTROL);
         } else if (mode == OC_AUTOMAITC_CONTROL) {
             if (Config.use_post_orgasm == true) {
-                orgasm_control_set_output_mode(OC_LOCKOUT_POST_MODE);
+                orgasm_control_set_output_mode(OC_ORGASM_MODE);
             } else {
                 orgasm_control_set_output_mode(OC_MANUAL_CONTROL);
             }
@@ -291,23 +332,25 @@ on_button(eom_hal_button_t button, eom_hal_button_event_t event, void* arg) {
 }
 
 static ui_render_flag_t on_encoder(int delta, void* arg) {
-    oc_bool_t locked = orgasm_control_isMenuLocked();
+    oc_bool_t locked = orgasm_control_is_menu_locked();
     orgasm_output_mode_t mode = orgasm_control_get_output_mode();
     uint64_t millis = esp_timer_get_time() / 1000UL;
 
     if (mode == OC_MANUAL_CONTROL) {
         int speed = eom_hal_get_motor_speed() + delta;
         uint8_t speed_byte = speed > 0xFF ? 0xFF : (speed < 0x00 ? 0x00 : speed);
+
         eom_hal_set_motor_speed(speed_byte);
-        accessory_driver_broadcast_speed(speed_byte);
+        event_manager_dispatch(EVT_SPEED_CHANGE, NULL, speed_byte);
         bluetooth_driver_broadcast_speed(speed_byte);
         // websocket_server_broadcast_speed(speed_byte);
+
         state.arousal_change_notice_ms = 0;
         state.speed_change_notice_ms = millis + CHANGE_NOTICE_DELAY_MS;
         return RENDER;
     }
 
-    if (mode == OC_AUTOMAITC_CONTROL) {
+    if (mode != OC_MANUAL_CONTROL) {
         orgasm_control_increment_arousal_threshold(delta);
         state.speed_change_notice_ms = 0;
         state.arousal_change_notice_ms = millis + CHANGE_NOTICE_DELAY_MS;

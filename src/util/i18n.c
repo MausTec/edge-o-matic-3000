@@ -10,6 +10,7 @@ static const char* TAG = "i18n";
 
 #ifdef I18N_USE_CJSON_DICT
 static cJSON* language = NULL;
+static cJSON* keys = NULL;
 #else
 #include "util/hashmap.h"
 static hashmap_t* dict;
@@ -28,7 +29,7 @@ esp_err_t i18n_load(const char* filename) {
 #ifndef I18N_USE_CJSON_DICT
     cJSON*
 #endif
-        language = cJSON_Parse(buffer);
+        cJSON* language = cJSON_Parse(buffer);
 
     free(buffer);
 
@@ -48,13 +49,18 @@ esp_err_t i18n_load(const char* filename) {
 
 #ifndef I18N_USE_CJSON_DICT
     // Load in entries:
-    cJSON* key = language->child;
+    cJSON* keys = cJSON_GetObjectItem(language, "keys");
+    cJSON* key = keys->child;
     while (key != NULL) {
         hashmap_insert(dict, key->string, key->valuestring);
         key = key->next;
     }
 
     cJSON_Delete(language);
+#else
+    keys = cJSON_GetObjectItem(language, "keys");
+    // Fallback for older, improperly formatted files.
+    if (keys == NULL) keys = language;
 #endif
     return ESP_OK;
 }
@@ -99,12 +105,14 @@ void i18n_dump(void) {
 
 void i18n_miss(const char* key) {
 #ifdef I18N_USE_CJSON_DICT
-    cJSON_AddStringToObject(language, key, "");
+    cJSON_AddStringToObject(keys, key, "");
 
+#ifdef I18N_WRITE_BACK_UNKNOWN_KEYS
     if (Config.language_file_name[0] != '\0') {
-        ESP_LOGW(TAG, "I18N MISS: \"%s\"", key);
+        ESP_LOGD(TAG, "I18N MISS: \"%s\"", key);
         i18n_dump();
     }
+#endif
 #else
     hashmap_insert(dict, key, "");
 #endif
@@ -114,7 +122,7 @@ const char* _(const char* str) {
     if (Config.language_file_name[0] == '\0') return str;
 
 #ifdef I18N_USE_CJSON_DICT
-    cJSON* obj = cJSON_GetObjectItem(language, str);
+    cJSON* obj = cJSON_GetObjectItem(keys, str);
     const char* value = obj == NULL ? NULL : obj->valuestring;
 #else
     const char* value = hashmap_find(dict, str);
