@@ -11,6 +11,7 @@
 #include "freertos/task.h"
 #include "orgasm_control.h"
 #include "polyfill.h"
+#include "system/action_manager.h"
 #include "system/http_server.h"
 #include "ui/ui.h"
 #include "util/i18n.h"
@@ -153,7 +154,7 @@ void app_main() {
         }
     }
 
-    // Blue = prepare Bluetooth
+    // Blue = prepare Bluetooth and Drivers
     vTaskDelayUntil(&boot_tick, 1000UL / portTICK_PERIOD_MS);
     eom_hal_set_encoder_rgb(0, 0, 255);
 
@@ -164,6 +165,9 @@ void app_main() {
     } else {
         ui_set_icon(UI_ICON_BT, -1);
     }
+
+    // Initialize Action Manager
+    action_manager_load_all_drivercfg();
 
     // Final delay on encoder colors.
     vTaskDelayUntil(&boot_tick, 1000UL / portTICK_PERIOD_MS);
