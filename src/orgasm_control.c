@@ -333,9 +333,9 @@ static void orgasm_control_updateEdgingTime() { // Edging+Orgasm timer
 
         // raise motor speed to max speep. protect not to go higher than max
         if (output_state.motor_speed <= (Config.motor_max_speed - output_state.motor_increment)) {
-            output_state.motor_speed = output_state.motor_speed + output_state.motor_increment;
+            update_check(output_state.motor_speed, output_state.motor_speed + output_state.motor_increment);
         } else {
-            output_state.motor_speed = Config.motor_max_speed;
+            update_check(output_state.motor_speed, Config.motor_max_speed);
         }
     }
 
@@ -350,13 +350,16 @@ static void orgasm_control_updateEdgingTime() { // Edging+Orgasm timer
             // continue to raise motor to max speed
             if (output_state.motor_speed <= (Config.motor_max_speed - output_state.motor_increment)
                 ) {
-                output_state.motor_speed = output_state.motor_speed + output_state.motor_increment;
+                update_check(output_state.motor_speed, output_state.motor_speed + output_state.motor_increment);
             } else {
-                output_state.motor_speed = Config.motor_max_speed;
+                //output_state.motor_speed = Config.motor_max_speed;
+                update_check(output_state.motor_speed, output_state.motor_speed + output_state.motor_increment);
             }
         } else {                                // Post_orgasm timer reached
             if (output_state.motor_speed > 0) { // Ramp down motor speed to 0
-                output_state.motor_speed = output_state.motor_speed - 1;
+                //output_state.motor_speed = output_state.motor_speed - 1;
+                update_check(output_state.motor_speed, output_state.motor_speed -1 )
+
             } else {
                 post_orgasm_state.menu_is_locked = ocFALSE;
                 post_orgasm_state.detected_orgasm = ocFALSE;
