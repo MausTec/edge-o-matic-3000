@@ -8,6 +8,7 @@
 #include "system/event_manager.h"
 #include "ui/toast.h"
 #include "ui/ui.h"
+#include "ui/edging_stats.h"
 #include "util/i18n.h"
 #include <math.h>
 #include <string.h>
@@ -16,14 +17,15 @@
 
 static const char* TAG = "page:edging_stats";
 
-volatile static struct {
-    uint16_t arousal_peak;
-    uint64_t arousal_peak_last_ms;
-    uint64_t arousal_peak_update_ms;
-    uint64_t arousal_change_notice_ms;
-    uint8_t denial_count;
-    event_handler_node_t* _h_denial;
-} state = { 0 };
+// Moved to edging_stats.h to be accessible from anywhere
+//volatile static struct {
+//    uint16_t arousal_peak;
+//    uint64_t arousal_peak_last_ms;
+//    uint64_t arousal_peak_update_ms;
+//    uint64_t arousal_change_notice_ms;
+//    uint8_t denial_count;
+//    event_handler_node_t* _h_denial;
+//} state = { 0 };
 
 static void _evt_orgasm_denial(
     const char* evt, EVENT_HANDLER_ARG_TYPE eap, int eai, EVENT_HANDLER_ARG_TYPE hap
