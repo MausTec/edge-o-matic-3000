@@ -12,6 +12,7 @@ extern "C" {
 
 #define EVENT_HANDLER_ARG_TYPE void*
 
+const char* EVT_ALL;
 EVENTS(EVENT_DECL);
 
 /**

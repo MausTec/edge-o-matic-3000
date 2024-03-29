@@ -17,6 +17,7 @@
 #include "util/i18n.h"
 #include "version.h"
 #include "wifi_manager.h"
+#include <esp_system.h>
 #include <time.h>
 
 static const char* TAG = "main";
@@ -82,6 +83,14 @@ static void loop_task(void* args) {
     }
 
     if (millis() - lastTick > 1000 / 15) {
+        ESP_LOGD(
+            TAG,
+            "%%heap=%d, min=%d, internal=%d",
+            esp_get_free_heap_size(),
+            esp_get_minimum_free_heap_size(),
+            esp_get_free_internal_heap_size()
+        );
+
         lastTick = millis();
         api_broadcast_readings();
     }
@@ -127,6 +136,7 @@ void app_main() {
     bluetooth_driver_init();
     orgasm_control_init();
     i18n_init();
+    action_manager_init();
 
     // Red = preboot
     eom_hal_set_sensor_sensitivity(Config.sensor_sensitivity);

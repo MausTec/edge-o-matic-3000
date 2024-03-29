@@ -4,6 +4,7 @@
 
 static const char* TAG = "system:event_manager";
 
+const char* EVT_ALL = "";
 EVENTS(EVENT_DEFINE);
 
 static event_node_t* _handlers = NULL;
@@ -40,11 +41,22 @@ static event_node_t* _get_handlers(const char* event) {
     return node;
 }
 
-void event_manager_dispatch(
-    const char* event, EVENT_HANDLER_ARG_TYPE event_arg_ptr, int event_arg_int
+void event_manager_dispatch_synthetic(
+    const char* match_event,
+    const char* event,
+    EVENT_HANDLER_ARG_TYPE event_arg_ptr,
+    int event_arg_int
 ) {
-    ESP_LOGD(TAG, "event_manager_dispatch(\"%s\", %p, %d);", event, event_arg_ptr, event_arg_int);
-    event_node_t* event_node = _get_handlers(event);
+    ESP_LOGD(
+        TAG,
+        "event_manager_dispatch(\"%s\", \"%s\", %p, %d);",
+        match_event,
+        event,
+        event_arg_ptr,
+        event_arg_int
+    );
+
+    event_node_t* event_node = _get_handlers(match_event);
     if (event_node == NULL) return;
 
     event_handler_node_t* ptr = event_node->handlers;
@@ -54,6 +66,17 @@ void event_manager_dispatch(
             ptr->handler(event, event_arg_ptr, event_arg_int, ptr->handler_arg);
         ptr = ptr->next;
     }
+
+    // Also, dispatch for "All" handlers:
+    if (match_event != EVT_ALL) {
+        event_manager_dispatch_synthetic(EVT_ALL, event, event_arg_ptr, event_arg_int);
+    }
+}
+
+void event_manager_dispatch(
+    const char* event, EVENT_HANDLER_ARG_TYPE event_arg_ptr, int event_arg_int
+) {
+    event_manager_dispatch_synthetic(event, event, event_arg_ptr, event_arg_int);
 }
 
 event_handler_node_t* event_manager_register_handler(

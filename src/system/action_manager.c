@@ -2,12 +2,17 @@
 #include "cJSON.h"
 #include "eom-hal.h"
 #include "maus_bus_drivercfg.h"
+#include "system/event_manager.h"
+#include "util/list.h"
+#include "util/strcase.h"
 #include <dirent.h>
 #include <esp_log.h>
 #include <stdio.h>
 #include <string.h>
 
 static const char* TAG = "system:action_manager";
+
+static list_t _drivercfgs = LIST_DEFAULT();
 
 #define DRIVERCFG_DIR "drivercfg"
 
@@ -80,8 +85,44 @@ void action_manager_load_drivercfg(const char* path) {
         goto cleanup;
     }
 
+    list_add(&_drivercfgs, (void*)drivercfg);
+
 cleanup:
     cJSON_Delete(drivercfg_json);
     free(buffer);
     fclose(f);
+}
+
+void action_manager_dispatch_event(const char* event, int arg) {
+    maus_bus_drivercfg_t* drivercfg = NULL;
+
+    const char* evt_strip = strstr("EVT_", event);
+    if (strncmp("EVT_", event, 4)) return;
+
+    size_t evt_name_len = str_to_camel_case(NULL, 0, event + 4);
+    if (evt_name_len == -1) return;
+
+    char* evt_name = (char*)malloc(evt_name_len + 1);
+    if (evt_name == NULL) return;
+
+    str_to_camel_case(evt_name, evt_name_len + 1, event + 4);
+
+    list_foreach(_drivercfgs, drivercfg) {
+        maus_bus_driver_event_invoke(drivercfg, evt_name, arg);
+    }
+
+    free(evt_name);
+}
+
+void action_manager_event_handler(
+    const char* event,
+    EVENT_HANDLER_ARG_TYPE event_arg_ptr,
+    int event_arg_int,
+    EVENT_HANDLER_ARG_TYPE handler_arg
+) {
+    action_manager_dispatch_event(event, event_arg_int);
+}
+
+void action_manager_init(void) {
+    event_manager_register_handler(EVT_ALL, action_manager_event_handler, NULL);
 }
