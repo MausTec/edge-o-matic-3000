@@ -98,7 +98,6 @@ void orgasm_control_init(void) {
     output_state.vibration_mode = Config.vibration_mode;
     output_state.edge_time_out = 10000;
     post_orgasm_state.clench_pressure_threshold = 4096;
-    output_state.motor_increment = calculate_increment(Config.motor_start_speed, Config.motor_max_speed, Config.motor_ramp_time_s);
 
     running_average_init(&arousal_state.average, Config.pressure_smoothing);
 }
@@ -352,13 +351,11 @@ static void orgasm_control_updateEdgingTime() { // Edging+Orgasm timer
                 ) {
                 update_check(output_state.motor_speed, output_state.motor_speed + output_state.motor_increment);
             } else {
-                //output_state.motor_speed = Config.motor_max_speed;
                 update_check(output_state.motor_speed, output_state.motor_speed + output_state.motor_increment);
             }
         } else {                                // Post_orgasm timer reached
             if (output_state.motor_speed > 0) { // Ramp down motor speed to 0
-                //output_state.motor_speed = output_state.motor_speed - 1;
-                update_check(output_state.motor_speed, output_state.motor_speed -1 )
+                update_check(output_state.motor_speed, output_state.motor_speed - 1 )
 
             } else {
                 post_orgasm_state.menu_is_locked = ocFALSE;
