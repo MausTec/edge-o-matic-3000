@@ -1,12 +1,11 @@
 {
+    "displayName": "Bell Ringer",
     "match": {
         "vid": 1,
         "pid": 1,
-        "serial": null,
-        "driver": "gpio"
+        "serial": null
     },
     "config": {
-        "displayName": "Bell Ringer",
         "gpio": {
             "0": {
                 "mode": "OUTPUT",
@@ -31,14 +30,14 @@
             "@high",
             {
                 "delay": {
-                    "ms": "1000",
-                    "then": "@low"
+                    "ms": "1000"
                 }
-            }
+            },
+            "@low"
         ]
     },
     "events": {
-        "edgeDetect": [
+        "orgasmDenial": [
             "@pulse"
         ]
     }
