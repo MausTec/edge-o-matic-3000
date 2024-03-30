@@ -135,7 +135,6 @@ static void on_open(const ui_menu_t* m, UI_MENU_ARG_TYPE arg) {
     ui_menu_add_input(m, (ui_input_t*)&DENIALS_COUNT_TO_ORGASM_INPUT);
     ui_menu_add_input(m, (ui_input_t*)&TO_ORGASM_MODE_INPUT);
     ui_menu_add_input(m, (ui_input_t*)&CLENCH_TIME_TO_ORGASM_MS_INPUT);
-    ui_menu_add_input(m, (ui_input_t*)&USE_POST_ORGASM_INPUT);
     ui_menu_add_input(m, (ui_input_t*)&POST_ORGASM_DURATION_SECONDS_INPUT);
     ui_menu_add_input(m, (ui_input_t*)&EDGE_MENU_LOCK_INPUT);
     ui_menu_add_input(m, (ui_input_t*)&POST_ORGASM_MENU_LOCK_INPUT);
