@@ -135,7 +135,7 @@ app_err_t application_parse_manifest(const char* pack_path, application_t* app) 
         }
     }
 
-    cJSON_free(manifest_json);
+    cJSON_Delete(manifest_json);
     return APP_OK;
 }
 

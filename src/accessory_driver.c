@@ -1,6 +1,7 @@
 #include "eom-hal.h"
 #include "esp_log.h"
 #include "maus_bus.h"
+#include "system/event_manager.h"
 #include "tscode.h"
 #include <string.h>
 
@@ -20,21 +21,12 @@ _accessory_write(uint8_t address, uint8_t subaddress, uint8_t* data, size_t len)
     return err;
 }
 
-void accessory_driver_init(void) {
-    maus_bus_config_t config = {
-        .read = _accessory_read,
-        .write = _accessory_write,
-    };
-
-    maus_bus_init(&config);
-}
-
 static void _device_speed_cb(
     maus_bus_driver_t* driver, maus_bus_device_t* device, maus_bus_address_t address, void* ptr
 ) {
     uint8_t speed = *((uint8_t*)ptr);
 
-    if (driver->transmit != NULL) {
+    if (driver->uart != NULL && driver->uart->transmit != NULL) {
         if (device->features.tscode) {
             ESP_LOGI(TAG, "Transmitting a TS-code speed command.");
 
@@ -51,25 +43,47 @@ static void _device_speed_cb(
             ESP_LOGI(TAG, "    -> Serialized: %s", buffer);
             tscode_dispose_command(&cmd);
 
-            driver->transmit((uint8_t*)buffer, strlen(buffer));
+            driver->uart->transmit((uint8_t*)buffer, strlen(buffer));
         }
     }
 }
 
-void accessory_driver_broadcast_speed(uint8_t speed) {
+static void _evt_speed_change(
+    const char* event,
+    EVENT_HANDLER_ARG_TYPE event_arg_ptr,
+    int speed,
+    EVENT_HANDLER_ARG_TYPE handler_arg
+) {
     static uint8_t last_value = 0;
     if (speed == last_value) return;
     last_value = speed;
 
-    ESP_LOGD(TAG, "accessory_driver_broadcast_speed(%d);", speed);
+    ESP_LOGD(TAG, "_evt_speed_change(%d);", speed);
 
     maus_bus_enumerate_devices(_device_speed_cb, &last_value);
 }
 
-void accessory_driver_broadcast_arousal(uint16_t arousal) {
+static void _evt_arousal_change(
+    const char* event,
+    EVENT_HANDLER_ARG_TYPE event_arg_ptr,
+    int arousal,
+    EVENT_HANDLER_ARG_TYPE handler_arg
+) {
     static uint16_t last_value = 0;
     if (arousal == last_value) return;
     last_value = arousal;
 
-    ESP_LOGD(TAG, "accessory_driver_broadcast_arousal(%d);", arousal);
+    ESP_LOGD(TAG, "_evt_arousal_change(%d);", arousal);
+}
+
+void accessory_driver_init(void) {
+    maus_bus_config_t config = {
+        .read = _accessory_read,
+        .write = _accessory_write,
+    };
+
+    maus_bus_init(&config);
+
+    event_manager_register_handler(EVT_SPEED_CHANGE, _evt_speed_change, NULL);
+    event_manager_register_handler(EVT_AROUSAL_CHANGE, _evt_arousal_change, NULL);
 }
