@@ -25,6 +25,12 @@ static const char* orgasm_output_mode_str[] = {
 };
 
 static struct {
+    uint8_t motor_start_speed;
+    uint8_t motor_max_speed;
+    int motor_ramp_time_s;
+} config_state;
+
+static struct {
     unsigned long last_update_ms;
     running_average_t* average;
     uint16_t last_value;
@@ -93,12 +99,36 @@ static void _set_speed(uint8_t speed) {
     bluetooth_driver_broadcast_speed(speed);
 }
 
+/**
+ * @brief Simplified method to increment motor speed up to a config max
+ * To be used if Motor control is paused
+ * The increment is calculated at first execution and recalculated if config changes
+ */
+void increment_motor(void) {
+    if ( config_state.motor_max_speed != Config.motor_max_speed ||
+            config_state.motor_start_speed != Config.motor_start_speed ||
+            config_state.motor_ramp_time_s != Config.motor_ramp_time_s) {
+        config_state.motor_max_speed = Config.motor_max_speed;
+        config_state.motor_start_speed = Config.motor_start_speed;
+        config_state.motor_ramp_time_s = Config.motor_ramp_time_s;   
+        output_state.motor_increment = calculate_increment(Config.motor_start_speed, Config.motor_max_speed, Config.motor_ramp_time_s);   
+    }
+    if (output_state.motor_speed <= (Config.motor_max_speed - output_state.motor_increment)) {
+        update_check(output_state.motor_speed, output_state.motor_speed + output_state.motor_increment);
+    } else {
+        update_check(output_state.motor_speed, Config.motor_max_speed );
+    }
+    _set_speed(output_state.motor_speed);
+}
+
 void orgasm_control_init(void) {
     output_state.output_mode = OC_MANUAL_CONTROL;
     output_state.vibration_mode = Config.vibration_mode;
     output_state.edge_time_out = 10000;
     post_orgasm_state.clench_pressure_threshold = 4096;
-
+    config_state.motor_max_speed = 0;
+    config_state.motor_start_speed = 0;
+    config_state.motor_ramp_time_s = 0;
     running_average_init(&arousal_state.average, Config.pressure_smoothing);
 }
 
@@ -312,8 +342,6 @@ static void orgasm_control_updateEdgingTime() { // Edging+Orgasm timer
     if (orgasm_control_is_permit_orgasm_reached() && !orgasm_control_is_post_orgasm_reached()) {
         if (output_state.control_motor) {
             orgasm_control_pause_control(); // make sure orgasm is now possible
-            // Calculate motor increment once, from here to end of post orgasm
-            output_state.motor_increment = calculate_increment(Config.motor_start_speed, Config.motor_max_speed, Config.motor_ramp_time_s);
         }
 
         // now detect the orgasm to start post orgasm torture timer
@@ -330,12 +358,8 @@ static void orgasm_control_updateEdgingTime() { // Edging+Orgasm timer
             eom_hal_set_encoder_rgb(0, 255, 0);
         }
 
-        // raise motor speed to max speep. protect not to go higher than max
-        if (output_state.motor_speed <= (Config.motor_max_speed - output_state.motor_increment)) {
-            update_check(output_state.motor_speed, output_state.motor_speed + output_state.motor_increment);
-        } else {
-            update_check(output_state.motor_speed, Config.motor_max_speed);
-        }
+        // gradualy raise motor speed to max speed. protect not to go higher than max
+        increment_motor();
     }
 
     // Post Orgasm loop
@@ -347,16 +371,11 @@ static void orgasm_control_updateEdgingTime() { // Edging+Orgasm timer
         if ((esp_timer_get_time() / 1000UL) < (post_orgasm_state.post_orgasm_start_millis +
                                                post_orgasm_state.post_orgasm_duration_millis)) {
             // continue to raise motor to max speed
-            if (output_state.motor_speed <= (Config.motor_max_speed - output_state.motor_increment)
-                ) {
-                update_check(output_state.motor_speed, output_state.motor_speed + output_state.motor_increment);
-            } else {
-                update_check(output_state.motor_speed, Config.motor_max_speed );
-            }
+            increment_motor();
         } else {                                // Post_orgasm timer reached
             if (output_state.motor_speed > 0) { // Ramp down motor speed to 0
                 update_check(output_state.motor_speed, output_state.motor_speed - 1 )
-
+                _set_speed(output_state.motor_speed);
             } else {
                 post_orgasm_state.menu_is_locked = ocFALSE;
                 post_orgasm_state.detected_orgasm = ocFALSE;
@@ -365,11 +384,6 @@ static void orgasm_control_updateEdgingTime() { // Edging+Orgasm timer
                 orgasm_control_set_output_mode(OC_MANUAL_CONTROL);
             }
         }
-    }
-    // Control output while motor control is paused
-    if (output_state.control_motor == OC_MANUAL_CONTROL) {
-        uint8_t speed = orgasm_control_get_motor_speed();
-        _set_speed(speed);
     }
 }
 
