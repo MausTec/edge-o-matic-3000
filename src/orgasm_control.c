@@ -439,7 +439,6 @@ static void orgasm_control_updateEdgingTime() { // Edging+Orgasm timer
                     // Rest period is finished. Reset variables for next round
                     post_orgasm_state.auto_edging_start_millis = (esp_timer_get_time() / 1000UL);
                     post_orgasm_state.post_orgasm_start_millis = 0;
-                    post_orgasm_state.post_orgasm_mode = Denial_count;
                     post_orgasm_state.detected_orgasm = ocFALSE;
                     post_orgasm_state.menu_is_locked = ocFALSE;
 
