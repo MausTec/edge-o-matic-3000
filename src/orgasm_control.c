@@ -9,7 +9,6 @@
 #include "system/websocket_handler.h"
 #include "ui/toast.h"
 #include "ui/ui.h"
-#include "ui/edging_stats.h"
 #include "util/i18n.h"
 #include "util/running_average.h"
 #include <math.h>
@@ -70,11 +69,23 @@ static struct {
     oc_bool_t detected_orgasm;
     int post_orgasm_duration_seconds;
     uint8_t edge_count_to_orgasm;
-    to_orgasm_mode_t to_orgasm_mode;
+    post_orgasm_mode_t post_orgasm_mode;
     uint8_t auto_edging_duration_minutes;
     bool random_orgasm_triggers;
     uint8_t orgasm_count;
 } post_orgasm_state;
+
+volatile static struct {
+    uint8_t denial_count;
+    event_handler_node_t* _h_denial;
+} denial_state = { 0 };
+
+static void _evt_orgasm_denial(
+    const char* evt, EVENT_HANDLER_ARG_TYPE eap, int eai, EVENT_HANDLER_ARG_TYPE hap
+) {
+    denial_state.denial_count += 1;
+}
+
 
 #define update_check(variable, value)                                                              \
     {                                                                                              \
@@ -106,6 +117,10 @@ void orgasm_control_init(void) {
     post_orgasm_state.clench_pressure_threshold = 4096;
     post_orgasm_state.orgasm_count = 0;
     running_average_init(&arousal_state.average, Config.pressure_smoothing);
+    if (denial_state._h_denial == NULL) {
+        denial_state._h_denial =
+            event_manager_register_handler(EVT_ORGASM_DENIAL, &_evt_orgasm_denial, NULL);
+    }
 }
 
 // Rename to get_vibration_mode_controller();
@@ -299,7 +314,7 @@ static void orgasm_control_updateEdgingTime() { // Edging+Orgasm timer
         post_orgasm_state.post_orgasm_duration_seconds = Config.post_orgasm_duration_seconds;
         post_orgasm_state.edge_count_to_orgasm = Config.denials_count_to_orgasm;
         post_orgasm_state.detected_orgasm = ocFALSE;
-        post_orgasm_state.to_orgasm_mode = Config.to_orgasm_mode;
+        post_orgasm_state.post_orgasm_mode = Config.post_orgasm_mode;
         post_orgasm_state.random_orgasm_triggers = Config.random_orgasm_triggers;
         return;
     }
@@ -310,10 +325,10 @@ static void orgasm_control_updateEdgingTime() { // Edging+Orgasm timer
         post_orgasm_state.post_orgasm_start_millis = 0;
         post_orgasm_state.orgasm_count = 0;
 
-        if ( post_orgasm_state.to_orgasm_mode == Random_mode ) {
-           post_orgasm_state.to_orgasm_mode = (random() % 2 + 1);
+        if ( post_orgasm_state.post_orgasm_mode == Random_mode ) {
+           post_orgasm_state.post_orgasm_mode = (random() % 2 + 1);
         }
-        post_orgasm_state.edge_count_to_orgasm = state.denial_count + Config.denials_count_to_orgasm;
+        post_orgasm_state.edge_count_to_orgasm = denial_state.denial_count + Config.denials_count_to_orgasm;
         post_orgasm_state.auto_edging_duration_minutes = Config.auto_edging_duration_minutes;
     } else {
         // Orgasm mode started
@@ -324,7 +339,7 @@ static void orgasm_control_updateEdgingTime() { // Edging+Orgasm timer
             int min_count = round( Config.denials_count_to_orgasm / 2 );
             int min_edge_time = round( Config.auto_edging_duration_minutes / 2 );
 
-            post_orgasm_state.edge_count_to_orgasm = state.denial_count + 
+            post_orgasm_state.edge_count_to_orgasm = denial_state.denial_count + 
                 min_count + rand() % (Config.denials_count_to_orgasm - min_count);
             post_orgasm_state.auto_edging_duration_minutes = 
                 min_edge_time + rand() % (Config.auto_edging_duration_minutes - min_edge_time );
@@ -389,7 +404,7 @@ static void orgasm_control_updateEdgingTime() { // Edging+Orgasm timer
         } else {                                // Post_orgasm timer reached
             if (output_state.motor_speed > 0) { // Ramp down motor speed to 0
                 update_check(output_state.motor_speed, output_state.motor_speed - 1 )
-            } else if ( (post_orgasm_state.to_orgasm_mode == Milk_o_matic) && 
+            } else if ( (post_orgasm_state.post_orgasm_mode == Milk_o_matic) && 
                         (post_orgasm_state.orgasm_count < Config.max_orgasms)) {
                 // The motor has been turnned off but this is Milk-O-Matic orgasm mode. Prepare for next round.
                 output_state.motor_speed = 0;
@@ -403,7 +418,7 @@ static void orgasm_control_updateEdgingTime() { // Edging+Orgasm timer
                     // Rest period is finished. Reset variables for next round
                     post_orgasm_state.auto_edging_start_millis = (esp_timer_get_time() / 1000UL);
                     post_orgasm_state.post_orgasm_start_millis = 0;
-                    post_orgasm_state.to_orgasm_mode = Denial_count;
+                    post_orgasm_state.post_orgasm_mode = Denial_count;
                     post_orgasm_state.detected_orgasm = ocFALSE;
                     post_orgasm_state.menu_is_locked = ocFALSE;
 
@@ -413,7 +428,7 @@ static void orgasm_control_updateEdgingTime() { // Edging+Orgasm timer
                         // re-enable calculation of random for next round
                         post_orgasm_state.random_orgasm_triggers = true;
                     } else {
-                        post_orgasm_state.edge_count_to_orgasm = state.denial_count + Config.denials_count_to_orgasm;
+                        post_orgasm_state.edge_count_to_orgasm = denial_state.denial_count + Config.denials_count_to_orgasm;
                     }
                     orgasm_control_resume_control();
                 }
@@ -546,13 +561,15 @@ void orgasm_control_tick() {
         snprintf(
             data_csv,
             255,
-            "%d,%d,%d,%d,%ld,%ld",
+            "%d,%d,%d,%d,%ld,%ld,%d,%d",
             orgasm_control_get_average_pressure(),
             orgasm_control_get_arousal(),
             eom_hal_get_motor_speed(),
             Config.sensitivity_threshold,
             post_orgasm_state.clench_pressure_threshold,
-            post_orgasm_state.clench_duration_millis
+            post_orgasm_state.clench_duration_millis,
+            denial_state.denial_count,
+            post_orgasm_state.edge_count_to_orgasm
         );
 
         // Write out to logfile, which includes millis:
@@ -673,24 +690,43 @@ void orgasm_control_permit_orgasm(int seconds) {
 }
 
 oc_bool_t orgasm_control_is_permit_orgasm_reached() {
-    if (post_orgasm_state.to_orgasm_mode == Timer ){
+//    if (post_orgasm_state.to_orgasm_mode == Timer ){
+//        // Detect if edging time has passed
+//        if ((esp_timer_get_time() / 1000UL) > (post_orgasm_state.auto_edging_start_millis +
+//                                               (Config.auto_edging_duration_minutes * 60 * 1000))) {
+//            return ocTRUE;
+//        } else {
+//            return ocFALSE;
+//        }
+//    } else if (post_orgasm_state.to_orgasm_mode == Denial_count || 
+//               post_orgasm_state.to_orgasm_mode == Milk_o_matic) {
+//        if (state.denial_count >= post_orgasm_state.edge_count_to_orgasm) {
+//            return ocTRUE;
+//        } else {
+//            return ocFALSE;
+//        }
+//    } else {
+//        return ocFALSE;
+//    }    
+//}
+    if (post_orgasm_state.post_orgasm_mode == Denial_count || 
+               post_orgasm_state.post_orgasm_mode == Milk_o_matic) {
+        if (denial_state.denial_count >= post_orgasm_state.edge_count_to_orgasm) {
+//        if (denial_state.denial_count >= 1) {
+
+            return ocTRUE;
+        } else {
+            return ocFALSE;
+        }
+    } else {
         // Detect if edging time has passed
         if ((esp_timer_get_time() / 1000UL) > (post_orgasm_state.auto_edging_start_millis +
                                                (Config.auto_edging_duration_minutes * 60 * 1000))) {
             return ocTRUE;
         } else {
             return ocFALSE;
-        }
-    } else if (post_orgasm_state.to_orgasm_mode == Denial_count || 
-               post_orgasm_state.to_orgasm_mode == Milk_o_matic) {
-        if (state.denial_count >= post_orgasm_state.edge_count_to_orgasm) {
-            return ocTRUE;
-        } else {
-            return ocFALSE;
-        }
-    } else {
-        return ocFALSE;
-    }    
+        }  
+    }
 }
 
 oc_bool_t orgasm_control_is_post_orgasm_reached() {

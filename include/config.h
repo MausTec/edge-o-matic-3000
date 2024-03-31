@@ -37,9 +37,9 @@ typedef enum vibration_mode vibration_mode_t;
 // To orgasm Modes
 // See vibration_mode_controller.h for more.
 
-enum to_orgasm_mode { Denial_count = 0, Timer = 1, Milk_o_matic = 2, Random_mode = 3 };
+enum post_orgasm_mode { Denial_count = 0, Timer = 1, Milk_o_matic = 2, Random_mode = 3 };
 
-typedef enum to_orgasm_mode to_orgasm_mode_t;
+typedef enum post_orgasm_mode post_orgasm_mode_t;
 
 /**
  * Main Configuration Struct!
@@ -170,7 +170,7 @@ struct config {
     // Edge_count will permit orgasm after # denial reached
     // Milk-O-Matic will restart edge+orgasm indefenetly and randomly choose Timer or edge_count at each loop
     // Random choose Timer or Edge_count at start of session
-    int to_orgasm_mode;
+    int post_orgasm_mode;
     
     //= Internal System Configuration (Update only if you know what you're doing)
 
