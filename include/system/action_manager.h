@@ -6,8 +6,8 @@ extern "C" {
 #endif
 
 void action_manager_init(void);
-void action_manager_load_drivercfg(const char* filename);
-void action_manager_load_all_drivercfg(void);
+void action_manager_load_plugin(const char* filename);
+void action_manager_load_all_plugins(void);
 void action_manager_dispatch_event(const char* event, int val);
 
 #ifdef __cplusplus
