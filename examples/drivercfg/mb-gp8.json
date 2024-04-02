@@ -9,28 +9,42 @@
         "gpio": {
             "0": {
                 "mode": "OUTPUT",
-                "level": "LOW"
+                "level": 0
             }
         }
     },
     "functions": {
         "@high": {
-            "setPin": {
+            "gpio.setPin": {
                 "pin": 0,
-                "level": "HIGH"
+                "level": 1
             }
         },
         "@low": {
-            "setPin": {
+            "gpio.setPin": {
                 "pin": 0,
-                "level": "LOW"
+                "level": 0
             }
         },
         "@pulse": [
+            {
+                "if": {
+                    "all": {
+                        "eq": [
+                            "$ms",
+                            0
+                        ]
+                    },
+                    "then": [
+                        "return"
+                    ],
+                    "else": []
+                }
+            },
             "@high",
             {
                 "delay": {
-                    "ms": "1000"
+                    "ms": "$ms"
                 }
             },
             "@low"
@@ -38,7 +52,11 @@
     },
     "events": {
         "orgasmDenial": [
-            "@pulse"
+            {
+                "@pulse": {
+                    "ms": 1000
+                }
+            }
         ]
     }
 }

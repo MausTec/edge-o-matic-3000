@@ -12,14 +12,14 @@
 static const char* TAG = "http_server";
 static httpd_handle_t _server = NULL;
 
-static const httpd_uri_t routes[] = {{
+static const httpd_uri_t routes[] = { {
     .uri = "/",
     .method = HTTP_GET,
     .handler = &websocket_handler,
     .user_ctx = NULL,
     .is_websocket = true,
     .handle_ws_control_frames = true,
-}};
+} };
 
 static void init_routes(httpd_handle_t server) {
     for (size_t i = 0; i < sizeof(routes) / sizeof(routes[0]); i++) {
@@ -50,9 +50,9 @@ static httpd_handle_t start_webserver(void) {
     }
 
     if (Config.use_ssl) {
-        // this will be enabled soon, though right now the server start handles ~only~ the HTTP server
-        // and expects that as a return, so there's no easy way to also configure SSL. Also, the certs
-        // should be loaded off SD card, not ASM.
+        // this will be enabled soon, though right now the server start handles ~only~ the HTTP
+        // server and expects that as a return, so there's no easy way to also configure SSL. Also,
+        // the certs should be loaded off SD card, not ASM.
 
         // httpd_ssl_config_t ssl_config = HTTPD_SSL_CONFIG_DEFAULT();
         // ssl_config.httpd = config;
@@ -80,10 +80,12 @@ static httpd_handle_t start_webserver(void) {
     return server;
 }
 
-static void stop_webserver(httpd_handle_t server) { httpd_stop(server); }
+static void stop_webserver(httpd_handle_t server) {
+    httpd_stop(server);
+}
 
-static void connect_handler(void* arg, esp_event_base_t event_base, int32_t event_id,
-                            void* event_data) {
+static void
+connect_handler(void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data) {
     httpd_handle_t* server = (httpd_handle_t*)arg;
     if (*server == NULL) {
         ESP_LOGI(TAG, "Starting webserver...");
@@ -91,8 +93,8 @@ static void connect_handler(void* arg, esp_event_base_t event_base, int32_t even
     }
 }
 
-static void disconnect_handler(void* arg, esp_event_base_t event_base, int32_t event_id,
-                               void* event_data) {
+static void
+disconnect_handler(void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data) {
     httpd_handle_t* server = (httpd_handle_t*)arg;
     if (*server) {
         ESP_LOGI(TAG, "Stopping webserver...");
@@ -103,8 +105,9 @@ static void disconnect_handler(void* arg, esp_event_base_t event_base, int32_t e
 
 esp_err_t http_server_init(void) {
     esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &connect_handler, &_server);
-    esp_event_handler_register(WIFI_EVENT, WIFI_EVENT_STA_DISCONNECTED, &disconnect_handler,
-                               &_server);
+    esp_event_handler_register(
+        WIFI_EVENT, WIFI_EVENT_STA_DISCONNECTED, &disconnect_handler, &_server
+    );
 
     api_register_all();
     return ESP_OK;

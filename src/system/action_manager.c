@@ -1,4 +1,5 @@
 #include "system/action_manager.h"
+#include "actions/index.h"
 #include "cJSON.h"
 #include "eom-hal.h"
 #include "mt_actions.h"
@@ -125,5 +126,6 @@ void action_manager_event_handler(
 }
 
 void action_manager_init(void) {
+    actions_register_all();
     event_manager_register_handler(EVT_ALL, action_manager_event_handler, NULL);
 }
