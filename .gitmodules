@@ -19,3 +19,6 @@
 [submodule "lib/tlibmp"]
 	path = lib/tlibmp
 	url = https://github.com/MauAbata/tlibmp
+[submodule "lib/mt-actions"]
+	path = lib/mt-actions
+	url = https://github.com/MausTec/mt-actions
