@@ -80,8 +80,9 @@ void websocket_register_command(const websocket_command_t* command) {
     }
 }
 
-void websocket_run_command(const char* command, cJSON* data, cJSON* response,
-                           websocket_client_t* client) {
+void websocket_run_command(
+    const char* command, cJSON* data, cJSON* response, websocket_client_t* client
+) {
     ESP_LOGD(TAG, "Running command: %s", command);
 
     websocket_command_t* cmd = NULL;
@@ -190,12 +191,17 @@ esp_err_t websocket_handler(httpd_req_t* req) {
             goto cleanup;
         }
 
-        ESP_LOGI(TAG, "Got packet type 0x%02x, data: %s", ws_pkt.type, ws_pkt.payload);
+        ESP_LOGI(TAG, "Got packet type 0x%02x", ws_pkt.type);
     }
 
-    if (ws_pkt.type == HTTPD_WS_TYPE_PONG) {
+    if (ws_pkt.type == HTTPD_WS_TYPE_CLOSE) {
+        ESP_LOGI(TAG, "Client requesting CLOSE");
+    } else if (ws_pkt.type == HTTPD_WS_TYPE_PING) {
+        ESP_LOGI(TAG, "Received PING message");
+    } else if (ws_pkt.type == HTTPD_WS_TYPE_PONG) {
         ESP_LOGI(TAG, "Received PONG message");
     } else if (ws_pkt.type == HTTPD_WS_TYPE_TEXT) {
+        ESP_LOGI(TAG, "data: %s", ws_pkt.payload);
         httpd_ws_frame_t resp_pkt;
         memset(&resp_pkt, 0, sizeof(httpd_ws_frame_t));
         resp_pkt.type = HTTPD_WS_TYPE_TEXT;
@@ -222,8 +228,7 @@ esp_err_t websocket_handler(httpd_req_t* req) {
             ret = httpd_ws_send_frame(req, &resp_pkt);
         }
 
-        if (command != NULL)
-            cJSON_Delete(command);
+        if (command != NULL) cJSON_Delete(command);
 
         cJSON_Delete(response);
         cJSON_free(resp_pkt.payload);
@@ -234,9 +239,10 @@ esp_err_t websocket_handler(httpd_req_t* req) {
     }
 
 cleanup:
-    if (buf != NULL)
-        free(buf);
+    if (buf != NULL) free(buf);
     return ret;
 }
 
-esp_err_t websocket_connect_to_bridge(const char* address, int port) { return ESP_FAIL; }
+esp_err_t websocket_connect_to_bridge(const char* address, int port) {
+    return ESP_FAIL;
+}

@@ -59,7 +59,8 @@ static void _dir_result(const char* path, struct dirent* dir, void* argp) {
 
     // Validate language:
 
-    char* buffer = fs_read_file(full_path);
+    char* buffer = NULL;
+    fs_read_file(full_path, &buffer);
     if (buffer == NULL) return;
 
     cJSON* root = cJSON_Parse(buffer);

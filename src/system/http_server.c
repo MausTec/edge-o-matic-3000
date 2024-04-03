@@ -1,13 +1,16 @@
 #include "system/http_server.h"
-#include "system/websocket_handler.h"
-
 #include "api/index.h"
-
 #include "config.h"
 #include "esp_event.h"
 #include "esp_http_server.h"
 #include "esp_https_server.h"
 #include "esp_log.h"
+#include "esp_system.h"
+#include "system/websocket_handler.h"
+#include "util/fs.h"
+
+#define DEFAULT_CACERT_PATH "cert.pem"
+#define DEFAULT_PRVTKEY_PATH "key.pem"
 
 static const char* TAG = "http_server";
 static httpd_handle_t _server = NULL;
@@ -30,6 +33,7 @@ static void init_routes(httpd_handle_t server) {
 }
 
 static httpd_handle_t start_webserver(void) {
+    esp_err_t err = ESP_OK;
     httpd_handle_t server = NULL;
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
 
@@ -41,37 +45,67 @@ static httpd_handle_t start_webserver(void) {
     config.open_fn = websocket_open_fd;
     config.close_fn = websocket_close_fd;
 
-    ESP_LOGI(TAG, "Starting server on port: %d", config.server_port);
-    esp_err_t err = httpd_start(&server, &config);
+    if (!Config.use_ssl) {
+        ESP_LOGI(TAG, "Starting server on port: %d", config.server_port);
+        err = httpd_start(&server, &config);
+    } else {
+        ESP_LOGI(
+            TAG,
+            "Starting SSL server on port: %d (%d bytes free)",
+            config.server_port,
+            esp_get_free_heap_size()
+        );
+
+        httpd_ssl_config_t ssl_config = HTTPD_SSL_CONFIG_DEFAULT();
+        ssl_config.httpd = config;
+
+        char path[CONFIG_PATH_MAX];
+
+        sniprintf(
+            path,
+            CONFIG_PATH_MAX,
+            "%s/%s",
+            fs_sd_root(),
+            Config.ssl_cacert_path ? Config.ssl_cacert_path : DEFAULT_CACERT_PATH
+        );
+
+        ssl_config.cacert_len = fs_read_file(path, (char**)&ssl_config.cacert_pem);
+
+        if (ssl_config.cacert_len <= 0) {
+            ESP_LOGE(TAG, "Error reading CA Certificate.");
+            return NULL;
+        } else {
+            ESP_LOGI(TAG, "%s", ssl_config.cacert_pem);
+        }
+
+        sniprintf(
+            path,
+            CONFIG_PATH_MAX,
+            "%s/%s",
+            fs_sd_root(),
+            Config.ssl_prvtkey_path ? Config.ssl_prvtkey_path : DEFAULT_PRVTKEY_PATH
+        );
+
+        ssl_config.prvtkey_len = fs_read_file(path, (char**)&ssl_config.prvtkey_pem);
+
+        if (ssl_config.prvtkey_len <= 0) {
+            ESP_LOGE(TAG, "Error reading SSL Private Key.");
+            free(ssl_config.cacert_pem);
+            return NULL;
+        } else {
+            ESP_LOGI(TAG, "%s", ssl_config.prvtkey_pem);
+        }
+
+        ESP_LOGI(TAG, "SSL Certificates provisioned. (%d bytes free)", esp_get_free_heap_size());
+        err = httpd_ssl_start(&server, &ssl_config);
+
+        free(ssl_config.cacert_pem);
+        free(ssl_config.prvtkey_pem);
+    }
 
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "Error starting server: %s", esp_err_to_name(err));
         return NULL;
-    }
-
-    if (Config.use_ssl) {
-        // this will be enabled soon, though right now the server start handles ~only~ the HTTP
-        // server and expects that as a return, so there's no easy way to also configure SSL. Also,
-        // the certs should be loaded off SD card, not ASM.
-
-        // httpd_ssl_config_t ssl_config = HTTPD_SSL_CONFIG_DEFAULT();
-        // ssl_config.httpd = config;
-
-        // extern const unsigned char cacert_pem_start[] asm("_binary_servercert_pem_start");
-        // extern const unsigned char cacert_pem_end[]   asm("_binary_servercert_pem_end");
-        // ssl_config.cacert_pem = cacert_pem_start;
-        // ssl_config.cacert_len = cacert_pem_end - cacert_pem_start;
-
-        // extern const unsigned char prvtkey_pem_start[] asm("_binary_prvtkey_pem_start");
-        // extern const unsigned char prvtkey_pem_end[]   asm("_binary_prvtkey_pem_end");
-        // ssl_config.prvtkey_pem = prvtkey_pem_start;
-        // ssl_config.prvtkey_len = prvtkey_pem_end - prvtkey_pem_start;
-
-        // esp_err_t ret = httpd_ssl_start(&server, &ssl_config);
-        // if (ESP_OK != ret) {
-        //     ESP_LOGE(TAG, "Error starting server!");
-        //     return NULL;
-        // }
     }
 
     ESP_LOGI(TAG, "Server started, registering routes.");

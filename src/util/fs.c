@@ -41,11 +41,12 @@ size_t fs_read_dir(
     return count;
 }
 
-char* fs_read_file(const char* path) {
+size_t fs_read_file(const char* path, char** data) {
     FILE* f = fopen(path, "r");
     if (!f) {
         ESP_LOGW(TAG, "File does not exist: %s", path);
-        return NULL;
+        *data = NULL;
+        return 0;
     }
 
     size_t fsize;
@@ -60,14 +61,16 @@ char* fs_read_file(const char* path) {
     if (!buffer) {
         fclose(f);
         ESP_LOGE(TAG, "Failed to allocate memory for file: %s", path);
-        return NULL;
+        *data = NULL;
+        return 0;
     }
 
     result = fread(buffer, 1, fsize, f);
     ESP_LOGD(TAG, "Read %d bytes from %s", result, path);
     buffer[result] = '\0';
     fclose(f);
-    return buffer;
+    *data = buffer;
+    return fsize + 1;
 }
 
 const char* fs_sd_root(void) {
