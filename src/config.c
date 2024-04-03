@@ -26,6 +26,8 @@ CONFIG_DEFS {
     CFG_NUMBER(websocket_port, 80);
     CFG_BOOL(classic_serial, false);
     CFG_BOOL(use_ssl, false);
+    CFG_STRING_PTR(ssl_cacert_path, NULL);
+    CFG_STRING_PTR(ssl_prvtkey_path, NULL);
     CFG_STRING(hostname, "eom3k");
 
     // UI Settings
