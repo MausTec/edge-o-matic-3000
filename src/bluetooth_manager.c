@@ -218,12 +218,13 @@ static int blecent_gap_event(struct ble_gap_event* event, void* arg) {
     switch (event->type) {
     case BLE_GAP_EVENT_DISC:
         rc = ble_hs_adv_parse_fields(&fields, event->disc.data, event->disc.length_data);
+
         if (rc != 0) {
             return 0;
         }
 
-        if (fields.name_is_complete) {
-            ESP_LOGI(TAG, "BLE_GAP_EVENT_DISC: %.*s", fields.name_len, (char*)fields.name);
+        if (fields.name_len > 1) {
+            ESP_LOGI(TAG, "BLE_GAP_EVENT_DISC: \"%.*s\"", fields.name_len, (char*)fields.name);
             if (_scan_callback != NULL) {
 
                 peer_t peer = { 0 };
@@ -233,6 +234,13 @@ static int blecent_gap_event(struct ble_gap_event* event, void* arg) {
 
                 _scan_callback(&peer, _scan_arg);
             }
+        } else {
+            ESP_LOGI(
+                TAG,
+                "BLE_GAP_EVENT_DISC: Incomplete Name! \"%.*s\"",
+                fields.name_len,
+                (char*)fields.name
+            );
         }
 
         // Do something with this event...
