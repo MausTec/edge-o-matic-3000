@@ -100,6 +100,10 @@ struct config {
     bool classic_serial;
     // Enable SSL server, which will eat all your RAM!
     bool use_ssl;
+    // Path to cacert.pem, which will be needed to run SSL server.
+    char* ssl_cacert_path;
+    // Path to prvtkey.pem, which will be needed to run SSL server.
+    char* ssl_prvtkey_path;
     // Local hostname for your device.
     char hostname[64];
 

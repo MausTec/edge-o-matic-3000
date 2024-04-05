@@ -177,7 +177,7 @@ void app_main() {
     }
 
     // Initialize Action Manager
-    action_manager_load_all_drivercfg();
+    action_manager_load_all_plugins();
 
     // Final delay on encoder colors.
     vTaskDelayUntil(&boot_tick, 1000UL / portTICK_PERIOD_MS);
