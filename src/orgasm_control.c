@@ -72,6 +72,7 @@ static struct {
     uint8_t auto_edging_duration_minutes;
     bool random_orgasm_triggers;
     uint8_t orgasm_count;
+    event_handler_node_t* _h_orgasm;
 } post_orgasm_state;
 
 volatile static struct {
@@ -85,10 +86,10 @@ static void _evt_orgasm_denial(
     denial_state.denial_count += 1;
 }
 
-volatile static struct {
-    uint8_t orgasm_count;
-    event_handler_node_t* _h_orgasm;
-} orgasm_state = { 0 };
+//volatile static struct {
+//    uint8_t orgasm_count;
+//    event_handler_node_t* _h_orgasm;
+//} orgasm_state = { 0 };
 
 static void _evt_orgasm_start(
     const char* evt, EVENT_HANDLER_ARG_TYPE eap, int eai, EVENT_HANDLER_ARG_TYPE hap
@@ -96,7 +97,7 @@ static void _evt_orgasm_start(
     if ( orgasm_control_is_permit_orgasm_reached() ) {
         post_orgasm_state.detected_orgasm = ocTRUE;
     }
-    orgasm_state.orgasm_count += 1;
+    post_orgasm_state.orgasm_count += 1;
 }
 
 #define update_check(variable, value)                                                              \
@@ -133,9 +134,8 @@ void orgasm_control_init(void) {
         denial_state._h_denial =
             event_manager_register_handler(EVT_ORGASM_DENIAL, &_evt_orgasm_denial, NULL);
     }
-    orgasm_state.orgasm_count = 0;
-    if (orgasm_state._h_orgasm == NULL) {
-        orgasm_state._h_orgasm =
+    if (post_orgasm_state._h_orgasm == NULL) {
+        post_orgasm_state._h_orgasm =
             event_manager_register_handler(EVT_ORGASM_START, &_evt_orgasm_start, NULL);
     }
 }
@@ -345,6 +345,7 @@ static void orgasm_control_updateEdgingTime() { // Edging+Orgasm timer
             output_state.motor_speed += 5;
         } else {
             update_check(output_state.motor_speed, Config.motor_max_speed);
+            _set_speed(output_state.motor_speed);
         }
     }
 
@@ -391,7 +392,7 @@ static void orgasm_control_updateEdgingTime() { // Edging+Orgasm timer
             } else {
                 post_orgasm_state.menu_is_locked = ocFALSE;
                 post_orgasm_state.detected_orgasm = ocFALSE;
-                output_state.motor_speed = 0;
+                update_check(output_state.motor_speed, 0 )
                 _set_speed(output_state.motor_speed);
                 orgasm_control_set_output_mode(OC_MANUAL_CONTROL);
             }
@@ -566,7 +567,7 @@ void orgasm_control_tick() {
             Config.sensitivity_threshold,
             post_orgasm_state.clench_pressure_threshold,
             post_orgasm_state.clench_duration_millis,
-            orgasm_state.orgasm_count
+            post_orgasm_state.orgasm_count
         );
 
         // Write out to logfile, which includes millis:
