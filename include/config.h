@@ -34,6 +34,13 @@ enum vibration_mode { RampStop = 1, Depletion = 2, Enhancement = 3, Pattern = 4,
 
 typedef enum vibration_mode vibration_mode_t;
 
+// Post orgasm Modes
+// See vibration_mode_controller.h for more.
+
+enum post_orgasm_mode { Denial_count = 0, Timer = 1, Milk_o_matic = 2, Random_mode = 3 };
+
+typedef enum post_orgasm_mode post_orgasm_mode_t;
+
 /**
  * Main Configuration Struct!
  *
@@ -153,6 +160,21 @@ struct config {
     bool edge_menu_lock;
     // Deny access to menu starting after orgasm detected
     bool post_orgasm_menu_lock;
+    // Edging needed to permit orgasm (Max value if ramdom selected).
+    int denials_count_to_orgasm;
+    // milk_o_matic rest period in seconds before restart edge+orgasm
+    int milk_o_matic_rest_duration_seconds;
+    // random timer and denial_count to orgasm from set values. minimum is 1/2
+    bool random_orgasm_triggers;
+    // how many orgasms before stopping in milk-o-matic
+    int max_orgasms;
+
+
+    // Timer : default original mode
+    // Edge_count will permit orgasm after # denial reached
+    // Milk-O-Matic will restart edge+orgasm indefenetly and randomly choose Timer or edge_count at each loop
+    // Random choose Timer or Edge_count at start of session
+    int post_orgasm_mode;
 
     //= Internal System Configuration (Update only if you know what you're doing)
 
