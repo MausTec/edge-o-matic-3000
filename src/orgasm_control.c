@@ -127,7 +127,7 @@ void orgasm_control_init(void) {
     output_state.output_mode = OC_MANUAL_CONTROL;
     output_state.vibration_mode = Config.vibration_mode;
     output_state.edge_time_out = 10000;
-    post_orgasm_state.clench_pressure_threshold = 4096;    
+    post_orgasm_state.clench_pressure_threshold = 4096;
 
     running_average_init(&arousal_state.average, Config.pressure_smoothing);
     if (denial_state._h_denial == NULL) {
@@ -362,41 +362,54 @@ static void orgasm_control_updateEdgingTime() { // Edging+Orgasm timer
             if (output_state.motor_speed > 0) { // Ramp down motor speed to 0
                 update_check(output_state.motor_speed, output_state.motor_speed - 1 )
                 _set_speed(output_state.motor_speed);
-            } else if ( (post_orgasm_state.post_orgasm_mode == Milk_o_matic) && 
-                        (post_orgasm_state.orgasm_count < Config.max_orgasms)) {
-                // The motor has been turnned off but this is Milk-O-Matic orgasm mode. Prepare for next round.
-                output_state.motor_speed = 0;
-                eom_hal_set_encoder_rgb(255, 0, 127);
-
-                // now give a break before restarting edging
-                if (esp_timer_get_time() / 1000UL > post_orgasm_state.post_orgasm_start_millis +
-                                                    post_orgasm_state.post_orgasm_duration_millis +
-                                                    (Config.milk_o_matic_rest_duration_seconds * 1000)) 
-                {
-                    // Rest period is finished. Reset variables for next round
-                    post_orgasm_state.auto_edging_start_millis = (esp_timer_get_time() / 1000UL);
-                    post_orgasm_state.post_orgasm_start_millis = 0;
-                    post_orgasm_state.detected_orgasm = ocFALSE;
-                    post_orgasm_state.menu_is_locked = ocFALSE;
-
-                    // Set the new denial count limit to reach before next orgasm
-                    // Randomize denial_count if turned on
-                    if (Config.random_orgasm_triggers) {
-                        // re-enable calculation of random for next round
-                        post_orgasm_state.random_orgasm_triggers = true;
-                    } else {
-                        post_orgasm_state.edge_count_to_orgasm = denial_state.denial_count + Config.denials_count_to_orgasm;
-                    }
-                    orgasm_control_resume_control();
-                }
             } else {
-                post_orgasm_state.menu_is_locked = ocFALSE;
-                post_orgasm_state.detected_orgasm = ocFALSE;
-                update_check(output_state.motor_speed, 0 )
-                _set_speed(output_state.motor_speed);
-                orgasm_control_set_output_mode(OC_MANUAL_CONTROL);
+                if ( post_orgasm_mode_milk_o_matic() != true ) {
+                    // post orgasm modes has finished. Turn off everything and return to manual mode
+                    post_orgasm_state.menu_is_locked = ocFALSE;
+                    post_orgasm_state.detected_orgasm = ocFALSE;
+                    update_check(output_state.motor_speed, 0 )
+                    _set_speed(output_state.motor_speed);
+                    orgasm_control_set_output_mode(OC_MANUAL_CONTROL);
+                }
             }
         }
+    }
+}
+
+/**
+ *  Detect if in milk-o-matic mode  
+ *  @return true if mode is still active, false if end of mode or not active
+ */
+bool post_orgasm_mode_milk_o_matic(void){
+    // make sure you don't go over max orgasm count in milk-o-matic mode
+    if ( (post_orgasm_state.post_orgasm_mode == Milk_o_matic) && 
+            (post_orgasm_state.orgasm_count < Config.max_orgasms)) {
+    
+        // The motor has been turnned off but this is Milk-O-Matic orgasm mode. Prepare for next round.
+        // now show that your in milk-o-matic mode. Usefull if you choose random post orgasm mode, you only find out after first post orgasm
+        eom_hal_set_encoder_rgb(255, 0, 127);
+        // now give a break before restarting edging
+        if (esp_timer_get_time() / 1000UL > post_orgasm_state.post_orgasm_start_millis +
+                                            post_orgasm_state.post_orgasm_duration_millis +
+                                            (Config.milk_o_matic_rest_duration_seconds * 1000)) {
+            // Rest period is finished. Reset variables for next round
+            post_orgasm_state.auto_edging_start_millis = (esp_timer_get_time() / 1000UL);
+            post_orgasm_state.post_orgasm_start_millis = 0;
+            post_orgasm_state.detected_orgasm = ocFALSE;
+            post_orgasm_state.menu_is_locked = ocFALSE;
+            // Set the new denial count limit to reach before next orgasm
+            // Randomize denial_count if turned on
+            if (Config.random_orgasm_triggers) {
+                // re-enable calculation of random for next round
+                post_orgasm_state.random_orgasm_triggers = true;
+            } else {
+                post_orgasm_state.edge_count_to_orgasm = denial_state.denial_count + Config.denials_count_to_orgasm;
+            }
+            orgasm_control_resume_control();
+        }
+        return true;
+    } else {
+        return false;
     }
 }
 
