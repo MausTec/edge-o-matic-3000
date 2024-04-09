@@ -49,7 +49,9 @@ CONFIG_DEFS {
     CFG_NUMBER(motor_ramp_time_s, 30);
     CFG_NUMBER(update_frequency_hz, 50);
     CFG_NUMBER(sensor_sensitivity, 128);
+    CFG_BOOL(use_denial_count_in_sensitivity, false);
     CFG_BOOL(use_average_values, false);
+    
 
     // Vibration Settings
     CFG_ENUM(vibration_mode, vibration_mode_t, RampStop);
