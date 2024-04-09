@@ -39,12 +39,12 @@ static void _device_speed_cb(
             cmd.speed = (tscode_unit_t*)malloc(sizeof(tscode_unit_t));
             cmd.speed->unit = TSCODE_UNIT_BYTE;
             cmd.speed->value = speed;
-            ESP_LOGI(TAG, " -> TSCODE Device: %s", device->product_name);
+            ESP_LOGD(TAG, " -> TSCODE Device: %s", device->product_name);
 
             char buffer[120] = "";
             tscode_serialize_command(buffer, &cmd, 120);
 
-            ESP_LOGI(TAG, "    -> Serialized: %s", buffer);
+            ESP_LOGD(TAG, "    -> Serialized: %s", buffer);
             tscode_dispose_command(&cmd);
 
             driver->uart->transmit((uint8_t*)buffer, strlen(buffer));
