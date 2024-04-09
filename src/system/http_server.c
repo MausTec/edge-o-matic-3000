@@ -15,14 +15,48 @@
 static const char* TAG = "http_server";
 static httpd_handle_t _server = NULL;
 
-static const httpd_uri_t routes[] = { {
-    .uri = "/",
-    .method = HTTP_GET,
-    .handler = &websocket_handler,
-    .user_ctx = NULL,
-    .is_websocket = true,
-    .handle_ws_control_frames = true,
-} };
+static const httpd_uri_t routes[] = {
+    {
+        .uri = "/",
+        .method = HTTP_GET,
+        .handler = &websocket_handler,
+        .user_ctx = NULL,
+        .is_websocket = true,
+        .handle_ws_control_frames = true,
+    },
+    {
+        .uri = "/stream",
+        .method = HTTP_GET,
+        .handler = &websocket_handler,
+        .user_ctx = NULL,
+        .is_websocket = true,
+        .handle_ws_control_frames = true,
+    },
+    {
+        .uri = "*",
+        .method = HTTP_GET,
+        .handler = &rest_get_handler,
+        .user_ctx = NULL,
+        .is_websocket = false,
+        .handle_ws_control_frames = false,
+    },
+    {
+        .uri = "*",
+        .method = HTTP_POST,
+        .handler = &rest_get_handler,
+        .user_ctx = NULL,
+        .is_websocket = false,
+        .handle_ws_control_frames = false,
+    },
+    {
+        .uri = "*",
+        .method = HTTP_OPTIONS,
+        .handler = &rest_get_handler,
+        .user_ctx = NULL,
+        .is_websocket = false,
+        .handle_ws_control_frames = false,
+    },
+};
 
 static void init_routes(httpd_handle_t server) {
     for (size_t i = 0; i < sizeof(routes) / sizeof(routes[0]); i++) {
@@ -40,6 +74,9 @@ static httpd_handle_t start_webserver(void) {
     if (Config.websocket_port > 0) {
         config.server_port = Config.websocket_port;
     }
+
+    // Allow wildcard matching:
+    config.uri_match_fn = httpd_uri_match_wildcard;
 
     // Open/Close callbacks
     config.open_fn = websocket_open_fd;

@@ -157,6 +157,42 @@ void websocket_close_fd(httpd_handle_t hd, int sockfd) {
     }
 }
 
+esp_err_t rest_get_handler(httpd_req_t* req) {
+    httpd_resp_set_type(req, "application/json");
+
+    // TODO: Parse out request URIs here for GET params
+    // TODO: Remove the client requirement on the websocket run command
+    // TODO: ... eugh a lot
+
+    if (req->method == HTTP_GET) {
+        ESP_LOGI(TAG, "Starting GET: %s", req->uri);
+    } else if (req->method == HTTP_POST) {
+        ESP_LOGI(TAG, "Starting POST: %s", req->uri);
+    } else if (req->method == HTTP_OPTIONS) {
+        httpd_resp_send(req, "", 0);
+        return ESP_OK;
+    } else {
+        httpd_resp_send_404(req);
+        return ESP_ERR_NOT_FOUND;
+    }
+
+    cJSON* resp = cJSON_CreateObject();
+
+    websocket_run_command(req->uri + 1, NULL, resp, NULL);
+
+    char* buf = cJSON_Print(resp);
+
+    if (buf != NULL) {
+        httpd_resp_send(req, buf, strlen(buf));
+    } else {
+        httpd_resp_send_500(req);
+    }
+
+    free(buf);
+    cJSON_Delete(resp);
+    return ESP_OK;
+}
+
 esp_err_t websocket_handler(httpd_req_t* req) {
     if (req->method == HTTP_GET) {
         ESP_LOGD(TAG, "This was the handshake.");
