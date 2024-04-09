@@ -45,6 +45,7 @@ static struct {
     uint8_t control_motor;
     uint8_t prev_control_motor;
     float motor_speed;
+    float motor_increment;
 } output_state;
 
 static struct {
@@ -279,6 +280,8 @@ static void orgasm_control_updateEdgingTime() { // Edging+Orgasm timer
     if (orgasm_control_is_permit_orgasm_reached() && !orgasm_control_is_post_orgasm_reached()) {
         if (output_state.control_motor) {
             orgasm_control_pause_control(); // make sure orgasm is now possible
+            // Calculate motor increment once, from here to end of post orgasm
+            output_state.motor_increment = calculate_increment(Config.motor_start_speed, Config.motor_max_speed, Config.motor_ramp_time_s);
         }
 
         // now detect the orgasm to start post orgasm torture timer
@@ -296,8 +299,8 @@ static void orgasm_control_updateEdgingTime() { // Edging+Orgasm timer
         }
 
         // raise motor speed to max speep. protect not to go higher than max
-        if (output_state.motor_speed <= (Config.motor_max_speed - 5)) {
-            output_state.motor_speed += 5;
+        if (output_state.motor_speed <= (Config.motor_max_speed - output_state.motor_increment)) {
+            update_check(output_state.motor_speed, output_state.motor_speed + output_state.motor_increment);
         } else {
             update_check(output_state.motor_speed, Config.motor_max_speed);
         }
@@ -311,10 +314,17 @@ static void orgasm_control_updateEdgingTime() { // Edging+Orgasm timer
         // Detect if within post orgasm session
         if ((esp_timer_get_time() / 1000UL) < (post_orgasm_state.post_orgasm_start_millis +
                                                post_orgasm_state.post_orgasm_duration_millis)) {
-            output_state.motor_speed = Config.motor_max_speed;
+            // continue to raise motor to max speed
+            if (output_state.motor_speed <= (Config.motor_max_speed - output_state.motor_increment)
+                ) {
+                update_check(output_state.motor_speed, output_state.motor_speed + output_state.motor_increment);
+            } else {
+                update_check(output_state.motor_speed, Config.motor_max_speed );
+            }
         } else {                                // Post_orgasm timer reached
             if (output_state.motor_speed > 0) { // Ramp down motor speed to 0
-                output_state.motor_speed = output_state.motor_speed - 1;
+                update_check(output_state.motor_speed, output_state.motor_speed - 1 )
+
             } else {
                 post_orgasm_state.menu_is_locked = ocFALSE;
                 post_orgasm_state.detected_orgasm = ocFALSE;
