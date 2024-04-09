@@ -21,6 +21,12 @@ _accessory_write(uint8_t address, uint8_t subaddress, uint8_t* data, size_t len)
     return err;
 }
 
+static maus_bus_err_t _accessory_probe(uint8_t address) {
+    maus_bus_err_t err = MAUS_BUS_OK;
+    if (EOM_HAL_OK != eom_hal_accessory_master_probe(address)) err = MAUS_BUS_FAIL;
+    return err;
+}
+
 static void _device_speed_cb(
     maus_bus_driver_t* driver, maus_bus_device_t* device, maus_bus_address_t address, void* ptr
 ) {
@@ -28,19 +34,17 @@ static void _device_speed_cb(
 
     if (driver->uart != NULL && driver->uart->transmit != NULL) {
         if (device->features.tscode) {
-            ESP_LOGI(TAG, "Transmitting a TS-code speed command.");
-
             tscode_command_t cmd = TSCODE_COMMAND_DEFAULT;
             cmd.type = speed > 0 ? TSCODE_RECIPROCATING_MOVE : TSCODE_CONDITIONAL_STOP;
             cmd.speed = (tscode_unit_t*)malloc(sizeof(tscode_unit_t));
             cmd.speed->unit = TSCODE_UNIT_BYTE;
             cmd.speed->value = speed;
-            ESP_LOGI(TAG, " -> TSCODE Device: %s", device->product_name);
+            ESP_LOGD(TAG, " -> TSCODE Device: %s", device->product_name);
 
             char buffer[120] = "";
             tscode_serialize_command(buffer, &cmd, 120);
 
-            ESP_LOGI(TAG, "    -> Serialized: %s", buffer);
+            ESP_LOGD(TAG, "    -> Serialized: %s", buffer);
             tscode_dispose_command(&cmd);
 
             driver->uart->transmit((uint8_t*)buffer, strlen(buffer));
@@ -80,6 +84,7 @@ void accessory_driver_init(void) {
     maus_bus_config_t config = {
         .read = _accessory_read,
         .write = _accessory_write,
+        .probe = _accessory_probe,
     };
 
     maus_bus_init(&config);

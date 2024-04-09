@@ -22,7 +22,8 @@ esp_err_t i18n_load(const char* filename) {
 
     ESP_LOGI(TAG, "Loading language dictionary: %s", full_path);
 
-    char* buffer = fs_read_file(full_path);
+    char* buffer;
+    fs_read_file(full_path, &buffer);
     if (buffer == NULL) return ESP_ERR_NOT_FOUND;
     ESP_LOGD(TAG, "Parsing Language Dict: %s", buffer);
 

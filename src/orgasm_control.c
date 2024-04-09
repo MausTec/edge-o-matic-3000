@@ -70,6 +70,20 @@ static struct {
     int post_orgasm_duration_seconds;
 } post_orgasm_state;
 
+volatile static struct {
+    uint8_t orgasm_count;
+    event_handler_node_t* _h_orgasm;
+} orgasm_state = { 0 };
+
+static void _evt_orgasm_start(
+    const char* evt, EVENT_HANDLER_ARG_TYPE eap, int eai, EVENT_HANDLER_ARG_TYPE hap
+) {
+    if ( orgasm_control_is_permit_orgasm_reached() ) {
+        post_orgasm_state.detected_orgasm = ocTRUE;
+    }
+    orgasm_state.orgasm_count += 1;
+}
+
 #define update_check(variable, value)                                                              \
     {                                                                                              \
         if (variable != (value)) {                                                                 \
@@ -97,9 +111,14 @@ void orgasm_control_init(void) {
     output_state.output_mode = OC_MANUAL_CONTROL;
     output_state.vibration_mode = Config.vibration_mode;
     output_state.edge_time_out = 10000;
-    post_orgasm_state.clench_pressure_threshold = 4096;
+    post_orgasm_state.clench_pressure_threshold = 4096;    
 
     running_average_init(&arousal_state.average, Config.pressure_smoothing);
+    orgasm_state.orgasm_count = 0;
+    if (orgasm_state._h_orgasm == NULL) {
+        orgasm_state._h_orgasm =
+            event_manager_register_handler(EVT_ORGASM_START, &_evt_orgasm_start, NULL);
+    }
 }
 
 // Rename to get_vibration_mode_controller();
@@ -153,66 +172,15 @@ static void orgasm_control_updateArousal() {
 
     arousal_state.last_value = p_check;
 
-    // detect muscle clenching.  Used in Edging+orgasm routine to detect an orgasm
-    // Can also be used as an other method to compliment detecting edging
-
-    // raise clench threshold to pressure - 1/2 sensitivity
-    long current_time = (esp_timer_get_time() / 1000UL);
-    if (p_check >=
-        (post_orgasm_state.clench_pressure_threshold + Config.clench_pressure_sensitivity)) {
-        post_orgasm_state.clench_pressure_threshold =
-            (p_check - (Config.clench_pressure_sensitivity / 2));
+    long clench_duration;
+    clench_duration = orgasm_control_clench_detect(p_check);
+    if (Config.clench_detector_in_edging) {
+        if (clench_duration > Config.clench_time_threshold_ms &&
+                clench_duration < Config.max_clench_duration_ms) {
+            arousal_state.arousal += 5;
+            arousal_state.update_flag = ocTRUE;
+        }
     }
-
-    // Start counting clench time if pressure over threshold
-    if (p_check >= post_orgasm_state.clench_pressure_threshold) {
-        post_orgasm_state.clench_duration_millis =
-            current_time - post_orgasm_state.clench_start_millis;
-
-        // Orgasm detected
-        if (post_orgasm_state.clench_duration_millis >= Config.clench_time_to_orgasm_ms &&
-            orgasm_control_is_permit_orgasm_reached()) {
-            post_orgasm_state.detected_orgasm = ocTRUE;
-            post_orgasm_state.clench_duration = 0;
-        }
-
-        // ajust arousal if Clench_detector in Edge is turned on
-        if (Config.clench_detector_in_edging) {
-            if (post_orgasm_state.clench_duration_millis > Config.clench_time_threshold_ms) {
-                arousal_state.arousal += 5;
-                arousal_state.update_flag = ocTRUE;
-            }
-        }
-
-        // desensitize clench threshold when clench too long. this is to stop arousal from going up
-        if (post_orgasm_state.clench_duration_millis >= Config.max_clench_duration_ms &&
-            !orgasm_control_is_permit_orgasm_reached(
-            )) { // Allow higher clench duration when orgasm permitted
-            post_orgasm_state.clench_pressure_threshold += 10;
-            //            post_orgasm_state.clench_pressure_threshold += 100000; // desensitize
-            //            enough to reduce clench cheating
-            post_orgasm_state.clench_duration_millis = Config.max_clench_duration_ms; // ms
-        }
-
-        // when not clenching lower clench time and decay clench threshold
-    } else {
-        if (output_state.motor_speed > 0 ||
-            output_state.output_mode ==
-                OC_MANUAL_CONTROL) { // decay only in Manual mode or if not in a denial period
-            post_orgasm_state.clench_start_millis = current_time;
-            post_orgasm_state.clench_duration_millis -= 150; // ms
-
-            if (post_orgasm_state.clench_duration_millis <= 0) {
-                post_orgasm_state.clench_duration_millis = 0;
-                // clench pressure threshold value decays over time to a min of pressure + 1/2
-                // sensitivity
-                if ((p_check + (Config.clench_pressure_sensitivity / 2)) <
-                    post_orgasm_state.clench_pressure_threshold) {
-                    post_orgasm_state.clench_pressure_threshold *= 0.99;
-                }
-            }
-        }
-    } // END of clench detector
 
     // Update accessories:
     if (arousal_state.update_flag) {
@@ -373,6 +341,53 @@ static void orgasm_control_updateEdgingTime() { // Edging+Orgasm timer
     }
 }
 
+/**
+ *  Detect muscle clenching.  
+ *  Used to ajust arousal if turned on
+ *  Used to detect the start of a Orgasm
+ *  @param p_check
+ *  @return clench duration in ms
+ */
+long orgasm_control_clench_detect(long p_check){
+    static bool orgasm_detect = false;
+    // raise clench threshold to pressure - 1/2 sensitivity
+    long current_time = (esp_timer_get_time() / 1000UL);
+    if (p_check >=
+        (post_orgasm_state.clench_pressure_threshold + Config.clench_pressure_sensitivity)) {
+        post_orgasm_state.clench_pressure_threshold =
+            (p_check - (Config.clench_pressure_sensitivity / 2));
+    }
+
+    // Start counting clench time if pressure over threshold
+    if (p_check >= post_orgasm_state.clench_pressure_threshold) {
+        post_orgasm_state.clench_duration_millis =
+            current_time - post_orgasm_state.clench_start_millis;
+
+        // Orgasm detected
+        if (post_orgasm_state.clench_duration_millis >= Config.clench_time_to_orgasm_ms &&
+            !orgasm_detect) {
+            orgasm_detect = true;
+            event_manager_dispatch(EVT_ORGASM_START, NULL, 0);    
+        }
+        return post_orgasm_state.clench_duration_millis;
+
+    } else {
+        orgasm_detect = false;
+        post_orgasm_state.clench_start_millis = current_time;
+        post_orgasm_state.clench_duration_millis -= 150; // ms
+        if (post_orgasm_state.clench_duration_millis <= 0) {
+            post_orgasm_state.clench_duration_millis = 0;
+            // clench pressure threshold value decays over time to a min of pressure + 1/2
+            // sensitivity
+            if ((p_check + (Config.clench_pressure_sensitivity / 2)) <
+                post_orgasm_state.clench_pressure_threshold) {
+                post_orgasm_state.clench_pressure_threshold *= 0.99;
+            }
+        }
+        return 0;
+    } // END of clench detector
+}
+
 void orgasm_control_twitch_detect() {
     if (arousal_state.arousal > Config.sensitivity_threshold) {
         output_state.motor_stop_time = (esp_timer_get_time() / 1000UL);
@@ -486,13 +501,14 @@ void orgasm_control_tick() {
         snprintf(
             data_csv,
             255,
-            "%d,%d,%d,%d,%ld,%ld",
+            "%d,%d,%d,%d,%ld,%ld,%d",
             orgasm_control_get_average_pressure(),
             orgasm_control_get_arousal(),
             eom_hal_get_motor_speed(),
             Config.sensitivity_threshold,
             post_orgasm_state.clench_pressure_threshold,
-            post_orgasm_state.clench_duration_millis
+            post_orgasm_state.clench_duration_millis,
+            orgasm_state.orgasm_count
         );
 
         // Write out to logfile, which includes millis:

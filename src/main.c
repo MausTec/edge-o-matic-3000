@@ -13,16 +13,19 @@
 #include "polyfill.h"
 #include "system/action_manager.h"
 #include "system/http_server.h"
+#include "ui/toast.h"
 #include "ui/ui.h"
 #include "util/i18n.h"
 #include "version.h"
 #include "wifi_manager.h"
+#include <esp_https_ota.h>
+#include <esp_ota_ops.h>
 #include <esp_system.h>
 #include <time.h>
 
 static const char* TAG = "main";
 
-void resetSD() {
+void storage_init() {
     long long int cardSize = eom_hal_get_sd_size_bytes();
 
     if (cardSize == -1) {
@@ -123,12 +126,58 @@ static void main_task(void* args) {
     }
 }
 
+esp_err_t run_boot_diagnostic(void) {
+    esp_err_t err = ESP_ERR_INVALID_ARG;
+    esp_ota_img_states_t ota_state = ESP_OTA_IMG_UNDEFINED;
+
+    const esp_partition_t* configured = esp_ota_get_boot_partition();
+    const esp_partition_t* running = esp_ota_get_running_partition();
+
+    if (configured != running) {
+        ESP_LOGW(
+            TAG,
+            "Configured OTA boot partition at offset 0x%08" PRIx32
+            ", but running from offset 0x%08" PRIx32,
+            configured->address,
+            running->address
+        );
+        ESP_LOGW(
+            TAG,
+            "(This can happen if either the OTA boot data or preferred boot image become corrupted "
+            "somehow.)"
+        );
+    }
+
+    ESP_LOGD(
+        TAG,
+        "Running partition type %d subtype %d (offset 0x%08" PRIx32 ")",
+        running->type,
+        running->subtype,
+        running->address
+    );
+
+    if (esp_ota_get_state_partition(running, &ota_state) == ESP_OK) {
+        if (ota_state == ESP_OTA_IMG_PENDING_VERIFY) {
+            // if (diagnostic_is_ok) {
+            ESP_LOGI(TAG, "Diagnostics completed successfully! Continuing execution ...");
+            esp_ota_mark_app_valid_cancel_rollback();
+            err = ESP_OK;
+            // } else {
+            // ESP_LOGE(TAG, "Diagnostics failed! Start rollback to the previous version ...");
+            // esp_ota_mark_app_invalid_rollback_and_reboot();
+            // }
+        }
+    }
+
+    return err;
+}
+
 void app_main() {
     TickType_t boot_tick = xTaskGetTickCount();
 
     eom_hal_init();
     ui_init();
-    resetSD(); // TODO: Make this storage_init();
+    storage_init();
     console_init();
     http_server_init();
     wifi_manager_init();
@@ -147,6 +196,14 @@ void app_main() {
     printf("Maus-Tec presents: Edge-o-Matic 3000\n");
     printf("Version: %s\n", EOM_VERSION);
     printf("EOM-HAL Version: %s\n", eom_hal_get_version());
+
+    // Post-Update Diagnostics
+    esp_err_t dxerr = run_boot_diagnostic();
+    if (dxerr != ESP_ERR_INVALID_ARG) {
+        if (dxerr == ESP_OK) {
+            ui_toast("%s\n%s", _("Update complete."), EOM_VERSION);
+        }
+    }
 
     // Go to the splash page:
     ui_open_page(&SPLASH_PAGE, NULL);
@@ -177,7 +234,7 @@ void app_main() {
     }
 
     // Initialize Action Manager
-    action_manager_load_all_drivercfg();
+    action_manager_load_all_plugins();
 
     // Final delay on encoder colors.
     vTaskDelayUntil(&boot_tick, 1000UL / portTICK_PERIOD_MS);

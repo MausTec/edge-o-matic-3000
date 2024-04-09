@@ -1,7 +1,8 @@
 #include "system/action_manager.h"
+#include "actions/index.h"
 #include "cJSON.h"
 #include "eom-hal.h"
-#include "maus_bus_drivercfg.h"
+#include "mt_actions.h"
 #include "system/event_manager.h"
 #include "util/list.h"
 #include "util/strcase.h"
@@ -12,15 +13,16 @@
 
 static const char* TAG = "system:action_manager";
 
-static list_t _drivercfgs = LIST_DEFAULT();
+static list_t _plugins = LIST_DEFAULT();
 
+#define PLUGIN_DIR "plugins"
 #define DRIVERCFG_DIR "drivercfg"
 
-void action_manager_load_all_drivercfg(void) {
+void action_manager_load_all_plugins(void) {
     DIR* d;
     struct dirent* dir;
     char* path = NULL;
-    asiprintf(&path, "%s/%s", eom_hal_get_sd_mount_point(), DRIVERCFG_DIR);
+    asiprintf(&path, "%s/%s", eom_hal_get_sd_mount_point(), PLUGIN_DIR);
     if (path == NULL) return;
 
     d = opendir(path);
@@ -33,7 +35,7 @@ void action_manager_load_all_drivercfg(void) {
                 asiprintf(&file, "%s/%s", path, dir->d_name);
                 if (file == NULL) break;
 
-                action_manager_load_drivercfg(file);
+                action_manager_load_plugin(file);
                 free(file);
             }
         }
@@ -44,12 +46,12 @@ void action_manager_load_all_drivercfg(void) {
     free(path);
 }
 
-void action_manager_load_drivercfg(const char* path) {
-    ESP_LOGI(TAG, "Loading drivercfg: %s", path);
+void action_manager_load_plugin(const char* path) {
+    ESP_LOGI(TAG, "Loading plugin: %s", path);
     long fsize;
     size_t result;
     char* buffer = NULL;
-    cJSON* drivercfg_json = NULL;
+    cJSON* plugin_json = NULL;
     FILE* f = fopen(path, "r");
 
     if (!f) {
@@ -72,29 +74,29 @@ void action_manager_load_drivercfg(const char* path) {
         goto cleanup;
     }
 
-    drivercfg_json = cJSON_ParseWithLength(buffer, fsize);
+    plugin_json = cJSON_ParseWithLength(buffer, fsize);
 
-    if (drivercfg_json == NULL) {
+    if (plugin_json == NULL) {
         goto cleanup;
     }
 
-    maus_bus_drivercfg_t* drivercfg = NULL;
-    maus_bus_driver_load(&drivercfg, drivercfg_json);
+    mta_plugin_t* plugin = NULL;
+    mta_load(&plugin, plugin_json);
 
-    if (drivercfg == NULL) {
+    if (plugin == NULL) {
         goto cleanup;
     }
 
-    list_add(&_drivercfgs, (void*)drivercfg);
+    list_add(&_plugins, (void*)plugin);
 
 cleanup:
-    cJSON_Delete(drivercfg_json);
+    cJSON_Delete(plugin_json);
     free(buffer);
     fclose(f);
 }
 
 void action_manager_dispatch_event(const char* event, int arg) {
-    maus_bus_drivercfg_t* drivercfg = NULL;
+    mta_plugin_t* plugin = NULL;
 
     const char* evt_strip = strstr("EVT_", event);
     if (strncmp("EVT_", event, 4)) return;
@@ -107,8 +109,8 @@ void action_manager_dispatch_event(const char* event, int arg) {
 
     str_to_camel_case(evt_name, evt_name_len + 1, event + 4);
 
-    list_foreach(_drivercfgs, drivercfg) {
-        maus_bus_driver_event_invoke(drivercfg, evt_name, arg);
+    list_foreach(_plugins, plugin) {
+        mta_event_invoke(plugin, evt_name, arg);
     }
 
     free(evt_name);
@@ -124,5 +126,6 @@ void action_manager_event_handler(
 }
 
 void action_manager_init(void) {
+    actions_register_all();
     event_manager_register_handler(EVT_ALL, action_manager_event_handler, NULL);
 }
