@@ -6,6 +6,7 @@
 #include "esp_https_server.h"
 #include "esp_log.h"
 #include "esp_system.h"
+#include "esp_wifi.h"
 #include "system/websocket_handler.h"
 #include "util/fs.h"
 
@@ -88,7 +89,7 @@ static httpd_handle_t start_webserver(void) {
     } else {
         ESP_LOGI(
             TAG,
-            "Starting SSL server on port: %d (%d bytes free)",
+            "Starting SSL server on port: %d (%ld bytes free)",
             config.server_port,
             esp_get_free_heap_size()
         );
@@ -133,7 +134,7 @@ static httpd_handle_t start_webserver(void) {
             ESP_LOGI(TAG, "%s", ssl_config.prvtkey_pem);
         }
 
-        ESP_LOGI(TAG, "SSL Certificates provisioned. (%d bytes free)", esp_get_free_heap_size());
+        ESP_LOGI(TAG, "SSL Certificates provisioned. (%ld bytes free)", esp_get_free_heap_size());
         err = httpd_ssl_start(&server, &ssl_config);
 
         free(ssl_config.cacert_pem);

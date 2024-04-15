@@ -6,14 +6,14 @@
 #define LOVENSE_CMD_MAX_LEN 32
 
 static const char* TAG = "drivers:lovense";
-static xSemaphoreHandle discover_sem;
+static SemaphoreHandle_t discover_sem;
 
 struct lovense_driver_state {
     char pending_tx[LOVENSE_CMD_MAX_LEN];
     int pending_len;
     bool pending_tx_flag;
-    xSemaphoreHandle tx_mutex;
-    xSemaphoreHandle notify_sem;
+    SemaphoreHandle_t tx_mutex;
+    SemaphoreHandle_t notify_sem;
     struct ble_gatt_chr tx_chr;
     struct ble_gatt_chr rx_chr;
 };
@@ -23,7 +23,7 @@ static void set_speed(peer_t* peer, uint8_t speed);
 static void sendf(peer_t* peer, const char* fmt, ...) {
     struct lovense_driver_state* state = (struct lovense_driver_state*)peer->driver_state;
 
-    if (xSemaphoreTake(state->tx_mutex, 1000UL / portTICK_RATE_MS)) {
+    if (xSemaphoreTake(state->tx_mutex, 1000UL / portTICK_PERIOD_MS)) {
         va_list argptr;
         va_start(argptr, fmt);
         state->pending_len = vsniprintf(state->pending_tx, LOVENSE_CMD_MAX_LEN, fmt, argptr);
@@ -55,7 +55,7 @@ static void tick(peer_t* peer) {
     struct lovense_driver_state* state = (struct lovense_driver_state*)peer->driver_state;
     if (state->pending_len == 0 || state->pending_tx_flag) return;
 
-    if (xSemaphoreTake(state->tx_mutex, 1000UL / portTICK_RATE_MS)) {
+    if (xSemaphoreTake(state->tx_mutex, 1000UL / portTICK_PERIOD_MS)) {
         ESP_LOGI(TAG, "BLE Driver sendf: %s, %d bytes", state->pending_tx, state->pending_len);
         char buffer[state->pending_len + 1];
         int len = state->pending_len;
@@ -87,7 +87,7 @@ static void _wait_for_notify(peer_t* peer) {
     return; // idk where the notifications come from @todo
     struct lovense_driver_state* state = (struct lovense_driver_state*)peer->driver_state;
 
-    if (!xSemaphoreTake(state->notify_sem, 1000 / portTICK_RATE_MS)) {
+    if (!xSemaphoreTake(state->notify_sem, 1000 / portTICK_PERIOD_MS)) {
         ESP_LOGW(TAG, "Timeout waiting for notify!");
     }
 }

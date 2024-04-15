@@ -2,6 +2,7 @@
 #include "eom-hal.h"
 #include "esp_log.h"
 #include "ui/ui.h"
+#include <assert.h>
 #include <stddef.h>
 
 static const char* TAG = "basic:graphics";

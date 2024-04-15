@@ -104,24 +104,30 @@ static command_err_t cmd_system_tasklist(int argc, char** argv, console_t* conso
     TaskHandle_t th = NULL;
     size_t waste = 0;
 
-    fprintf(console->out, "ID  Task Name            High W STAT\n");
+    // DEPRECATED: pxTaskGetNext was changed in IDF5 to possibly require
+    // CONFIG_FREERTOS_ENABLE_TASK_SNAPSHOT or similar. This routine includes a note, however, that
+    // it should only be run when FreeRTOS is stopped, since it does not acquire locks. So, we'll
+    // skip it here.
 
-    for (size_t i = 0; i < n; i++) {
-        th = pxTaskGetNext(th);
-        if (th == NULL) break;
-        TaskStatus_t status;
-        size_t highw = 0;
-        vTaskGetInfo(th, &status, &highw, eInvalid);
-        waste += highw;
-        fprintf(
-            console->out,
-            "%-3d %-20s %-6d %02d\n",
-            i,
-            status.pcTaskName,
-            highw,
-            status.eCurrentState
-        );
-    }
+    // fprintf(console->out, "ID  Task Name High W
+    // STAT\n");
+
+    // for (size_t i = 0; i < n; i++) {
+    //     th = pxTaskGetNext(th);
+    //     if (th == NULL) break;
+    //     TaskStatus_t status;
+    //     size_t highw = 0;
+    //     vTaskGetInfo(th, &status, &highw, eInvalid);
+    //     waste += highw;
+    //     fprintf(
+    //         console->out,
+    //         "%-3d %-20s %-6d %02d\n",
+    //         i,
+    //         status.pcTaskName,
+    //         highw,
+    //         status.eCurrentState
+    //     );
+    // }
 
     fprintf(console->out, "-------------------------------\n");
     fprintf(console->out, "Wasted memory: %d\n", waste);

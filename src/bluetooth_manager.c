@@ -10,6 +10,7 @@
 #include "nimble/nimble_port.h"
 #include "nimble/nimble_port_freertos.h"
 #include "services/gap/ble_svc_gap.h"
+#include <nimble/hci_common.h>
 
 static const char* TAG = "bluetooth_manager";
 static bluetooth_manager_scan_callback_t _scan_callback;
@@ -43,7 +44,6 @@ void bluetooth_manager_init(void) {
 
     _ble_connect_sem = xSemaphoreCreateBinary();
 
-    esp_nimble_hci_and_controller_init();
     nimble_port_init();
 
     ble_hs_cfg.reset_cb = blecent_on_reset;
@@ -73,7 +73,6 @@ void bluetooth_manager_deinit(void) {
 
     if (rc == 0) {
         nimble_port_deinit();
-        esp_nimble_hci_and_controller_deinit();
     } else {
         ESP_LOGE(TAG, "Nimble port stop failed, rc = %d", rc);
         return;

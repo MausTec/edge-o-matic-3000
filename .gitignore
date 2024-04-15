@@ -32,3 +32,5 @@ platformio.vcxproj
 platformio.vcxproj.filters
 platformio.vcxproj.user
 platformio.log
+
+managed_components/

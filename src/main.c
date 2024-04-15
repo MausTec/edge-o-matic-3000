@@ -88,7 +88,7 @@ static void loop_task(void* args) {
     if (millis() - lastTick > 1000 / 15) {
         ESP_LOGD(
             TAG,
-            "%%heap=%d, min=%d, internal=%d",
+            "%%heap=%ld, min=%ld, internal=%ld",
             esp_get_free_heap_size(),
             esp_get_minimum_free_heap_size(),
             esp_get_free_internal_heap_size()

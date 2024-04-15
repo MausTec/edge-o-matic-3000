@@ -1,5 +1,6 @@
 #include "util/list.h"
 #include "esp_log.h"
+#include <stdlib.h>
 
 static const char* TAG = "list";
 
@@ -27,7 +28,7 @@ list_node_t* list_add(list_t* list, void* data) {
 
 void list_remove(list_t* list, void* data) {
     ESP_LOGI(TAG, "Remove from list: %p", data);
-    
+
     list_node_t* ptr = list->_first;
     list_node_t* prev = NULL;
 

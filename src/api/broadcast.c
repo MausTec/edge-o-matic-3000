@@ -4,6 +4,7 @@
 #include "eom-hal.h"
 #include "orgasm_control.h"
 #include "system/websocket_handler.h"
+#include <esp_timer.h>
 
 void api_broadcast_config(void) {
     cJSON* payload = cJSON_CreateObject();

@@ -9,6 +9,7 @@
 #include "ui/toast.h"
 #include "util/i18n.h"
 #include "version.h"
+#include <esp_timer.h>
 
 #define AXIS_WIDTH 3
 #define CHART_WIDTH (EOM_DISPLAY_WIDTH - AXIS_WIDTH)

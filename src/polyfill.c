@@ -19,5 +19,5 @@ long map(long x, long in_min, long in_max, long out_min, long out_max) {
 }
 
 void delay(long ms) {
-    vTaskDelay(ms / portTICK_RATE_MS);
+    vTaskDelay(ms / portTICK_PERIOD_MS);
 }

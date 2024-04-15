@@ -7,12 +7,12 @@ extern "C" {
 
 #include "system/events.h"
 
-#define EVENT_DECL(evt) const char* evt
+#define EVENT_DECL(evt) extern const char* evt
 #define EVENT_DEFINE(evt) const char* evt = #evt
 
 #define EVENT_HANDLER_ARG_TYPE void*
 
-const char* EVT_ALL;
+extern const char* EVT_ALL;
 EVENTS(EVENT_DECL);
 
 /**

@@ -315,8 +315,16 @@ esp_err_t update_manager_update_from_web(um_progress_callback_t* progress_cb, vo
             .crt_bundle_attach = esp_crt_bundle_attach,
         };
 
+        esp_https_ota_config_t ota_config = {
+            .http_config = &config,
+            .bulk_flash_erase = false,
+            .http_client_init_cb = NULL,
+            .max_http_request_size = 4096,
+            .partial_http_download = true,
+        };
+
         ESP_LOGI(TAG, "Downloading update from: %s", config.url);
-        err = esp_https_ota(&config);
+        err = esp_https_ota(&ota_config);
     }
 
     cJSON_Delete(data);
