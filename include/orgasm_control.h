@@ -69,6 +69,7 @@ oc_bool_t orgasm_control_is_post_orgasm_reached(void);
 void orgasm_control_permit_orgasm(int seconds);
 void orgasm_control_lock_menu(oc_bool_t value);
 long orgasm_control_clench_detect(long p_check);
+bool post_orgasm_mode_milk_o_matic(void);
 
 #ifdef __cplusplus
 }
