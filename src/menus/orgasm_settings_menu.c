@@ -108,11 +108,11 @@ static const ui_input_numeric_t DENIALS_COUNT_TO_ORGASM_INPUT = {
 
 static const ui_input_numeric_t MILK_O_MATIC_REST_DURATION_INPUT = {
     UnsignedInputValues(
-        "Milk-o-matic resting duration", &Config.milk_o_matic_rest_duration_seconds, UNIT_SECONDS, on_config_save
+        "Milk-o-matic resting duration", &Config.milk_o_matic_rest_duration_minutes, UNIT_MINUTES, on_config_save
     ),
-    .max = 1800,
+    .max = 1440,
     .step = 1,
-    .input.help = MILK_O_MATIC_REST_DURATION_SECONDS_HELP
+    .input.help = MILK_O_MATIC_REST_DURATION_MINUTES_HELP
 };
 
 static const ui_input_toggle_t RANDOM_ORGASM_TRIGGERS_INPUT = {

@@ -162,8 +162,8 @@ struct config {
     bool post_orgasm_menu_lock;
     // Edging needed to permit orgasm (Max value if ramdom selected).
     int denials_count_to_orgasm;
-    // milk_o_matic rest period in seconds before restart edge+orgasm
-    int milk_o_matic_rest_duration_seconds;
+    // milk_o_matic rest period in minutes before restart edge+orgasm
+    int milk_o_matic_rest_duration_minutes;
     // random timer and denial_count to orgasm from set values. minimum is 1/2
     bool random_orgasm_triggers;
     // how many orgasms before stopping in milk-o-matic

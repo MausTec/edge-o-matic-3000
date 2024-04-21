@@ -96,8 +96,9 @@ static void _evt_orgasm_start(
 ) {
     if ( orgasm_control_is_permit_orgasm_reached() ) {
         post_orgasm_state.detected_orgasm = ocTRUE;
+        post_orgasm_state.orgasm_count += 1;
     }
-    post_orgasm_state.orgasm_count += 1;
+    // if not permited then you got a ruined orgasm
 }
 
 #define update_check(variable, value)                                                              \
@@ -391,7 +392,7 @@ bool post_orgasm_mode_milk_o_matic(void){
         // now give a break before restarting edging
         if (esp_timer_get_time() / 1000UL > post_orgasm_state.post_orgasm_start_millis +
                                             post_orgasm_state.post_orgasm_duration_millis +
-                                            (Config.milk_o_matic_rest_duration_seconds * 1000)) {
+                                            (Config.milk_o_matic_rest_duration_minutes * 60 * 1000)) {
             // Rest period is finished. Reset variables for next round
             post_orgasm_state.auto_edging_start_millis = (esp_timer_get_time() / 1000UL);
             post_orgasm_state.post_orgasm_start_millis = 0;

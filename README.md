@@ -62,7 +62,7 @@ and is automatically generated. Here is a quick summary of config variables:
 |`max_clench_duration_ms`|Int|3000|Duration the clench detector can raise arousal if clench detector turned on in edging session.|
 |`clench_time_threshold_ms`|Int|900|Threshold variable that is milliseconds counts to detect the start of clench.|
 |`denials_count_to_orgasm`|Int|10|How many denials before permiting an orgasm, if this mode is chosen.|
-|`milk_o_matic_rest_duration_seconds`|Int|60|How long to rest before restarting an other round of Denial_count edging.|
+|`milk_o_matic_rest_duration_minutes`|Int|60|How long to rest before restarting an other round of Denial_count edging.|
 |`random_orgasm_triggers`|Boolean|false|Randomize Edge timer and Denial count to minimum of 1/2 of their values.|
 |`post_orgasm_mode`|PostOrgasmMode|Timer|Timer, Denial_count and Milk-O-Matic. Random is a choice between Timer and Milk-o-matic. See documentation for more details.|
 |`max_orgasms`|Int|4|Milk-o-matic maximum orgasms before turning off.|
