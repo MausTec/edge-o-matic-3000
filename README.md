@@ -64,8 +64,9 @@ and is automatically generated. Here is a quick summary of config variables:
 |`denials_count_to_orgasm`|Int|10|How many denials before permiting an orgasm, if this mode is chosen.|
 |`milk_o_matic_rest_duration_minutes`|Int|60|How long to rest before restarting an other round of Denial_count edging.|
 |`random_orgasm_triggers`|Boolean|false|Randomize Edge timer and Denial count to minimum of 1/2 of their values.|
-|`post_orgasm_mode`|PostOrgasmMode|Timer|Timer, Denial_count and Milk-O-Matic. Random is a choice between Timer and Milk-o-matic. See documentation for more details.|
+|`post_orgasm_mode`|PostOrgasmMode|Default|Timer, Denial_count and Milk-O-Matic. Random is a choice between Timer and Milk-o-matic. See documentation for more details.|
 |`max_orgasms`|Int|4|Milk-o-matic maximum orgasms before turning off.|
+|`orgasm_triggers`|OrgasmTriggers|Timer|Timer, Edge_count, Now, Random triggers. See documentation for more details.|
 
 
 \* AzureFang refers to a common wireless technology that is blue and involves chewing face-rocks. However, the
@@ -84,13 +85,20 @@ and is automatically generated. Here is a quick summary of config variables:
 |3|Enhancement|Vibrator speed ramps up as arousal increases, holding a peak for ramp_time.|
 |0|Global Sync|When set on secondary vibrators, they will follow the primary vibrator speed.|
 
+### Orgasm Triggers:
+|ID|Name|Description|
+|---|---|---|
+|0|Timer|Needs to reach specified time before permitting orgasm.|
+|1|Edge Count|Needs to reach edge count before permitting orgasm.|
+|2|Now|Permits an orgasm at start of session without edging.|
+|3|Random_triggers|Random choice of orgasm trigger based on the weight of each.|
+
 ### Post Orgasm Modes:
 |ID|Name|Description|
 |---|---|---|
-|0|Denial_count|How many Denials before permiting an orgasm. Value set with - "Denials to permit orgasm" in the Orgasm Menu|
-|1|Timer|How long to edge before permiting an orgasm. Value set with - "Edge Duration Minutes" in the Orgasm Menu|
-|2|Milk_o_matic|Cycles in Denial_count mode after each orgasm. Repeats until max_orgasms reached|
-|3|Random_mode|Random choice Timer or milk-o-matic before orgasm. For best result choose "Edge Duration Minutes" = 60 min and "Denials to permit orgasm" = 20. the idea is not knowing if you will have an 1 hours tease or multiple orgasm within that same 1 hour. Max_orgasms stops the session after it's reached.|
+|0|Default|Does the post orgasm duration timer and finishes the session.|
+|1|Milk_o_matic|Repeats a session after each orgasm until max_orgasms reached|
+|2|Random_mode|Random choice of post orgasm mode based on the weight of each mode.|
 
 ### post_orgasm_duration_seconds:
 |Seconds|Description|

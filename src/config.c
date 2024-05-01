@@ -52,7 +52,8 @@ CONFIG_DEFS {
     CFG_BOOL(use_average_values, false);
     CFG_NUMBER(denials_count_to_orgasm, 10);
     CFG_NUMBER(milk_o_matic_rest_duration_minutes, 10);
-    CFG_ENUM(post_orgasm_mode, post_orgasm_mode_t, Timer);
+    CFG_ENUM(orgasm_triggers, orgasm_triggers_t, Timer);
+    CFG_ENUM(post_orgasm_mode, post_orgasm_mode_t, Default);
     CFG_BOOL(random_orgasm_triggers, false);
     CFG_NUMBER(max_orgasms, 4);
     

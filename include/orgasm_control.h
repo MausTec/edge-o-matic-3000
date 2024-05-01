@@ -19,6 +19,16 @@ typedef enum orgasm_output_mode {
     _OC_MODE_ERROR = -1
 } orgasm_output_mode_t;
 
+typedef enum orgasm_control_state {
+    EDGING,
+    EDGING_ORGASM,
+    ORGASM_IS_PERMITED,
+    POST_ORGASM,
+    SHUTDOWN,
+    RESTART,
+    MANUAL
+} orgasm_control_state_t;
+
 typedef enum oc_bool {
     ocFALSE,
     ocTRUE,

@@ -62,6 +62,7 @@ extern "C" {
 #define RANDOM_ORGASM_TRIGGERS_HELP _HELPSTR("Randomize Edge timer and Denial count to minimum of 1/2 of their values.")
 #define POST_ORGASM_MODE_HELP _HELPSTR("Timer, Denial_count and Milk-O-Matic. Random is a choice between Timer and Milk-o-matic. See documentation for more details.")
 #define MAX_ORGASMS_HELP _HELPSTR("Milk-o-matic maximum orgasms before turning off.")
+#define ORGASM_TRIGGERS_HELP _HELPSTR("Randomly choose a trigger based on weight.")
 
 #ifdef __cplusplus
 }
