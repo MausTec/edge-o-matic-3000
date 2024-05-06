@@ -15,7 +15,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
-#include "modules/orgasm_trigger_timer.h"
+#include "orgasm_trigger_control.h"
 #include "post_orgasm_control.h"
 
 static const char* TAG = "orgasm_control";
@@ -26,15 +26,7 @@ static const char* orgasm_output_mode_str[] = {
     "ORGASM_MODE",
 };
 
-static const char* orgasm_control_state_str[] = {
-    "EDGING",
-    "EDGING_ORGASM",
-    "ORGASM_IS_PERMITED",
-    "POST_ORGASM",
-    "SHUTDOWN",
-    "RESTART",
-    "MANUAL"
-};
+session_t session_state;
 
 static struct {
     orgasm_control_state_t state;
@@ -44,7 +36,8 @@ static struct {
     float motor_speed;
     event_handler_node_t* _h_orgasm_is_permited;
     event_handler_node_t* _h_orgasm_control_shutdown;
-    event_handler_node_t* _h_orgasm_control_restart;
+    event_handler_node_t* _h_orgasm_control_session_start;
+    event_handler_node_t* _h_orgasm_control_session_setup;
     event_handler_node_t* _h_orgasm;
 } orgasm_control;
 
@@ -86,14 +79,14 @@ static struct {
 } clench_state;
 
 volatile static struct {
-    uint8_t denial_count;
-    event_handler_node_t* _h_denial;
-} denial_state = { 0 };
+    uint8_t edge_count;
+    event_handler_node_t* _h_edge_count;
+} edge_state = { 0 };
 
 static void _evt_orgasm_denial(
     const char* evt, EVENT_HANDLER_ARG_TYPE eap, int eai, EVENT_HANDLER_ARG_TYPE hap
 ) {
-    denial_state.denial_count += 1;
+    edge_state.edge_count += 1;
 }
 
 static void _evt_orgasm_is_permited(
@@ -114,10 +107,16 @@ static void _evt_orgasm_start(
     // if not permited then you got a ruined orgasm 
 }
 
-static void _evt_orgasm_control_restart(
+static void _evt_orgasm_control_session_start(
     const char* evt, EVENT_HANDLER_ARG_TYPE eap, int eai, EVENT_HANDLER_ARG_TYPE hap
 ) {
-    orgasm_control.state = RESTART;
+    orgasm_control.state = SESSION_START;
+}
+
+static void _evt_orgasm_control_session_setup(
+    const char* evt, EVENT_HANDLER_ARG_TYPE eap, int eai, EVENT_HANDLER_ARG_TYPE hap
+) {
+    orgasm_control.state = SESSION_SETUP;
 }
 
 static void _evt_orgasm_control_shutdown(
@@ -153,8 +152,8 @@ void orgasm_control_init(void) {
     clench_state.clench_pressure_threshold = 4096;
 
     running_average_init(&arousal_state.average, Config.pressure_smoothing);
-    if (denial_state._h_denial == NULL) {
-        denial_state._h_denial =
+    if (edge_state._h_edge_count == NULL) {
+        edge_state._h_edge_count =
             event_manager_register_handler(EVT_ORGASM_DENIAL, &_evt_orgasm_denial, NULL);
     }
     if (orgasm_control._h_orgasm == NULL) {
@@ -167,17 +166,21 @@ void orgasm_control_init(void) {
     }
     if (orgasm_control._h_orgasm_is_permited == NULL) {
         orgasm_control._h_orgasm_is_permited = 
-            event_manager_register_handler(EVT_ORGASM_IS_PERMITED, &_evt_orgasm_is_permited, NULL);
+            event_manager_register_handler(EVT_ORGASM_CONTROL_ORGASM_IS_PERMITED, &_evt_orgasm_is_permited, NULL);
     }
     if (orgasm_control._h_orgasm_control_shutdown == NULL){
         orgasm_control._h_orgasm_control_shutdown =
             event_manager_register_handler(EVT_ORGASM_CONTROL_SHUTDOWN, &_evt_orgasm_control_shutdown, NULL);
     }
-    if (orgasm_control._h_orgasm_control_restart == NULL){
-        orgasm_control._h_orgasm_control_restart =
-            event_manager_register_handler(EVT_ORGASM_CONTROL_RESTART, &_evt_orgasm_control_restart, NULL);
+    if (orgasm_control._h_orgasm_control_session_start == NULL){
+        orgasm_control._h_orgasm_control_session_start =
+            event_manager_register_handler(EVT_ORGASM_CONTROL_SESSION_START, &_evt_orgasm_control_session_start, NULL);
     }
-    orgasm_trigger_timer_init();
+    if (orgasm_control._h_orgasm_control_session_setup == NULL){
+        orgasm_control._h_orgasm_control_session_setup =
+            event_manager_register_handler(EVT_ORGASM_CONTROL_SESSION_SETUP, &_evt_orgasm_control_session_setup, NULL);
+    }
+    orgasm_trigger_init();
     post_orgasm_init();
 }
 
@@ -313,7 +316,8 @@ static void orgasm_control_updateMotorSpeed() {
 }
 
 
-// Orgasm modes State machine dispatching events to appropriate modules 
+// Orgasm modes State machine dispatching events to appropriate modules
+// State is EVT_ driven 
 static void orgasm_control_manage_orgasm_modes() {
     const vibration_mode_controller_t* orgasm_controller = &RampStopController;
 
@@ -332,17 +336,40 @@ static void orgasm_control_manage_orgasm_modes() {
 
     if (output_state.output_mode == OC_ORGASM_MODE){ 
         orgasm_controller->tick(output_state.motor_speed, arousal_state.arousal);
+
         if (orgasm_control.state == EDGING || orgasm_control.state == MANUAL) {
             // just started edging+orgams mode
-            // initialize orgasm trigger modules
-            event_manager_dispatch(EVT_ORGASM_TRIGGER_SET, NULL, 0);
-            orgasm_control.state = EDGING_ORGASM;
-            orgasm_control.edging_start_millis = (esp_timer_get_time() / 1000UL);
+            // initialize orgasm trigger and post orgasm modules
+            orgasm_control.state = SESSION_SETUP;
         }
 
+        // starting a egde-o-matic edging-orgasm mode
+        // or received SESSION_SETUP EVT
+        if (orgasm_control.state == SESSION_SETUP) {
+
+            // Set the orgasm triger and post orgasm mode
+            session_state.orgasm_trigger = orgasm_trigger_random_select(Config.orgasm_triggers);
+            session_state.post_orgasm_mode = post_orgasm_mode_random_select(Config.post_orgasm_mode);
+
+            orgasm_control.edging_start_millis = (esp_timer_get_time() / 1000UL);
+            orgasm_control.state = SESSION_START;
+        }
+
+        // starting a egde-o-matic edging-orgasm mode
+        // or received SESSION_START EVT
+        if (orgasm_control.state == SESSION_START) {
+            event_manager_dispatch(EVT_ORGASM_CONTROL_ORGASM_TRIGGER_SET, NULL, session_state.orgasm_trigger);
+            event_manager_dispatch(EVT_ORGASM_CONTROL_POST_ORGASM_SET, NULL, session_state.post_orgasm_mode);
+            if (!output_state.control_motor){
+                orgasm_control_resume_control();    
+            }
+            orgasm_control.state = EDGING_ORGASM;
+        }
+
+        // Run the main edging loop until orgasm is permited
         if (orgasm_control.state == EDGING_ORGASM) {
             // RUN THE ORGASM TRIGGER MODULES
-            event_manager_dispatch(EVT_IS_ORGASM_PERMITED, NULL, 0);
+            event_manager_dispatch(EVT_ORGASM_CONTROL_IS_ORGASM_PERMITED, NULL, 0);
         
             // Update LED for Arousal Color
             float arousal_perc = orgasm_control_get_arousal_percent() * 255.0f;
@@ -360,7 +387,8 @@ static void orgasm_control_manage_orgasm_modes() {
             }
         }
     
-        // Controling Motor to give orgasm is not a module
+        // Orgasm is permit EVT was received
+        // Controling Motor to give orgasm is controled by main program. This is not a module
         if (orgasm_control.state == ORGASM_IS_PERMITED) {
             if (output_state.control_motor) {
                 orgasm_control_pause_control(); // make sure orgasm is now possible
@@ -371,10 +399,13 @@ static void orgasm_control_manage_orgasm_modes() {
             update_check(output_state.motor_speed, orgasm_controller->increment() );
             event_manager_dispatch(EVT_SPEED_CHANGE, NULL, output_state.motor_speed);   
         }
-    
+        
+        
+        // Orgasm start EVT was detected
+        // RUN POST ORGASM MODULES
         if (orgasm_control.state == POST_ORGASM) {
-            // RUN POST ORGASM MODULES
-            event_manager_dispatch(EVT_POST_ORGASM_START, NULL, output_state.motor_speed);
+            
+            event_manager_dispatch(EVT_ORGASM_CONTROL_POST_ORGASM_START, NULL, output_state.motor_speed);
             
             // Lock menu if turned on
             if (Config.post_orgasm_menu_lock && !orgasm_control.menu_is_locked) {
@@ -385,21 +416,17 @@ static void orgasm_control_manage_orgasm_modes() {
             arousal_state.update_flag = ocTRUE;
         }
 
+        // Received a shutdown EVT request
         if (orgasm_control.state == SHUTDOWN) {
             // post orgasm modes has finished. Turn off everything and return to manual mode
             orgasm_control.menu_is_locked = ocFALSE;
-            orgasm_control.orgasm_count = 0;
-            orgasm_control.state = EDGING;
+            orgasm_control.state = MANUAL;
             update_check(output_state.motor_speed, 0 );
             event_manager_dispatch(EVT_SPEED_CHANGE, NULL, output_state.motor_speed);
             orgasm_control_set_output_mode(OC_MANUAL_CONTROL);            
         }
-
-        if (orgasm_control.state == RESTART) {
-            orgasm_control.state = EDGING;
-            orgasm_control_resume_control();
-        }
     }
+
 }
 
 /**
@@ -685,7 +712,7 @@ void orgasm_control_resume_control() {
 void orgasm_control_permit_orgasm(int seconds) {
     orgasm_control_set_output_mode(OC_ORGASM_MODE);
     orgasm_control.state = ORGASM_IS_PERMITED;
-    event_manager_dispatch(EVT_ORGASM_IS_PERMITED, NULL, seconds);
+    event_manager_dispatch(EVT_ORGASM_CONTROL_ORGASM_IS_PERMITED, NULL, seconds);
 }
 
 oc_bool_t orgasm_control_is_permit_orgasm_reached() {

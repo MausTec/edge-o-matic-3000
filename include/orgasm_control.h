@@ -20,19 +20,38 @@ typedef enum orgasm_output_mode {
 } orgasm_output_mode_t;
 
 typedef enum orgasm_control_state {
+    MANUAL,
     EDGING,
+    SESSION_SETUP,
+    SESSION_START,
     EDGING_ORGASM,
     ORGASM_IS_PERMITED,
     POST_ORGASM,
-    SHUTDOWN,
-    RESTART,
-    MANUAL
+    SHUTDOWN   
 } orgasm_control_state_t;
+
+static const char* orgasm_control_state_str[] = {
+    "MANUAL",
+    "EDGING",
+    "SESSION_SETUP",
+    "SESSION_START",
+    "EDGING_ORGASM",
+    "ORGASM_IS_PERMITED",
+    "POST_ORGASM",
+    "SHUTDOWN"
+};
 
 typedef enum oc_bool {
     ocFALSE,
     ocTRUE,
 } oc_bool_t;
+
+typedef struct {
+    int orgasm_trigger;
+    int post_orgasm_mode;    
+} session_t;
+
+//extern session_t session_state;
 
 void orgasm_control_init(void);
 void orgasm_control_tick(void);

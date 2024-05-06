@@ -1,19 +1,17 @@
-#include "./post_orgasm_milk_o_matic.h"
-
+#include "post_orgasm_control.h"
 #include "orgasm_control.h"
-#include "system/event_manager.h"
-#include "config.h"
-#include "esp_timer.h"
-#include "eom-hal.h"
-#include "vibration_mode_controller.h"
+
 
 static const char* TAG = "post_orgasm_milk_o_matic";
+
 
 volatile static struct {
     oc_bool_t enabled;
     // Autoedging Time and Post-Orgasm varables
     unsigned long post_orgasm_start_millis;
     unsigned long post_orgasm_duration_millis;
+    post_orgasm_mode_t post_orgasm_mode;
+    event_handler_node_t* _h_post_orgasm_set;
     event_handler_node_t* _h_post_orgasm;
     event_handler_node_t* _h_orgasm;
     uint8_t orgasm_count;
@@ -30,14 +28,13 @@ static void _evt_orgasm_start(
     int orgasm_count,
     EVENT_HANDLER_ARG_TYPE handler_arg
 ) { 
-    if (Config.post_orgasm_mode == Milk_o_matic && post_orgasm_state.enabled == ocFALSE) {
+    if (post_orgasm_state.post_orgasm_mode == Milk_o_matic) {
         post_orgasm_state.post_orgasm_start_millis = (esp_timer_get_time() / 1000UL);
         post_orgasm_state.post_orgasm_duration_millis =
-                (Config.post_orgasm_duration_seconds * 1000);
-        post_orgasm_state.orgasm_count = orgasm_count;
-    }
+                (Config.mom_post_orgasm_duration_seconds * 1000);
+        post_orgasm_state.orgasm_count += 1;
+    } 
 }
-
 
 
 static void _evt_post_orgasm_start(
@@ -47,12 +44,12 @@ static void _evt_post_orgasm_start(
     EVENT_HANDLER_ARG_TYPE handler_arg
 ) {
     const vibration_mode_controller_t* post_orgasm_controller = &RampStopController;
-    if (post_orgasm_state.enabled == ocFALSE ) {
+    if (post_orgasm_state.enabled == false ) {
         // only set on first post_orgasm event
         output_state.motor_speed = motor_speed;
     }
-    if (Config.post_orgasm_mode == Milk_o_matic){
-        post_orgasm_state.enabled = ocTRUE;
+    if (post_orgasm_state.post_orgasm_mode == Milk_o_matic){
+        post_orgasm_state.enabled = true;
         post_orgasm_controller->tick(output_state.motor_speed, 0);
         eom_hal_set_encoder_rgb(255, 0, 0);
 
@@ -76,23 +73,47 @@ static void _evt_post_orgasm_start(
                     // now give a break before restarting edging
                     if (esp_timer_get_time() / 1000UL > post_orgasm_state.post_orgasm_start_millis +
                                                         post_orgasm_state.post_orgasm_duration_millis +
-                                                        (Config.milk_o_matic_rest_duration_minutes * 60 * 1000)) {
+                                                        (Config.milk_o_matic_rest_duration_seconds * 1000)) {
                         // Rest period is finished. Reset variables for next round
-                        post_orgasm_state.enabled = ocFALSE;
-                        event_manager_dispatch(EVT_ORGASM_CONTROL_RESTART, NULL, 0);
+                        post_orgasm_state.enabled = false;
+                        event_manager_dispatch(EVT_ORGASM_CONTROL_SESSION_START, NULL, 0);
                     }
                 } else {
-                    // post orgasm modes has finished. Turn off everything and return to manual mode
-                    post_orgasm_state.enabled = ocFALSE;
-                    event_manager_dispatch(EVT_ORGASM_CONTROL_SHUTDOWN, NULL, 0);
+                    if (!Config.orgasm_session_setup_m_o_m) {
+                        // post orgasm modes has finished. Turn off everything and return to manual mode
+                        post_orgasm_state.enabled = false;
+                        post_orgasm_state.orgasm_count = 0;
+                        event_manager_dispatch(EVT_ORGASM_CONTROL_SHUTDOWN, NULL, 0);
+                    } else {
+                        // Restart session with choosing orgasm_trigger and post orgasm mode (best used with random)
+                        post_orgasm_state.enabled = false;
+                        post_orgasm_state.orgasm_count = 0;
+                        event_manager_dispatch(EVT_ORGASM_CONTROL_SESSION_SETUP, NULL, 0);
+                    }
                 }
             }
         }
+    } else {
+        post_orgasm_state.enabled = false;
+        post_orgasm_state.orgasm_count = 0;
     }
 }
 
+static void _evt_post_orgasm_set(
+    const char* evt, EVENT_HANDLER_ARG_TYPE eap, int post_orgasm_mode, EVENT_HANDLER_ARG_TYPE hap
+) {
+        post_orgasm_state.post_orgasm_mode = post_orgasm_mode;
+}
+
+
 void post_orgasm_milk_o_matic_init(void) {
-    post_orgasm_state.enabled = ocFALSE;
+    post_orgasm_state.enabled = false;
+    post_orgasm_state.orgasm_count = 0;
+    
+    if (post_orgasm_state._h_post_orgasm_set == NULL) {
+        post_orgasm_state._h_post_orgasm_set =
+            event_manager_register_handler(EVT_ORGASM_CONTROL_POST_ORGASM_SET, &_evt_post_orgasm_set, NULL);
+    }
 
     if (post_orgasm_state._h_orgasm == NULL) {
         post_orgasm_state._h_orgasm =
@@ -100,6 +121,6 @@ void post_orgasm_milk_o_matic_init(void) {
     }
     if (post_orgasm_state._h_post_orgasm == NULL) {
         post_orgasm_state._h_post_orgasm =
-            event_manager_register_handler(EVT_POST_ORGASM_START, &_evt_post_orgasm_start, NULL);
+            event_manager_register_handler(EVT_ORGASM_CONTROL_POST_ORGASM_START, &_evt_post_orgasm_start, NULL);
     }
 }

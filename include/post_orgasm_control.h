@@ -15,7 +15,20 @@
 extern "C" {
 #endif
 
+#include "system/event_manager.h"
+#include "esp_timer.h"
+#include "eom-hal.h"
+
+// Post orgasm Modes
+typedef enum post_orgasm_mode {
+    Default,
+    Milk_o_matic,
+    Ruin_orgasm,
+    Random_mode
+} post_orgasm_mode_t;
+
 void post_orgasm_init(void);
+post_orgasm_mode_t post_orgasm_mode_random_select(post_orgasm_mode_t);
 
 #ifdef __cplusplus
 }

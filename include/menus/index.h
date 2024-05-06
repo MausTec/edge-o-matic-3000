@@ -25,6 +25,8 @@ extern const ui_menu_t CONNECTED_ACCESSORIES_MENU;
 extern const ui_menu_t UI_LANGUAGE_MENU;
 
 extern const ui_menu_t EDGING_MODE_MENU;
+extern const ui_menu_t ORGASM_TRIGGERS_MENU;
+extern const ui_menu_t POST_ORGASM_MENU;
 
 #ifdef __cplusplus
 }

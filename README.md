@@ -61,12 +61,8 @@ and is automatically generated. Here is a quick summary of config variables:
 |`post_orgasm_menu_lock`|Boolean|false|Deny access to menu starting after orgasm detected.|
 |`max_clench_duration_ms`|Int|3000|Duration the clench detector can raise arousal if clench detector turned on in edging session.|
 |`clench_time_threshold_ms`|Int|900|Threshold variable that is milliseconds counts to detect the start of clench.|
-|`denials_count_to_orgasm`|Int|10|How many denials before permiting an orgasm, if this mode is chosen.|
-|`milk_o_matic_rest_duration_minutes`|Int|60|How long to rest before restarting an other round of Denial_count edging.|
-|`random_orgasm_triggers`|Boolean|false|Randomize Edge timer and Denial count to minimum of 1/2 of their values.|
-|`post_orgasm_mode`|PostOrgasmMode|Default|Timer, Denial_count and Milk-O-Matic. Random is a choice between Timer and Milk-o-matic. See documentation for more details.|
-|`max_orgasms`|Int|4|Milk-o-matic maximum orgasms before turning off.|
-|`orgasm_triggers`|OrgasmTriggers|Timer|Timer, Edge_count, Now, Random triggers. See documentation for more details.|
+|`post_orgasm_mode`|PostOrgasmMode|Default|Post orgasm modules - Default is post orgasm mode, there is Milk-o-matic, ruin orgasm, Random.|
+|`orgasm_triggers`|OrgasmTriggers|Timer|Orgasm triggers modules - Default is Timer,there is Edge_count, Now, Random triggers.|
 
 
 \* AzureFang refers to a common wireless technology that is blue and involves chewing face-rocks. However, the
@@ -96,9 +92,10 @@ and is automatically generated. Here is a quick summary of config variables:
 ### Post Orgasm Modes:
 |ID|Name|Description|
 |---|---|---|
-|0|Default|Does the post orgasm duration timer and finishes the session.|
+|0|Default|Does the post orgasm duration timer.|
 |1|Milk_o_matic|Repeats a session after each orgasm until max_orgasms reached|
-|2|Random_mode|Random choice of post orgasm mode based on the weight of each mode.|
+|2|ruin|Abruply stops stimulation to ruin orgasm.|
+|3|Random_mode|Random choice of post orgasm mode based on the weight of each mode.|
 
 ### post_orgasm_duration_seconds:
 |Seconds|Description|
