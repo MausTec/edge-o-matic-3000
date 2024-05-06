@@ -1,13 +1,6 @@
-#include "orgasm_control.h"
-#include "system/event_manager.h"
-#include "config.h"
-#include "esp_timer.h"
-#include <math.h>
 #include "orgasm_trigger_control.h"
 
-//static const char* TAG = "orgasm_trigger_timer";
-
-//extern session_t session_state;
+static const char* TAG = "orgasm_trigger_timer";
 
 volatile static struct {
     bool enabled;

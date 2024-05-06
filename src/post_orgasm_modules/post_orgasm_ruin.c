@@ -1,10 +1,9 @@
 #include "post_orgasm_control.h"
-#include "orgasm_control.h"
 
 static const char* TAG = "post_orgasm_ruin";
 
 volatile static struct {
-    oc_bool_t enabled;
+    bool enabled;
     post_orgasm_mode_t post_orgasm_mode;
     event_handler_node_t* _h_post_orgasm_set;
     event_handler_node_t* _h_post_orgasm;

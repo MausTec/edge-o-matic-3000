@@ -18,6 +18,8 @@ extern "C" {
 #include "system/event_manager.h"
 #include "esp_timer.h"
 #include "eom-hal.h"
+#include "config.h"
+#include "vibration_mode_controller.h"
 
 // Post orgasm Modes
 typedef enum post_orgasm_mode {

@@ -1,12 +1,9 @@
 #include "post_orgasm_control.h"
-#include "orgasm_control.h"
 
 static const char* TAG = "post_orgasm_default";
 
-extern session_t session_state;
-
 volatile static struct {
-    oc_bool_t enabled;
+    bool enabled;
     // Autoedging Time and Post-Orgasm varables
     unsigned long post_orgasm_start_millis;
     unsigned long post_orgasm_duration_millis;

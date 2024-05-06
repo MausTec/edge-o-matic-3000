@@ -150,7 +150,7 @@ struct config {
     bool edge_menu_lock;
     // Deny access to menu starting after orgasm detected
     bool post_orgasm_menu_lock;
-    // random timer and denial_count to orgasm from set values. minimum is 1/2
+    // random orgasm triggers if module supports it. Timer and Denial supports it for now
     bool random_orgasm_triggers;
 
 
