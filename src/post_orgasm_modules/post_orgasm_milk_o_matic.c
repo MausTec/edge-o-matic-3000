@@ -4,6 +4,7 @@ static const char* TAG = "post_orgasm_milk_o_matic";
 
 volatile static struct {
     bool enabled;
+    bool orgasm_permited;
     // Autoedging Time and Post-Orgasm varables
     unsigned long post_orgasm_start_millis;
     unsigned long post_orgasm_duration_millis;
@@ -11,6 +12,7 @@ volatile static struct {
     event_handler_node_t* _h_post_orgasm_set;
     event_handler_node_t* _h_post_orgasm;
     event_handler_node_t* _h_orgasm;
+    event_handler_node_t* _h_orgasm_is_permited;
     uint8_t orgasm_count;
 } post_orgasm_state = { 0 };
 
@@ -18,6 +20,13 @@ volatile static struct {
     float motor_speed;
 } output_state;
 
+static void _evt_orgasm_is_permited(
+    const char* evt, EVENT_HANDLER_ARG_TYPE eap, int eai, EVENT_HANDLER_ARG_TYPE hap
+) {
+    if (post_orgasm_state.post_orgasm_mode == Milk_o_matic ) {
+        post_orgasm_state.orgasm_permited = true;
+    }
+}
 
 static void _evt_orgasm_start(
     const char* event,
@@ -25,11 +34,13 @@ static void _evt_orgasm_start(
     int orgasm_count,
     EVENT_HANDLER_ARG_TYPE handler_arg
 ) { 
-    if (post_orgasm_state.post_orgasm_mode == Milk_o_matic) {
+    if (post_orgasm_state.post_orgasm_mode == Milk_o_matic && 
+            post_orgasm_state.orgasm_permited ) {
         post_orgasm_state.post_orgasm_start_millis = (esp_timer_get_time() / 1000UL);
         post_orgasm_state.post_orgasm_duration_millis =
                 (Config.mom_post_orgasm_duration_seconds * 1000);
         post_orgasm_state.orgasm_count += 1;
+        post_orgasm_state.orgasm_permited = false;
     } 
 }
 
@@ -106,6 +117,7 @@ static void _evt_post_orgasm_set(
 void post_orgasm_milk_o_matic_init(void) {
     post_orgasm_state.enabled = false;
     post_orgasm_state.orgasm_count = 0;
+    post_orgasm_state.orgasm_permited = false;
     
     if (post_orgasm_state._h_post_orgasm_set == NULL) {
         post_orgasm_state._h_post_orgasm_set =
@@ -120,4 +132,9 @@ void post_orgasm_milk_o_matic_init(void) {
         post_orgasm_state._h_post_orgasm =
             event_manager_register_handler(EVT_ORGASM_CONTROL_POST_ORGASM_START, &_evt_post_orgasm_start, NULL);
     }
+    if (post_orgasm_state._h_orgasm_is_permited == NULL) {
+        post_orgasm_state._h_orgasm_is_permited =
+            event_manager_register_handler(EVT_ORGASM_CONTROL_ORGASM_IS_PERMITED, &_evt_orgasm_is_permited, NULL);
+    }    
+    
 }
