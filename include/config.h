@@ -34,6 +34,7 @@ enum vibration_mode { RampStop = 1, Depletion = 2, Enhancement = 3, Pattern = 4,
 
 typedef enum vibration_mode vibration_mode_t;
 
+
 /**
  * Main Configuration Struct!
  *
@@ -145,14 +146,65 @@ struct config {
     int clench_time_threshold_ms;
     // Use the clench detector to adjust Arousal
     bool clench_detector_in_edging;
-    // How long to edge before permiting an orgasm
-    int auto_edging_duration_minutes;
-    // How long to stimulate after orgasm detected
-    int post_orgasm_duration_seconds;
     // Deny access to menu starting in the edging session
     bool edge_menu_lock;
     // Deny access to menu starting after orgasm detected
     bool post_orgasm_menu_lock;
+    // random orgasm triggers if module supports it. Timer and Denial supports it for now
+    bool random_orgasm_triggers;
+
+
+    // Timer : default original mode
+    // Edge_count : Will permit orgasm after # denial reached
+    // Now : Permit without delai
+    // Random choose Timer or Edge_count or Now at start of session
+    int orgasm_triggers;
+
+    // default : original Post orgasm mode.
+    // Milk-O-Matic will restart edge+orgasm 
+    // Random choose 
+    // Ruin_orgasm
+    int post_orgasm_mode;
+
+    // orgasm_trigger_timer
+    bool random_timer;
+    int min_timer_seconds;
+    int max_timer_seconds;
+    int random_trigger_timer_weight;
+
+    // edge_denial_trigger
+    bool random_edge_count;
+    int min_edge_count;
+    int max_edge_count;
+    int random_trigger_edge_count_weight;    
+
+// Now trigger
+    int random_trigger_now_weight; 
+
+
+//Post Orgasm default 
+    // How long to stimulate after orgasm detected
+    int post_orgasm_duration_seconds;
+    // the weight associated to the random choice.
+    int random_post_default_weight; 
+    // turn off session and end of post orgasm or restart 
+    bool orgasm_session_setup_post_default; 
+
+// milk_o_matic
+    int milk_o_matic_rest_duration_seconds;
+    // How long to stimulate after orgasm detected
+    int mom_post_orgasm_duration_seconds;
+    int max_orgasms;
+    // the weight associated to the random choice.
+    int random_post_mom_weight;
+    // turn off session and end of post orgasm or restart
+    bool orgasm_session_setup_m_o_m; 
+
+//Ruin orgasm
+    // the weight associated to the random choice.
+    int random_post_ruin_weight; 
+    // turn off session and end of post orgasm or restart 
+    bool orgasm_session_setup_ruin;
 
     //= Internal System Configuration (Update only if you know what you're doing)
 

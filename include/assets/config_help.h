@@ -57,6 +57,8 @@ extern "C" {
 #define POST_ORGASM_MENU_LOCK_HELP _HELPSTR("Deny access to menu starting after orgasm detected.")
 #define MAX_CLENCH_DURATION_MS_HELP _HELPSTR("Duration the clench detector can raise arousal if clench detector turned on in edging session.")
 #define CLENCH_TIME_THRESHOLD_MS_HELP _HELPSTR("Threshold variable that is milliseconds counts to detect the start of clench.")
+#define POST_ORGASM_MODE_HELP _HELPSTR("Post orgasm modules - Default is post orgasm mode, there is Milk-o-matic, ruin orgasm, Random.")
+#define ORGASM_TRIGGERS_HELP _HELPSTR("Orgasm triggers modules - Default is Timer,there is Edge_count, Now, Random triggers.")
 
 #ifdef __cplusplus
 }

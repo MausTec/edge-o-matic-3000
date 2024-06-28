@@ -61,6 +61,8 @@ and is automatically generated. Here is a quick summary of config variables:
 |`post_orgasm_menu_lock`|Boolean|false|Deny access to menu starting after orgasm detected.|
 |`max_clench_duration_ms`|Int|3000|Duration the clench detector can raise arousal if clench detector turned on in edging session.|
 |`clench_time_threshold_ms`|Int|900|Threshold variable that is milliseconds counts to detect the start of clench.|
+|`post_orgasm_mode`|PostOrgasmMode|Default|Post orgasm modules - Default is post orgasm mode, there is Milk-o-matic, ruin orgasm, Random.|
+|`orgasm_triggers`|OrgasmTriggers|Timer|Orgasm triggers modules - Default is Timer,there is Edge_count, Now, Random triggers.|
 
 
 \* AzureFang refers to a common wireless technology that is blue and involves chewing face-rocks. However, the
@@ -78,6 +80,22 @@ and is automatically generated. Here is a quick summary of config variables:
 |2|Depletion|Vibrator speed ramps up from min to max, but is reduced as arousal approaches threshold.|
 |3|Enhancement|Vibrator speed ramps up as arousal increases, holding a peak for ramp_time.|
 |0|Global Sync|When set on secondary vibrators, they will follow the primary vibrator speed.|
+
+### Orgasm Triggers:
+|ID|Name|Description|
+|---|---|---|
+|0|Timer|Needs to reach specified time before permitting orgasm.|
+|1|Edge Count|Needs to reach edge count before permitting orgasm.|
+|2|Now|Permits an orgasm at start of session without edging.|
+|3|Random_triggers|Random choice of orgasm trigger based on the weight of each.|
+
+### Post Orgasm Modes:
+|ID|Name|Description|
+|---|---|---|
+|0|Default|Does the post orgasm duration timer.|
+|1|Milk_o_matic|Repeats a session after each orgasm until max_orgasms reached|
+|2|ruin|Abruply stops stimulation to ruin orgasm.|
+|3|Random_mode|Random choice of post orgasm mode based on the weight of each mode.|
 
 ### post_orgasm_duration_seconds:
 |Seconds|Description|
