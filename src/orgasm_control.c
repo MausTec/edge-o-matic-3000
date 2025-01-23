@@ -448,7 +448,7 @@ void orgasm_control_start_recording() {
         fprintf(
             logger_state.logfile,
             "millis,pressure,avg_pressure,arousal,motor_speed,sensitivity_threshold,"
-            "clench_pressure_threshold,clench_duration"
+            "clench_pressure_threshold,clench_duration\n"
         );
 
         ui_set_icon(UI_ICON_RECORD, RECORD_ICON_RECORDING);
