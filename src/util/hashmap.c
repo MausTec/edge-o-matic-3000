@@ -47,8 +47,10 @@ void hashmap_insert(hashmap_t* store, const char* key, const char* value) {
     bucket->next = NULL;
 
     if (bucket->value == NULL || bucket->key == NULL) {
+        if (bucket->key != NULL) free(bucket->key);
+        if (bucket->value != NULL) free(bucket->value);
         free(bucket);
-        ESP_LOGE(TAG, "Coudln't alloc bucket values.");
+        ESP_LOGE(TAG, "Couldn't alloc bucket values.");
         return;
     }
 

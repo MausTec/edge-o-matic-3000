@@ -71,6 +71,7 @@ app_err_t application_parse_manifest(const char* pack_path, application_t* app) 
 
     sniprintf(path, PATH_MAX, "%s/manifest.json", pack_path);
     strncpy(app->pack_path, pack_path, 255);
+    app->pack_path[255] = '\0';
 
     FILE* f = fopen(path, "r");
 

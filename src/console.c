@@ -140,6 +140,8 @@ static void console_idle_task(void* args) {
 }
 
 static void console_task(void* args) {
+    // Note: prompt is allocated once and used for the lifetime of this task.
+    // Not freed since this task runs indefinitely until system shutdown.
     char* prompt = (char*)malloc(PATH_MAX + 7);
 
     reinitialize_console();
@@ -360,6 +362,13 @@ void console_run_command(int argc, char** argv, console_t* console) {
     // Check for output redirection:
     for (size_t i = 0; i < argc; i++) {
         if (!strcmp(argv[i], ">") || !strcmp(argv[i], ">>")) {
+            // Check if filename argument exists (i+1 must be valid index)
+            if (i + 1 >= argc) {
+                fprintf(console->out, "ERROR: Redirection without file.\n");
+                err = CMD_ARG_ERR;
+                break;
+            }
+
             argc -= 2;
             if (argc < 1) {
                 fprintf(console->out, "ERROR: Redirection without command or file.\n");
@@ -416,7 +425,7 @@ void console_run_command(int argc, char** argv, console_t* console) {
     } else if (err == CMD_NOT_FOUND) {
         fprintf(console->out, "Unknown command: %s\n", argv[0]);
     } else if (err == CMD_SUBCOMMAND_NOT_FOUND) {
-        fprintf(console->out, "Unknown subcommand: %s\n", argv[1]);
+        fprintf(console->out, "Unknown subcommand: %s\n", argc > 1 ? argv[1] : "(none)");
     } else if (err == CMD_SUBCOMMAND_REQUIRED) {
         fprintf(console->out, "Command requires a subcommand.\n");
     }

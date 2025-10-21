@@ -133,7 +133,7 @@ static command_err_t cmd_mkdir(int argc, char** argv, console_t* console) {
             }
 
             // Replace the removed token to continue building our path:
-            if (savptr != NULL) {
+            if (savptr != NULL && savptr > path) {
                 savptr[-1] = '/';
             }
 
@@ -377,11 +377,12 @@ static command_err_t cmd_run(int argc, char** argv, console_t* console) {
             char* argv[ARGV_MAX] = { 0 };
             int argc = esp_console_split_argv(line, argv, ARGV_MAX);
             console_run_command(argc, argv, console);
-        }
-
-        if (lineptr < LINE_MAX - 2) {
+            lineptr = 0;
+            line[0] = '\0';
+        } else if (lineptr < LINE_MAX - 2) {
             line[lineptr] = c;
             line[lineptr + 1] = '\0';
+            lineptr++;
         }
     }
 

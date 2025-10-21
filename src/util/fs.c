@@ -22,12 +22,18 @@ size_t fs_read_dir(
             if (flags & FS_READ_ABSOLUTE_PATH) {
                 size_t sz = strlen(dir->d_name) + strlen(path) + 2;
                 file = (char*)malloc(sz);
-                if (file == NULL) break;
+                if (file == NULL) {
+                    closedir(d);  // Fix resource leak: close DIR* before early return
+                    break;
+                }
                 sprintf(file, "%s/%s", path, dir->d_name);
             } else {
                 size_t sz = strlen(dir->d_name) + 1;
                 file = (char*)malloc(sz);
-                if (file == NULL) break;
+                if (file == NULL) {
+                    closedir(d);  // Fix resource leak: close DIR* before early return
+                    break;
+                }
                 strcpy(file, dir->d_name);
             }
 
@@ -35,9 +41,9 @@ size_t fs_read_dir(
             if (~flags & FS_READ_NO_FREE) free(file);
             count++;
         }
-    }
 
-    closedir(d);
+        closedir(d);
+    }
     return count;
 }
 
