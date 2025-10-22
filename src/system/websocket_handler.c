@@ -10,18 +10,35 @@ static const char* TAG = "websocket_handler";
 static list_t _cmd_list = LIST_DEFAULT();
 static list_t _client_list = LIST_DEFAULT();
 
+// Free function for HTTP server session context
+static void _client_free_fn(void* ctx) {
+    websocket_client_t* client = (websocket_client_t*)ctx;
+    if (client != NULL) {
+        ESP_LOGI(TAG, "HTTP server freeing client fd:%d context", client->fd);
+        list_remove(&_client_list, client);
+        free(client);
+    }
+}
+
 bool _is_websocket(websocket_client_t* client) {
+    if (client == NULL || client->server == NULL) {
+        return false;
+    }
     return httpd_ws_get_fd_info(client->server, client->fd) == HTTPD_WS_CLIENT_WEBSOCKET;
 }
 
 esp_err_t websocket_send_to_client(websocket_client_t* client, const char* msg) {
+    if (client == NULL || msg == NULL) {
+        return ESP_ERR_INVALID_ARG;
+    }
+    
     if (!_is_websocket(client)) {
         return ESP_ERR_HTTPD_INVALID_REQ;
     }
 
     httpd_ws_frame_t ws_pkt;
     memset(&ws_pkt, 0, sizeof(httpd_ws_frame_t));
-    ws_pkt.payload = msg;
+    ws_pkt.payload = (uint8_t*)msg;
     ws_pkt.len = strlen(msg);
     ws_pkt.type = HTTPD_WS_TYPE_TEXT;
     ws_pkt.final = true;
@@ -31,15 +48,29 @@ esp_err_t websocket_send_to_client(websocket_client_t* client, const char* msg) 
 
 esp_err_t websocket_broadcast(cJSON* root, int broadcast_flags) {
     char* str = cJSON_PrintUnformatted(root);
+    if (str == NULL) {
+        ESP_LOGE(TAG, "Failed to serialize JSON for broadcast");
+        return ESP_ERR_NO_MEM;
+    }
 
     if (!cJSON_HasObjectItem(root, "readings")) {
         ESP_LOGD(TAG, "Broadcasting: %s", str);
     }
 
-    websocket_client_t* client = NULL;
-    list_foreach(_client_list, client) {
-        if (client->broadcast_flags & broadcast_flags) {
-            websocket_send_to_client(client, str);
+    // Simple iteration without trying to remove clients during broadcast
+    // Let the HTTP server's close callback handle cleanup
+    list_node_t* node = _client_list._first;
+    while (node != NULL) {
+        websocket_client_t* client = (websocket_client_t*)node->data;
+        node = node->next; // Move to next before any potential issues
+        
+        if (client != NULL && (client->broadcast_flags & broadcast_flags)) {
+            esp_err_t err = websocket_send_to_client(client, str);
+            if (err != ESP_OK) {
+                ESP_LOGW(TAG, "Send failed for client fd:%d, error: %s", 
+                         client->fd, esp_err_to_name(err));
+                // Don't try to clean up here - let the HTTP server handle it
+            }
         }
     }
 
@@ -72,7 +103,7 @@ static void _json_add_error(cJSON* root, const char* error) {
 }
 
 void websocket_register_command(const websocket_command_t* command) {
-    list_node_t* node = list_add(&_cmd_list, command);
+    list_node_t* node = list_add(&_cmd_list, (void*)command);
     if (node == NULL) {
         ESP_LOGE(TAG, "Command registration failed, NO MEM!");
     } else {
@@ -138,23 +169,30 @@ esp_err_t websocket_open_fd(httpd_handle_t hd, int sockfd) {
 
     ESP_LOGI(TAG, "websocket_open_fd(hd: %p, sockfd: %d) => IP: %s", hd, sockfd, ipstr);
     websocket_client_t* client = malloc(sizeof(websocket_client_t));
+    if (client == NULL) {
+        ESP_LOGE(TAG, "Failed to allocate memory for websocket client");
+        return ESP_ERR_NO_MEM;
+    }
+    
     client->fd = sockfd;
     client->server = hd;
     client->broadcast_flags = 0;
-    list_add(&_client_list, client);
-    httpd_sess_set_ctx(hd, sockfd, client, NULL);
+    
+    list_node_t* node = list_add(&_client_list, client);
+    if (node == NULL) {
+        ESP_LOGE(TAG, "Failed to add client to list");
+        free(client);
+        return ESP_ERR_NO_MEM;
+    }
+    
+    httpd_sess_set_ctx(hd, sockfd, client, _client_free_fn);
     return ESP_OK;
 }
 
 void websocket_close_fd(httpd_handle_t hd, int sockfd) {
     ESP_LOGI(TAG, "websocket_close_fd(hd: %p, sockfd: %d)", hd, sockfd);
-    websocket_client_t* client = NULL;
-    list_foreach(_client_list, client) {
-        if (client->fd == sockfd) {
-            list_remove(&_client_list, client);
-            return;
-        }
-    }
+    // The HTTP server will call our _client_free_fn to clean up the client
+    // No manual cleanup needed here
 }
 
 esp_err_t websocket_handler(httpd_req_t* req) {
