@@ -1,5 +1,6 @@
 #include "util/list.h"
 #include "esp_log.h"
+#include <stdlib.h>
 
 static const char* TAG = "list";
 
@@ -28,26 +29,33 @@ list_node_t* list_add(list_t* list, void* data) {
 void list_remove(list_t* list, void* data) {
     ESP_LOGI(TAG, "Remove from list: %p", data);
     
+    if (list == NULL || data == NULL) {
+        return;
+    }
+    
     list_node_t* ptr = list->_first;
     list_node_t* prev = NULL;
 
     while (ptr != NULL) {
         if (ptr->data == data) {
+            // Update previous node's next pointer
             if (prev != NULL) {
                 prev->next = ptr->next;
-            }
-
-            if (ptr == list->_first) {
+            } else {
+                // Removing first node
                 list->_first = ptr->next;
             }
-
+            
+            // Update last pointer if we're removing the last node
             if (ptr == list->_last) {
                 list->_last = prev;
             }
-        } else {
-            prev = ptr;
+            
+            free(ptr);
+            return;
         }
-
+        
+        prev = ptr;
         ptr = ptr->next;
     }
 }
