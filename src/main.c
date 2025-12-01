@@ -17,6 +17,7 @@
 #include "ui/ui.h"
 #include "util/i18n.h"
 #include "version.h"
+#include "wasm_runtime.h"
 #include "wifi_manager.h"
 #include <esp_https_ota.h>
 #include <esp_ota_ops.h>
@@ -175,6 +176,7 @@ esp_err_t run_boot_diagnostic(void) {
 void app_main() {
     TickType_t boot_tick = xTaskGetTickCount();
 
+    // TODO: We really just don't log any of these, do we?
     eom_hal_init();
     ui_init();
     storage_init();
@@ -186,6 +188,13 @@ void app_main() {
     orgasm_control_init();
     i18n_init();
     action_manager_init();
+
+    // for sure log this one
+    if (eom_wasm_runtime_init() != ESP_OK) {
+        ESP_LOGE(TAG, "WASM init issue - plugins disabled");
+    } else {
+        ESP_LOGI(TAG, "WASM runtime init ok");
+    }
 
     // Red = preboot
     eom_hal_set_sensor_sensitivity(Config.sensor_sensitivity);
