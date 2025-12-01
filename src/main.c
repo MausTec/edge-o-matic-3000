@@ -19,12 +19,47 @@
 #include "version.h"
 #include "wasm_runtime.h"
 #include "wifi_manager.h"
+#include <esp_heap_caps.h>
 #include <esp_https_ota.h>
 #include <esp_ota_ops.h>
 #include <esp_system.h>
 #include <time.h>
 
 static const char* TAG = "main";
+
+static void print_retro_banner(void) {
+    const esp_partition_t* running = esp_ota_get_running_partition();
+    size_t free_now = esp_get_free_heap_size();
+    esp_chip_info_t chip_info;
+    esp_chip_info(&chip_info);
+
+    printf("\n\n**** MAUS-TEC EDGE-O-MATIC 3000 ****\n\n");
+    printf(
+        "EOM-FW V%s   (IDF %s) (HAL %s)\n",
+        EOM_VERSION,
+        esp_get_idf_version(),
+        eom_hal_get_version()
+    );
+    printf("BUILD %s %s   PART %s\n", __DATE__, __TIME__, running ? running->label : "?");
+    printf("%u BYTES FREE\n\n", (unsigned)free_now);
+}
+
+static void print_memory_diagnostics(uint32_t heap_at_start) {
+    size_t free_now = esp_get_free_heap_size();
+    size_t min_ever = esp_get_minimum_free_heap_size();
+    size_t free_internal = esp_get_free_internal_heap_size();
+    size_t largest_block = heap_caps_get_largest_free_block(MALLOC_CAP_8BIT);
+    long delta = (long)free_now - (long)heap_at_start;
+
+    printf(
+        "MEM: free=%u min=%u internal=%u largest=%u delta=%ld\n",
+        (unsigned)free_now,
+        (unsigned)min_ever,
+        (unsigned)free_internal,
+        (unsigned)largest_block,
+        delta
+    );
+}
 
 void storage_init() {
     long long int cardSize = eom_hal_get_sd_size_bytes();
@@ -71,6 +106,12 @@ static void loop_task(void* args) {
     // for (;;) {
     static long lastStatusTick = 0;
     static long lastTick = 0;
+    static long lastMemoryTick = 0;
+    static uint32_t heap_at_start = 0;
+
+    if (heap_at_start == 0) {
+        heap_at_start = esp_get_free_heap_size();
+    }
 
     // Periodically send out WiFi status:
     if (millis() - lastStatusTick > 1000 * 10) {
@@ -97,6 +138,12 @@ static void loop_task(void* args) {
 
         lastTick = millis();
         api_broadcast_readings();
+    }
+
+    // Periodically print memory diagnostics
+    if (millis() - lastMemoryTick > 5000) {
+        lastMemoryTick = millis();
+        print_memory_diagnostics(heap_at_start);
     }
 
     // Tick and see if we need to save config:
@@ -175,6 +222,7 @@ esp_err_t run_boot_diagnostic(void) {
 
 void app_main() {
     TickType_t boot_tick = xTaskGetTickCount();
+    uint32_t heap_at_start = esp_get_free_heap_size();
 
     // TODO: We really just don't log any of these, do we?
     eom_hal_init();
@@ -201,10 +249,8 @@ void app_main() {
     eom_hal_set_encoder_brightness(Config.led_brightness);
     eom_hal_set_encoder_rgb(255, 0, 0);
 
-    // Welcome Preamble
-    printf("Maus-Tec presents: Edge-o-Matic 3000\n");
-    printf("Version: %s\n", EOM_VERSION);
-    printf("EOM-HAL Version: %s\n", eom_hal_get_version());
+    // Welcome Preamble (retro vibe)
+    print_retro_banner();
 
     // Post-Update Diagnostics
     esp_err_t dxerr = run_boot_diagnostic();
@@ -251,4 +297,8 @@ void app_main() {
 
     xTaskCreate(accessory_driver_task, "ACCESSORY", 1024 * 4, NULL, tskIDLE_PRIORITY, NULL);
     xTaskCreate(main_task, "MAIN", 1024 * 8, NULL, tskIDLE_PRIORITY + 1, NULL);
+
+    // Initial memory diagnostics
+    print_memory_diagnostics(heap_at_start);
+    printf("READY.\n\n");
 }

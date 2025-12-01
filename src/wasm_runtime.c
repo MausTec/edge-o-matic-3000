@@ -16,6 +16,13 @@ static const char* TAG = "wasm_runtime";
 #define WASM_GLOBAL_HEAP_SIZE (48 * 1024)
 #define WASM_INSTANCE_STACK_SIZE (16 * 1024)
 
+// Static heap buffer for WASM runtime (aligned for WAMR requirements)
+static uint8_t wasm_heap_buffer[WASM_GLOBAL_HEAP_SIZE] __attribute__((aligned(8)));
+
+// Static buffers for FreeRTOS executor task
+static StackType_t executor_task_stack[WASM_EXECUTOR_STACK_SIZE / sizeof(StackType_t)];
+static StaticTask_t executor_task_tcb;
+
 static TaskHandle_t executor_task_handle = NULL;
 static QueueHandle_t executor_queue = NULL;
 static bool runtime_initialized = false;
@@ -117,7 +124,9 @@ esp_err_t eom_wasm_runtime_init(void) {
     RuntimeInitArgs init_args;
     memset(&init_args, 0, sizeof(RuntimeInitArgs));
 
-    init_args.mem_alloc_type = Alloc_With_System_Allocator;
+    init_args.mem_alloc_type = Alloc_With_Pool;
+    init_args.mem_alloc_option.pool.heap_buf = wasm_heap_buffer;
+    init_args.mem_alloc_option.pool.heap_size = sizeof(wasm_heap_buffer);
 
     if (!wasm_runtime_full_init(&init_args)) {
         ESP_LOGE(TAG, "Failed to initialize WAMR runtime");
@@ -133,17 +142,18 @@ esp_err_t eom_wasm_runtime_init(void) {
         return ESP_FAIL;
     }
 
-    // Create executor task <--- HEAP SHIT MANY CRASHES HANDLE IT
-    BaseType_t task_created = xTaskCreate(
+    // Create executor task with static allocation
+    executor_task_handle = xTaskCreateStatic(
         wasm_executor_task,
         "WASM_EXEC",
-        WASM_EXECUTOR_STACK_SIZE,
+        WASM_EXECUTOR_STACK_SIZE / sizeof(StackType_t),
         NULL,
         WASM_EXECUTOR_PRIORITY,
-        &executor_task_handle
+        executor_task_stack,
+        &executor_task_tcb
     );
 
-    if (task_created != pdPASS) {
+    if (executor_task_handle == NULL) {
         ESP_LOGE(TAG, "Failed to create executor task");
         vQueueDelete(executor_queue);
         executor_queue = NULL;
