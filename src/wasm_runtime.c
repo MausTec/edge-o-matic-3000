@@ -5,6 +5,8 @@
 #include "freertos/queue.h"
 #include "freertos/task.h"
 #include "wasm_export.h"
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 static const char* TAG = "wasm_runtime";
@@ -260,4 +262,113 @@ esp_err_t wasm_executor_enqueue(const wasm_work_item_t* work_item) {
 
 TaskHandle_t wasm_executor_get_task_handle(void) {
     return executor_task_handle;
+}
+
+esp_err_t wasm_load_and_run(const char* path, uint32_t stack_size, uint32_t heap_size) {
+    if (path == NULL || stack_size == 0) {
+        ESP_LOGE(TAG, "Invalid args: path or stack_size");
+        return ESP_ERR_INVALID_ARG;
+    }
+
+    // Ensure runtime is initialized (memory issues may cause wasm to not load)
+    if (eom_wasm_runtime_init() != ESP_OK) {
+        ESP_LOGE(TAG, "WASM runtime init failed");
+        return ESP_FAIL;
+    }
+
+    ESP_LOGI(TAG, "Loading WASM module from: %s", path);
+
+    FILE* fp = fopen(path, "rb");
+    if (!fp) {
+        ESP_LOGE(TAG, "Failed to open file: %s", path);
+        return ESP_FAIL;
+    }
+
+    if (fseek(fp, 0, SEEK_END) != 0) {
+        fclose(fp);
+        return ESP_FAIL;
+    }
+
+    long fsize = ftell(fp);
+    if (fsize <= 0) {
+        fclose(fp);
+        return ESP_FAIL;
+    }
+    rewind(fp);
+
+    uint8_t* wasm_bytes = (uint8_t*)malloc((size_t)fsize);
+    if (!wasm_bytes) {
+        ESP_LOGE(TAG, "malloc failed for %ld bytes", fsize);
+        fclose(fp);
+        return ESP_ERR_NO_MEM;
+    }
+
+    size_t readn = fread(wasm_bytes, 1, (size_t)fsize, fp);
+    fclose(fp);
+
+    if (readn != (size_t)fsize) {
+        ESP_LOGE(TAG, "fread mismatch: %u/%ld", (unsigned)readn, fsize);
+        free(wasm_bytes);
+        return ESP_FAIL;
+    }
+
+    char error_buf[160] = { 0 };
+    wasm_module_t module =
+        wasm_runtime_load(wasm_bytes, (uint32_t)fsize, error_buf, sizeof(error_buf));
+
+    if (!module) {
+        ESP_LOGE(TAG, "wasm_runtime_load failed: %s", error_buf);
+        free(wasm_bytes);
+        return ESP_FAIL;
+    }
+
+    // The module is loaded into runtime structures; raw bytes can be freed now
+    free(wasm_bytes);
+
+    if (heap_size == 0) {
+        // Provide a conservative default if caller passes 0
+        heap_size = 32 * 1024;
+    }
+
+    ESP_LOGI(
+        TAG, "Instantiating module (stack=%u, heap=%u)", (unsigned)stack_size, (unsigned)heap_size
+    );
+
+    wasm_module_inst_t module_inst =
+        wasm_runtime_instantiate(module, stack_size, heap_size, error_buf, sizeof(error_buf));
+
+    if (!module_inst) {
+        ESP_LOGE(TAG, "wasm_runtime_instantiate failed: %s", error_buf);
+        wasm_runtime_unload(module);
+        return ESP_FAIL;
+    }
+
+    // Optionally set WASI args (no argv/env, stdio default)
+    // If libc-wasi is enabled in WAMR build, this enables WASI syscalls.
+    // We keep argv empty for now.
+    const char* empty_dirs[] = {};
+    const char* empty_env[] = {};
+    char* empty_argv[] = {};
+    (void)empty_dirs;
+    (void)empty_env;
+    (void)empty_argv;
+#ifdef WASM_ENABLE_LIBC_WASI
+    wasm_runtime_set_wasi_args(module_inst, empty_dirs, 0, NULL, 0, empty_env, 0, empty_argv, 0);
+#endif
+
+    ESP_LOGI(TAG, "Executing WASM main()...");
+
+    if (!wasm_application_execute_main(module_inst, 0, NULL)) {
+        const char* exception = wasm_runtime_get_exception(module_inst);
+        ESP_LOGE(TAG, "WASM exception: %s", exception ? exception : "unknown");
+        wasm_runtime_deinstantiate(module_inst);
+        wasm_runtime_unload(module);
+        return ESP_FAIL;
+    }
+
+    ESP_LOGI(TAG, "WASM main() finished successfully");
+
+    wasm_runtime_deinstantiate(module_inst);
+    wasm_runtime_unload(module);
+    return ESP_OK;
 }

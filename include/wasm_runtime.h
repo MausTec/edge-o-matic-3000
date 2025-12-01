@@ -56,6 +56,11 @@ esp_err_t wasm_executor_enqueue(const wasm_work_item_t* work_item);
 
 TaskHandle_t wasm_executor_get_task_handle(void);
 
+/**
+ * @brief Load a raw WASM/WASI module from filesystem and run its main()
+ */
+esp_err_t wasm_load_and_run(const char* path, uint32_t stack_size, uint32_t heap_size);
+
 #ifdef __cplusplus
 }
 #endif
