@@ -29,6 +29,7 @@ CONFIG_DEFS {
     CFG_STRING_PTR(ssl_cacert_path, NULL);
     CFG_STRING_PTR(ssl_prvtkey_path, NULL);
     CFG_STRING(hostname, "eom3k");
+    CFG_BOOL(mdns_enabled, true);
 
     // UI Settings
     CFG_NUMBER(led_brightness, 128);

@@ -99,6 +99,8 @@ struct config {
     char* ssl_prvtkey_path;
     // Local hostname for your device.
     char hostname[64];
+    // Enable mDNS (.local) advertising and service discovery
+    bool mdns_enabled;
 
     //= Orgasms and Stuff
 

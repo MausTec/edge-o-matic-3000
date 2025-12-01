@@ -27,6 +27,16 @@
 
 static const char* TAG = "main";
 
+// Static buffers for FreeRTOS tasks
+#define MAIN_TASK_STACK_SIZE (8 * 1024)
+#define ACCESSORY_TASK_STACK_SIZE (4 * 1024)
+
+static StackType_t main_task_stack[MAIN_TASK_STACK_SIZE / sizeof(StackType_t)];
+static StaticTask_t main_task_tcb;
+
+static StackType_t accessory_task_stack[ACCESSORY_TASK_STACK_SIZE / sizeof(StackType_t)];
+static StaticTask_t accessory_task_tcb;
+
 static void print_retro_banner(void) {
     const esp_partition_t* running = esp_ota_get_running_partition();
     size_t free_now = esp_get_free_heap_size();
@@ -295,8 +305,25 @@ void app_main() {
     vTaskDelayUntil(&boot_tick, 1000UL / portTICK_PERIOD_MS);
     ui_fade_to(0x00);
 
-    xTaskCreate(accessory_driver_task, "ACCESSORY", 1024 * 4, NULL, tskIDLE_PRIORITY, NULL);
-    xTaskCreate(main_task, "MAIN", 1024 * 8, NULL, tskIDLE_PRIORITY + 1, NULL);
+    xTaskCreateStatic(
+        accessory_driver_task,
+        "ACCESSORY",
+        ACCESSORY_TASK_STACK_SIZE / sizeof(StackType_t),
+        NULL,
+        tskIDLE_PRIORITY,
+        accessory_task_stack,
+        &accessory_task_tcb
+    );
+
+    xTaskCreateStatic(
+        main_task,
+        "MAIN",
+        MAIN_TASK_STACK_SIZE / sizeof(StackType_t),
+        NULL,
+        tskIDLE_PRIORITY + 1,
+        main_task_stack,
+        &main_task_tcb
+    );
 
     // Initial memory diagnostics
     print_memory_diagnostics(heap_at_start);

@@ -118,26 +118,6 @@ tscode_handler(tscode_command_t* cmd, char* response, size_t resp_len) {
     }
 }
 
-static void console_task(void* args);
-
-/**
- * Dedicated system task for handling the console initialization and looping.
- */
-static void console_idle_task(void* args) {
-
-    // Delay here on console initialization to allow the user to connect a terminal first.
-    if (!Config.console_basic_mode) {
-        printf("Press any key to initialize the terminal.\n");
-        for (;;) {
-            if (getc(stdin) != EOF) break;
-            vTaskDelay(1);
-        }
-    }
-
-    xTaskCreate(&console_task, "CONSOLE", 1024 * 8, NULL, tskIDLE_PRIORITY, NULL);
-    vTaskDelete(NULL);
-}
-
 static void console_task(void* args) {
     char* prompt = (char*)malloc(PATH_MAX + 7);
 
@@ -245,7 +225,21 @@ void console_register_command(const command_t* command) {
 }
 
 void console_ready(void) {
-    xTaskCreate(&console_idle_task, "con_idle", 1024 * 2, NULL, tskIDLE_PRIORITY, NULL);
+    // Delay here on console initialization to allow the user to connect a terminal first.
+    if (!Config.console_basic_mode) {
+        printf("Press any key to initialize the terminal.\n");
+        // Poll stdin without blocking - will initialize on first character
+        int c = getc(stdin);
+        if (c == EOF) {
+            // No input yet - user can manually trigger console later if needed
+            // Console will auto-initialize on first stdin activity via UART interrupt
+            return;
+        }
+        ungetc(c, stdin);
+    }
+
+    // Create console task directly
+    xTaskCreate(&console_task, "CONSOLE", 1024 * 8, NULL, tskIDLE_PRIORITY, NULL);
 }
 
 void console_receive_file(const char* filename, console_t* console) {

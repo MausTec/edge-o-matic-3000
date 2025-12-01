@@ -16,12 +16,12 @@ static const char* TAG = "wasm_runtime";
 #define WASM_GLOBAL_HEAP_SIZE (48 * 1024)
 #define WASM_INSTANCE_STACK_SIZE (16 * 1024)
 
-// Static heap buffer for WASM runtime (aligned for WAMR requirements)
-static uint8_t wasm_heap_buffer[WASM_GLOBAL_HEAP_SIZE] __attribute__((aligned(8)));
+// Dynamic heap buffer for WASM runtime (allocated at init)
+static uint8_t* wasm_heap_buffer = NULL;
 
-// Static buffers for FreeRTOS executor task
-static StackType_t executor_task_stack[WASM_EXECUTOR_STACK_SIZE / sizeof(StackType_t)];
-static StaticTask_t executor_task_tcb;
+// Dynamic buffers for FreeRTOS executor task (allocated at init)
+static StackType_t* executor_task_stack = NULL;
+static StaticTask_t* executor_task_tcb = NULL;
 
 static TaskHandle_t executor_task_handle = NULL;
 static QueueHandle_t executor_queue = NULL;
@@ -120,13 +120,43 @@ esp_err_t eom_wasm_runtime_init(void) {
     ESP_LOGI(TAG, "  Global heap: %d KB", WASM_GLOBAL_HEAP_SIZE / 1024);
     ESP_LOGI(TAG, "  Instance stack: %d KB", WASM_INSTANCE_STACK_SIZE / 1024);
     ESP_LOGI(TAG, "  Executor queue: %d items", WASM_EXECUTOR_QUEUE_SIZE);
+    ESP_LOGI(TAG, "  Free heap before alloc: %d bytes", esp_get_free_heap_size());
+
+    // Allocate WASM heap buffer (aligned for WAMR)
+    wasm_heap_buffer = heap_caps_aligned_alloc(8, WASM_GLOBAL_HEAP_SIZE, MALLOC_CAP_8BIT);
+    if (!wasm_heap_buffer) {
+        ESP_LOGE(TAG, "Failed to allocate WASM heap buffer (%d bytes)", WASM_GLOBAL_HEAP_SIZE);
+        return ESP_ERR_NO_MEM;
+    }
+
+    // Allocate executor task stack
+    executor_task_stack = heap_caps_malloc(WASM_EXECUTOR_STACK_SIZE, MALLOC_CAP_8BIT);
+    if (!executor_task_stack) {
+        ESP_LOGE(TAG, "Failed to allocate executor task stack");
+        free(wasm_heap_buffer);
+        wasm_heap_buffer = NULL;
+        return ESP_ERR_NO_MEM;
+    }
+
+    // Allocate executor task TCB
+    executor_task_tcb = heap_caps_malloc(sizeof(StaticTask_t), MALLOC_CAP_8BIT);
+    if (!executor_task_tcb) {
+        ESP_LOGE(TAG, "Failed to allocate executor task TCB");
+        free(executor_task_stack);
+        free(wasm_heap_buffer);
+        executor_task_stack = NULL;
+        wasm_heap_buffer = NULL;
+        return ESP_ERR_NO_MEM;
+    }
+
+    ESP_LOGI(TAG, "  WASM buffers allocated, free heap: %d bytes", esp_get_free_heap_size());
 
     RuntimeInitArgs init_args;
     memset(&init_args, 0, sizeof(RuntimeInitArgs));
 
     init_args.mem_alloc_type = Alloc_With_Pool;
     init_args.mem_alloc_option.pool.heap_buf = wasm_heap_buffer;
-    init_args.mem_alloc_option.pool.heap_size = sizeof(wasm_heap_buffer);
+    init_args.mem_alloc_option.pool.heap_size = WASM_GLOBAL_HEAP_SIZE;
 
     if (!wasm_runtime_full_init(&init_args)) {
         ESP_LOGE(TAG, "Failed to initialize WAMR runtime");
@@ -142,7 +172,7 @@ esp_err_t eom_wasm_runtime_init(void) {
         return ESP_FAIL;
     }
 
-    // Create executor task with static allocation
+    // Create executor task with dynamically allocated buffers
     executor_task_handle = xTaskCreateStatic(
         wasm_executor_task,
         "WASM_EXEC",
@@ -150,7 +180,7 @@ esp_err_t eom_wasm_runtime_init(void) {
         NULL,
         WASM_EXECUTOR_PRIORITY,
         executor_task_stack,
-        &executor_task_tcb
+        executor_task_tcb
     );
 
     if (executor_task_handle == NULL) {
@@ -190,6 +220,20 @@ void eom_wasm_runtime_deinit(void) {
     }
 
     wasm_runtime_destroy();
+
+    // Free dynamically allocated buffers
+    if (executor_task_tcb) {
+        free(executor_task_tcb);
+        executor_task_tcb = NULL;
+    }
+    if (executor_task_stack) {
+        free(executor_task_stack);
+        executor_task_stack = NULL;
+    }
+    if (wasm_heap_buffer) {
+        free(wasm_heap_buffer);
+        wasm_heap_buffer = NULL;
+    }
 
     runtime_initialized = false;
     ESP_LOGI(TAG, "WASM runtime deinitialized");
