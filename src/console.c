@@ -11,7 +11,6 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "linenoise/linenoise.h"
-#include "my_basic.h"
 #include "tscode.h"
 #include "version.h"
 #include <ctype.h>
