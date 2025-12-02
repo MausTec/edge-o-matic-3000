@@ -1,4 +1,5 @@
 #include "wasm_runtime.h"
+#include "esp_heap_caps.h"
 #include "esp_log.h"
 #include "esp_system.h"
 #include "freertos/FreeRTOS.h"
@@ -15,10 +16,9 @@ static const char* TAG = "wasm_runtime";
 #define WASM_EXECUTOR_PRIORITY (tskIDLE_PRIORITY + 2)
 #define WASM_EXECUTOR_QUEUE_SIZE 16
 
-#define WASM_GLOBAL_HEAP_SIZE (48 * 1024)
 #define WASM_INSTANCE_STACK_SIZE (16 * 1024)
 
-// Dynamic heap buffer for WASM runtime (allocated at init)
+// Note: Using system allocator for WAMR; no global heap buffer
 static uint8_t* wasm_heap_buffer = NULL;
 
 // Dynamic buffers for FreeRTOS executor task (allocated at init)
@@ -119,24 +119,15 @@ esp_err_t eom_wasm_runtime_init(void) {
     }
 
     ESP_LOGI(TAG, "Initializing WASM runtime");
-    ESP_LOGI(TAG, "  Global heap: %d KB", WASM_GLOBAL_HEAP_SIZE / 1024);
+    ESP_LOGI(TAG, "  Allocator: system malloc");
     ESP_LOGI(TAG, "  Instance stack: %d KB", WASM_INSTANCE_STACK_SIZE / 1024);
     ESP_LOGI(TAG, "  Executor queue: %d items", WASM_EXECUTOR_QUEUE_SIZE);
     ESP_LOGI(TAG, "  Free heap before alloc: %d bytes", esp_get_free_heap_size());
-
-    // Allocate WASM heap buffer (aligned for WAMR)
-    wasm_heap_buffer = heap_caps_aligned_alloc(8, WASM_GLOBAL_HEAP_SIZE, MALLOC_CAP_8BIT);
-    if (!wasm_heap_buffer) {
-        ESP_LOGE(TAG, "Failed to allocate WASM heap buffer (%d bytes)", WASM_GLOBAL_HEAP_SIZE);
-        return ESP_ERR_NO_MEM;
-    }
 
     // Allocate executor task stack
     executor_task_stack = heap_caps_malloc(WASM_EXECUTOR_STACK_SIZE, MALLOC_CAP_8BIT);
     if (!executor_task_stack) {
         ESP_LOGE(TAG, "Failed to allocate executor task stack");
-        free(wasm_heap_buffer);
-        wasm_heap_buffer = NULL;
         return ESP_ERR_NO_MEM;
     }
 
@@ -145,9 +136,7 @@ esp_err_t eom_wasm_runtime_init(void) {
     if (!executor_task_tcb) {
         ESP_LOGE(TAG, "Failed to allocate executor task TCB");
         free(executor_task_stack);
-        free(wasm_heap_buffer);
         executor_task_stack = NULL;
-        wasm_heap_buffer = NULL;
         return ESP_ERR_NO_MEM;
     }
 
@@ -156,9 +145,7 @@ esp_err_t eom_wasm_runtime_init(void) {
     RuntimeInitArgs init_args;
     memset(&init_args, 0, sizeof(RuntimeInitArgs));
 
-    init_args.mem_alloc_type = Alloc_With_Pool;
-    init_args.mem_alloc_option.pool.heap_buf = wasm_heap_buffer;
-    init_args.mem_alloc_option.pool.heap_size = WASM_GLOBAL_HEAP_SIZE;
+    init_args.mem_alloc_type = Alloc_With_System_Allocator;
 
     if (!wasm_runtime_full_init(&init_args)) {
         ESP_LOGE(TAG, "Failed to initialize WAMR runtime");
@@ -322,8 +309,7 @@ esp_err_t wasm_load_and_run(const char* path, uint32_t stack_size, uint32_t heap
         return ESP_FAIL;
     }
 
-    // The module is loaded into runtime structures; raw bytes can be freed now
-    free(wasm_bytes);
+    // The module references string data within wasm_bytes, free after unload
 
     if (heap_size == 0) {
         // Provide a conservative default if caller passes 0
@@ -340,35 +326,46 @@ esp_err_t wasm_load_and_run(const char* path, uint32_t stack_size, uint32_t heap
     if (!module_inst) {
         ESP_LOGE(TAG, "wasm_runtime_instantiate failed: %s", error_buf);
         wasm_runtime_unload(module);
+        free(wasm_bytes);
         return ESP_FAIL;
     }
-
-    // Optionally set WASI args (no argv/env, stdio default)
-    // If libc-wasi is enabled in WAMR build, this enables WASI syscalls.
-    // We keep argv empty for now.
-    const char* empty_dirs[] = {};
-    const char* empty_env[] = {};
-    char* empty_argv[] = {};
-    (void)empty_dirs;
-    (void)empty_env;
-    (void)empty_argv;
-#ifdef WASM_ENABLE_LIBC_WASI
-    wasm_runtime_set_wasi_args(module_inst, empty_dirs, 0, NULL, 0, empty_env, 0, empty_argv, 0);
-#endif
 
     ESP_LOGI(TAG, "Executing WASM main()...");
 
-    if (!wasm_application_execute_main(module_inst, 0, NULL)) {
-        const char* exception = wasm_runtime_get_exception(module_inst);
-        ESP_LOGE(TAG, "WASM exception: %s", exception ? exception : "unknown");
+    wasm_function_inst_t main_func = wasm_runtime_lookup_function(module_inst, "main", NULL);
+    if (!main_func) {
+        ESP_LOGE(TAG, "main() function not found");
         wasm_runtime_deinstantiate(module_inst);
         wasm_runtime_unload(module);
+        free(wasm_bytes);
         return ESP_FAIL;
     }
 
-    ESP_LOGI(TAG, "WASM main() finished successfully");
+    wasm_exec_env_t exec_env = wasm_runtime_create_exec_env(module_inst, WASM_INSTANCE_STACK_SIZE);
+    if (!exec_env) {
+        ESP_LOGE(TAG, "Failed to create execution environment");
+        wasm_runtime_deinstantiate(module_inst);
+        wasm_runtime_unload(module);
+        free(wasm_bytes);
+        return ESP_FAIL;
+    }
+
+    uint32_t argv[2] = { 0, 0 }; // argc=0, argv=NULL
+    if (!wasm_runtime_call_wasm(exec_env, main_func, 2, argv)) {
+        const char* exception = wasm_runtime_get_exception(module_inst);
+        ESP_LOGE(TAG, "WASM exception: %s", exception ? exception : "unknown");
+        wasm_runtime_destroy_exec_env(exec_env);
+        wasm_runtime_deinstantiate(module_inst);
+        wasm_runtime_unload(module);
+        free(wasm_bytes);
+        return ESP_FAIL;
+    }
+
+    ESP_LOGI(TAG, "WASM main() returned: %d", argv[0]);
+    wasm_runtime_destroy_exec_env(exec_env);
 
     wasm_runtime_deinstantiate(module_inst);
     wasm_runtime_unload(module);
+    free(wasm_bytes);
     return ESP_OK;
 }

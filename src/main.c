@@ -23,6 +23,7 @@
 #include <esp_https_ota.h>
 #include <esp_ota_ops.h>
 #include <esp_system.h>
+#include <pthread.h>
 #include <time.h>
 
 static const char* TAG = "main";
@@ -230,15 +231,58 @@ esp_err_t run_boot_diagnostic(void) {
     return err;
 }
 
+static void* wasm_thread_main(void* arg) {
+    const char* wasm = "/sdcard/hello_world.wasm";
+    esp_err_t werr = wasm_load_and_run(wasm, 1024, 0);
+
+    if (werr == ESP_OK) {
+        ESP_LOGI(TAG, "WASM app ran successfully from: %s", wasm);
+    } else {
+        ESP_LOGW(TAG, "WASM app not found or failed at: %s", wasm);
+    }
+
+    return NULL;
+}
+
 void app_main() {
     TickType_t boot_tick = xTaskGetTickCount();
     uint32_t heap_at_start = esp_get_free_heap_size();
+    esp_err_t dxerr = run_boot_diagnostic();
 
     // TODO: We really just don't log any of these, do we?
     eom_hal_init();
-    ui_init();
     storage_init();
-    console_init();
+
+    // App loading consumes lots of memory, preload that now.
+    // for sure log this one
+    if (eom_wasm_runtime_init() != ESP_OK) {
+        ESP_LOGE(TAG, "WASM init issue - plugins disabled");
+    } else {
+        ESP_LOGI(TAG, "WASM runtime init ok");
+    }
+
+    pthread_t wasm_thread;
+    pthread_attr_t tattr;
+    pthread_attr_init(&tattr);
+    pthread_attr_setdetachstate(&tattr, PTHREAD_CREATE_JOINABLE);
+    pthread_attr_setstacksize(&tattr, 8192);
+
+    int res = pthread_create(&wasm_thread, &tattr, wasm_thread_main, NULL);
+    if (res != 0) {
+        ESP_LOGE(TAG, "Failed to create WASM pthread: %d", res);
+    } else {
+        // Wait for WASM thread to complete
+        pthread_join(wasm_thread, NULL);
+        ESP_LOGI(TAG, "WASM thread completed");
+    }
+
+    for (;;) {
+        // End here so we can see wasm execution result.
+        vTaskDelay(portMAX_DELAY);
+    }
+
+    // console_init();
+    ui_init();
     http_server_init();
     wifi_manager_init();
     accessory_driver_init();
@@ -246,13 +290,6 @@ void app_main() {
     orgasm_control_init();
     i18n_init();
     action_manager_init();
-
-    // for sure log this one
-    if (eom_wasm_runtime_init() != ESP_OK) {
-        ESP_LOGE(TAG, "WASM init issue - plugins disabled");
-    } else {
-        ESP_LOGI(TAG, "WASM runtime init ok");
-    }
 
     // Red = preboot
     eom_hal_set_sensor_sensitivity(Config.sensor_sensitivity);
@@ -263,7 +300,6 @@ void app_main() {
     print_retro_banner();
 
     // Post-Update Diagnostics
-    esp_err_t dxerr = run_boot_diagnostic();
     if (dxerr != ESP_ERR_INVALID_ARG) {
         if (dxerr == ESP_OK) {
             ui_toast("%s\n%s", _("Update complete."), EOM_VERSION);
