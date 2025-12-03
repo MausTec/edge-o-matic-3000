@@ -32,3 +32,6 @@ platformio.vcxproj
 platformio.vcxproj.filters
 platformio.vcxproj.user
 platformio.log
+
+sdkconfig.*
+!sdkconfig.defaults
