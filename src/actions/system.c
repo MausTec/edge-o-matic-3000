@@ -5,14 +5,15 @@
 
 static const char* TAG = "actions:system";
 
-int action_system_delay(struct mta_plugin* plugin, cJSON* args) {
-    char* arg = cJSON_Print(args);
-    ESP_LOGI(TAG, "fn args: %s", arg);
-    free(arg);
+int action_system_delay(
+    struct mta_plugin* plugin, mta_scope_t* scope, mta_arg_t* args, uint8_t arg_count
+) {
+    if (arg_count != 1) {
+        ESP_LOGE(TAG, "delay: expected 1 argument, got %d", arg_count);
+        return -1;
+    }
 
-    cJSON* ms_json = cJSON_GetObjectItem(args, "ms");
-    if (ms_json == NULL) return -1;
-    int ms = ms_json->valueint;
+    int ms = args[0].val.i;
 
     ESP_LOGI(TAG, "delay(%d) start", ms);
     vTaskDelay(ms / portTICK_PERIOD_MS);
