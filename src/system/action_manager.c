@@ -126,6 +126,14 @@ void action_manager_event_handler(
 }
 
 void action_manager_init(void) {
-    actions_register_all();
+    ESP_LOGI(TAG, "Initializing action manager...");
+
+    // Register system functions for mt-actions
+    // TODO: Implement mta_register_system_function() in mt-actions library
+    // actions_register_system();
+
+    // Register event handler for all events
     event_manager_register_handler(EVT_ALL, action_manager_event_handler, NULL);
+
+    ESP_LOGI(TAG, "Action manager initialized (plugin loading deferred)");
 }

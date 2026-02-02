@@ -231,89 +231,53 @@ esp_err_t run_boot_diagnostic(void) {
     return err;
 }
 
-static void* wasm_thread_main(void* arg) {
-    const char* wasm = "/sdcard/hello_world.wasm";
-    esp_err_t werr = wasm_load_and_run(wasm, 1024, 0);
-
-    if (werr == ESP_OK) {
-        ESP_LOGI(TAG, "WASM app ran successfully from: %s", wasm);
-    } else {
-        ESP_LOGW(TAG, "WASM app not found or failed at: %s", wasm);
-    }
-
-    return NULL;
-}
-
 void app_main() {
     TickType_t boot_tick = xTaskGetTickCount();
     uint32_t heap_at_start = esp_get_free_heap_size();
     esp_err_t dxerr = run_boot_diagnostic();
 
-    // TODO: We really just don't log any of these, do we?
+    // Initialize HAL and storage first
     eom_hal_init();
     storage_init();
 
-    // App loading consumes lots of memory, preload that now.
-    // for sure log this one
-    if (eom_wasm_runtime_init() != ESP_OK) {
-        ESP_LOGE(TAG, "WASM init issue - plugins disabled");
-    } else {
-        ESP_LOGI(TAG, "WASM runtime init ok");
-    }
-
-    pthread_t wasm_thread;
-    pthread_attr_t tattr;
-    pthread_attr_init(&tattr);
-    pthread_attr_setdetachstate(&tattr, PTHREAD_CREATE_JOINABLE);
-    pthread_attr_setstacksize(&tattr, 8192);
-
-    int res = pthread_create(&wasm_thread, &tattr, wasm_thread_main, NULL);
-    if (res != 0) {
-        ESP_LOGE(TAG, "Failed to create WASM pthread: %d", res);
-    } else {
-        // Wait for WASM thread to complete
-        pthread_join(wasm_thread, NULL);
-        ESP_LOGI(TAG, "WASM thread completed");
-    }
-
-    for (;;) {
-        // End here so we can see wasm execution result.
-        vTaskDelay(portMAX_DELAY);
-    }
-
-    // console_init();
+    // Initialize core subsystems
+    console_init();
     ui_init();
     http_server_init();
     wifi_manager_init();
-    accessory_driver_init();
     bluetooth_driver_init();
     orgasm_control_init();
     i18n_init();
+
+    // Initialize accessory bus and action system
+    accessory_driver_init();
     action_manager_init();
 
+    // Configure hardware from saved settings
     // Red = preboot
     eom_hal_set_sensor_sensitivity(Config.sensor_sensitivity);
     eom_hal_set_encoder_brightness(Config.led_brightness);
     eom_hal_set_encoder_rgb(255, 0, 0);
 
-    // Welcome Preamble (retro vibe)
+    // Display welcome banner
     print_retro_banner();
-
-    // Post-Update Diagnostics
+    // Show post-update diagnostics if applicable
     if (dxerr != ESP_ERR_INVALID_ARG) {
         if (dxerr == ESP_OK) {
             ui_toast("%s\n%s", _("Update complete."), EOM_VERSION);
         }
     }
 
-    // Go to the splash page:
+    // Show splash screen
     ui_open_page(&SPLASH_PAGE, NULL);
 
+    // Boot sequence with status indication via LED colors
+    // Green = connecting to network
     // Green = prepare Networking
     vTaskDelayUntil(&boot_tick, 1000UL / portTICK_PERIOD_MS);
     eom_hal_set_encoder_rgb(0, 255, 0);
 
-    // Initialize WiFi
+    // Connect to WiFi if enabled
     if (Config.wifi_on) {
         if (ESP_OK == wifi_manager_connect_to_ap(Config.wifi_ssid, Config.wifi_key)) {
             ui_set_icon(UI_ICON_WIFI, WIFI_ICON_WEAK_SIGNAL);
@@ -322,11 +286,11 @@ void app_main() {
         }
     }
 
-    // Blue = prepare Bluetooth and Drivers
+    // Blue = loading plugins and drivers
     vTaskDelayUntil(&boot_tick, 1000UL / portTICK_PERIOD_MS);
     eom_hal_set_encoder_rgb(0, 0, 255);
 
-    // Initialize Bluetooth
+    // Enable Bluetooth if configured
     if (Config.bt_on) {
         bluetooth_manager_init();
         ui_set_icon(UI_ICON_BT, BT_ICON_ACTIVE);
@@ -334,10 +298,10 @@ void app_main() {
         ui_set_icon(UI_ICON_BT, -1);
     }
 
-    // Initialize Action Manager
+    // Load action plugins from SD card
     action_manager_load_all_plugins();
 
-    // Final delay on encoder colors.
+    // Boot complete - fade LED to off
     vTaskDelayUntil(&boot_tick, 1000UL / portTICK_PERIOD_MS);
     ui_fade_to(0x00);
 
