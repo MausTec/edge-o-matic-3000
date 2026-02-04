@@ -1,0 +1,88 @@
+menu "WAMR Configuration"
+
+    config WAMR_ENABLE_INTERP
+        bool "Enable WAMR Interpreter"
+        default y
+        help
+            Enable interpreter mode for WASM execution.
+            Required for runtime execution without AOT compilation.
+
+    config WAMR_INTERP_FAST
+        bool "Enable Fast Interpreter"
+        depends on WAMR_ENABLE_INTERP
+        default y
+        help
+            Enable fast interpreter mode for better performance.
+            Uses more memory but executes faster.
+
+    config WAMR_ENABLE_AOT
+        bool "Enable AOT (Ahead-of-Time compilation)"
+        default n
+        help
+            Enable AOT compilation support.
+            Disabled to save memory on ESP32.
+
+    config WAMR_ENABLE_LIBC_BUILTIN
+        bool "Enable built-in libc"
+        default y
+        help
+            Enable WAMR's built-in libc implementation.
+
+    config WAMR_ENABLE_LIBC_WASI
+        bool "Enable WASI libc"
+        default y
+        help
+            Enable WASI (WebAssembly System Interface) libc.
+
+    config WAMR_ENABLE_MULTI_MODULE
+        bool "Enable multi-module support"
+        default n
+        help
+            Enable loading multiple WASM modules.
+            Disabled to save memory.
+
+    config WAMR_ENABLE_SHARED_MEMORY
+        bool "Enable shared memory"
+        default n
+        help
+            Enable shared memory between WASM instances.
+            Disabled to save memory.
+
+    config WAMR_ENABLE_MEMORY_PROFILING
+        bool "Enable memory profiling"
+        default n
+        help
+            Enable memory profiling for debugging.
+
+    config WAMR_ENABLE_PERF_PROFILING
+        bool "Enable performance profiling"
+        default n
+        help
+            Enable performance profiling for debugging.
+
+    config WAMR_ENABLE_REF_TYPES
+        bool "Enable reference types"
+        default n
+        help
+            Enable reference types support.
+
+    config WAMR_ENABLE_LIB_PTHREAD
+        bool "Enable pthread library"
+        default n
+        help
+            Enable pthread library support.
+            Disabled - using FreeRTOS directly.
+
+    config WAMR_BUILD_DEBUG
+        bool "Build WAMR in debug mode"
+        default n
+        help
+            Build with debug symbols and logging.
+
+    config WAMR_INTERP_LOADER_MINI
+        bool "Use mini loader"
+        default n
+        help
+            Use minimal loader to save code size.
+
+endmenu
