@@ -23,5 +23,5 @@ int action_system_delay(
 }
 
 void actions_register_system(void) {
-    mta_register_system_function_by_name("delay", action_system_delay);
+    mta_register_system_function("delay", action_system_delay, NULL);
 }

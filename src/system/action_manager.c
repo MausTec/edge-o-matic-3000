@@ -19,15 +19,6 @@ static list_t _plugins = LIST_DEFAULT();
 #define PLUGIN_DIR "plugins"
 #define PLUGINCFG_DIR "plugincfg"
 
-static int
-host_get_system_config(mta_plugin_t* plugin, mta_scope_t* scope, mta_arg_t* args, uint8_t count);
-static int
-host_set_system_config(mta_plugin_t* plugin, mta_scope_t* scope, mta_arg_t* args, uint8_t count);
-static int
-host_get_plugin_config(mta_plugin_t* plugin, mta_scope_t* scope, mta_arg_t* args, uint8_t count);
-static int
-host_set_plugin_config(mta_plugin_t* plugin, mta_scope_t* scope, mta_arg_t* args, uint8_t count);
-
 void action_manager_load_all_plugins(void) {
     DIR* d;
     struct dirent* dir;
@@ -97,20 +88,10 @@ void action_manager_load_plugin(const char* path) {
         goto cleanup;
     }
 
-    // Load plugin name
-    cJSON* name_json = cJSON_GetObjectItem(plugin_json, "name");
-    if (name_json && cJSON_IsString(name_json)) {
-        mta_plugin_set_name(plugin, name_json->valuestring);
-    }
-
-    // Load permissions array
-    cJSON* permissions_json = cJSON_GetObjectItem(plugin_json, "permissions");
-    if (permissions_json && cJSON_IsArray(permissions_json)) {
-        mta_plugin_set_permissions(plugin, cJSON_Duplicate(permissions_json, 1));
-    }
-
-    // Load plugin config from /plugincfg/<name>.json
+    // Load user config from /plugincfg/<name>.json
     const char* plugin_name = mta_plugin_get_name(plugin);
+    cJSON* user_config = NULL;
+
     if (plugin_name) {
         char* config_path = NULL;
         asiprintf(
@@ -130,7 +111,7 @@ void action_manager_load_plugin(const char* path) {
                     cfg_buffer[cfg_size] = '\0';
 
                     if (cfg_read == cfg_size) {
-                        mta_plugin_set_config(plugin, cJSON_ParseWithLength(cfg_buffer, cfg_size));
+                        user_config = cJSON_ParseWithLength(cfg_buffer, cfg_size);
                     }
 
                     free(cfg_buffer);
@@ -143,9 +124,8 @@ void action_manager_load_plugin(const char* path) {
         }
     }
 
-    if (!mta_plugin_get_config(plugin)) {
-        mta_plugin_set_config(plugin, cJSON_CreateObject());
-    }
+    mta_plugin_set_config(plugin, user_config);
+    if (user_config) cJSON_Delete(user_config);
 
     list_add(&_plugins, (void*)plugin);
 
@@ -187,11 +167,6 @@ void action_manager_event_handler(
 
 void action_manager_init(void) {
     ESP_LOGI(TAG, "Initializing action manager...");
-
-    mta_register_system_function_by_name("getSystemConfig", host_get_system_config);
-    mta_register_system_function_by_name("setSystemConfig", host_set_system_config);
-    mta_register_system_function_by_name("getPluginConfig", host_get_plugin_config);
-    mta_register_system_function_by_name("setPluginConfig", host_set_plugin_config);
 
     event_manager_register_handler(EVT_ALL, action_manager_event_handler, NULL);
 
@@ -240,9 +215,6 @@ host_get_system_config(mta_plugin_t* plugin, mta_scope_t* scope, mta_arg_t* args
     const char* key = mta_arg_get_string(plugin, scope, args, 0);
     if (!key) return -1;
 
-    // TODO: Permission check
-    // if (!has_permission(plugin, "sysconfig:read")) return -1;
-
     char buffer[256];
     if (get_config_value(key, buffer, sizeof(buffer))) {
         mta_return_string(plugin, scope, buffer);
@@ -259,9 +231,6 @@ host_set_system_config(mta_plugin_t* plugin, mta_scope_t* scope, mta_arg_t* args
     const char* key = mta_arg_get_string(plugin, scope, args, 0);
     const char* value = mta_arg_get_string(plugin, scope, args, 1);
     if (!key || !value) return -1;
-
-    // TODO: Permission check
-    // if (!has_permission(plugin, "sysconfig:write")) return -1;
 
     bool require_reboot = false;
     if (set_config_value(key, value, &require_reboot)) {
