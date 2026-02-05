@@ -99,3 +99,15 @@ const ui_icon_def_t RECORD_ICON = { .icon_state_cnt = 1,
                                                      0b11010001,
                                                      0b00011111,
                                                      0b00000000 } } };
+
+// PLUGIN_ICON
+
+const ui_icon_def_t PLUGIN_ICON = { .icon_state_cnt = 1,
+                                    .icon_data = { { 0b01100110,
+                                                     0b01100110,
+                                                     0b11111111,
+                                                     0b10000001,
+                                                     0b10000001,
+                                                     0b01111110,
+                                                     0b00010000,
+                                                     0b00011111 } } };

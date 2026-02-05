@@ -38,7 +38,7 @@ static StaticTask_t main_task_tcb;
 static StackType_t accessory_task_stack[ACCESSORY_TASK_STACK_SIZE / sizeof(StackType_t)];
 static StaticTask_t accessory_task_tcb;
 
-static void print_retro_banner(void) {
+static void print_boot_banner(void) {
     const esp_partition_t* running = esp_ota_get_running_partition();
     size_t free_now = esp_get_free_heap_size();
     esp_chip_info_t chip_info;
@@ -46,10 +46,7 @@ static void print_retro_banner(void) {
 
     printf("\n\n**** MAUS-TEC EDGE-O-MATIC 3000 ****\n\n");
     printf(
-        "EOM-FW V%s   (IDF %s) (HAL %s)\n",
-        EOM_VERSION,
-        esp_get_idf_version(),
-        eom_hal_get_version()
+        "EOM-FW %s   (IDF %s) (HAL %s)\n", EOM_VERSION, esp_get_idf_version(), eom_hal_get_version()
     );
     printf("BUILD %s %s   PART %s\n", __DATE__, __TIME__, running ? running->label : "?");
     printf("%u BYTES FREE\n\n", (unsigned)free_now);
@@ -172,7 +169,7 @@ static void accessory_driver_task(void* args) {
 }
 
 static void main_task(void* args) {
-    console_ready();
+    // console_ready();
     ui_open_page(&PAGE_EDGING_STATS, NULL);
     ui_reset_idle_timer();
     orgasm_control_set_output_mode(OC_MANUAL_CONTROL);
@@ -259,8 +256,6 @@ void app_main() {
     eom_hal_set_encoder_brightness(Config.led_brightness);
     eom_hal_set_encoder_rgb(255, 0, 0);
 
-    // Display welcome banner
-    print_retro_banner();
     // Show post-update diagnostics if applicable
     if (dxerr != ESP_ERR_INVALID_ARG) {
         if (dxerr == ESP_OK) {
@@ -300,10 +295,15 @@ void app_main() {
 
     // Load action plugins from SD card
     action_manager_load_all_plugins();
+    if (action_manager_get_plugin_count() > 0) {
+        ui_set_icon(UI_ICON_PLUG, PLUGIN_ICON_ACTIVE);
+    }
 
     // Boot complete - fade LED to off
     vTaskDelayUntil(&boot_tick, 1000UL / portTICK_PERIOD_MS);
     ui_fade_to(0x00);
+
+    print_boot_banner();
 
     xTaskCreateStatic(
         accessory_driver_task,

@@ -198,6 +198,37 @@ void action_manager_init(void) {
     ESP_LOGI(TAG, "Action manager initialized");
 }
 
+size_t action_manager_get_plugin_count(void) {
+    size_t count = 0;
+    list_node_t* node = _plugins._first;
+    while (node) {
+        count++;
+        node = node->next;
+    }
+    return count;
+}
+
+mta_plugin_t* action_manager_get_plugin(size_t index) {
+    size_t i = 0;
+    list_node_t* node = _plugins._first;
+    while (node) {
+        if (i == index) return (mta_plugin_t*)node->data;
+        i++;
+        node = node->next;
+    }
+    return NULL;
+}
+
+mta_plugin_t* action_manager_find_plugin(const char* name) {
+    if (!name) return NULL;
+    mta_plugin_t* plugin = NULL;
+    list_foreach(_plugins, plugin) {
+        const char* plugin_name = mta_plugin_get_name(plugin);
+        if (plugin_name && strcmp(plugin_name, name) == 0) return plugin;
+    }
+    return NULL;
+}
+
 // ==========================
 // Host System Function Implementations
 // ==========================

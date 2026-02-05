@@ -31,6 +31,10 @@ static struct status_icon {
                     {
                         .icon = &RECORD_ICON,
                         .index = -1,
+                    },
+                    {
+                        .icon = &PLUGIN_ICON,
+                        .index = -1,
                     } };
 
 uint8_t ui_draw_str_center(u8g2_t* d, uint8_t cx, uint8_t y, const char* str) {

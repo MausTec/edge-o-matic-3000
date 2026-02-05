@@ -225,20 +225,6 @@ void console_register_command(const command_t* command) {
 }
 
 void console_ready(void) {
-    // Delay here on console initialization to allow the user to connect a terminal first.
-    if (!Config.console_basic_mode) {
-        printf("Press any key to initialize the terminal.\n");
-        // Poll stdin without blocking - will initialize on first character
-        int c = getc(stdin);
-        if (c == EOF) {
-            // No input yet - user can manually trigger console later if needed
-            // Console will auto-initialize on first stdin activity via UART interrupt
-            return;
-        }
-        ungetc(c, stdin);
-    }
-
-    // Create console task directly
     xTaskCreate(&console_task, "CONSOLE", 1024 * 8, NULL, tskIDLE_PRIORITY, NULL);
 }
 
