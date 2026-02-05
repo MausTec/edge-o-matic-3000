@@ -13,7 +13,7 @@ int action_system_delay(
         return -1;
     }
 
-    int ms = args[0].val.i;
+    int ms = mta_arg_get_int(plugin, scope, args, 0);
 
     ESP_LOGI(TAG, "delay(%d) start", ms);
     vTaskDelay(ms / portTICK_PERIOD_MS);
@@ -23,5 +23,5 @@ int action_system_delay(
 }
 
 void actions_register_system(void) {
-    mta_register_system_function("delay", action_system_delay);
+    mta_register_system_function_by_name("delay", action_system_delay);
 }

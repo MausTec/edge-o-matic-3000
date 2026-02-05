@@ -1,8 +1,9 @@
 #include "system/action_manager.h"
+#include "../../lib/mt-actions/include/mt_actions.h"
 #include "actions/index.h"
 #include "cJSON.h"
+#include "config.h"
 #include "eom-hal.h"
-#include "mt_actions.h"
 #include "system/event_manager.h"
 #include "util/list.h"
 #include "util/strcase.h"
@@ -16,7 +17,16 @@ static const char* TAG = "system:action_manager";
 static list_t _plugins = LIST_DEFAULT();
 
 #define PLUGIN_DIR "plugins"
-#define DRIVERCFG_DIR "drivercfg"
+#define PLUGINCFG_DIR "plugincfg"
+
+static int
+host_get_system_config(mta_plugin_t* plugin, mta_scope_t* scope, mta_arg_t* args, uint8_t count);
+static int
+host_set_system_config(mta_plugin_t* plugin, mta_scope_t* scope, mta_arg_t* args, uint8_t count);
+static int
+host_get_plugin_config(mta_plugin_t* plugin, mta_scope_t* scope, mta_arg_t* args, uint8_t count);
+static int
+host_set_plugin_config(mta_plugin_t* plugin, mta_scope_t* scope, mta_arg_t* args, uint8_t count);
 
 void action_manager_load_all_plugins(void) {
     DIR* d;
@@ -81,10 +91,60 @@ void action_manager_load_plugin(const char* path) {
     }
 
     mta_plugin_t* plugin = NULL;
-    mta_load(&plugin, plugin_json);
+    mta_load_plugin(&plugin, plugin_json);
 
     if (plugin == NULL) {
         goto cleanup;
+    }
+
+    // Load plugin name
+    cJSON* name_json = cJSON_GetObjectItem(plugin_json, "name");
+    if (name_json && cJSON_IsString(name_json)) {
+        mta_plugin_set_name(plugin, name_json->valuestring);
+    }
+
+    // Load permissions array
+    cJSON* permissions_json = cJSON_GetObjectItem(plugin_json, "permissions");
+    if (permissions_json && cJSON_IsArray(permissions_json)) {
+        mta_plugin_set_permissions(plugin, cJSON_Duplicate(permissions_json, 1));
+    }
+
+    // Load plugin config from /plugincfg/<name>.json
+    const char* plugin_name = mta_plugin_get_name(plugin);
+    if (plugin_name) {
+        char* config_path = NULL;
+        asiprintf(
+            &config_path, "%s/%s/%s.json", eom_hal_get_sd_mount_point(), PLUGINCFG_DIR, plugin_name
+        );
+
+        if (config_path) {
+            FILE* cfg_file = fopen(config_path, "r");
+            if (cfg_file) {
+                fseek(cfg_file, 0, SEEK_END);
+                long cfg_size = ftell(cfg_file);
+                rewind(cfg_file);
+
+                char* cfg_buffer = (char*)malloc(cfg_size + 1);
+                if (cfg_buffer) {
+                    size_t cfg_read = fread(cfg_buffer, 1, cfg_size, cfg_file);
+                    cfg_buffer[cfg_size] = '\0';
+
+                    if (cfg_read == cfg_size) {
+                        mta_plugin_set_config(plugin, cJSON_ParseWithLength(cfg_buffer, cfg_size));
+                    }
+
+                    free(cfg_buffer);
+                }
+
+                fclose(cfg_file);
+            }
+
+            free(config_path);
+        }
+    }
+
+    if (!mta_plugin_get_config(plugin)) {
+        mta_plugin_set_config(plugin, cJSON_CreateObject());
     }
 
     list_add(&_plugins, (void*)plugin);
@@ -128,12 +188,132 @@ void action_manager_event_handler(
 void action_manager_init(void) {
     ESP_LOGI(TAG, "Initializing action manager...");
 
-    // Register system functions for mt-actions
-    // TODO: Implement mta_register_system_function() in mt-actions library
-    // actions_register_system();
+    mta_register_system_function_by_name("getSystemConfig", host_get_system_config);
+    mta_register_system_function_by_name("setSystemConfig", host_set_system_config);
+    mta_register_system_function_by_name("getPluginConfig", host_get_plugin_config);
+    mta_register_system_function_by_name("setPluginConfig", host_set_plugin_config);
 
-    // Register event handler for all events
     event_manager_register_handler(EVT_ALL, action_manager_event_handler, NULL);
 
-    ESP_LOGI(TAG, "Action manager initialized (plugin loading deferred)");
+    ESP_LOGI(TAG, "Action manager initialized");
+}
+
+// ==========================
+// Host System Function Implementations
+// ==========================
+
+static int
+host_get_system_config(mta_plugin_t* plugin, mta_scope_t* scope, mta_arg_t* args, uint8_t count) {
+    if (count < 1) return -1;
+
+    const char* key = mta_arg_get_string(plugin, scope, args, 0);
+    if (!key) return -1;
+
+    // TODO: Permission check
+    // if (!has_permission(plugin, "sysconfig:read")) return -1;
+
+    char buffer[256];
+    if (get_config_value(key, buffer, sizeof(buffer))) {
+        mta_return_string(plugin, scope, buffer);
+        return 0;
+    }
+
+    return -1;
+}
+
+static int
+host_set_system_config(mta_plugin_t* plugin, mta_scope_t* scope, mta_arg_t* args, uint8_t count) {
+    if (count < 2) return -1;
+
+    const char* key = mta_arg_get_string(plugin, scope, args, 0);
+    const char* value = mta_arg_get_string(plugin, scope, args, 1);
+    if (!key || !value) return -1;
+
+    // TODO: Permission check
+    // if (!has_permission(plugin, "sysconfig:write")) return -1;
+
+    bool require_reboot = false;
+    if (set_config_value(key, value, &require_reboot)) {
+        config_enqueue_save(0);
+        mta_return_int(plugin, scope, require_reboot ? 1 : 0);
+        return 0;
+    }
+
+    return -1;
+}
+
+static int
+host_get_plugin_config(mta_plugin_t* plugin, mta_scope_t* scope, mta_arg_t* args, uint8_t count) {
+    if (count < 1) return -1;
+
+    const char* key = mta_arg_get_string(plugin, scope, args, 0);
+    cJSON* config = mta_plugin_get_config(plugin);
+    if (!key || !config) return -1;
+
+    cJSON* value = cJSON_GetObjectItem(config, key);
+
+    if (value) {
+        if (cJSON_IsNumber(value)) {
+            mta_return_int(plugin, scope, value->valueint);
+            return 0;
+        } else if (cJSON_IsString(value)) {
+            mta_return_string(plugin, scope, value->valuestring);
+            return 0;
+        }
+    }
+
+    // Return default if provided
+    if (count >= 2) {
+        int default_val = mta_arg_get_int(plugin, scope, args, 1);
+        mta_return_int(plugin, scope, default_val);
+        return 0;
+    }
+
+    return -1;
+}
+
+static int
+host_set_plugin_config(mta_plugin_t* plugin, mta_scope_t* scope, mta_arg_t* args, uint8_t count) {
+    cJSON* config = mta_plugin_get_config(plugin);
+    const char* plugin_name = mta_plugin_get_name(plugin);
+
+    if (count < 2 || !config || !plugin_name) return -1;
+
+    const char* key = mta_arg_get_string(plugin, scope, args, 0);
+    if (!key) return -1;
+
+    cJSON_DeleteItemFromObject(config, key);
+
+    switch (mta_arg_get_type(plugin, scope, args, 1)) {
+    case MTA_ARG_STRING_REF: {
+        const char* str_val = mta_arg_get_string(plugin, scope, args, 1);
+        if (str_val) cJSON_AddStringToObject(config, key, str_val);
+        break;
+    }
+    case MTA_ARG_FLOAT:
+        cJSON_AddNumberToObject(config, key, mta_arg_get_float(plugin, scope, args, 1));
+        break;
+    default: cJSON_AddNumberToObject(config, key, mta_arg_get_int(plugin, scope, args, 1)); break;
+    }
+
+    // Write back to disk
+    char* config_path = NULL;
+    asiprintf(
+        &config_path, "%s/%s/%s.json", eom_hal_get_sd_mount_point(), PLUGINCFG_DIR, plugin_name
+    );
+
+    if (config_path) {
+        FILE* f = fopen(config_path, "w");
+        if (f) {
+            char* json_str = cJSON_Print(config);
+            if (json_str) {
+                fputs(json_str, f);
+                free(json_str);
+            }
+            fclose(f);
+        }
+        free(config_path);
+    }
+
+    return 0;
 }
