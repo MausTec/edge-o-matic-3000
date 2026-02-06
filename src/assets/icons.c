@@ -103,11 +103,11 @@ const ui_icon_def_t RECORD_ICON = { .icon_state_cnt = 1,
 // PLUGIN_ICON
 
 const ui_icon_def_t PLUGIN_ICON = { .icon_state_cnt = 1,
-                                    .icon_data = { { 0b01100110,
-                                                     0b01100110,
-                                                     0b11111111,
-                                                     0b10000001,
-                                                     0b10000001,
+                                    .icon_data = { { 0b00100100,
+                                                     0b00100100,
                                                      0b01111110,
-                                                     0b00010000,
+                                                     0b01000010,
+                                                     0b01000010,
+                                                     0b00111100,
+                                                     0b00011000,
                                                      0b00011111 } } };
