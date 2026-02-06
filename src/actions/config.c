@@ -76,9 +76,7 @@ host_get_plugin_config(mta_plugin_t* plugin, mta_scope_t* scope, mta_arg_t* args
 static int
 host_set_plugin_config(mta_plugin_t* plugin, mta_scope_t* scope, mta_arg_t* args, uint8_t count) {
     cJSON* config = mta_plugin_get_config(plugin);
-    const char* plugin_name = mta_plugin_get_name(plugin);
-
-    if (count < 2 || !config || !plugin_name) return -1;
+    if (count < 2 || !config) return -1;
 
     const char* key = mta_arg_get_string(plugin, scope, args, 0);
     if (!key) return -1;
@@ -97,20 +95,9 @@ host_set_plugin_config(mta_plugin_t* plugin, mta_scope_t* scope, mta_arg_t* args
     default: cJSON_AddNumberToObject(config, key, mta_arg_get_int(plugin, scope, args, 1)); break;
     }
 
-    char* config_path = NULL;
-    asiprintf(&config_path, "%s/plugincfg/%s.json", eom_hal_get_sd_mount_point(), plugin_name);
-
-    if (config_path) {
-        FILE* f = fopen(config_path, "w");
-        if (f) {
-            char* json_str = cJSON_Print(config);
-            if (json_str) {
-                fputs(json_str, f);
-                free(json_str);
-            }
-            fclose(f);
-        }
-        free(config_path);
+    // Delegate to action_manager for persistence
+    if (!action_manager_save_plugin_config(plugin)) {
+        return -1;
     }
 
     return 0;

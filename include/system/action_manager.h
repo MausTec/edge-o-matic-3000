@@ -17,6 +17,16 @@ size_t action_manager_get_plugin_count(void);
 mta_plugin_t* action_manager_get_plugin(size_t index);
 mta_plugin_t* action_manager_find_plugin(const char* name);
 
+/**
+ * @brief Save plugin config to disk
+ *
+ * Serializes plugin config and writes to /plugincfg/<name>.json
+ *
+ * @param plugin Plugin instance
+ * @return true if saved successfully, false otherwise
+ */
+bool action_manager_save_plugin_config(mta_plugin_t* plugin);
+
 #ifdef __cplusplus
 }
 #endif

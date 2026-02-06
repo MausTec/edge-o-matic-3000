@@ -204,6 +204,39 @@ mta_plugin_t* action_manager_find_plugin(const char* name) {
     return NULL;
 }
 
+bool action_manager_save_plugin_config(mta_plugin_t* plugin) {
+    if (!plugin) return false;
+
+    const char* plugin_name = mta_plugin_get_name(plugin);
+    if (!plugin_name) return false;
+
+    cJSON* config_json = mta_plugin_serialize_config(plugin);
+    if (!config_json) return false;
+
+    char* config_path = NULL;
+    asiprintf(
+        &config_path, "%s/%s/%s.json", eom_hal_get_sd_mount_point(), PLUGINCFG_DIR, plugin_name
+    );
+
+    bool success = false;
+    if (config_path) {
+        FILE* f = fopen(config_path, "w");
+        if (f) {
+            char* json_str = cJSON_PrintUnformatted(config_json);
+            if (json_str) {
+                fputs(json_str, f);
+                success = true;
+                free(json_str);
+            }
+            fclose(f);
+        }
+        free(config_path);
+    }
+
+    cJSON_Delete(config_json);
+    return success;
+}
+
 // ==========================
 // Host System Function Implementations
 // ==========================
