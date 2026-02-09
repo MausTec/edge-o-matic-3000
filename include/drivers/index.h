@@ -7,10 +7,10 @@ extern "C" {
 
 #include "bluetooth_driver.h"
 
-extern const bluetooth_driver_t LOVENSE_DRIVER;
+extern const bluetooth_driver_t PLUGIN_DRIVER;
 
 static const bluetooth_driver_t* BT_DRIVERS[] = {
-    &LOVENSE_DRIVER,
+    &PLUGIN_DRIVER,
 };
 
 #ifdef __cplusplus
