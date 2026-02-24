@@ -26,7 +26,7 @@ static void on_render(u8g2_t* d, void* arg) {
         return;
     }
 
-    ui_draw_status(d, app->title);
+    ui_draw_status(d, app->display_name);
 }
 
 ui_render_flag_t on_loop(void* arg) {

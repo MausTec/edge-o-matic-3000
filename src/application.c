@@ -65,15 +65,15 @@ static app_err_t application_parse_manifest(const char* pack_path, application_t
         return APP_FILE_INVALID;
     }
 
-    // Get title
-    cJSON* title = cJSON_GetObjectItem(manifest_json, "title");
+    // Get displayName
+    cJSON* display_name = cJSON_GetObjectItem(manifest_json, "displayName");
 
-    if (title == NULL || !cJSON_IsString(title)) {
+    if (display_name == NULL || !cJSON_IsString(display_name)) {
         cJSON_Delete(manifest_json);
         return APP_FILE_INVALID;
     }
 
-    strlcpy(app->title, title->valuestring, APP_TITLE_MAXLEN);
+    strlcpy(app->display_name, display_name->valuestring, APP_TITLE_MAXLEN);
 
     // Get entrypoint
     cJSON* entrypoint = cJSON_GetObjectItem(manifest_json, "entrypoint");
@@ -110,12 +110,17 @@ app_err_t application_load(const char* path, application_t** app_h) {
         return err;
     }
 
-    ESP_LOGI(TAG, "Parsed manifest: title='%s', entrypoint='%s'", app->title, app->entrypoint);
+    ESP_LOGI(
+        TAG,
+        "Parsed manifest: displayName='%s', entrypoint='%s'",
+        app->display_name,
+        app->entrypoint
+    );
     ESP_LOGW(TAG, "WASM loading not implemented - application will not run");
 
     // Register to task list
     struct app_task_node* node = (struct app_task_node*)malloc(sizeof(struct app_task_node));
-    
+
     if (node == NULL) {
         free(*app_h);
         *app_h = NULL;
@@ -142,7 +147,7 @@ app_err_t application_start_background(application_t* app) {
 app_err_t application_kill(application_t* app) {
     if (app == NULL) return APP_FILE_NOT_FOUND;
 
-    ESP_LOGI(TAG, "STUB: Killing application %s", app->title);
+    ESP_LOGI(TAG, "STUB: Killing application %s", app->display_name);
     // TODO: Cleanup WASM instance
 
     return APP_OK;
@@ -151,7 +156,7 @@ app_err_t application_kill(application_t* app) {
 void app_dispose(application_t* app) {
     if (app == NULL) return;
 
-    ESP_LOGI(TAG, "STUB: Disposing application %s", app->title);
+    ESP_LOGI(TAG, "STUB: Disposing application %s", app->display_name);
 
     // Remove from tasklist
     struct app_task_node** ptr = &tasklist;

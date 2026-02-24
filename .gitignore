@@ -1,6 +1,9 @@
 *.hex
 *.bin
 
+TODO.md
+CHANGELOG.md
+
 tmp/*
 !tmp/.keep
 

@@ -25,7 +25,7 @@ typedef enum {
 
 // TODO: NOT !!! WASM specific yet
 typedef struct {
-    char title[APP_TITLE_MAXLEN];
+    char display_name[APP_TITLE_MAXLEN];
     char pack_path[PATH_MAX];
     char entrypoint[APP_TITLE_MAXLEN];
     void* runtime_data; // Placeholder - will become WASM module/instance
