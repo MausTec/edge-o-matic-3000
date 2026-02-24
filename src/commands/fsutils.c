@@ -252,7 +252,7 @@ static command_err_t cmd_load(int argc, char** argv, console_t* console) {
             return CMD_FAIL;
         }
 
-        fprintf(console->out, "Loaded: %s\n", application->title);
+        fprintf(console->out, "Loaded: %s\n", application->display_name);
         app_err = application_start(application);
         fprintf(console->out, "\n");
 
