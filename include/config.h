@@ -43,7 +43,7 @@ typedef enum vibration_mode vibration_mode_t;
 
 // Increment this if you need to trigger a migration on the system config file.
 // Your migration should be defined in config_migrations.c
-#define SYSTEM_CONFIG_FILE_VERSION 2
+#define SYSTEM_CONFIG_FILE_VERSION 3
 
 struct config {
     // Private Things, do not erase!
@@ -133,20 +133,10 @@ struct config {
     // Vibration Mode for main vibrator control.
     int vibration_mode;
 
-    //= Post orgasm torure stuff
+    //= Post orgasm torture stuff
 
     // Use post-orgasm torture mode and functionality.
     bool use_post_orgasm;
-    // Threshold over arousal to detect a clench : Lower values increase sensitivity
-    int clench_pressure_sensitivity;
-    // Duration the clench detector can raise arousal if clench detector turned on in edging session
-    int max_clench_duration_ms;
-    // Threshold variable that is milliseconds counts of clench to detect orgasm
-    int clench_time_to_orgasm_ms;
-    // Threshold variable that is milliseconds counts to detect the start of clench
-    int clench_time_threshold_ms;
-    // Use the clench detector to adjust Arousal
-    bool clench_detector_in_edging;
     // How long to edge before permiting an orgasm
     int auto_edging_duration_minutes;
     // How long to stimulate after orgasm detected

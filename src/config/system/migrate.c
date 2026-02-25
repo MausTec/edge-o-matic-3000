@@ -27,21 +27,21 @@ migration_result_t migrate_to_1(cJSON* root) {
     return MIGRATION_COMPLETE;
 }
 
-/**
- * Rename "clench_threshold_2_orgasm" to "clench_time_to_orgasm_ms" and change value unit
- * from ticks to ms.
- */
 migration_result_t migrate_to_2(cJSON* root) {
-    cJSON* old = cJSON_GetObjectItem(root, "clench_threshold_2_orgasm");
-    if (old == NULL) return MIGRATION_COMPLETE;
+    // noop (original migration removed during contributor audit)
+    return MIGRATION_COMPLETE;
+}
 
-    // my tests to validate this has shown a 30 to 1 ratio
-    int value_ms = old->valueint * 30; // i think this was the tick rate?
-    cJSON* new = cJSON_AddNumberToObject(root, "clench_time_to_orgasm_ms", value_ms);
-
-    if (new == NULL) return MIGRATION_ERR_BAD_DATA;
+/**
+ * Remove clench detector config keys (feature removed in v1.3.0).
+ */
+migration_result_t migrate_to_3(cJSON* root) {
+    cJSON_DeleteItemFromObject(root, "clench_pressure_sensitivity");
+    cJSON_DeleteItemFromObject(root, "max_clench_duration_ms");
+    cJSON_DeleteItemFromObject(root, "clench_time_to_orgasm_ms");
+    cJSON_DeleteItemFromObject(root, "clench_time_threshold_ms");
+    cJSON_DeleteItemFromObject(root, "clench_detector_in_edging");
     cJSON_DeleteItemFromObject(root, "clench_threshold_2_orgasm");
-
     return MIGRATION_COMPLETE;
 }
 
@@ -51,6 +51,7 @@ migration_result_t config_system_migrate(cJSON* root) {
     // List all migration calls below, in numeric order:
     MIGRATE(1);
     MIGRATE(2);
+    MIGRATE(3);
 
     END_MIGRATION();
 }
