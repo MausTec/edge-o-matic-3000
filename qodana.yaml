@@ -1,0 +1,9 @@
+#################################################################################
+#              WARNING: Do not store sensitive information in this file,        #
+#               as its contents will be included in the Qodana report.          #
+#################################################################################
+version: "1.0"
+linter: qodana-clang
+# Requires: pio run -e esp32dev -t compiledb (generates compile_commands.json in project root)
+# bootstrap filters project-only files and rewrites host paths to /data/project for Docker.
+bootstrap: python3 bin/qodana_prep.py

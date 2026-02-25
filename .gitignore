@@ -38,3 +38,6 @@ platformio.log
 
 sdkconfig.*
 !sdkconfig.defaults
+.envrc
+compile_commands.json
+.idea/
