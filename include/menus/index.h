@@ -14,7 +14,6 @@ extern "C" {
 extern const ui_menu_t MAIN_MENU;
 extern const ui_menu_t APPLICATIONS_MENU;
 extern const ui_menu_t EDGING_SETTINGS_MENU;
-extern const ui_menu_t ORGASM_SETTINGS_MENU;
 extern const ui_menu_t UI_SETTINGS_MENU;
 extern const ui_menu_t USER_PROFILES_MENU;
 extern const ui_menu_t NETWORKING_MENU;

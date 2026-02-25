@@ -33,15 +33,24 @@ migration_result_t migrate_to_2(cJSON* root) {
 }
 
 /**
- * Remove clench detector config keys (feature removed in v1.3.0).
+ * Remove clench detector and post-orgasm torture config keys (features removed in v1.3.0).
  */
 migration_result_t migrate_to_3(cJSON* root) {
+    // Clench detector keys
     cJSON_DeleteItemFromObject(root, "clench_pressure_sensitivity");
     cJSON_DeleteItemFromObject(root, "max_clench_duration_ms");
     cJSON_DeleteItemFromObject(root, "clench_time_to_orgasm_ms");
     cJSON_DeleteItemFromObject(root, "clench_time_threshold_ms");
     cJSON_DeleteItemFromObject(root, "clench_detector_in_edging");
     cJSON_DeleteItemFromObject(root, "clench_threshold_2_orgasm");
+
+    // Post-orgasm torture keys
+    cJSON_DeleteItemFromObject(root, "use_post_orgasm");
+    cJSON_DeleteItemFromObject(root, "auto_edging_duration_minutes");
+    cJSON_DeleteItemFromObject(root, "post_orgasm_duration_seconds");
+    cJSON_DeleteItemFromObject(root, "edge_menu_lock");
+    cJSON_DeleteItemFromObject(root, "post_orgasm_menu_lock");
+
     return MIGRATION_COMPLETE;
 }
 

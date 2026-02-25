@@ -21,7 +21,6 @@ static const char* TAG = "orgasm_control";
 static const char* orgasm_output_mode_str[] = {
     "MANUAL_CONTROL",
     "AUTOMAITC_CONTROL",
-    "ORGASM_MODE",
 };
 
 static struct {
@@ -52,16 +51,6 @@ static struct {
     unsigned long recording_start_ms;
     FILE* logfile;
 } logger_state;
-
-static struct {
-    // Autoedging Time and Post-Orgasm variables
-    unsigned long auto_edging_start_millis;
-    unsigned long post_orgasm_start_millis;
-    unsigned long post_orgasm_duration_millis;
-    oc_bool_t menu_is_locked;
-    oc_bool_t detected_orgasm;
-    int post_orgasm_duration_seconds;
-} post_orgasm_state;
 
 #define update_check(variable, value)                                                              \
     {                                                                                              \
@@ -215,86 +204,6 @@ static void orgasm_control_updateMotorSpeed() {
     }
 }
 
-static void orgasm_control_updateEdgingTime() { // Edging+Orgasm timer
-    // Make sure menu_is_locked is turned off in Manual mode
-    if (output_state.output_mode == OC_MANUAL_CONTROL) {
-        post_orgasm_state.menu_is_locked = ocFALSE;
-        post_orgasm_state.post_orgasm_duration_seconds = Config.post_orgasm_duration_seconds;
-        return;
-    }
-
-    // keep edging start time to current time as long as system is not in Edge-Orgasm mode 2
-    if (output_state.output_mode != OC_ORGASM_MODE) {
-        post_orgasm_state.auto_edging_start_millis = (esp_timer_get_time() / 1000UL);
-        post_orgasm_state.post_orgasm_start_millis = 0;
-    }
-
-    // Lock Menu if turned on. and in Edging_orgasm mode
-    if (Config.edge_menu_lock && !post_orgasm_state.menu_is_locked) {
-        // Lock only after 2 minutes
-        if ((esp_timer_get_time() / 1000UL) >
-            post_orgasm_state.auto_edging_start_millis + (2 * 60 * 1000)) {
-            post_orgasm_state.menu_is_locked = ocTRUE;
-            arousal_state.update_flag = ocTRUE;
-        }
-    }
-
-    // Pre-Orgasm loop -- Orgasm is permited
-    if (orgasm_control_is_permit_orgasm_reached() && !orgasm_control_is_post_orgasm_reached()) {
-        if (output_state.control_motor) {
-            orgasm_control_pause_control(); // make sure orgasm is now possible
-        }
-
-        // now detect the orgasm to start post orgasm torture timer
-        if (post_orgasm_state.detected_orgasm) {
-            post_orgasm_state.post_orgasm_start_millis =
-                (esp_timer_get_time() / 1000UL); // Start Post orgasm torture timer
-            // Lock menu if turned on
-            if (Config.post_orgasm_menu_lock && !post_orgasm_state.menu_is_locked) {
-                post_orgasm_state.menu_is_locked = ocTRUE;
-            }
-
-            eom_hal_set_encoder_rgb(255, 0, 0);
-        } else {
-            eom_hal_set_encoder_rgb(0, 255, 0);
-        }
-
-        // raise motor speed to max speep. protect not to go higher than max
-        if (output_state.motor_speed <= (Config.motor_max_speed - 5)) {
-            output_state.motor_speed += 5;
-        } else {
-            update_check(output_state.motor_speed, Config.motor_max_speed);
-        }
-    }
-
-    // Post Orgasm loop
-    if (orgasm_control_is_post_orgasm_reached()) {
-        post_orgasm_state.post_orgasm_duration_millis =
-            (post_orgasm_state.post_orgasm_duration_seconds * 1000);
-
-        // Detect if within post orgasm session
-        if ((esp_timer_get_time() / 1000UL) < (post_orgasm_state.post_orgasm_start_millis +
-                                               post_orgasm_state.post_orgasm_duration_millis)) {
-            output_state.motor_speed = Config.motor_max_speed;
-        } else {                                // Post_orgasm timer reached
-            if (output_state.motor_speed > 0) { // Ramp down motor speed to 0
-                output_state.motor_speed = output_state.motor_speed - 1;
-            } else {
-                post_orgasm_state.menu_is_locked = ocFALSE;
-                post_orgasm_state.detected_orgasm = ocFALSE;
-                output_state.motor_speed = 0;
-                _set_speed(output_state.motor_speed);
-                orgasm_control_set_output_mode(OC_MANUAL_CONTROL);
-            }
-        }
-    }
-    // Control output while motor control is paused
-    if (output_state.control_motor == OC_MANUAL_CONTROL) {
-        uint8_t speed = orgasm_control_get_motor_speed();
-        _set_speed(speed);
-    }
-}
-
 void orgasm_control_twitch_detect() {
     if (arousal_state.arousal > Config.sensitivity_threshold) {
         output_state.motor_stop_time = (esp_timer_get_time() / 1000UL);
@@ -398,7 +307,6 @@ void orgasm_control_tick() {
 
     if (millis - arousal_state.last_update_ms > update_frequency_ms) {
         orgasm_control_updateArousal();
-        orgasm_control_updateEdgingTime();
         orgasm_control_updateMotorSpeed();
         arousal_state.last_update_ms = millis;
 
@@ -523,37 +431,4 @@ void orgasm_control_resume_control() {
     output_state.control_motor = output_state.prev_control_motor;
 }
 
-void orgasm_control_permit_orgasm(int seconds) {
-    post_orgasm_state.detected_orgasm = ocFALSE;
-    orgasm_control_set_output_mode(OC_ORGASM_MODE);
-    post_orgasm_state.auto_edging_start_millis =
-        (esp_timer_get_time() / 1000UL) - (Config.auto_edging_duration_minutes * 60 * 1000);
-    post_orgasm_state.post_orgasm_duration_seconds = seconds;
-}
 
-oc_bool_t orgasm_control_is_permit_orgasm_reached() {
-    // Detect if edging time has passed
-    if ((esp_timer_get_time() / 1000UL) > (post_orgasm_state.auto_edging_start_millis +
-                                           (Config.auto_edging_duration_minutes * 60 * 1000))) {
-        return ocTRUE;
-    } else {
-        return ocFALSE;
-    }
-}
-
-oc_bool_t orgasm_control_is_post_orgasm_reached() {
-    // Detect if after orgasm
-    if (post_orgasm_state.post_orgasm_start_millis > 0) {
-        return ocTRUE;
-    } else {
-        return ocFALSE;
-    }
-}
-
-oc_bool_t orgasm_control_is_menu_locked() {
-    return post_orgasm_state.menu_is_locked;
-};
-
-void orgasm_control_lock_menu(oc_bool_t value) {
-    post_orgasm_state.menu_is_locked = value;
-}

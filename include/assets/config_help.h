@@ -47,11 +47,6 @@ extern "C" {
 #define SENSOR_SENSITIVITY_HELP _HELPSTR("Analog pressure prescaling. Please see instruction manual.")
 #define USE_AVERAGE_VALUES_HELP _HELPSTR("Use average values when calculating arousal. This smooths noisy data.")
 #define VIBRATION_MODE_HELP _HELPSTR("Vibration Mode for main vibrator control.")
-#define USE_POST_ORGASM_HELP _HELPSTR("Use post-orgasm torture mode and functionality.")
-#define AUTO_EDGING_DURATION_MINUTES_HELP _HELPSTR("How long to edge before permiting an orgasm.")
-#define POST_ORGASM_DURATION_SECONDS_HELP _HELPSTR("How long to stimulate after orgasm detected.")
-#define EDGE_MENU_LOCK_HELP _HELPSTR("Deny access to menu starting in the edging session.")
-#define POST_ORGASM_MENU_LOCK_HELP _HELPSTR("Deny access to menu starting after orgasm detected.")
 
 #ifdef __cplusplus
 }

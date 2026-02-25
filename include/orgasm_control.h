@@ -14,7 +14,6 @@ extern "C" {
 typedef enum orgasm_output_mode {
     OC_MANUAL_CONTROL,
     OC_AUTOMAITC_CONTROL,
-    OC_ORGASM_MODE,
     _OC_MODE_MAX,
     _OC_MODE_ERROR = -1
 } orgasm_output_mode_t;
@@ -59,15 +58,6 @@ oc_bool_t orgasm_control_is_recording(void);
 // Twitch Detect (In wrong place for 60hz)
 // Note 03-27-24 M. Abata - Clarify the above?
 void orgasm_control_twitch_detect(void);
-
-// Post orgasm
-// TODO - Refactor post-orgasm and similar modes into post_orgasm_control.h, which I so
-//        generously provided a template for! Truly my generosity is boundless.
-oc_bool_t orgasm_control_is_menu_locked(void);
-oc_bool_t orgasm_control_is_permit_orgasm_reached(void);
-oc_bool_t orgasm_control_is_post_orgasm_reached(void);
-void orgasm_control_permit_orgasm(int seconds);
-void orgasm_control_lock_menu(oc_bool_t value);
 
 #ifdef __cplusplus
 }

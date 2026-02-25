@@ -133,19 +133,6 @@ struct config {
     // Vibration Mode for main vibrator control.
     int vibration_mode;
 
-    //= Post orgasm torture stuff
-
-    // Use post-orgasm torture mode and functionality.
-    bool use_post_orgasm;
-    // How long to edge before permiting an orgasm
-    int auto_edging_duration_minutes;
-    // How long to stimulate after orgasm detected
-    int post_orgasm_duration_seconds;
-    // Deny access to menu starting in the edging session
-    bool edge_menu_lock;
-    // Deny access to menu starting after orgasm detected
-    bool post_orgasm_menu_lock;
-
     //= Internal System Configuration (Update only if you know what you're doing)
 
     // Remote update server URL. You may change this to OTA update other versions.

@@ -55,13 +55,6 @@ CONFIG_DEFS {
     // Vibration Settings
     CFG_ENUM(vibration_mode, vibration_mode_t, RampStop);
 
-    // Post-Orgasm Torture
-    CFG_BOOL(use_post_orgasm, false);
-    CFG_NUMBER(auto_edging_duration_minutes, 30);
-    CFG_NUMBER(post_orgasm_duration_seconds, 10);
-    CFG_BOOL(post_orgasm_menu_lock, false);
-    CFG_BOOL(edge_menu_lock, false);
-
     // Internal system things, only edit if you know what you're doing.
     CFG_STRING_PTR(remote_update_url, REMOTE_UPDATE_URL)
 
