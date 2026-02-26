@@ -36,11 +36,6 @@ static struct {
 static struct {
     orgasm_output_mode_t output_mode;
     vibration_mode_t vibration_mode;
-    unsigned long motor_stop_time;
-    unsigned long motor_start_time;
-    unsigned long edge_time_out; // 10000?
-    unsigned long random_additional_delay;
-    int twitch_count;
     uint8_t control_motor;
     uint8_t prev_control_motor;
     float motor_speed;
@@ -78,7 +73,6 @@ static void _set_speed(uint8_t speed) {
 void orgasm_control_init(void) {
     output_state.output_mode = OC_MANUAL_CONTROL;
     output_state.vibration_mode = Config.vibration_mode;
-    output_state.edge_time_out = 10000;
 
     running_average_init(&arousal_state.average, Config.pressure_smoothing);
 }
@@ -155,58 +149,32 @@ static void orgasm_control_updateMotorSpeed() {
     const vibration_mode_controller_t* controller = orgasm_control_getVibrationMode();
     controller->tick(output_state.motor_speed, arousal_state.arousal);
 
-    // Calculate timeout delay
-    oc_bool_t time_out_over = ocFALSE;
-    long on_time = (esp_timer_get_time() / 1000UL) - output_state.motor_start_time;
-
-    if ((esp_timer_get_time() / 1000UL) - output_state.motor_stop_time >
-        Config.edge_delay + output_state.random_additional_delay) {
-        time_out_over = ocTRUE;
-    }
+    float motor_increment =
+        ((float)Config.motor_max_speed /
+         ((float)Config.update_frequency_hz * (float)Config.motor_ramp_time_s));
 
     // Ope, orgasm incoming! Stop it!
-    if (!time_out_over) {
-        orgasm_control_twitch_detect();
-
-    } else if (arousal_state.arousal > Config.sensitivity_threshold &&
-               output_state.motor_speed > 0 && on_time > Config.minimum_on_time) {
-        // The motor_speed check above, btw, is so we only hit this once per peak.
-        // Set the motor speed to 0, set stop time, and determine the new additional random time.
-        output_state.motor_speed = controller->stop();
-        output_state.motor_stop_time = (esp_timer_get_time() / 1000UL);
-        output_state.motor_start_time = 0;
+    if (arousal_state.arousal > Config.sensitivity_threshold && output_state.motor_speed > 0) {
+        output_state.motor_speed = fmaxf(
+            -255.0f,
+            -0.5f * (float)Config.motor_ramp_time_s * (float)Config.update_frequency_hz *
+                motor_increment
+        );
         arousal_state.update_flag = ocTRUE;
 
         event_manager_dispatch(EVT_ORGASM_DENIAL, NULL, 0);
 
-        // If Max Additional Delay is not disabled, caculate a new delay every time the motor is
-        // stopped.
-        if (Config.max_additional_delay != 0) {
-            output_state.random_additional_delay = random() % Config.max_additional_delay;
-        }
+    } else if (output_state.motor_speed < Config.motor_max_speed) {
+        update_check(output_state.motor_speed, output_state.motor_speed + motor_increment);
 
-        // Start from 0
-    } else if (output_state.motor_speed == 0 && output_state.motor_start_time == 0) {
-        output_state.motor_speed = controller->start();
-        output_state.motor_start_time = (esp_timer_get_time() / 1000UL);
-        output_state.random_additional_delay = 0;
-        arousal_state.update_flag = ocTRUE;
-
-        // Increment or Change
-    } else {
-        update_check(output_state.motor_speed, controller->increment());
+    } else if (output_state.motor_speed > Config.motor_max_speed) {
+        output_state.motor_speed = Config.motor_max_speed;
     }
 
     // Control motor if we are not manually doing so.
     if (output_state.control_motor) {
         uint8_t speed = orgasm_control_get_motor_speed();
         _set_speed(speed);
-    }
-}
-
-void orgasm_control_twitch_detect() {
-    if (arousal_state.arousal > Config.sensitivity_threshold) {
-        output_state.motor_stop_time = (esp_timer_get_time() / 1000UL);
     }
 }
 

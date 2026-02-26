@@ -43,7 +43,7 @@ typedef enum vibration_mode vibration_mode_t;
 
 // Increment this if you need to trigger a migration on the system config file.
 // Your migration should be defined in config_migrations.c
-#define SYSTEM_CONFIG_FILE_VERSION 3
+#define SYSTEM_CONFIG_FILE_VERSION 4
 
 struct config {
     // Private Things, do not erase!
@@ -106,15 +106,6 @@ struct config {
 
     // Maximum speed for the motor in auto-ramp mode.
     uint8_t motor_max_speed;
-    // The minimum speed the motor will start at in automatic mode.
-    uint8_t motor_start_speed;
-    // Minimum time (ms) after edge detection before resuming stimulation.
-    int edge_delay;
-    // Maximum time (ms) that can be added to the edge delay before resuming stimulation. A random
-    // number will be picked between 0 and this setting each cycle. 0 to disable.
-    int max_additional_delay;
-    // Time (ms) after stimulation starts before edge detection is resumed.
-    int minimum_on_time;
     // Number of samples to take an average of. Higher results in lag and lower resolution!
     uint8_t pressure_smoothing;
     // The arousal threshold for orgasm detection. Lower = sooner cutoff.

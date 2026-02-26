@@ -10,13 +10,13 @@ static struct {
 } state;
 
 static float start(void) {
-    state.motor_speed = Config.motor_start_speed;
-    return Config.motor_start_speed;
+    state.motor_speed = 0;
+    return 0;
 }
 
 static float increment(void) {
     float motor_increment = calculate_increment(
-        Config.motor_start_speed, Config.motor_max_speed, Config.motor_ramp_time_s
+        0, Config.motor_max_speed, Config.motor_ramp_time_s
     );
 
     if (state.motor_speed < (Config.motor_max_speed - motor_increment)) {

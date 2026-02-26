@@ -41,10 +41,6 @@ CONFIG_DEFS {
 
     // Orgasm Settings
     CFG_NUMBER(motor_max_speed, 128);
-    CFG_NUMBER(motor_start_speed, 10);
-    CFG_NUMBER(edge_delay, 1000);
-    CFG_NUMBER(max_additional_delay, 1000);
-    CFG_NUMBER(minimum_on_time, 1000);
     CFG_NUMBER(pressure_smoothing, 5);
     CFG_NUMBER(sensitivity_threshold, 600);
     CFG_NUMBER(motor_ramp_time_s, 30);

@@ -55,10 +55,6 @@ void orgasm_control_start_recording(void);
 void orgasm_control_stop_recording(void);
 oc_bool_t orgasm_control_is_recording(void);
 
-// Twitch Detect (In wrong place for 60hz)
-// Note 03-27-24 M. Abata - Clarify the above?
-void orgasm_control_twitch_detect(void);
-
 #ifdef __cplusplus
 }
 #endif

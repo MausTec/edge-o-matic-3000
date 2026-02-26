@@ -54,6 +54,18 @@ migration_result_t migrate_to_3(cJSON* root) {
     return MIGRATION_COMPLETE;
 }
 
+/**
+ * Remove contributed edge timing and random delay config keys (contributor audit v1.3.0).
+ */
+migration_result_t migrate_to_4(cJSON* root) {
+    cJSON_DeleteItemFromObject(root, "motor_start_speed");
+    cJSON_DeleteItemFromObject(root, "edge_delay");
+    cJSON_DeleteItemFromObject(root, "max_additional_delay");
+    cJSON_DeleteItemFromObject(root, "minimum_on_time");
+
+    return MIGRATION_COMPLETE;
+}
+
 migration_result_t config_system_migrate(cJSON* root) {
     START_MIGRATION();
 
@@ -61,6 +73,7 @@ migration_result_t config_system_migrate(cJSON* root) {
     MIGRATE(1);
     MIGRATE(2);
     MIGRATE(3);
+    MIGRATE(4);
 
     END_MIGRATION();
 }

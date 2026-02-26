@@ -12,7 +12,7 @@ static struct {
 } state;
 
 static float start(void) {
-    return Config.motor_start_speed;
+    return 0;
 }
 
 static float increment(void) {
@@ -20,12 +20,12 @@ static float increment(void) {
 
     if (state.stopped) {
         return state.motor_speed +
-               calculate_increment(Config.motor_max_speed, 0, Config.edge_delay);
+               calculate_increment(Config.motor_max_speed, 0, Config.motor_ramp_time_s);
     }
 
-    float speed_diff = Config.motor_max_speed - Config.motor_start_speed;
+    float speed_diff = Config.motor_max_speed;
     float alter_perc = ((float)state.arousal / Config.sensitivity_threshold);
-    return Config.motor_start_speed + (alter_perc * speed_diff);
+    return (alter_perc * speed_diff);
 }
 
 static void tick(float motor_speed, uint16_t arousal) {

@@ -49,41 +49,11 @@ static const ui_input_byte_t MOTOR_MAX_SPEED_INPUT = {
     .input.help = MOTOR_MAX_SPEED_HELP
 };
 
-static const ui_input_byte_t MOTOR_START_SPEED_INPUT = {
-    ByteInputValues("Motor Start Speed", &Config.motor_start_speed, UNIT_PERCENT, on_config_save),
-    .input.help = MOTOR_START_SPEED_HELP
-};
-
 static const ui_input_numeric_t MOTOR_RAMP_TIME_INPUT = {
     UnsignedInputValues("Motor Ramp Time", &Config.motor_ramp_time_s, UNIT_SECONDS, on_config_save),
     .max = 255,
     .step = 5,
     .input.help = MOTOR_RAMP_TIME_S_HELP
-};
-
-static const ui_input_numeric_t EDGE_DELAY_INPUT = {
-    UnsignedInputValues("Edge Delay", &Config.edge_delay, UNIT_MILLISECONDS, on_config_save),
-    .max = 15000,
-    .step = 100,
-    .input.help = EDGE_DELAY_HELP
-};
-
-static const ui_input_numeric_t MAX_ADDITIONAL_DELAY_INPUT = {
-    UnsignedInputValues(
-        "Max Additional Delay", &Config.max_additional_delay, UNIT_MILLISECONDS, on_config_save
-    ),
-    .max = 30000,
-    .step = 100,
-    .input.help = MAX_ADDITIONAL_DELAY_HELP
-};
-
-static const ui_input_numeric_t MINIMUM_ON_TIME_INPUT = {
-    UnsignedInputValues(
-        "Minimum On Time", &Config.minimum_on_time, UNIT_MILLISECONDS, on_config_save
-    ),
-    .max = 5000,
-    .step = 50,
-    .input.help = MINIMUM_ON_TIME_HELP
 };
 
 static const ui_input_numeric_t AROUSAL_LIMIT_INPUT = {
@@ -114,11 +84,7 @@ static const ui_input_byte_t SENSOR_SENSITIVITY_INPUT = {
 static void on_open(const ui_menu_t* m, UI_MENU_ARG_TYPE arg) {
     ui_menu_add_input(m, (ui_input_t*)&VIBRATION_MODE_INPUT);
     ui_menu_add_input(m, (ui_input_t*)&MOTOR_MAX_SPEED_INPUT);
-    ui_menu_add_input(m, (ui_input_t*)&MOTOR_START_SPEED_INPUT);
     ui_menu_add_input(m, (ui_input_t*)&MOTOR_RAMP_TIME_INPUT);
-    ui_menu_add_input(m, (ui_input_t*)&EDGE_DELAY_INPUT);
-    ui_menu_add_input(m, (ui_input_t*)&MAX_ADDITIONAL_DELAY_INPUT);
-    ui_menu_add_input(m, (ui_input_t*)&MINIMUM_ON_TIME_INPUT);
     ui_menu_add_input(m, (ui_input_t*)&AROUSAL_LIMIT_INPUT);
     ui_menu_add_input(m, (ui_input_t*)&SENSOR_SENSITIVITY_INPUT);
 }
