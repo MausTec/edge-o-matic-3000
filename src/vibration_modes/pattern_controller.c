@@ -24,16 +24,22 @@ static float start(void) {
     return increment();
 }
 
-static float increment(void) { return 0.0f; }
+static float increment(void) {
+    return 0.0f;
+}
 
 static void tick(float motor_speed, uint16_t arousal) {
     state.motor_speed = motor_speed;
     state.arousal = arousal;
 }
 
-static float stop(void) { return 0; }
+static float stop(void) {
+    return 0;
+}
 
-static float on_edge(void) { return 0; }
+static float on_edge(void) {
+    return 0;
+}
 
 const vibration_mode_controller_t PatternController = {
     .start = start,

@@ -193,7 +193,9 @@ static void orgasm_control_updateMotorSpeed() {
                 output_state.motor_speed = 0;
                 arousal_state.update_flag = ocTRUE;
                 event_manager_dispatch(EVT_ORGASM_DENIAL, NULL, 0);
-                ESP_LOGD(TAG, "RUNNING -> COOLDOWN (jitter: %lu ms)", output_state.cooldown_jitter_ms);
+                ESP_LOGD(
+                    TAG, "RUNNING -> COOLDOWN (jitter: %lu ms)", output_state.cooldown_jitter_ms
+                );
             } else {
                 // Permit: stay running at the returned speed
                 output_state.motor_speed = edge_response;
