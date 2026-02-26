@@ -106,6 +106,14 @@ struct config {
 
     // Maximum speed for the motor in auto-ramp mode.
     uint8_t motor_max_speed;
+    // Floor speed for motor when ramping in automatic mode.
+    uint8_t motor_min_speed;
+    // Minimum time (ms) after a denial event before the motor resumes.
+    int cooldown_delay_ms;
+    // Maximum random time (ms) added to cooldown delay each cycle. 0 to disable.
+    int cooldown_random_ms;
+    // Time (ms) after motor resumes before arousal threshold detection re-engages.
+    int arousal_holdoff_ms;
     // Number of samples to take an average of. Higher results in lag and lower resolution!
     uint8_t pressure_smoothing;
     // The arousal threshold for orgasm detection. Lower = sooner cutoff.

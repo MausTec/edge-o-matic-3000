@@ -33,9 +33,12 @@ static void tick(float motor_speed, uint16_t arousal) {
 
 static float stop(void) { return 0; }
 
+static float on_edge(void) { return 0; }
+
 const vibration_mode_controller_t PatternController = {
     .start = start,
     .increment = increment,
-    .tick = tick,
     .stop = stop,
+    .on_edge = on_edge,
+    .tick = tick,
 };

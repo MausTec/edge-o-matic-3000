@@ -56,6 +56,38 @@ static const ui_input_numeric_t MOTOR_RAMP_TIME_INPUT = {
     .input.help = MOTOR_RAMP_TIME_S_HELP
 };
 
+static const ui_input_byte_t MOTOR_MIN_SPEED_INPUT = {
+    ByteInputValues("Motor Min Speed", &Config.motor_min_speed, UNIT_PERCENT, on_config_save),
+    .input.help = MOTOR_MIN_SPEED_HELP
+};
+
+static const ui_input_numeric_t COOLDOWN_DELAY_INPUT = {
+    UnsignedInputValues(
+        "Cooldown Delay", &Config.cooldown_delay_ms, UNIT_MILLISECONDS, on_config_save
+    ),
+    .max = 60000,
+    .step = 100,
+    .input.help = COOLDOWN_DELAY_MS_HELP
+};
+
+static const ui_input_numeric_t COOLDOWN_RANDOM_INPUT = {
+    UnsignedInputValues(
+        "Cooldown Jitter", &Config.cooldown_random_ms, UNIT_MILLISECONDS, on_config_save
+    ),
+    .max = 60000,
+    .step = 100,
+    .input.help = COOLDOWN_RANDOM_MS_HELP
+};
+
+static const ui_input_numeric_t AROUSAL_HOLDOFF_INPUT = {
+    UnsignedInputValues(
+        "Arousal Hold-Off", &Config.arousal_holdoff_ms, UNIT_MILLISECONDS, on_config_save
+    ),
+    .max = 30000,
+    .step = 100,
+    .input.help = AROUSAL_HOLDOFF_MS_HELP
+};
+
 static const ui_input_numeric_t AROUSAL_LIMIT_INPUT = {
     UnsignedInputValues("Arousal Limit", &Config.sensitivity_threshold, "", on_config_save),
     .max = 2048,
@@ -85,6 +117,10 @@ static void on_open(const ui_menu_t* m, UI_MENU_ARG_TYPE arg) {
     ui_menu_add_input(m, (ui_input_t*)&VIBRATION_MODE_INPUT);
     ui_menu_add_input(m, (ui_input_t*)&MOTOR_MAX_SPEED_INPUT);
     ui_menu_add_input(m, (ui_input_t*)&MOTOR_RAMP_TIME_INPUT);
+    ui_menu_add_input(m, (ui_input_t*)&MOTOR_MIN_SPEED_INPUT);
+    ui_menu_add_input(m, (ui_input_t*)&COOLDOWN_DELAY_INPUT);
+    ui_menu_add_input(m, (ui_input_t*)&COOLDOWN_RANDOM_INPUT);
+    ui_menu_add_input(m, (ui_input_t*)&AROUSAL_HOLDOFF_INPUT);
     ui_menu_add_input(m, (ui_input_t*)&AROUSAL_LIMIT_INPUT);
     ui_menu_add_input(m, (ui_input_t*)&SENSOR_SENSITIVITY_INPUT);
 }

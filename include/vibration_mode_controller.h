@@ -25,6 +25,7 @@ typedef struct vibration_mode_controller {
     vibration_mode_callback_t start;
     vibration_mode_callback_t increment;
     vibration_mode_callback_t stop;
+    vibration_mode_callback_t on_edge;
     vibration_mode_tick_func_t tick;
 } vibration_mode_controller_t;
 

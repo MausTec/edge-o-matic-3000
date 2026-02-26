@@ -10,13 +10,13 @@ static struct {
 } state;
 
 static float start(void) {
-    state.motor_speed = 0;
-    return 0;
+    state.motor_speed = Config.motor_min_speed;
+    return Config.motor_min_speed;
 }
 
 static float increment(void) {
     float motor_increment = calculate_increment(
-        0, Config.motor_max_speed, Config.motor_ramp_time_s
+        Config.motor_min_speed, Config.motor_max_speed, Config.motor_ramp_time_s
     );
 
     if (state.motor_speed < (Config.motor_max_speed - motor_increment)) {
@@ -36,9 +36,14 @@ static float stop(void) {
     return 0.0f;
 }
 
+static float on_edge(void) {
+    return 0;
+}
+
 const vibration_mode_controller_t RampStopController = {
     .start = start,
     .increment = increment,
-    .tick = tick,
     .stop = stop,
+    .on_edge = on_edge,
+    .tick = tick,
 };

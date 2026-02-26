@@ -12,7 +12,7 @@ static struct {
 } state;
 
 static float start(void) {
-    state.base_speed = 0;
+    state.base_speed = Config.motor_min_speed;
     return state.base_speed;
 }
 
@@ -21,15 +21,15 @@ static float increment(void) {
 
     if (state.base_speed < Config.motor_max_speed) {
         state.base_speed += calculate_increment(
-            0, Config.motor_max_speed, Config.motor_ramp_time_s
+            Config.motor_min_speed, Config.motor_max_speed, Config.motor_ramp_time_s
         );
     }
 
     float alter_perc = ((float)state.arousal / Config.sensitivity_threshold);
     float final_speed = state.base_speed * (1 - alter_perc);
 
-    if (final_speed < 0) {
-        return 0;
+    if (final_speed < Config.motor_min_speed) {
+        return Config.motor_min_speed;
     } else if (final_speed > (float)Config.motor_max_speed) {
         return Config.motor_max_speed;
     } else {
@@ -46,9 +46,14 @@ static float stop(void) {
     return 0;
 }
 
+static float on_edge(void) {
+    return 0;
+}
+
 const vibration_mode_controller_t DepletionController = {
     .start = start,
     .increment = increment,
-    .tick = tick,
     .stop = stop,
+    .on_edge = on_edge,
+    .tick = tick,
 };

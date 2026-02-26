@@ -13,6 +13,7 @@
 #include "util/running_average.h"
 #include <math.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <time.h>
 
@@ -33,12 +34,22 @@ static struct {
     uint8_t update_flag;
 } arousal_state;
 
+typedef enum {
+    OC_STATE_RUNNING,
+    OC_STATE_COOLDOWN,
+    OC_STATE_RESUMING,
+} oc_control_state_t;
+
 static struct {
     orgasm_output_mode_t output_mode;
     vibration_mode_t vibration_mode;
     uint8_t control_motor;
     uint8_t prev_control_motor;
     float motor_speed;
+    oc_control_state_t control_state;
+    unsigned long cooldown_start_ms;
+    unsigned long resume_start_ms;
+    unsigned long cooldown_jitter_ms;
 } output_state;
 
 static struct {
@@ -73,6 +84,10 @@ static void _set_speed(uint8_t speed) {
 void orgasm_control_init(void) {
     output_state.output_mode = OC_MANUAL_CONTROL;
     output_state.vibration_mode = Config.vibration_mode;
+    output_state.control_state = OC_STATE_RESUMING;
+    output_state.resume_start_ms = esp_timer_get_time() / 1000UL;
+    output_state.cooldown_start_ms = 0;
+    output_state.cooldown_jitter_ms = 0;
 
     running_average_init(&arousal_state.average, Config.pressure_smoothing);
 }
@@ -149,26 +164,90 @@ static void orgasm_control_updateMotorSpeed() {
     const vibration_mode_controller_t* controller = orgasm_control_getVibrationMode();
     controller->tick(output_state.motor_speed, arousal_state.arousal);
 
-    float motor_increment =
-        ((float)Config.motor_max_speed /
-         ((float)Config.update_frequency_hz * (float)Config.motor_ramp_time_s));
+    unsigned long now_ms = esp_timer_get_time() / 1000UL;
 
-    // Ope, orgasm incoming! Stop it!
-    if (arousal_state.arousal > Config.sensitivity_threshold && output_state.motor_speed > 0) {
-        output_state.motor_speed = fmaxf(
-            -255.0f,
-            -0.5f * (float)Config.motor_ramp_time_s * (float)Config.update_frequency_hz *
-                motor_increment
-        );
-        arousal_state.update_flag = ocTRUE;
+    switch (output_state.control_state) {
+    case OC_STATE_RUNNING: {
+        // Motor is on, arousal detection active.
+        float next_speed = controller->increment();
+        update_check(output_state.motor_speed, next_speed);
 
-        event_manager_dispatch(EVT_ORGASM_DENIAL, NULL, 0);
+        if (output_state.motor_speed > Config.motor_max_speed) {
+            output_state.motor_speed = Config.motor_max_speed;
+        }
 
-    } else if (output_state.motor_speed < Config.motor_max_speed) {
-        update_check(output_state.motor_speed, output_state.motor_speed + motor_increment);
+        // Detect arousal threshold breach (guard: hold-off must have elapsed)
+        if (arousal_state.arousal > Config.sensitivity_threshold && output_state.motor_speed > 0 &&
+            (now_ms - output_state.resume_start_ms) >= (unsigned long)Config.arousal_holdoff_ms) {
+            float edge_response = controller->on_edge();
 
-    } else if (output_state.motor_speed > Config.motor_max_speed) {
-        output_state.motor_speed = Config.motor_max_speed;
+            if (edge_response <= 0) {
+                // Denial: transition RUNNING -> COOLDOWN
+                output_state.control_state = OC_STATE_COOLDOWN;
+                output_state.cooldown_start_ms = now_ms;
+                output_state.cooldown_jitter_ms =
+                    (Config.cooldown_random_ms > 0)
+                        ? (unsigned long)(random() % Config.cooldown_random_ms)
+                        : 0;
+                controller->stop();
+                output_state.motor_speed = 0;
+                arousal_state.update_flag = ocTRUE;
+                event_manager_dispatch(EVT_ORGASM_DENIAL, NULL, 0);
+                ESP_LOGD(TAG, "RUNNING -> COOLDOWN (jitter: %lu ms)", output_state.cooldown_jitter_ms);
+            } else {
+                // Permit: stay running at the returned speed
+                output_state.motor_speed = edge_response;
+                arousal_state.update_flag = ocTRUE;
+                event_manager_dispatch(EVT_ORGASM_PERMIT, NULL, 0);
+            }
+        }
+        break;
+    }
+
+    case OC_STATE_COOLDOWN: {
+        // Motor is off, waiting for cooldown to expire.
+        output_state.motor_speed = 0;
+
+        // Anti-twitch: reset cooldown timer on arousal spike
+        if (arousal_state.arousal > Config.sensitivity_threshold) {
+            output_state.cooldown_start_ms = now_ms;
+        }
+
+        // Check if cooldown period has elapsed
+        unsigned long cooldown_total =
+            (unsigned long)Config.cooldown_delay_ms + output_state.cooldown_jitter_ms;
+        if ((now_ms - output_state.cooldown_start_ms) >= cooldown_total) {
+            // Transition COOLDOWN -> RESUMING
+            output_state.control_state = OC_STATE_RESUMING;
+            output_state.resume_start_ms = now_ms;
+            output_state.motor_speed = controller->start();
+            ESP_LOGD(TAG, "COOLDOWN -> RESUMING");
+        }
+        break;
+    }
+
+    case OC_STATE_RESUMING: {
+        // Motor restarting, hold-off timer active.
+        float next_speed = controller->increment();
+        update_check(output_state.motor_speed, next_speed);
+
+        if (output_state.motor_speed > Config.motor_max_speed) {
+            output_state.motor_speed = Config.motor_max_speed;
+        }
+
+        // Check if hold-off period has elapsed
+        if ((now_ms - output_state.resume_start_ms) >= (unsigned long)Config.arousal_holdoff_ms) {
+            output_state.control_state = OC_STATE_RUNNING;
+            ESP_LOGD(TAG, "RESUMING -> RUNNING");
+        }
+        break;
+    }
+
+    default:
+        // recover from corrupted state
+        output_state.control_state = OC_STATE_RESUMING;
+        output_state.resume_start_ms = now_ms;
+        break;
     }
 
     // Control motor if we are not manually doing so.
@@ -375,6 +454,8 @@ void orgasm_control_set_output_mode(orgasm_output_mode_t mode) {
     if (old == OC_MANUAL_CONTROL) {
         const vibration_mode_controller_t* controller = orgasm_control_getVibrationMode();
         output_state.motor_speed = controller->start();
+        output_state.control_state = OC_STATE_RESUMING;
+        output_state.resume_start_ms = esp_timer_get_time() / 1000UL;
     } else if (mode == OC_MANUAL_CONTROL) {
         const vibration_mode_controller_t* controller = orgasm_control_getVibrationMode();
         output_state.motor_speed = controller->stop();
