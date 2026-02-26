@@ -14,7 +14,6 @@ build/
 
 serials.yml
 .vscode/
-.vs/
 
 ~*
 .pio
@@ -28,12 +27,6 @@ tmp/
 __pycache__/
 
 *.old.DS_Store
-.DS_Store
-
-platformio.sln
-platformio.vcxproj
-platformio.vcxproj.filters
-platformio.vcxproj.user
 platformio.log
 
 sdkconfig.*

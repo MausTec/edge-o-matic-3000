@@ -430,5 +430,3 @@ void orgasm_control_pause_control() {
 void orgasm_control_resume_control() {
     output_state.control_motor = output_state.prev_control_motor;
 }
-
-
