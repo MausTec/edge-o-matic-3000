@@ -315,7 +315,7 @@ static ui_render_flag_t on_encoder(int delta, void* arg) {
         return RENDER;
     }
 
-    if (mode != OC_MANUAL_CONTROL) {
+    if (mode == OC_AUTOMAITC_CONTROL) {
         orgasm_control_increment_arousal_threshold(delta);
         state.arousal_change_notice_ms = millis + CHANGE_NOTICE_DELAY_MS;
         return RENDER;
