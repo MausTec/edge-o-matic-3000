@@ -239,9 +239,20 @@ static void _draw_pressure_icon(u8g2_t* d) {
 static void _draw_denial_count(u8g2_t* d) {
     const uint8_t MID_HEIGHT = 20;
     const uint8_t DENIAL_WIDTH = 41;
-    char denial_str[4];
+    char denial_str[6];
 
-    snprintf(denial_str, 4, "%03d", state.denial_count);
+    switch ((denial_count_mode_t)Config.denial_count_mode) {
+    case DENIAL_COUNT_8BIT:
+        snprintf(denial_str, sizeof(denial_str), "%03d", (uint8_t)state.denial_count);
+        break;
+    case DENIAL_COUNT_HEX:
+        snprintf(denial_str, sizeof(denial_str), "%02X", (uint8_t)state.denial_count);
+        break;
+    case DENIAL_COUNT_DECIMAL:
+    default:
+        snprintf(denial_str, sizeof(denial_str), "%d", state.denial_count);
+        break;
+    }
 
     u8g2_SetDrawColor(d, 1);
     u8g2_DrawVLine(

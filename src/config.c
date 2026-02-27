@@ -55,6 +55,9 @@ CONFIG_DEFS {
     // Vibration Settings
     CFG_ENUM(vibration_mode, vibration_mode_t, RampStop);
 
+    // UI Settings — Edging Stats
+    CFG_ENUM(denial_count_mode, denial_count_mode_t, DENIAL_COUNT_DECIMAL);
+
     // Internal system things, only edit if you know what you're doing.
     CFG_STRING_PTR(remote_update_url, REMOTE_UPDATE_URL)
 

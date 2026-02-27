@@ -34,6 +34,14 @@ enum vibration_mode { RampStop = 1, Depletion = 2, Enhancement = 3, Pattern = 4,
 
 typedef enum vibration_mode vibration_mode_t;
 
+// How the denial count is formatted on the edging stats page.
+enum denial_count_mode {
+    DENIAL_COUNT_DECIMAL = 0, // Natural decimal; no overflow (default)
+    DENIAL_COUNT_8BIT    = 1, // Wraps at 255 back to 0
+    DENIAL_COUNT_HEX     = 2, // Hexadecimal, 8-bit (00-FF)
+};
+typedef enum denial_count_mode denial_count_mode_t;
+
 /**
  * Main Configuration Struct!
  *
@@ -131,6 +139,8 @@ struct config {
 
     // Vibration Mode for main vibrator control.
     int vibration_mode;
+    // How the denial count is displayed on the edging stats screen.
+    int denial_count_mode;
 
     //= Internal System Configuration (Update only if you know what you're doing)
 
