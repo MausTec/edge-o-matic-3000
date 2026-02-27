@@ -21,7 +21,7 @@ volatile static struct {
     uint64_t arousal_peak_last_ms;
     uint64_t arousal_peak_update_ms;
     uint64_t arousal_change_notice_ms;
-    uint8_t denial_count;
+    uint16_t denial_count;
     event_handler_node_t* _h_denial;
 } state = { 0 };
 
@@ -123,9 +123,14 @@ float _get_arousal_bar_max(void) {
     // Memoize to prevent recalculating on renders.
     if (Config.sensitivity_threshold != last_sens_thresh) {
         last_sens_thresh = Config.sensitivity_threshold;
-        last_arousal_max =
-            pow10f(ceilf(log10f(Config.sensitivity_threshold * 1.10f) * 2.0f) / 2.0f);
-        if (last_arousal_max < 100) last_arousal_max = 100;
+        // Scale to twice the threshold, then snap to the nearest half-decade
+        // (10^0.5 ≈ 3.16× steps). This keeps the threshold marker in the lower
+        // half of the bar for normal settings, while ultra-low thresholds
+        // visibly occupy a small fraction of the window — signalling misconfiguration
+        // rather than erratic readings.
+        float target = Config.sensitivity_threshold * 2.0f;
+        if (target < 100.0f) target = 100.0f;
+        last_arousal_max = pow10f(ceilf(log10f(target) * 2.0f) / 2.0f);
     }
 
     return last_arousal_max;
