@@ -14,6 +14,10 @@ Connect to your device at [link.maustec.io](http://link.maustec.io) for remote c
 
 Built with ESP-IDF and PlatformIO. See [doc/](doc/) for technical documentation.
 
+## License
+
+MIT License — see [LICENSE](LICENSE) and [RELICENSING.md](RELICENSING.md).
+
 ---
 
 **Edge-o-Matic** is a registered trademark of Maus-Tec LLC.

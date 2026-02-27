@@ -28,7 +28,7 @@ migration_result_t migrate_to_1(cJSON* root) {
 }
 
 migration_result_t migrate_to_2(cJSON* root) {
-    // noop (original migration removed during contributor audit)
+    // noop (legacy migration removed in v1.3.0)
     return MIGRATION_COMPLETE;
 }
 
@@ -55,7 +55,7 @@ migration_result_t migrate_to_3(cJSON* root) {
 }
 
 /**
- * Remove contributed edge timing and random delay config keys (contributor audit v1.3.0).
+ * Remove deprecated edge timing and random delay config keys (license review, v1.3.0).
  */
 migration_result_t migrate_to_4(cJSON* root) {
     cJSON_DeleteItemFromObject(root, "motor_start_speed");

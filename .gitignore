@@ -26,7 +26,8 @@ tmp/
 *.code-workspace
 __pycache__/
 
-*.old.DS_Store
+*.old
+.DS_Store
 platformio.log
 
 sdkconfig.*
