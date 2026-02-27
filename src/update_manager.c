@@ -94,6 +94,7 @@ esp_err_t _http_event_handler(esp_http_client_event_t* evt) {
 
             if (output_len + evt->data_len > *(cb->size)) {
                 ESP_LOGE(TAG, "Possible buffer overflow!");
+                return ESP_FAIL;
             }
 
             memcpy(*(cb->buffer) + output_len, evt->data, evt->data_len);
@@ -440,8 +441,9 @@ update_manager_list_local_updates(um_update_callback_t* on_result, void* cb_arg)
 
     if (d) {
         while ((dir = readdir(d)) != NULL) {
-            if (dir->d_type != DT_REG || strcmp(dir->d_name + strlen(dir->d_name) - 4, ".bin") ||
-                dir->d_name[0] == '.')
+            size_t name_len = strlen(dir->d_name);
+            if (dir->d_type != DT_REG || name_len < 4 ||
+                strcmp(dir->d_name + name_len - 4, ".bin") || dir->d_name[0] == '.')
                 continue;
 
             char* path;

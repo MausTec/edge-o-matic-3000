@@ -230,7 +230,10 @@ static int blecent_gap_event(struct ble_gap_event* event, void* arg) {
                 peer_t peer = { 0 };
 
                 memcpy(&peer.addr, &event->disc.addr, sizeof(ble_addr_t));
-                strncpy(peer.name, (char*)fields.name, fields.name_len);
+                size_t copy_len = fields.name_len < sizeof(peer.name) - 1
+                    ? fields.name_len : sizeof(peer.name) - 1;
+                memcpy(peer.name, fields.name, copy_len);
+                peer.name[copy_len] = '\0';
 
                 _scan_callback(&peer, _scan_arg);
             }

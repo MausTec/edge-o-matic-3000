@@ -309,6 +309,7 @@ void orgasm_control_start_recording() {
     if (!logfile_name) {
         ESP_LOGE(TAG, "Logfile filename buffer issues.");
         ui_toast("%s", _("Error opening logfile!"));
+        return;
     }
 
     ESP_LOGI(TAG, "Opening logfile: %s", logfile_name);

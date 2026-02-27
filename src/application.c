@@ -24,7 +24,7 @@ static app_err_t application_parse_manifest(const char* pack_path, application_t
     size_t result;
 
     snprintf(path, PATH_MAX, "%s/manifest.json", pack_path);
-    strncpy(app->pack_path, pack_path, 255);
+    strlcpy(app->pack_path, pack_path, sizeof(app->pack_path));
 
     FILE* f = fopen(path, "r");
     if (!f) {
