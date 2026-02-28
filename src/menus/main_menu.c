@@ -35,6 +35,7 @@ static void on_open(const ui_menu_t* m, UI_MENU_ARG_TYPE arg) {
     ui_menu_add_menu(m, &APPLICATIONS_MENU);
 #endif
     ui_menu_add_menu(m, &EDGING_SETTINGS_MENU);
+    ui_menu_add_menu(m, &ORGASM_SETTINGS_MENU);
     ui_menu_add_menu(m, &UI_SETTINGS_MENU);
 #ifdef EOM_BETA
     ui_menu_add_menu(m, &USER_PROFILES_MENU);

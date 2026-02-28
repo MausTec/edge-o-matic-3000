@@ -50,10 +50,17 @@ void orgasm_control_set_output_mode(orgasm_output_mode_t mode);
 const char* orgasm_control_get_output_mode_str(void);
 orgasm_output_mode_t orgasm_control_str_to_output_mode(const char* str);
 
-// Recording Control
-void orgasm_control_start_recording(void);
-void orgasm_control_stop_recording(void);
-oc_bool_t orgasm_control_is_recording(void);
+/// @deprecated Use data_logger_start_recording() from data_logger.h instead.
+__attribute__((deprecated("Use data_logger_start_recording() instead"))) void
+orgasm_control_start_recording(void);
+
+/// @deprecated Use data_logger_stop_recording() from data_logger.h instead.
+__attribute__((deprecated("Use data_logger_stop_recording() instead"))) void
+orgasm_control_stop_recording(void);
+
+/// @deprecated Use data_logger_is_recording() from data_logger.h instead.
+__attribute__((deprecated("Use data_logger_is_recording() instead"))) oc_bool_t
+orgasm_control_is_recording(void);
 
 #ifdef __cplusplus
 }

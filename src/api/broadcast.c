@@ -3,6 +3,7 @@
 #include "config_defs.h"
 #include "eom-hal.h"
 #include "orgasm_control.h"
+#include "orgasm_detection.h"
 #include "system/websocket_handler.h"
 
 void api_broadcast_config(void) {
@@ -27,6 +28,13 @@ void api_broadcast_readings(void) {
 
     // Everything around this is deprecated and should be moved into its own broadcast.
     cJSON_AddStringToObject(root, "runMode", orgasm_control_get_output_mode_str());
+
+    // Orgasm detection state
+    cJSON_AddStringToObject(root, "detectState", orgasm_detection_get_state_str());
+    cJSON_AddNumberToObject(root, "detectBaseline", orgasm_detection_get_baseline());
+    cJSON_AddNumberToObject(root, "detectPeakCount", orgasm_detection_get_peak_count());
+    cJSON_AddNumberToObject(root, "detectSustainedMs", orgasm_detection_get_sustained_ms());
+    cJSON_AddNumberToObject(root, "detectLastIntervalMs", orgasm_detection_get_last_interval_ms());
 
     websocket_broadcast(payload, WS_BROADCAST_READINGS);
     cJSON_Delete(payload);

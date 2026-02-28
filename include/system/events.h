@@ -6,6 +6,7 @@
     X(EVT_SPEED_CHANGE);                                                                           \
     X(EVT_AROUSAL_CHANGE);                                                                         \
     X(EVT_ORGASM_DENIAL);                                                                          \
-    X(EVT_ORGASM_PERMIT);
+    X(EVT_ORGASM_PERMIT);                                                                          \
+    X(EVT_ORGASM_START);
 
 #endif

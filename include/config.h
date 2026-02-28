@@ -37,10 +37,18 @@ typedef enum vibration_mode vibration_mode_t;
 // How the denial count is formatted on the edging stats page.
 enum denial_count_mode {
     DENIAL_COUNT_DECIMAL = 0, // Natural decimal; no overflow (default)
-    DENIAL_COUNT_8BIT    = 1, // Wraps at 255 back to 0
-    DENIAL_COUNT_HEX     = 2, // Hexadecimal, 8-bit (00-FF)
+    DENIAL_COUNT_8BIT = 1,    // Wraps at 255 back to 0
+    DENIAL_COUNT_HEX = 2,     // Hexadecimal, 8-bit (00-FF)
 };
 typedef enum denial_count_mode denial_count_mode_t;
+
+// Orgasm detection modes — see orgasm_detection.h for details.
+enum orgasm_detect_mode {
+    OD_MODE_AUTO = 0,      // Try rhythmic; fall back to sustained
+    OD_MODE_RHYTHMIC = 1,  // Only rhythmic peak detection
+    OD_MODE_SUSTAINED = 2, // Only duration-gated sustained detection
+};
+typedef enum orgasm_detect_mode orgasm_detect_mode_t;
 
 /**
  * Main Configuration Struct!
@@ -134,6 +142,42 @@ struct config {
     uint8_t sensor_sensitivity;
     // Use average values when calculating arousal. This smooths noisy data.
     bool use_average_values;
+    // Arousal decay per-second factor (0-100, as percent retained per second). Default 60 means
+    // arousal decays to 60% of its value each second. Lower = faster decay.
+    int arousal_decay_rate;
+
+    //= Orgasm Detection
+
+    // Detection mode: 0=AUTO, 1=RHYTHMIC, 2=SUSTAINED
+    int od_mode;
+    // Pressure above baseline (ADC counts) to enter sustained phase.
+    int od_sustained_threshold;
+    // Duration (ms) before sustained-only detection fires.
+    int od_sustained_fallback_ms;
+    // Pressure drop duration (ms) before returning to IDLE.
+    int od_sustained_dropout_ms;
+    // Minimum peak-to-trough excursion to count as rhythmic peak.
+    int od_peak_min_amplitude;
+    // Minimum rhythmic peaks before confirming orgasm.
+    int od_rhythmic_min_peaks;
+    // Minimum inter-peak interval (ms).
+    int od_rhythmic_interval_min_ms;
+    // Maximum inter-peak interval (ms).
+    int od_rhythmic_interval_max_ms;
+    // Maximum std_dev of intervals (ms) for rhythmic confirmation.
+    int od_rhythmic_interval_variance_ms;
+    // Max gap between peaks (ms) before rhythmic detection resets.
+    int od_rhythmic_timeout_ms;
+    // Minimum arousal (% of threshold) to arm detection. 0 disables gating.
+    int od_arousal_gate_percent;
+    // Time at baseline (ms) after detection before returning to IDLE.
+    int od_recovery_ms;
+    // Feed clench events back into arousal accumulator.
+    bool od_clench_arousal_boost;
+    // Arousal boost per tick while in sustained phase.
+    int od_clench_arousal_boost_amount;
+    // Enable orgasm detection dispatch. False = log-only mode.
+    bool od_detection_armed;
 
     //= Vibration Output Mode
 

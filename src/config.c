@@ -51,6 +51,24 @@ CONFIG_DEFS {
     CFG_NUMBER(update_frequency_hz, 50);
     CFG_NUMBER(sensor_sensitivity, 128);
     CFG_BOOL(use_average_values, false);
+    CFG_NUMBER(arousal_decay_rate, 60);
+
+    // Orgasm Detection Settings
+    CFG_ENUM(od_mode, orgasm_detect_mode_t, OD_MODE_AUTO);
+    CFG_NUMBER(od_sustained_threshold, 200);
+    CFG_NUMBER(od_sustained_fallback_ms, 5000);
+    CFG_NUMBER(od_sustained_dropout_ms, 500);
+    CFG_NUMBER(od_peak_min_amplitude, 40);
+    CFG_NUMBER(od_rhythmic_min_peaks, 4);
+    CFG_NUMBER(od_rhythmic_interval_min_ms, 500);
+    CFG_NUMBER(od_rhythmic_interval_max_ms, 1200);
+    CFG_NUMBER(od_rhythmic_interval_variance_ms, 200);
+    CFG_NUMBER(od_rhythmic_timeout_ms, 1500);
+    CFG_NUMBER(od_arousal_gate_percent, 70);
+    CFG_NUMBER(od_recovery_ms, 3000);
+    CFG_BOOL(od_clench_arousal_boost, false);
+    CFG_NUMBER(od_clench_arousal_boost_amount, 5);
+    CFG_BOOL(od_detection_armed, true);
 
     // Vibration Settings
     CFG_ENUM(vibration_mode, vibration_mode_t, RampStop);

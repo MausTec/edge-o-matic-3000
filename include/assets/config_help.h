@@ -48,6 +48,23 @@ extern "C" {
 #define USE_AVERAGE_VALUES_HELP _HELPSTR("Use average values when calculating arousal. This smooths noisy data.")
 #define VIBRATION_MODE_HELP _HELPSTR("Vibration Mode for main vibrator control.")
 
+#define AROUSAL_DECAY_RATE_HELP _HELPSTR("How quickly arousal decays each second, as a percentage retained (1-99). Lower values mean faster decay. Default 60 retains 60% per second.")
+#define OD_MODE_HELP _HELPSTR("Orgasm detection mode. Auto tries rhythmic detection first, then falls back to sustained duration. Rhythmic only detects orgasmic contractions. Sustained uses duration-gated threshold.")
+#define OD_SUSTAINED_THRESHOLD_HELP _HELPSTR("Pressure above baseline (in ADC counts) required to enter the sustained detection phase.")
+#define OD_SUSTAINED_FALLBACK_MS_HELP _HELPSTR("Duration in milliseconds of sustained pressure before orgasm is detected via the sustained path.")
+#define OD_SUSTAINED_DROPOUT_MS_HELP _HELPSTR("If pressure drops below threshold for this many milliseconds, detection resets to idle.")
+#define OD_PEAK_MIN_AMPLITUDE_HELP _HELPSTR("Minimum peak-to-trough excursion (ADC counts) to count as a rhythmic contraction peak. Lower values detect weaker signals.")
+#define OD_RHYTHMIC_MIN_PEAKS_HELP _HELPSTR("Minimum number of rhythmic peaks at consistent intervals before confirming orgasm via the rhythmic path.")
+#define OD_RHYTHMIC_INTERVAL_MIN_MS_HELP _HELPSTR("Minimum time between rhythmic contraction peaks. Orgasmic contractions are typically 600-1000ms apart.")
+#define OD_RHYTHMIC_INTERVAL_MAX_MS_HELP _HELPSTR("Maximum time between rhythmic contraction peaks.")
+#define OD_RHYTHMIC_INTERVAL_VARIANCE_MS_HELP _HELPSTR("Maximum allowed standard deviation of inter-peak intervals. Lower values require more consistent rhythm.")
+#define OD_RHYTHMIC_TIMEOUT_MS_HELP _HELPSTR("If no peak is detected for this long, rhythmic detection falls back to sustained.")
+#define OD_AROUSAL_GATE_PERCENT_HELP _HELPSTR("Minimum arousal level as percentage of threshold before orgasm detection arms. Set to 0 to disable gating.")
+#define OD_RECOVERY_MS_HELP _HELPSTR("Time in milliseconds at baseline pressure after detection before the detector returns to idle.")
+#define OD_CLENCH_AROUSAL_BOOST_HELP _HELPSTR("When enabled, sustained clenching adds to the arousal accumulator, creating a biofeedback loop during edging.")
+#define OD_CLENCH_AROUSAL_BOOST_AMOUNT_HELP _HELPSTR("Arousal points added per tick while a sustained clench is detected.")
+#define OD_DETECTION_ARMED_HELP _HELPSTR("When enabled, orgasm detection dispatches events. Disable for log-only data collection mode.")
+
 #ifdef __cplusplus
 }
 #endif

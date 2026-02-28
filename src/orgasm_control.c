@@ -2,20 +2,19 @@
 #include "accessory_driver.h"
 #include "bluetooth_driver.h"
 #include "config.h"
+#include "data_logger.h"
 #include "eom-hal.h"
 #include "esp_log.h"
 #include "esp_timer.h"
+#include "orgasm_detection.h"
 #include "system/event_manager.h"
 #include "system/websocket_handler.h"
-#include "ui/toast.h"
 #include "ui/ui.h"
 #include "util/i18n.h"
 #include "util/running_average.h"
 #include <math.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
 
 static const char* TAG = "orgasm_control";
 
@@ -52,12 +51,6 @@ static struct {
     unsigned long cooldown_jitter_ms;
 } output_state;
 
-static struct {
-    // File Writer
-    unsigned long recording_start_ms;
-    FILE* logfile;
-} logger_state;
-
 #define update_check(variable, value)                                                              \
     {                                                                                              \
         if (variable != (value)) {                                                                 \
@@ -90,6 +83,8 @@ void orgasm_control_init(void) {
     output_state.cooldown_jitter_ms = 0;
 
     running_average_init(&arousal_state.average, Config.pressure_smoothing);
+
+    orgasm_detection_init();
 }
 
 // Rename to get_vibration_mode_controller();
@@ -111,8 +106,15 @@ static const vibration_mode_controller_t* orgasm_control_getVibrationMode() {
  * This happens with a default update frequency of 50Hz.
  */
 static void orgasm_control_updateArousal() {
-    // Decay stale arousal value:
-    update_check(arousal_state.arousal, arousal_state.arousal * 0.99);
+    // Decay stale arousal value (tick-rate-independent):
+    // arousal_decay_rate is the percentage retained per second (0-100).
+    // Convert to per-tick factor: decay_factor = (rate/100) ^ (1/hz)
+    //   = exp(ln(rate/100) / hz)
+    float decay_rate = Config.arousal_decay_rate;
+    if (decay_rate < 1) decay_rate = 1;
+    if (decay_rate > 99) decay_rate = 99;
+    float decay_factor = expf(logf(decay_rate / 100.0f) / (float)Config.update_frequency_hz);
+    update_check(arousal_state.arousal, (uint16_t)(arousal_state.arousal * decay_factor));
 
     // Acquire new pressure and take average:
     arousal_state.pressure_value = eom_hal_get_pressure_reading();
@@ -282,72 +284,27 @@ orgasm_output_mode_t orgasm_control_str_to_output_mode(const char* str) {
 }
 
 /**
- * \todo Recording functions don't need to be here.
+ * @deprecated Recording functions now delegate to data_logger module.
+ * Use data_logger_start_recording(), data_logger_stop_recording(),
+ * and data_logger_is_recording() directly.
  */
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+
 void orgasm_control_start_recording() {
-    if (logger_state.logfile) {
-        orgasm_control_stop_recording();
-    }
-
-    ui_toast_blocking("%s", _("Preapring recording..."));
-
-    time_t now;
-    struct tm timeinfo;
-    char filename_date[32];
-    time(&now);
-
-    if (!localtime_r(&now, &timeinfo)) {
-        ESP_LOGE(TAG, "Failed to obtain time");
-        sniprintf(filename_date, 32, "%lld", (esp_timer_get_time() / 1000UL));
-    } else {
-        strftime(filename_date, 32, "%Y%m%d-%H%M%S", &timeinfo);
-    }
-
-    char* logfile_name = NULL;
-    asiprintf(&logfile_name, "%s/log-%s.csv", eom_hal_get_sd_mount_point(), filename_date);
-
-    if (!logfile_name) {
-        ESP_LOGE(TAG, "Logfile filename buffer issues.");
-        ui_toast("%s", _("Error opening logfile!"));
-        return;
-    }
-
-    ESP_LOGI(TAG, "Opening logfile: %s", logfile_name);
-    logger_state.logfile = fopen(logfile_name, "w+");
-
-    if (!logger_state.logfile) {
-        ESP_LOGE(TAG, "Couldn't open logfile to save! (%s)", logfile_name);
-        ui_toast("%s", _("Error opening logfile!"));
-    } else {
-        logger_state.recording_start_ms = (esp_timer_get_time() / 1000UL);
-
-        fprintf(
-            logger_state.logfile,
-            "millis,pressure,avg_pressure,arousal,motor_speed,sensitivity_threshold"
-        );
-
-        ui_set_icon(UI_ICON_RECORD, RECORD_ICON_RECORDING);
-        char* fntok = basename(logfile_name);
-        ui_toast(_("Recording started:\n%s"), fntok);
-    }
-
-    free(logfile_name);
+    data_logger_start_recording();
 }
 
 void orgasm_control_stop_recording() {
-    if (logger_state.logfile != NULL) {
-        ui_toast_blocking("%s", _("Stopping..."));
-        ESP_LOGI(TAG, "Closing logfile.");
-        fclose(logger_state.logfile);
-        logger_state.logfile = NULL;
-        ui_set_icon(UI_ICON_RECORD, -1);
-        ui_toast("%s", _("Recording stopped."));
-    }
+    data_logger_stop_recording();
 }
 
 oc_bool_t orgasm_control_is_recording() {
-    return (oc_bool_t) !!logger_state.logfile;
+    return (oc_bool_t)data_logger_is_recording();
 }
+
+#pragma GCC diagnostic pop
 
 void orgasm_control_tick() {
     if (Config.update_frequency_hz == 0) return;
@@ -358,34 +315,25 @@ void orgasm_control_tick() {
     if (millis - arousal_state.last_update_ms > update_frequency_ms) {
         orgasm_control_updateArousal();
         orgasm_control_updateMotorSpeed();
+
+        // Orgasm detection — runs after arousal and motor updates
+        long p_check_for_det = Config.use_average_values ? orgasm_control_get_average_pressure()
+                                                         : arousal_state.pressure_value;
+        orgasm_detection_tick((uint16_t)p_check_for_det, arousal_state.arousal);
+
+        // Clench arousal boost: add to arousal while in sustained/rhythmic phase
+        if (Config.od_clench_arousal_boost) {
+            orgasm_detect_state_t od_state = orgasm_detection_get_state();
+            if (od_state == OD_STATE_SUSTAINED || od_state == OD_STATE_RHYTHMIC) {
+                arousal_state.arousal += Config.od_clench_arousal_boost_amount;
+                arousal_state.update_flag = ocTRUE;
+            }
+        }
+
         arousal_state.last_update_ms = millis;
 
-        // Data for logfile or classic log.
-        char data_csv[255];
-        snprintf(
-            data_csv,
-            255,
-            "%d,%d,%d,%d",
-            orgasm_control_get_average_pressure(),
-            orgasm_control_get_arousal(),
-            eom_hal_get_motor_speed(),
-            Config.sensitivity_threshold
-        );
-
-        // Write out to logfile, which includes millis:
-        if (logger_state.logfile != NULL) {
-            fprintf(
-                logger_state.logfile,
-                "%ld,%s\n",
-                arousal_state.last_update_ms - logger_state.recording_start_ms,
-                data_csv
-            );
-        }
-
-        // Write to console for classic log mode:
-        if (Config.classic_serial) {
-            printf("%s\n", data_csv);
-        }
+        // Data logging (CSV + serial) handled by data_logger module
+        data_logger_tick(arousal_state.last_update_ms);
     }
 }
 
