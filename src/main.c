@@ -30,13 +30,13 @@ static const char* TAG = "main";
 
 // Static buffers for FreeRTOS tasks
 #define MAIN_TASK_STACK_SIZE (8 * 1024)
-#define ACCESSORY_TASK_STACK_SIZE (4 * 1024)
+#define PLUGIN_TASK_STACK_SIZE (4 * 1024)
 
 static StackType_t main_task_stack[MAIN_TASK_STACK_SIZE / sizeof(StackType_t)];
 static StaticTask_t main_task_tcb;
 
-static StackType_t accessory_task_stack[ACCESSORY_TASK_STACK_SIZE / sizeof(StackType_t)];
-static StaticTask_t accessory_task_tcb;
+static StackType_t plugin_task_stack[PLUGIN_TASK_STACK_SIZE / sizeof(StackType_t)];
+static StaticTask_t plugin_task_tcb;
 
 static void print_boot_banner(void) {
     const esp_partition_t* running = esp_ota_get_running_partition();
@@ -161,7 +161,7 @@ static void loop_task(void* args) {
     // }
 }
 
-static void accessory_driver_task(void* args) {
+static void plugin_task(void* args) {
     while (true) {
         plugin_driver_tick();
         vTaskDelay(1);
@@ -306,13 +306,13 @@ void app_main() {
     print_boot_banner();
 
     xTaskCreateStatic(
-        accessory_driver_task,
-        "ACCESSORY",
-        ACCESSORY_TASK_STACK_SIZE / sizeof(StackType_t),
+        plugin_task,
+        "PLUGIN",
+        PLUGIN_TASK_STACK_SIZE / sizeof(StackType_t),
         NULL,
         tskIDLE_PRIORITY,
-        accessory_task_stack,
-        &accessory_task_tcb
+        plugin_task_stack,
+        &plugin_task_tcb
     );
 
     xTaskCreateStatic(
