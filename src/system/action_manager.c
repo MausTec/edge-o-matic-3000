@@ -29,6 +29,7 @@ void action_manager_load_all_plugins(void) {
 
     if (d) {
         while ((dir = readdir(d)) != NULL) {
+            // Flat file: /plugins/foo.json
             if (dir->d_type == DT_REG && !strcmp(dir->d_name + strlen(dir->d_name) - 5, ".json") &&
                 dir->d_name[0] != '.') {
                 char* file = NULL;
@@ -37,6 +38,20 @@ void action_manager_load_all_plugins(void) {
 
                 action_manager_load_plugin(file);
                 free(file);
+            }
+
+            // Named subfolder: /plugins/foo/plugin.json
+            if (dir->d_type == DT_DIR && dir->d_name[0] != '.') {
+                char* file = NULL;
+                asiprintf(&file, "%s/%s/plugin.json", path, dir->d_name);
+                if (file != NULL) {
+                    FILE* probe = fopen(file, "r");
+                    if (probe != NULL) {
+                        fclose(probe);
+                        action_manager_load_plugin(file);
+                    }
+                    free(file);
+                }
             }
         }
 
@@ -126,6 +141,15 @@ void action_manager_load_plugin(const char* path) {
     mta_plugin_set_config(plugin, user_config);
     if (user_config) cJSON_Delete(user_config);
 
+    // Reject duplicate plugin names (e.g. both flat file and subfolder present)
+    if (plugin_name && action_manager_find_plugin(plugin_name)) {
+        ESP_LOGW(
+            TAG, "Plugin '%s' already loaded — skipping duplicate from: %s", plugin_name, path
+        );
+        mta_plugin_free(plugin);
+        goto cleanup;
+    }
+
     list_add(&_plugins, (void*)plugin);
 
 cleanup:
@@ -149,6 +173,9 @@ void action_manager_dispatch_event(const char* event, int arg) {
     str_to_camel_case(evt_name, evt_name_len + 1, event + 4);
 
     list_foreach(_plugins, plugin) {
+        const char* type = mta_plugin_get_type(plugin);
+        if (type && strcmp(type, "ble_driver") == 0) continue;
+
         mta_event_invoke(plugin, evt_name, arg);
     }
 

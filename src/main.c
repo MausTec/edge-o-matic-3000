@@ -1,11 +1,11 @@
 
 #include "accessory_driver.h"
 #include "api/broadcast.h"
-#include "bluetooth_driver.h"
 #include "bluetooth_manager.h"
 #include "config.h"
 #include "config_defs.h"
 #include "console.h"
+#include "drivers/plugin_driver.h"
 #include "eom-hal.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -163,7 +163,7 @@ static void loop_task(void* args) {
 
 static void accessory_driver_task(void* args) {
     while (true) {
-        bluetooth_driver_tick();
+        plugin_driver_tick();
         vTaskDelay(1);
     }
 }
@@ -242,7 +242,7 @@ void app_main() {
     ui_init();
     http_server_init();
     wifi_manager_init();
-    bluetooth_driver_init();
+    plugin_driver_init();
     orgasm_control_init();
     i18n_init();
 

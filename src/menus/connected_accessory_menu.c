@@ -1,4 +1,4 @@
-#include "bluetooth_driver.h"
+#include "drivers/plugin_driver.h"
 #include "maus_bus.h"
 #include "ui/menu.h"
 #include "ui/toast.h"
@@ -25,7 +25,7 @@ static void on_bt_device(peer_t* device, void* arg) {
 static void on_open(const ui_menu_t* m, UI_MENU_ARG_TYPE arg) {
     ui_toast_blocking("%s", _("Loading..."));
     maus_bus_enumerate_devices(on_cu_device, (void*)m);
-    bluetooth_driver_enumerate_devices(on_bt_device, (void*)m);
+    plugin_driver_enumerate(on_bt_device, (void*)m);
     ui_toast_clear();
 }
 

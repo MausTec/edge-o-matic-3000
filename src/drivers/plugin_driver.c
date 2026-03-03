@@ -1,154 +1,191 @@
 #include "drivers/plugin_driver.h"
+#include "mt_actions_internal.h"
 #include "system/action_manager.h"
+#include "system/event_manager.h"
 #include <esp_log.h>
 #include <string.h>
 
-static const char* TAG = "drivers:plugin";
+static const char* TAG = "plugin_driver";
 
-/**
- * @brief Callback for BLE GATT write completion, clears pending flag and logs result.
- *
- * @param conn_handle
- * @param error
- * @param attr
- * @param arg
- * @return int
- */
 static int on_tx_complete(
     uint16_t conn_handle, const struct ble_gatt_error* error, struct ble_gatt_attr* attr, void* arg
 ) {
-    plugin_driver_state_t* state = (plugin_driver_state_t*)arg;
-    if (!state) return 0;
+    ble_conn_ctx_t* ctx = (ble_conn_ctx_t*)arg;
+    if (!ctx) return 0;
 
-    if (error->status == 0) {
-        ESP_LOGD(TAG, "TX complete");
-        state->pending_tx_flag = false;
-        state->pending_len = 0;
-    } else {
+    if (error->status != 0) {
         ESP_LOGW(TAG, "TX failed: status=%d", error->status);
-        state->pending_tx_flag = false;
     }
 
+    ctx->pending_tx_flag = false;
+    ctx->tx_retry_count = 0;
     return 0;
 }
 
-static bluetooth_driver_status_t plugin_connect(peer_t* peer) {
-    plugin_driver_state_t* state = (plugin_driver_state_t*)peer->driver_state;
-    if (!state || !state->plugin) return BT_DEVICE_ECONNECT;
+static void ctx_flush_tx(ble_conn_ctx_t* ctx) {
+    if (!ctx || ctx->pending_len == 0 || ctx->pending_tx_flag) return;
 
-    ESP_LOGI(TAG, "Plugin driver connect: %s", peer->name);
-    mta_event_invoke(state->plugin, "connect", 0);
-    return BT_DEVICE_CONNECTED;
-}
+    // EBUSY backoff: don't hammer NimBLE while a prior GATT op is finishing
+    if (ctx->retry_after && xTaskGetTickCount() < ctx->retry_after) return;
 
-static void plugin_disconnect(peer_t* peer) {
-    plugin_driver_state_t* state = (plugin_driver_state_t*)peer->driver_state;
-    if (!state) return;
-
-    ESP_LOGI(TAG, "Plugin driver disconnect: %s", peer->name);
-
-    if (state->plugin) {
-        mta_event_invoke(state->plugin, "disconnect", 0);
-        mta_plugin_set_device(state->plugin, NULL);
-    }
-
-    if (state->tx_mutex) {
-        vSemaphoreDelete(state->tx_mutex);
-    }
-
-    free(state);
-    peer->driver_state = NULL;
-}
-
-static void plugin_tick(peer_t* peer) {
-    plugin_driver_state_t* state = (plugin_driver_state_t*)peer->driver_state;
-    if (!state || state->pending_len == 0 || state->pending_tx_flag) return;
-
-    if (xSemaphoreTake(state->tx_mutex, 1000UL / portTICK_RATE_MS)) {
+    if (xSemaphoreTake(ctx->tx_mutex, 1000UL / portTICK_RATE_MS)) {
         char buffer[PLUGIN_DRIVER_TX_MAX];
-        int len = state->pending_len;
-        memcpy(buffer, state->pending_tx, len);
+        int len = ctx->pending_len;
+        bool use_no_rsp = ctx->use_write_no_rsp;
+        memcpy(buffer, ctx->pending_tx, len);
         buffer[len] = '\0';
-        xSemaphoreGive(state->tx_mutex);
-
-        state->pending_tx_flag = true;
+        ctx->pending_len = 0; // Consumed — new bleWrites can queue fresh data
+        xSemaphoreGive(ctx->tx_mutex);
 
         int rc;
-        if (state->use_write_no_rsp && state->has_tx_no_rsp_chr) {
+        if (use_no_rsp && ctx->has_tx_no_rsp_chr) {
             rc = ble_gattc_write_no_rsp_flat(
-                peer->conn_handle, state->tx_no_rsp_chr.val_handle, buffer, len
+                ctx->peer->conn_handle, ctx->tx_no_rsp_chr.val_handle, buffer, len
             );
-            // No callback for write-no-response, clear immediately
-            if (rc == 0) {
-                state->pending_tx_flag = false;
-                state->pending_len = 0;
-            }
-        } else if (state->has_tx_chr) {
+        } else if (ctx->has_tx_chr) {
+            ctx->pending_tx_flag = true;
             rc = ble_gattc_write_flat(
-                peer->conn_handle, state->tx_chr.val_handle, buffer, len, on_tx_complete, state
+                ctx->peer->conn_handle, ctx->tx_chr.val_handle, buffer, len, on_tx_complete, ctx
             );
         } else {
-            ESP_LOGW(TAG, "tick: no suitable write characteristic");
-            state->pending_tx_flag = false;
+            ESP_LOGW(TAG, "flush: no suitable write characteristic");
             return;
         }
 
         if (rc == 0) {
-            ESP_LOGD(TAG, "Write initiated: %d bytes", len);
+            ctx->retry_after = 0;
+            ctx->tx_retry_count = 0;
+            if (use_no_rsp) ctx->pending_tx_flag = false;
+            ESP_LOGI(TAG, "TX: %.*s", len, buffer);
+        } else if (rc == 7 /* BLE_HS_EBUSY */) {
+            ctx->pending_tx_flag = false;
+            ctx->tx_retry_count++;
+
+            if (ctx->tx_retry_count <= PLUGIN_DRIVER_TX_MAX_RETRIES) {
+                if (xSemaphoreTake(ctx->tx_mutex, pdMS_TO_TICKS(10))) {
+                    if (ctx->pending_len == 0) {
+                        memcpy(ctx->pending_tx, buffer, len);
+                        ctx->pending_len = len;
+                        ctx->use_write_no_rsp = use_no_rsp;
+                    }
+                    xSemaphoreGive(ctx->tx_mutex);
+                }
+                ctx->retry_after = xTaskGetTickCount() + pdMS_TO_TICKS(50);
+                ESP_LOGD(
+                    TAG, "BLE busy, retry %d/%d", ctx->tx_retry_count, PLUGIN_DRIVER_TX_MAX_RETRIES
+                );
+            } else {
+                ESP_LOGW(TAG, "Write dropped after %d retries (BLE busy)", ctx->tx_retry_count);
+                ctx->tx_retry_count = 0;
+                ctx->retry_after = 0;
+            }
         } else {
             ESP_LOGW(TAG, "Write failed: rc=%d", rc);
-            state->pending_tx_flag = false;
+            ctx->pending_tx_flag = false;
         }
     } else {
-        ESP_LOGW(TAG, "tick: timeout waiting for TX mutex");
+        ESP_LOGW(TAG, "flush: timeout waiting for TX mutex");
     }
 }
 
-static size_t plugin_get_name(peer_t* peer, char* buffer, size_t len) {
-    plugin_driver_state_t* state = (plugin_driver_state_t*)peer->driver_state;
-    if (!state || !state->plugin) return 0;
+/**
+ * @brief I/O backend write — queue data into the BLE TX buffer
+ *
+ * Routes through the async TX pipe. The wait_response parameter selects
+ * between write-with-response and write-no-response GATT semantics.
+ */
+static int ble_io_write(void* device, const void* data, size_t len, bool wait_response) {
+    ble_conn_ctx_t* ctx = (ble_conn_ctx_t*)device;
+    if (!ctx || !ctx->peer) return -1;
 
-    const char* name = mta_plugin_get_name(state->plugin);
-    if (!name) return 0;
+    if (wait_response && !ctx->has_tx_chr) return -1;
+    if (!wait_response && !ctx->has_tx_no_rsp_chr && !ctx->has_tx_chr) return -1;
 
-    size_t name_len = strlen(name);
-    if (name_len >= len) name_len = len - 1;
-    memcpy(buffer, name, name_len);
-    buffer[name_len] = '\0';
-    return name_len;
-}
+    if ((int)len >= PLUGIN_DRIVER_TX_MAX) {
+        ESP_LOGW(TAG, "ble_io_write: data too long (%d >= %d)", (int)len, PLUGIN_DRIVER_TX_MAX);
+        len = PLUGIN_DRIVER_TX_MAX - 1;
+    }
 
-static bluetooth_driver_status_t plugin_get_status(peer_t* peer) {
-    return BT_DEVICE_DISCONNECTED;
-}
+    if (xSemaphoreTake(ctx->tx_mutex, 1000UL / portTICK_RATE_MS)) {
+        memcpy(ctx->pending_tx, data, len);
+        ctx->pending_tx[len] = '\0';
+        ctx->pending_len = (int)len;
+        ctx->use_write_no_rsp = false;
+        xSemaphoreGive(ctx->tx_mutex);
+        return 0;
+    }
 
-static void plugin_set_speed(peer_t* peer, uint8_t speed) {
-    plugin_driver_state_t* state = (plugin_driver_state_t*)peer->driver_state;
-    if (!state || !state->plugin) return;
-
-    mta_event_invoke(state->plugin, "speedChange", (int)speed);
+    ESP_LOGW(TAG, "ble_io_write: timeout waiting for TX mutex");
+    return -1;
 }
 
 /**
- * @brief Try to match a BLE peer against all loaded ble_driver plugins.
- *
- * Iterates action_manager plugins looking for type="ble_driver" with a
- * bleName or bleNamePrefix match. If found, performs GATT service discovery
- * and populates the driver state.
+ * @brief I/O backend close — free the ble_conn_ctx_t
  */
-static bluetooth_driver_compatibility_t plugin_discover(peer_t* peer) {
+static void ble_io_close(void* device) {
+    ble_conn_ctx_t* ctx = (ble_conn_ctx_t*)device;
+    if (!ctx) return;
+
+    ESP_LOGI(TAG, "Closing BLE context for '%s'", ctx->peer ? ctx->peer->name : "?");
+
+    if (ctx->peer) {
+        ctx->peer->driver_state = NULL;
+    }
+
+    if (ctx->tx_mutex) {
+        vSemaphoreDelete(ctx->tx_mutex);
+    }
+
+    free(ctx);
+}
+
+/**
+ * @brief Static I/O backend vtable for BLE connections
+ */
+static const mta_io_backend_t _ble_io_backend = {
+    .write = ble_io_write,
+    .read = NULL,
+    .close = ble_io_close,
+};
+
+static void plugin_driver_event_handler(
+    const char* event, void* event_arg_ptr, int event_arg_int, void* handler_arg
+) {
+    (void)event_arg_ptr;
+    (void)handler_arg;
+
+    // Map firmware event names to plugin event names
+    const char* plugin_event = NULL;
+
+    if (strcmp(event, "EVT_SPEED_CHANGE") == 0) {
+        plugin_event = "speedChange";
+    } else if (strcmp(event, "EVT_AROUSAL_CHANGE") == 0) {
+        plugin_event = "arousalChange";
+    }
+
+    if (!plugin_event) return;
+
+    mta_driver_instance_dispatch_all(plugin_event, event_arg_int);
+}
+
+void plugin_driver_init(void) {
+    ESP_LOGI(TAG, "Plugin driver subsystem initialized");
+    event_manager_register_handler(EVT_SPEED_CHANGE, plugin_driver_event_handler, NULL);
+    event_manager_register_handler(EVT_AROUSAL_CHANGE, plugin_driver_event_handler, NULL);
+}
+
+bool plugin_driver_try_claim(peer_t* peer) {
     size_t plugin_count = action_manager_get_plugin_count();
 
     for (size_t i = 0; i < plugin_count; i++) {
         mta_plugin_t* plugin = action_manager_get_plugin(i);
         if (!plugin) continue;
 
-        // Only match ble_driver type plugins
         const char* type = mta_plugin_get_type(plugin);
         if (!type || strcmp(type, "ble_driver") != 0) continue;
 
-        // Already bound to a device?
-        if (mta_plugin_get_device(plugin) != NULL) continue;
+        // Check if this peer already has an active driver instance
+        if (peer->driver_state != NULL) continue;
 
         // Check BLE name match
         const char* ble_name = mta_plugin_get_match_ble_name(plugin);
@@ -170,11 +207,11 @@ static bluetooth_driver_compatibility_t plugin_discover(peer_t* peer) {
             peer->name
         );
 
-        // Discover GATT services
+        // GATT service discovery
         int rc = bluetooth_manager_discover_all(peer);
         if (rc != 0) {
             ESP_LOGW(TAG, "Service discovery failed: rc=%d", rc);
-            return BT_DRIVER_DISCOVERY_ERROR;
+            return false;
         }
 
         // Scan for write characteristics
@@ -186,15 +223,12 @@ static bluetooth_driver_compatibility_t plugin_discover(peer_t* peer) {
             struct peer_chr_node* chr = svc->chrs;
             while (chr != NULL) {
                 uint8_t prop = chr->chr.properties;
-
                 if ((prop & BLE_GATT_CHR_PROP_WRITE) && !write_chr) {
                     write_chr = &chr->chr;
                 }
-
                 if ((prop & BLE_GATT_CHR_PROP_WRITE_NO_RSP) && !write_no_rsp_chr) {
                     write_no_rsp_chr = &chr->chr;
                 }
-
                 chr = chr->next;
             }
             svc = svc->next;
@@ -202,57 +236,126 @@ static bluetooth_driver_compatibility_t plugin_discover(peer_t* peer) {
 
         if (!write_chr && !write_no_rsp_chr) {
             ESP_LOGW(TAG, "No writable characteristics found for '%s'", peer->name);
-            return BT_DRIVER_NOT_COMPATIBLE;
+            return false;
         }
 
-        // Allocate bridge state
-        plugin_driver_state_t* state =
-            (plugin_driver_state_t*)calloc(1, sizeof(plugin_driver_state_t));
-        if (!state) return BT_DRIVER_DISCOVERY_ERROR;
+        // Allocate BLE connection context
+        ble_conn_ctx_t* ctx = (ble_conn_ctx_t*)calloc(1, sizeof(ble_conn_ctx_t));
+        if (!ctx) return false;
 
-        state->peer = peer;
-        state->plugin = plugin;
-        state->tx_mutex = xSemaphoreCreateMutex();
-        state->pending_tx_flag = false;
-        state->pending_len = 0;
+        ctx->peer = peer;
+        ctx->tx_mutex = xSemaphoreCreateMutex();
+        ctx->pending_tx_flag = false;
+        ctx->pending_len = 0;
+        ctx->retry_after = 0;
+        ctx->tx_retry_count = 0;
 
         if (write_chr) {
-            state->tx_chr = *write_chr;
-            state->has_tx_chr = true;
+            ctx->tx_chr = *write_chr;
+            ctx->has_tx_chr = true;
         }
-
         if (write_no_rsp_chr) {
-            state->tx_no_rsp_chr = *write_no_rsp_chr;
-            state->has_tx_no_rsp_chr = true;
+            ctx->tx_no_rsp_chr = *write_no_rsp_chr;
+            ctx->has_tx_no_rsp_chr = true;
         }
 
-        // Cross-link: plugin / peer
-        peer->driver_state = (void*)state;
-        mta_plugin_set_device(plugin, (void*)state);
+        // Create driver instance: device = ctx so I/O backend callbacks
+        // receive the ble_conn_ctx_t directly. The peer_t* is reachable
+        // via ctx->peer, and peer->driver_state points back to the instance.
+        mta_driver_instance_t* instance = mta_driver_instance_create(plugin, ctx, &_ble_io_backend);
+        if (!instance) {
+            vSemaphoreDelete(ctx->tx_mutex);
+            free(ctx);
+            return false;
+        }
+
+        // Set scope user_data to the ble_conn_ctx_t so bleWrite can find the TX pipe
+        mta_scope_set_user_data(mta_driver_instance_get_scope(instance), ctx);
+
+        // Cross-link: peer -> driver instance
+        peer->driver_state = (void*)instance;
+
+        // Register in global instance list
+        mta_driver_instance_add(instance);
+
+        // Fire connect event
+        mta_driver_instance_dispatch(instance, "connect", 0, NULL);
 
         ESP_LOGI(
             TAG,
-            "Plugin driver bound: write=%s, write_no_rsp=%s",
+            "Connection bound: write=%s, write_no_rsp=%s",
             write_chr ? "yes" : "no",
             write_no_rsp_chr ? "yes" : "no"
         );
 
-        return BT_DRIVER_COMPATIBLE;
+        return true;
     }
 
-    return BT_DRIVER_NOT_COMPATIBLE;
+    return false;
 }
 
-const bluetooth_driver_t PLUGIN_DRIVER = {
-    .connect = plugin_connect,
-    .disconnect = plugin_disconnect,
-    .tick = plugin_tick,
-    .get_name = plugin_get_name,
-    .get_status = plugin_get_status,
-    .set_speed = plugin_set_speed,
-    .discover = plugin_discover,
-};
+void plugin_driver_release_peer(peer_t* peer) {
+    if (!peer) return;
 
-void plugin_driver_init(void) {
-    ESP_LOGI(TAG, "Plugin driver bridge initialized");
+    mta_driver_instance_t* instance = (mta_driver_instance_t*)peer->driver_state;
+    if (!instance) {
+        ESP_LOGW(TAG, "release_peer: peer '%s' has no driver instance", peer->name);
+        return;
+    }
+
+    ESP_LOGI(TAG, "Releasing connection for '%s'", peer->name);
+
+    // destroy fires disconnect event, calls io_backend->close (frees ctx),
+    // and removes from the global instance list.
+    mta_driver_instance_destroy(instance);
+}
+
+static void tick_flush_cb(mta_driver_instance_t* instance, void* arg) {
+    (void)arg;
+    ble_conn_ctx_t* ctx = (ble_conn_ctx_t*)mta_driver_instance_get_device(instance);
+    if (!ctx) return;
+    ctx_flush_tx(ctx);
+}
+
+void plugin_driver_tick(void) {
+    mta_driver_instance_foreach(tick_flush_cb, NULL);
+}
+
+typedef struct {
+    plugin_driver_enum_cb_t cb;
+    void* arg;
+} enum_ctx_t;
+
+static void enum_cb(mta_driver_instance_t* instance, void* arg) {
+    enum_ctx_t* ectx = (enum_ctx_t*)arg;
+    ble_conn_ctx_t* ctx = (ble_conn_ctx_t*)mta_driver_instance_get_device(instance);
+    if (ctx && ctx->peer) ectx->cb(ctx->peer, ectx->arg);
+}
+
+void plugin_driver_enumerate(plugin_driver_enum_cb_t cb, void* arg) {
+    if (!cb) return;
+    enum_ctx_t ectx = { .cb = cb, .arg = arg };
+    mta_driver_instance_foreach(enum_cb, &ectx);
+}
+
+bool plugin_driver_can_handle_name(const char* name) {
+    if (!name) return false;
+
+    size_t plugin_count = action_manager_get_plugin_count();
+
+    for (size_t i = 0; i < plugin_count; i++) {
+        mta_plugin_t* plugin = action_manager_get_plugin(i);
+        if (!plugin) continue;
+
+        const char* type = mta_plugin_get_type(plugin);
+        if (!type || strcmp(type, "ble_driver") != 0) continue;
+
+        const char* ble_name = mta_plugin_get_match_ble_name(plugin);
+        const char* ble_prefix = mta_plugin_get_match_ble_name_prefix(plugin);
+
+        if (ble_name && strcmp(name, ble_name) == 0) return true;
+        if (ble_prefix && strncmp(name, ble_prefix, strlen(ble_prefix)) == 0) return true;
+    }
+
+    return false;
 }

@@ -34,7 +34,6 @@ typedef struct peer {
     ble_addr_t addr;
     char name[BLE_HS_ADV_MAX_SZ];
     uint16_t conn_handle;
-    const struct bluetooth_driver* driver;
     void* driver_state;
 
     struct peer_svc_node* svcs;

@@ -1,6 +1,5 @@
 #include "orgasm_control.h"
 #include "accessory_driver.h"
-#include "bluetooth_driver.h"
 #include "config.h"
 #include "data_logger.h"
 #include "eom-hal.h"
@@ -71,7 +70,6 @@ static void _set_speed(uint8_t speed) {
 
     eom_hal_set_motor_speed(speed);
     event_manager_dispatch(EVT_SPEED_CHANGE, NULL, speed);
-    bluetooth_driver_broadcast_speed(speed);
 }
 
 void orgasm_control_init(void) {
@@ -148,7 +146,6 @@ static void orgasm_control_updateArousal() {
     // Update accessories:
     if (arousal_state.update_flag) {
         event_manager_dispatch(EVT_AROUSAL_CHANGE, NULL, arousal_state.arousal);
-        bluetooth_driver_broadcast_arousal(arousal_state.arousal);
         // websocket_driver_broadcast_arousal(arousal_state.arousal);
 
         // Update LED for Arousal Color
