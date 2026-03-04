@@ -21,3 +21,6 @@ MIT License — see [LICENSE](LICENSE) and [RELICENSING.md](RELICENSING.md).
 ---
 
 **Edge-o-Matic** is a registered trademark of Maus-Tec LLC.
+
+The Bluetooth® word mark and logos are registered trademarks owned by Bluetooth SIG, Inc.
+and any use of such marks by Maus-Tec LLC is under license.

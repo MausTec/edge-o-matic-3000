@@ -75,11 +75,11 @@ struct config {
     // True to enable WiFi / Websocket server.
     bool wifi_on;
 
-    // AzureFang* device name, you might wanna change this.
+    // Bluetooth device name, you might wanna change this.
     char bt_display_name[64];
-    // True to enable the AzureFang connection.
+    // True to enable the Bluetooth connection.
     bool bt_on;
-    // True to force AzureFang and WiFi at the same time**.
+    // True to force Bluetooth and WiFi at the same time.
     bool force_bt_coex;
 
     //= UI And Stuff
