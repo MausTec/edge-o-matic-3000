@@ -29,6 +29,7 @@ CONFIG_DEFS {
     CFG_STRING_PTR(ssl_cacert_path, NULL);
     CFG_STRING_PTR(ssl_prvtkey_path, NULL);
     CFG_STRING(hostname, "eom3k");
+    CFG_BOOL(mdns_enabled, true);
 
     // UI Settings
     CFG_NUMBER(led_brightness, 128);
@@ -40,31 +41,40 @@ CONFIG_DEFS {
 
     // Orgasm Settings
     CFG_NUMBER(motor_max_speed, 128);
-    CFG_NUMBER(motor_start_speed, 10);
-    CFG_NUMBER(edge_delay, 1000);
-    CFG_NUMBER(max_additional_delay, 1000);
-    CFG_NUMBER(minimum_on_time, 1000);
+    CFG_NUMBER(motor_min_speed, 10);
+    CFG_NUMBER(cooldown_delay_ms, 1000);
+    CFG_NUMBER(cooldown_random_ms, 1000);
+    CFG_NUMBER(arousal_holdoff_ms, 1000);
     CFG_NUMBER(pressure_smoothing, 5);
     CFG_NUMBER(sensitivity_threshold, 600);
     CFG_NUMBER(motor_ramp_time_s, 30);
     CFG_NUMBER(update_frequency_hz, 50);
     CFG_NUMBER(sensor_sensitivity, 128);
     CFG_BOOL(use_average_values, false);
+    CFG_NUMBER(arousal_decay_rate, 60);
+
+    // Orgasm Detection Settings
+    CFG_ENUM(od_mode, orgasm_detect_mode_t, OD_MODE_AUTO);
+    CFG_NUMBER(od_sustained_threshold, 200);
+    CFG_NUMBER(od_sustained_fallback_ms, 5000);
+    CFG_NUMBER(od_sustained_dropout_ms, 500);
+    CFG_NUMBER(od_peak_min_amplitude, 40);
+    CFG_NUMBER(od_rhythmic_min_peaks, 4);
+    CFG_NUMBER(od_rhythmic_interval_min_ms, 500);
+    CFG_NUMBER(od_rhythmic_interval_max_ms, 1200);
+    CFG_NUMBER(od_rhythmic_interval_variance_ms, 200);
+    CFG_NUMBER(od_rhythmic_timeout_ms, 1500);
+    CFG_NUMBER(od_arousal_gate_percent, 70);
+    CFG_NUMBER(od_recovery_ms, 3000);
+    CFG_BOOL(od_clench_arousal_boost, false);
+    CFG_NUMBER(od_clench_arousal_boost_amount, 5);
+    CFG_BOOL(od_detection_armed, true);
 
     // Vibration Settings
     CFG_ENUM(vibration_mode, vibration_mode_t, RampStop);
 
-    // Post-Orgasm Torture
-    CFG_BOOL(use_post_orgasm, false);
-    CFG_NUMBER(clench_pressure_sensitivity, 200);
-    CFG_NUMBER(clench_time_to_orgasm_ms, 1500);
-    CFG_NUMBER(clench_time_threshold_ms, 900);
-    CFG_BOOL(clench_detector_in_edging, false);
-    CFG_NUMBER(auto_edging_duration_minutes, 30);
-    CFG_NUMBER(post_orgasm_duration_seconds, 10);
-    CFG_BOOL(post_orgasm_menu_lock, false);
-    CFG_BOOL(edge_menu_lock, false);
-    CFG_NUMBER(max_clench_duration_ms, 3000);
+    // UI Settings — Edging Stats
+    CFG_ENUM(denial_count_mode, denial_count_mode_t, DENIAL_COUNT_DECIMAL);
 
     // Internal system things, only edit if you know what you're doing.
     CFG_STRING_PTR(remote_update_url, REMOTE_UPDATE_URL)

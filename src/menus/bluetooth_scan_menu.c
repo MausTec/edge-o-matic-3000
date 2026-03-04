@@ -1,5 +1,5 @@
-#include "bluetooth_driver.h"
 #include "bluetooth_manager.h"
+#include "drivers/plugin_driver.h"
 #include "esp_log.h"
 #include "menus/common.h"
 #include "ui/menu.h"
@@ -18,6 +18,12 @@ static void on_pair_start(const ui_menu_t* m, const ui_menu_item_t* item, UI_MEN
     peer_t* peer = (peer_t*)item->arg;
     if (m == NULL || item == NULL || peer == NULL) return;
 
+    // Transfer peer ownership from the menu item to the BLE connection.
+    // The peer_t must outlive the menu: NimBLE stores it as the GAP callback
+    // arg, and the driver instance references it via ble_conn_ctx_t.
+    // It will be freed by the GAP disconnect handler.
+    ((ui_menu_item_t*)item)->freer = NULL;
+
     int rc;
     ui_toast_blocking("%s", _("Connecting..."));
 
@@ -27,20 +33,19 @@ static void on_pair_start(const ui_menu_t* m, const ui_menu_item_t* item, UI_MEN
     rc = bluetooth_manager_connect(peer);
 
     if (rc == BLE_HS_EDONE) {
+        free(peer); // No GAP events — we must free
         ui_toast("%s", _("Already connected."));
     } else if (rc != 0) {
         ESP_LOGE(TAG, "Failed to connect: %d", rc);
+        free(peer); // Connect failed, no GAP events — we must free
         ui_toast(_("Failed to connect: %d"), rc);
     } else {
-        peer->driver = bluetooth_driver_find_for_peer(peer);
-
-        if (peer->driver == NULL) {
+        if (!plugin_driver_try_claim(peer)) {
+            // Disconnect is async; the GAP disconnect handler will free peer
             bluetooth_manager_disconnect(peer);
             ui_toast("%s", _("Unable to find suitable driver."));
             return;
         }
-
-        bluetooth_driver_register_peer(peer);
 
         ui_toast("%s", _("Connected!"));
         ui_close_menu();
@@ -50,6 +55,13 @@ static void on_pair_start(const ui_menu_t* m, const ui_menu_item_t* item, UI_MEN
 
 static void on_scan_result(peer_t* peer, void* arg) {
     const ui_menu_t* m = (const ui_menu_t*)arg;
+
+    // Pre-filter: only surface devices that at least one loaded ble_driver can claim.
+    // This avoids cluttering the list with unpairable devices.
+    if (!plugin_driver_can_handle_name(peer->name)) {
+        ESP_LOGD(TAG, "Scan: skipping '%s' (no matching driver)", peer->name);
+        return;
+    }
 
     peer_t* peer_cpy = (peer_t*)malloc(sizeof(peer_t));
     if (peer_cpy == NULL) return;

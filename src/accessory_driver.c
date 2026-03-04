@@ -37,6 +37,10 @@ static void _device_speed_cb(
             tscode_command_t cmd = TSCODE_COMMAND_DEFAULT;
             cmd.type = speed > 0 ? TSCODE_RECIPROCATING_MOVE : TSCODE_CONDITIONAL_STOP;
             cmd.speed = (tscode_unit_t*)malloc(sizeof(tscode_unit_t));
+            if (cmd.speed == NULL) {
+                ESP_LOGE(TAG, "_device_speed_cb: out of memory");
+                return;
+            }
             cmd.speed->unit = TSCODE_UNIT_BYTE;
             cmd.speed->value = speed;
             ESP_LOGD(TAG, " -> TSCODE Device: %s", device->product_name);

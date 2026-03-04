@@ -1,11 +1,9 @@
 #include "SDHelper.h"
 #include "application.h"
-#include "basic_api.h"
 #include "commands/index.h"
 #include "console.h"
 #include "esp_console.h"
 #include "esp_vfs.h"
-#include "my_basic.h"
 #include <errno.h>
 #include <stdio.h>
 #include <sys/stat.h>
@@ -241,13 +239,10 @@ static command_err_t cmd_load(int argc, char** argv, console_t* console) {
         return CMD_ARG_ERR;
     }
 
-    struct mb_interpreter_t* bas = NULL;
-    int mb_err = MB_FUNC_OK;
-
     char path[PATH_MAX + 1] = { 0 };
     SDHelper_getRelativePath(path, PATH_MAX, argv[argc - 1], console);
 
-    // Branch off to load apps, otherwise run an inline interpreter below:
+    // Load .mpk applications (WASM or future formats)
     if (!strcmp(path + strlen(path) - 4, APP_EXTENSION)) {
         application_t* application;
         app_err_t app_err = application_load(path, &application);
@@ -257,7 +252,7 @@ static command_err_t cmd_load(int argc, char** argv, console_t* console) {
             return CMD_FAIL;
         }
 
-        fprintf(console->out, "Loaded: %s\n", application->title);
+        fprintf(console->out, "Loaded: %s\n", application->display_name);
         app_err = application_start(application);
         fprintf(console->out, "\n");
 
@@ -269,28 +264,8 @@ static command_err_t cmd_load(int argc, char** argv, console_t* console) {
         return CMD_OK;
     }
 
-    fprintf(console->out, "Loading %s...\n", path);
-
-    mb_init();
-    mb_open(&bas);
-    basic_api_register_all(bas);
-
-    mb_err = mb_load_file(bas, path);
-    if (mb_err != MB_FUNC_OK) goto cleanup;
-
-    mb_err = mb_run(bas, true);
-    if (mb_err != MB_FUNC_OK) goto cleanup;
-
-cleanup:
-    if (mb_err != MB_FUNC_OK) {
-        mb_error_e err = mb_get_last_error(bas, NULL, NULL, NULL, NULL);
-        fprintf(console->out, "Basic Error %d: %s\n", err, mb_get_error_desc(err));
-    }
-
-    mb_close(&bas);
-    mb_dispose();
-
-    return mb_err == MB_FUNC_OK ? CMD_OK : CMD_FAIL;
+    fprintf(console->out, "ERROR: Only .mpk applications supported\n");
+    return CMD_FAIL;
 }
 
 static const command_t cmd_load_s = {

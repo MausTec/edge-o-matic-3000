@@ -7,7 +7,6 @@ extern "C" {
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
-#include "my_basic.h"
 #include <stdio.h>
 
 #define APP_EXTENSION ".mpk"
@@ -24,25 +23,21 @@ typedef enum {
     APP_NO_INTERPRETER,
 } app_err_t;
 
+// TODO: NOT !!! WASM specific yet
 typedef struct {
-    char title[APP_TITLE_MAXLEN];
+    char display_name[APP_TITLE_MAXLEN];
     char pack_path[PATH_MAX];
     char entrypoint[APP_TITLE_MAXLEN];
-    struct mb_interpreter_t* interpreter;
-    void** interpreter_context;
+    void* runtime_data; // Placeholder - will become WASM module/instance
     TaskHandle_t task;
     uint32_t stack_depth;
     app_err_t status;
-    mb_value_t fn_open;
-    mb_value_t fn_close;
-    mb_value_t fn_loop;
 } application_t;
 
 app_err_t application_load(const char* filename, application_t** app);
 app_err_t application_start(application_t* app);
 app_err_t application_start_background(application_t* app);
 app_err_t application_kill(application_t* app);
-application_t* application_find_by_interpreter(struct mb_interpreter_t* bas);
 void app_dispose(application_t* app);
 
 #ifdef __cplusplus

@@ -23,6 +23,7 @@ static int s_retry_num = 0;
 static char s_wifi_ip_addr_str[20] = "";
 static bool s_initialized = false;
 static wifi_manager_status_t s_wifi_status = WIFI_MANAGER_DISCONNECTED;
+static bool s_mdns_running = false;
 
 #define WIFI_MAX_CONNECTION_RETRY 5
 
@@ -41,6 +42,12 @@ event_handler(void* arg, esp_event_base_t event_base, int32_t event_id, void* ev
                 esp_wifi_connect();
             }
         } else if (event_id == WIFI_EVENT_STA_DISCONNECTED) {
+            // Stop mDNS when disconnecting to free memory
+            if (s_mdns_running) {
+                mdns_free();
+                s_mdns_running = false;
+                ESP_LOGI(TAG, "mDNS stopped (disconnect)");
+            }
             if (s_wifi_status == WIFI_MANAGER_DISCONNECTING) {
                 s_wifi_status = WIFI_MANAGER_DISCONNECTED;
                 return;
@@ -143,11 +150,17 @@ esp_err_t wifi_manager_connect_to_ap(const char* ssid, const char* key) {
 
     if (bits & WIFI_CONNECTED_BIT) {
         ESP_LOGI(TAG, "Connected to AP.");
-        // Set mDNS hostname
-        if (Config.hostname[0] != '\0') {
-            ESP_ERROR_CHECK(mdns_init());
-            mdns_hostname_set(Config.hostname);
-            mdns_instance_name_set(Config.bt_display_name);
+
+        if (!s_mdns_running && Config.mdns_enabled && Config.hostname[0] != '\0') {
+            esp_err_t mdns_err = mdns_init();
+            if (mdns_err == ESP_OK) {
+                mdns_hostname_set(Config.hostname);
+                mdns_instance_name_set(Config.bt_display_name);
+                s_mdns_running = true;
+                ESP_LOGI(TAG, "mDNS started: %s.local", Config.hostname);
+            } else {
+                ESP_LOGE(TAG, "mDNS init failed: %s", esp_err_to_name(mdns_err));
+            }
         }
 
         if (Config.websocket_port > 0) {
@@ -198,6 +211,11 @@ esp_err_t wifi_manager_scan(wifi_ap_record_t* ap_info, uint16_t* count) {
 void wifi_manager_disconnect(void) {
     s_wifi_status = WIFI_MANAGER_DISCONNECTING;
     http_server_disconnect();
+    if (s_mdns_running) {
+        mdns_free();
+        s_mdns_running = false;
+        ESP_LOGI(TAG, "mDNS stopped (disconnect request)");
+    }
     esp_wifi_disconnect();
 }
 

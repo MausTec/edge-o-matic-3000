@@ -31,6 +31,9 @@ esp_err_t websocket_send_to_client(websocket_client_t* client, const char* msg) 
 
 esp_err_t websocket_broadcast(cJSON* root, int broadcast_flags) {
     char* str = cJSON_PrintUnformatted(root);
+    if (str == NULL) {
+        return ESP_ERR_NO_MEM;
+    }
 
     if (!cJSON_HasObjectItem(root, "readings")) {
         ESP_LOGD(TAG, "Broadcasting: %s", str);
@@ -39,7 +42,10 @@ esp_err_t websocket_broadcast(cJSON* root, int broadcast_flags) {
     websocket_client_t* client = NULL;
     list_foreach(_client_list, client) {
         if (client->broadcast_flags & broadcast_flags) {
-            websocket_send_to_client(client, str);
+            esp_err_t err = websocket_send_to_client(client, str);
+            if (err != ESP_OK) {
+                ESP_LOGW(TAG, "Broadcast send failed for fd %d: %s", client->fd, esp_err_to_name(err));
+            }
         }
     }
 
@@ -138,6 +144,10 @@ esp_err_t websocket_open_fd(httpd_handle_t hd, int sockfd) {
 
     ESP_LOGI(TAG, "websocket_open_fd(hd: %p, sockfd: %d) => IP: %s", hd, sockfd, ipstr);
     websocket_client_t* client = malloc(sizeof(websocket_client_t));
+    if (client == NULL) {
+        ESP_LOGE(TAG, "websocket_open_fd: out of memory");
+        return ESP_ERR_NO_MEM;
+    }
     client->fd = sockfd;
     client->server = hd;
     client->broadcast_flags = 0;
@@ -152,6 +162,7 @@ void websocket_close_fd(httpd_handle_t hd, int sockfd) {
     list_foreach(_client_list, client) {
         if (client->fd == sockfd) {
             list_remove(&_client_list, client);
+            free(client);
             return;
         }
     }

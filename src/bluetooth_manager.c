@@ -1,6 +1,7 @@
 #include "bluetooth_manager.h"
 #include "config.h"
 #include "console/console.h"
+#include "drivers/plugin_driver.h"
 #include "esp_log.h"
 #include "esp_nimble_hci.h"
 #include "freertos/FreeRTOS.h"
@@ -208,6 +209,29 @@ static void blecent_on_disc_complete(const struct peer* peer, int status, void* 
     // Do something with peer?
 }
 
+/**
+ * @brief Free all discovered services and characteristics for a peer.
+ *
+ * The svc_node / chr_node linked lists are malloc'd during GATT discovery
+ * and must be freed when the connection is torn down.
+ */
+static void peer_free_discovery(peer_t* peer) {
+    struct peer_svc_node* svc = peer->svcs;
+    while (svc != NULL) {
+        struct peer_chr_node* chr = svc->chrs;
+        while (chr != NULL) {
+            struct peer_chr_node* next_chr = chr->next;
+            free(chr);
+            chr = next_chr;
+        }
+        struct peer_svc_node* next_svc = svc->next;
+        free(svc);
+        svc = next_svc;
+    }
+    peer->svcs = NULL;
+    peer->disc_svc_next = NULL;
+}
+
 static int blecent_gap_event(struct ble_gap_event* event, void* arg) {
     struct ble_gap_conn_desc desc;
     struct ble_hs_adv_fields fields;
@@ -230,7 +254,10 @@ static int blecent_gap_event(struct ble_gap_event* event, void* arg) {
                 peer_t peer = { 0 };
 
                 memcpy(&peer.addr, &event->disc.addr, sizeof(ble_addr_t));
-                strncpy(peer.name, (char*)fields.name, fields.name_len);
+                size_t copy_len = fields.name_len < sizeof(peer.name) - 1 ? fields.name_len
+                                                                          : sizeof(peer.name) - 1;
+                memcpy(peer.name, fields.name, copy_len);
+                peer.name[copy_len] = '\0';
 
                 _scan_callback(&peer, _scan_arg);
             }
@@ -281,16 +308,19 @@ static int blecent_gap_event(struct ble_gap_event* event, void* arg) {
         return 0;
 
     case BLE_GAP_EVENT_DISCONNECT:
-        /* Connection terminated. */
-        ESP_LOGI(TAG, "disconnect; reason=%d ", event->disconnect.reason);
-        // print_conn_desc(&event->disconnect.conn);
-        ESP_LOGI(TAG, "");
+        /* Connection terminated (remote or local). */
+        ESP_LOGI(TAG, "disconnect; reason=%d", event->disconnect.reason);
 
-        /* Forget about peer. */
-        // peer_delete(event->disconnect.conn.conn_handle);
+        {
+            peer_t* peer = (peer_t*)arg;
+            if (peer != NULL) {
+                ESP_LOGI(TAG, "Cleaning up peer '%s'", peer->name);
+                plugin_driver_release_peer(peer);
+                peer_free_discovery(peer);
+                free(peer);
+            }
+        }
 
-        /* Resume scanning. */
-        // blecent_scan();
         return 0;
 
     case BLE_GAP_EVENT_DISC_COMPLETE:

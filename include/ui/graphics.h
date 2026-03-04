@@ -23,6 +23,7 @@ typedef enum ui_icon {
     UI_ICON_BT,
     UI_ICON_UPDATE,
     UI_ICON_RECORD,
+    UI_ICON_PLUG,
     _UI_ICON_MAX,
 } ui_icon_t;
 

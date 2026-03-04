@@ -1,11 +1,11 @@
 
 #include "accessory_driver.h"
 #include "api/broadcast.h"
-#include "bluetooth_driver.h"
 #include "bluetooth_manager.h"
 #include "config.h"
 #include "config_defs.h"
 #include "console.h"
+#include "drivers/plugin_driver.h"
 #include "eom-hal.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -17,13 +17,57 @@
 #include "ui/ui.h"
 #include "util/i18n.h"
 #include "version.h"
+#include "wasm_runtime.h"
 #include "wifi_manager.h"
+#include <esp_heap_caps.h>
 #include <esp_https_ota.h>
 #include <esp_ota_ops.h>
 #include <esp_system.h>
+#include <pthread.h>
 #include <time.h>
 
 static const char* TAG = "main";
+
+// Static buffers for FreeRTOS tasks
+#define MAIN_TASK_STACK_SIZE (8 * 1024)
+#define PLUGIN_TASK_STACK_SIZE (4 * 1024)
+
+static StackType_t main_task_stack[MAIN_TASK_STACK_SIZE / sizeof(StackType_t)];
+static StaticTask_t main_task_tcb;
+
+static StackType_t plugin_task_stack[PLUGIN_TASK_STACK_SIZE / sizeof(StackType_t)];
+static StaticTask_t plugin_task_tcb;
+
+static void print_boot_banner(void) {
+    const esp_partition_t* running = esp_ota_get_running_partition();
+    size_t free_now = esp_get_free_heap_size();
+    esp_chip_info_t chip_info;
+    esp_chip_info(&chip_info);
+
+    printf("\n\n**** MAUS-TEC EDGE-O-MATIC 3000 ****\n\n");
+    printf(
+        "EOM-FW %s   (IDF %s) (HAL %s)\n", EOM_VERSION, esp_get_idf_version(), eom_hal_get_version()
+    );
+    printf("BUILD %s %s   PART %s\n", __DATE__, __TIME__, running ? running->label : "?");
+    printf("%u BYTES FREE\n\n", (unsigned)free_now);
+}
+
+static void print_memory_diagnostics(uint32_t heap_at_start) {
+    size_t free_now = esp_get_free_heap_size();
+    size_t min_ever = esp_get_minimum_free_heap_size();
+    size_t free_internal = esp_get_free_internal_heap_size();
+    size_t largest_block = heap_caps_get_largest_free_block(MALLOC_CAP_8BIT);
+    long delta = (long)free_now - (long)heap_at_start;
+
+    printf(
+        "MEM: free=%u min=%u internal=%u largest=%u delta=%ld\n",
+        (unsigned)free_now,
+        (unsigned)min_ever,
+        (unsigned)free_internal,
+        (unsigned)largest_block,
+        delta
+    );
+}
 
 void storage_init() {
     long long int cardSize = eom_hal_get_sd_size_bytes();
@@ -70,6 +114,12 @@ static void loop_task(void* args) {
     // for (;;) {
     static long lastStatusTick = 0;
     static long lastTick = 0;
+    static long lastMemoryTick = 0;
+    static uint32_t heap_at_start = 0;
+
+    if (heap_at_start == 0) {
+        heap_at_start = esp_get_free_heap_size();
+    }
 
     // Periodically send out WiFi status:
     if (millis() - lastStatusTick > 1000 * 10) {
@@ -98,6 +148,12 @@ static void loop_task(void* args) {
         api_broadcast_readings();
     }
 
+    // Periodically print memory diagnostics
+    if (millis() - lastMemoryTick > 5000) {
+        lastMemoryTick = millis();
+        print_memory_diagnostics(heap_at_start);
+    }
+
     // Tick and see if we need to save config:
     config_enqueue_save(-1);
 
@@ -105,15 +161,15 @@ static void loop_task(void* args) {
     // }
 }
 
-static void accessory_driver_task(void* args) {
+static void plugin_task(void* args) {
     while (true) {
-        bluetooth_driver_tick();
+        plugin_driver_tick();
         vTaskDelay(1);
     }
 }
 
 static void main_task(void* args) {
-    console_ready();
+    // console_ready();
     ui_open_page(&PAGE_EDGING_STATS, NULL);
     ui_reset_idle_timer();
     orgasm_control_set_output_mode(OC_MANUAL_CONTROL);
@@ -174,45 +230,49 @@ esp_err_t run_boot_diagnostic(void) {
 
 void app_main() {
     TickType_t boot_tick = xTaskGetTickCount();
+    uint32_t heap_at_start = esp_get_free_heap_size();
+    esp_err_t dxerr = run_boot_diagnostic();
 
+    // Initialize HAL and storage first
     eom_hal_init();
-    ui_init();
     storage_init();
+
+    // Initialize core subsystems
     console_init();
+    ui_init();
     http_server_init();
     wifi_manager_init();
-    accessory_driver_init();
-    bluetooth_driver_init();
+    plugin_driver_init();
     orgasm_control_init();
     i18n_init();
+
+    // Initialize accessory bus and action system
+    accessory_driver_init();
     action_manager_init();
 
+    // Configure hardware from saved settings
     // Red = preboot
     eom_hal_set_sensor_sensitivity(Config.sensor_sensitivity);
     eom_hal_set_encoder_brightness(Config.led_brightness);
     eom_hal_set_encoder_rgb(255, 0, 0);
 
-    // Welcome Preamble
-    printf("Maus-Tec presents: Edge-o-Matic 3000\n");
-    printf("Version: %s\n", EOM_VERSION);
-    printf("EOM-HAL Version: %s\n", eom_hal_get_version());
-
-    // Post-Update Diagnostics
-    esp_err_t dxerr = run_boot_diagnostic();
+    // Show post-update diagnostics if applicable
     if (dxerr != ESP_ERR_INVALID_ARG) {
         if (dxerr == ESP_OK) {
             ui_toast("%s\n%s", _("Update complete."), EOM_VERSION);
         }
     }
 
-    // Go to the splash page:
+    // Show splash screen
     ui_open_page(&SPLASH_PAGE, NULL);
 
+    // Boot sequence with status indication via LED colors
+    // Green = connecting to network
     // Green = prepare Networking
     vTaskDelayUntil(&boot_tick, 1000UL / portTICK_PERIOD_MS);
     eom_hal_set_encoder_rgb(0, 255, 0);
 
-    // Initialize WiFi
+    // Connect to WiFi if enabled
     if (Config.wifi_on) {
         if (ESP_OK == wifi_manager_connect_to_ap(Config.wifi_ssid, Config.wifi_key)) {
             ui_set_icon(UI_ICON_WIFI, WIFI_ICON_WEAK_SIGNAL);
@@ -221,11 +281,11 @@ void app_main() {
         }
     }
 
-    // Blue = prepare Bluetooth and Drivers
+    // Blue = loading plugins and drivers
     vTaskDelayUntil(&boot_tick, 1000UL / portTICK_PERIOD_MS);
     eom_hal_set_encoder_rgb(0, 0, 255);
 
-    // Initialize Bluetooth
+    // Enable Bluetooth if configured
     if (Config.bt_on) {
         bluetooth_manager_init();
         ui_set_icon(UI_ICON_BT, BT_ICON_ACTIVE);
@@ -233,13 +293,39 @@ void app_main() {
         ui_set_icon(UI_ICON_BT, -1);
     }
 
-    // Initialize Action Manager
+    // Load action plugins from SD card
     action_manager_load_all_plugins();
+    if (action_manager_get_plugin_count() > 0) {
+        ui_set_icon(UI_ICON_PLUG, PLUGIN_ICON_ACTIVE);
+    }
 
-    // Final delay on encoder colors.
+    // Boot complete - fade LED to off
     vTaskDelayUntil(&boot_tick, 1000UL / portTICK_PERIOD_MS);
     ui_fade_to(0x00);
 
-    xTaskCreate(accessory_driver_task, "ACCESSORY", 1024 * 4, NULL, tskIDLE_PRIORITY, NULL);
-    xTaskCreate(main_task, "MAIN", 1024 * 8, NULL, tskIDLE_PRIORITY + 1, NULL);
+    print_boot_banner();
+
+    xTaskCreateStatic(
+        plugin_task,
+        "PLUGIN",
+        PLUGIN_TASK_STACK_SIZE / sizeof(StackType_t),
+        NULL,
+        tskIDLE_PRIORITY,
+        plugin_task_stack,
+        &plugin_task_tcb
+    );
+
+    xTaskCreateStatic(
+        main_task,
+        "MAIN",
+        MAIN_TASK_STACK_SIZE / sizeof(StackType_t),
+        NULL,
+        tskIDLE_PRIORITY + 1,
+        main_task_stack,
+        &main_task_tcb
+    );
+
+    // Initial memory diagnostics
+    print_memory_diagnostics(heap_at_start);
+    printf("READY.\n\n");
 }

@@ -30,6 +30,9 @@ extern const ui_icon_def_t UPDATE_ICON;
 #define RECORD_ICON_RECORDING 0
 extern const ui_icon_def_t RECORD_ICON;
 
+#define PLUGIN_ICON_ACTIVE 0
+extern const ui_icon_def_t PLUGIN_ICON;
+
 #ifdef __cplusplus
 }
 #endif

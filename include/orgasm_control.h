@@ -14,7 +14,6 @@ extern "C" {
 typedef enum orgasm_output_mode {
     OC_MANUAL_CONTROL,
     OC_AUTOMAITC_CONTROL,
-    OC_ORGASM_MODE,
     _OC_MODE_MAX,
     _OC_MODE_ERROR = -1
 } orgasm_output_mode_t;
@@ -51,24 +50,17 @@ void orgasm_control_set_output_mode(orgasm_output_mode_t mode);
 const char* orgasm_control_get_output_mode_str(void);
 orgasm_output_mode_t orgasm_control_str_to_output_mode(const char* str);
 
-// Recording Control
-void orgasm_control_start_recording(void);
-void orgasm_control_stop_recording(void);
-oc_bool_t orgasm_control_is_recording(void);
+/// @deprecated Use data_logger_start_recording() from data_logger.h instead.
+__attribute__((deprecated("Use data_logger_start_recording() instead"))) void
+orgasm_control_start_recording(void);
 
-// Twitch Detect (In wrong place for 60hz)
-// Note 03-27-24 M. Abata - Clarify the above?
-void orgasm_control_twitch_detect(void);
+/// @deprecated Use data_logger_stop_recording() from data_logger.h instead.
+__attribute__((deprecated("Use data_logger_stop_recording() instead"))) void
+orgasm_control_stop_recording(void);
 
-// Post orgasm
-// TODO - Refactor post-orgasm and similar modes into post_orgasm_control.h, which I so
-//        generously provided a template for! Truly my generosity is boundless.
-oc_bool_t orgasm_control_is_menu_locked(void);
-oc_bool_t orgasm_control_is_permit_orgasm_reached(void);
-oc_bool_t orgasm_control_is_post_orgasm_reached(void);
-void orgasm_control_permit_orgasm(int seconds);
-void orgasm_control_lock_menu(oc_bool_t value);
-long orgasm_control_clench_detect(long p_check);
+/// @deprecated Use data_logger_is_recording() from data_logger.h instead.
+__attribute__((deprecated("Use data_logger_is_recording() instead"))) oc_bool_t
+orgasm_control_is_recording(void);
 
 #ifdef __cplusplus
 }

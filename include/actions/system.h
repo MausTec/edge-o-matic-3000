@@ -7,7 +7,9 @@ extern "C" {
 
 #include "mt_actions.h"
 
-int action_system_delay(mta_plugin_t* plugin, cJSON* args);
+int action_system_delay(
+    struct mta_plugin* plugin, mta_scope_t* scope, mta_arg_t* args, uint8_t arg_count
+);
 
 #ifdef __cplusplus
 }

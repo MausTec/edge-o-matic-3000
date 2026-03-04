@@ -1,5 +1,6 @@
 #include "assets/config_help.h"
 #include "config.h"
+#include "eom-hal.h"
 #include "esp_log.h"
 #include "menus/index.h"
 #include "ui/toast.h"
@@ -22,6 +23,11 @@ void on_config_save(int value, int final, UI_INPUT_ARG_TYPE arg) {
     }
 }
 
+static void on_led_brightness_save(int value, int final, UI_INPUT_ARG_TYPE arg) {
+    eom_hal_set_encoder_brightness((uint8_t)value);
+    on_config_save(value, final, arg);
+}
+
 static const ui_input_numeric_t SCREEN_DIM_INPUT = {
     UnsignedInputValues("Screen Dim Delay", &Config.screen_dim_seconds, "Seconds", on_config_save),
     .input.help = SCREEN_DIM_SECONDS_HELP,
@@ -35,7 +41,7 @@ static const ui_input_numeric_t SCREEN_TIMEOUT_INPUT = {
 };
 
 static const ui_input_byte_t LED_BRIGHTNESS_INPUT = {
-    ByteInputValues("LED Brightness", &Config.led_brightness, "%", on_config_save),
+    ByteInputValues("LED Brightness", &Config.led_brightness, "%", on_led_brightness_save),
     .input.help = LED_BRIGHTNESS_HELP,
 };
 

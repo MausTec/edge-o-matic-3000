@@ -1,0 +1,12 @@
+{
+    "name": "hello_world",
+    "version": "0.1.0",
+    "type": "app",
+    "entry": "hello_world.wasm",
+    "exports": {
+        "wasi": true,
+        "main": true
+    },
+    "permissions": [],
+    "description": "Minimal WASI app that prints Hello World and exits"
+}

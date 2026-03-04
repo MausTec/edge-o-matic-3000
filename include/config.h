@@ -34,6 +34,22 @@ enum vibration_mode { RampStop = 1, Depletion = 2, Enhancement = 3, Pattern = 4,
 
 typedef enum vibration_mode vibration_mode_t;
 
+// How the denial count is formatted on the edging stats page.
+enum denial_count_mode {
+    DENIAL_COUNT_DECIMAL = 0, // Natural decimal; no overflow (default)
+    DENIAL_COUNT_8BIT = 1,    // Wraps at 255 back to 0
+    DENIAL_COUNT_HEX = 2,     // Hexadecimal, 8-bit (00-FF)
+};
+typedef enum denial_count_mode denial_count_mode_t;
+
+// Orgasm detection modes — see orgasm_detection.h for details.
+enum orgasm_detect_mode {
+    OD_MODE_AUTO = 0,      // Try rhythmic; fall back to sustained
+    OD_MODE_RHYTHMIC = 1,  // Only rhythmic peak detection
+    OD_MODE_SUSTAINED = 2, // Only duration-gated sustained detection
+};
+typedef enum orgasm_detect_mode orgasm_detect_mode_t;
+
 /**
  * Main Configuration Struct!
  *
@@ -43,7 +59,7 @@ typedef enum vibration_mode vibration_mode_t;
 
 // Increment this if you need to trigger a migration on the system config file.
 // Your migration should be defined in config_migrations.c
-#define SYSTEM_CONFIG_FILE_VERSION 2
+#define SYSTEM_CONFIG_FILE_VERSION 4
 
 struct config {
     // Private Things, do not erase!
@@ -59,11 +75,11 @@ struct config {
     // True to enable WiFi / Websocket server.
     bool wifi_on;
 
-    // AzureFang* device name, you might wanna change this.
+    // Bluetooth device name, you might wanna change this.
     char bt_display_name[64];
-    // True to enable the AzureFang connection.
+    // True to enable the Bluetooth connection.
     bool bt_on;
-    // True to force AzureFang and WiFi at the same time**.
+    // True to force Bluetooth and WiFi at the same time.
     bool force_bt_coex;
 
     //= UI And Stuff
@@ -99,20 +115,21 @@ struct config {
     char* ssl_prvtkey_path;
     // Local hostname for your device.
     char hostname[64];
+    // Enable mDNS (.local) advertising and service discovery
+    bool mdns_enabled;
 
     //= Orgasms and Stuff
 
     // Maximum speed for the motor in auto-ramp mode.
     uint8_t motor_max_speed;
-    // The minimum speed the motor will start at in automatic mode.
-    uint8_t motor_start_speed;
-    // Minimum time (ms) after edge detection before resuming stimulation.
-    int edge_delay;
-    // Maximum time (ms) that can be added to the edge delay before resuming stimulation. A random
-    // number will be picked between 0 and this setting each cycle. 0 to disable.
-    int max_additional_delay;
-    // Time (ms) after stimulation starts before edge detection is resumed.
-    int minimum_on_time;
+    // Floor speed for motor when ramping in automatic mode.
+    uint8_t motor_min_speed;
+    // Minimum time (ms) after a denial event before the motor resumes.
+    int cooldown_delay_ms;
+    // Maximum random time (ms) added to cooldown delay each cycle. 0 to disable.
+    int cooldown_random_ms;
+    // Time (ms) after motor resumes before arousal threshold detection re-engages.
+    int arousal_holdoff_ms;
     // Number of samples to take an average of. Higher results in lag and lower resolution!
     uint8_t pressure_smoothing;
     // The arousal threshold for orgasm detection. Lower = sooner cutoff.
@@ -125,34 +142,49 @@ struct config {
     uint8_t sensor_sensitivity;
     // Use average values when calculating arousal. This smooths noisy data.
     bool use_average_values;
+    // Arousal decay per-second factor (0-100, as percent retained per second). Default 60 means
+    // arousal decays to 60% of its value each second. Lower = faster decay.
+    int arousal_decay_rate;
+
+    //= Orgasm Detection
+
+    // Detection mode: 0=AUTO, 1=RHYTHMIC, 2=SUSTAINED
+    int od_mode;
+    // Pressure above baseline (ADC counts) to enter sustained phase.
+    int od_sustained_threshold;
+    // Duration (ms) before sustained-only detection fires.
+    int od_sustained_fallback_ms;
+    // Pressure drop duration (ms) before returning to IDLE.
+    int od_sustained_dropout_ms;
+    // Minimum peak-to-trough excursion to count as rhythmic peak.
+    int od_peak_min_amplitude;
+    // Minimum rhythmic peaks before confirming orgasm.
+    int od_rhythmic_min_peaks;
+    // Minimum inter-peak interval (ms).
+    int od_rhythmic_interval_min_ms;
+    // Maximum inter-peak interval (ms).
+    int od_rhythmic_interval_max_ms;
+    // Maximum std_dev of intervals (ms) for rhythmic confirmation.
+    int od_rhythmic_interval_variance_ms;
+    // Max gap between peaks (ms) before rhythmic detection resets.
+    int od_rhythmic_timeout_ms;
+    // Minimum arousal (% of threshold) to arm detection. 0 disables gating.
+    int od_arousal_gate_percent;
+    // Time at baseline (ms) after detection before returning to IDLE.
+    int od_recovery_ms;
+    // Feed clench events back into arousal accumulator.
+    bool od_clench_arousal_boost;
+    // Arousal boost per tick while in sustained phase.
+    int od_clench_arousal_boost_amount;
+    // Enable orgasm detection dispatch. False = log-only mode.
+    bool od_detection_armed;
 
     //= Vibration Output Mode
 
     // Vibration Mode for main vibrator control.
     int vibration_mode;
-
-    //= Post orgasm torure stuff
-
-    // Use post-orgasm torture mode and functionality.
-    bool use_post_orgasm;
-    // Threshold over arousal to detect a clench : Lower values increase sensitivity
-    int clench_pressure_sensitivity;
-    // Duration the clench detector can raise arousal if clench detector turned on in edging session
-    int max_clench_duration_ms;
-    // Threshold variable that is milliseconds counts of clench to detect orgasm
-    int clench_time_to_orgasm_ms;
-    // Threshold variable that is milliseconds counts to detect the start of clench
-    int clench_time_threshold_ms;
-    // Use the clench detector to adjust Arousal
-    bool clench_detector_in_edging;
-    // How long to edge before permiting an orgasm
-    int auto_edging_duration_minutes;
-    // How long to stimulate after orgasm detected
-    int post_orgasm_duration_seconds;
-    // Deny access to menu starting in the edging session
-    bool edge_menu_lock;
-    // Deny access to menu starting after orgasm detected
-    bool post_orgasm_menu_lock;
+    // How the denial count is displayed on the edging stats screen.
+    int denial_count_mode;
 
     //= Internal System Configuration (Update only if you know what you're doing)
 

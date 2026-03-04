@@ -1,6 +1,5 @@
 #include "accessory_driver.h"
 #include "assets.h"
-#include "bluetooth_driver.h"
 #include "esp_log.h"
 #include "esp_timer.h"
 #include "menus/index.h"
@@ -21,7 +20,7 @@ volatile static struct {
     uint64_t arousal_peak_last_ms;
     uint64_t arousal_peak_update_ms;
     uint64_t arousal_change_notice_ms;
-    uint8_t denial_count;
+    uint16_t denial_count;
     event_handler_node_t* _h_denial;
 } state = { 0 };
 
@@ -99,18 +98,9 @@ static void _draw_buttons(u8g2_t* d, orgasm_output_mode_t mode) {
     const char* btn1 = _("MENU");
     const char* btn2 = _("STOP");
 
-    if (orgasm_control_is_menu_locked()) {
-        ui_draw_button_labels(d, btn1, _("LOCKED"), _("LOCKED"));
-        ui_draw_button_disable(d, 0b011);
-    } else if (mode == OC_MANUAL_CONTROL) {
+    if (mode == OC_MANUAL_CONTROL) {
         ui_draw_button_labels(d, btn1, btn2, _("AUTO"));
     } else if (mode == OC_AUTOMAITC_CONTROL) {
-        if (Config.use_post_orgasm == true) {
-            ui_draw_button_labels(d, btn1, btn2, _("POST"));
-        } else {
-            ui_draw_button_labels(d, btn1, btn2, _("MANUAL"));
-        }
-    } else if (mode == OC_ORGASM_MODE) {
         ui_draw_button_labels(d, btn1, btn2, _("MANUAL"));
     }
 }
@@ -120,8 +110,6 @@ static void _draw_status(u8g2_t* d, orgasm_output_mode_t mode) {
         ui_draw_status(d, _("Auto Edging"));
     } else if (mode == OC_MANUAL_CONTROL) {
         ui_draw_status(d, _("Manual"));
-    } else if (mode == OC_ORGASM_MODE) {
-        ui_draw_status(d, _("Edging+Orgasm"));
     } else {
         ui_draw_status(d, "---");
     }
@@ -134,9 +122,14 @@ float _get_arousal_bar_max(void) {
     // Memoize to prevent recalculating on renders.
     if (Config.sensitivity_threshold != last_sens_thresh) {
         last_sens_thresh = Config.sensitivity_threshold;
-        last_arousal_max =
-            pow10f(ceilf(log10f(Config.sensitivity_threshold * 1.10f) * 2.0f) / 2.0f);
-        if (last_arousal_max < 100) last_arousal_max = 100;
+        // Scale to twice the threshold, then snap to the nearest half-decade
+        // (10^0.5 ≈ 3.16× steps). This keeps the threshold marker in the lower
+        // half of the bar for normal settings, while ultra-low thresholds
+        // visibly occupy a small fraction of the window — signalling misconfiguration
+        // rather than erratic readings.
+        float target = Config.sensitivity_threshold * 2.0f;
+        if (target < 100.0f) target = 100.0f;
+        last_arousal_max = pow10f(ceilf(log10f(target) * 2.0f) / 2.0f);
     }
 
     return last_arousal_max;
@@ -245,9 +238,18 @@ static void _draw_pressure_icon(u8g2_t* d) {
 static void _draw_denial_count(u8g2_t* d) {
     const uint8_t MID_HEIGHT = 20;
     const uint8_t DENIAL_WIDTH = 41;
-    char denial_str[4];
+    char denial_str[6];
 
-    snprintf(denial_str, 4, "%03d", state.denial_count);
+    switch ((denial_count_mode_t)Config.denial_count_mode) {
+    case DENIAL_COUNT_8BIT:
+        snprintf(denial_str, sizeof(denial_str), "%03d", (uint8_t)state.denial_count);
+        break;
+    case DENIAL_COUNT_HEX:
+        snprintf(denial_str, sizeof(denial_str), "%02X", (uint8_t)state.denial_count);
+        break;
+    case DENIAL_COUNT_DECIMAL:
+    default: snprintf(denial_str, sizeof(denial_str), "%d", state.denial_count); break;
+    }
 
     u8g2_SetDrawColor(d, 1);
     u8g2_DrawVLine(
@@ -286,33 +288,20 @@ static void on_close(void* arg) {
 
 static ui_render_flag_t
 on_button(eom_hal_button_t button, eom_hal_button_event_t event, void* arg) {
-    oc_bool_t locked = orgasm_control_is_menu_locked();
-
     if (event != EOM_HAL_BUTTON_PRESS) return PASS;
 
     if (button == EOM_HAL_BUTTON_BACK) {
         ui_open_menu(&EDGING_MODE_MENU, NULL);
     } else if (button == EOM_HAL_BUTTON_MID) {
-        if (locked) return NORENDER;
-
         orgasm_control_set_output_mode(OC_MANUAL_CONTROL);
         eom_hal_set_motor_speed(0x00);
         event_manager_dispatch(EVT_SPEED_CHANGE, NULL, 0);
-        bluetooth_driver_broadcast_speed(0x00);
         // websocket_server_broadcast_speed(0x00);
     } else if (button == EOM_HAL_BUTTON_OK) {
-        if (locked) return NORENDER;
-
         orgasm_output_mode_t mode = orgasm_control_get_output_mode();
 
         if (mode == OC_MANUAL_CONTROL) {
             orgasm_control_set_output_mode(OC_AUTOMAITC_CONTROL);
-        } else if (mode == OC_AUTOMAITC_CONTROL) {
-            if (Config.use_post_orgasm == true) {
-                orgasm_control_set_output_mode(OC_ORGASM_MODE);
-            } else {
-                orgasm_control_set_output_mode(OC_MANUAL_CONTROL);
-            }
         } else {
             orgasm_control_set_output_mode(OC_MANUAL_CONTROL);
         }
@@ -324,7 +313,6 @@ on_button(eom_hal_button_t button, eom_hal_button_event_t event, void* arg) {
 }
 
 static ui_render_flag_t on_encoder(int delta, void* arg) {
-    oc_bool_t locked = orgasm_control_is_menu_locked();
     orgasm_output_mode_t mode = orgasm_control_get_output_mode();
     uint64_t millis = esp_timer_get_time() / 1000UL;
 
@@ -334,12 +322,11 @@ static ui_render_flag_t on_encoder(int delta, void* arg) {
 
         eom_hal_set_motor_speed(speed_byte);
         event_manager_dispatch(EVT_SPEED_CHANGE, NULL, speed_byte);
-        bluetooth_driver_broadcast_speed(speed_byte);
         // websocket_server_broadcast_speed(speed_byte);
         return RENDER;
     }
 
-    if (mode != OC_MANUAL_CONTROL) {
+    if (mode == OC_AUTOMAITC_CONTROL) {
         orgasm_control_increment_arousal_threshold(delta);
         state.arousal_change_notice_ms = millis + CHANGE_NOTICE_DELAY_MS;
         return RENDER;

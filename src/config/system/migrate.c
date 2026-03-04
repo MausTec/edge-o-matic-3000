@@ -27,20 +27,41 @@ migration_result_t migrate_to_1(cJSON* root) {
     return MIGRATION_COMPLETE;
 }
 
-/**
- * Rename "clench_threshold_2_orgasm" to "clench_time_to_orgasm_ms" and change value unit
- * from ticks to ms.
- */
 migration_result_t migrate_to_2(cJSON* root) {
-    cJSON* old = cJSON_GetObjectItem(root, "clench_threshold_2_orgasm");
-    if (old == NULL) return MIGRATION_COMPLETE;
+    // noop (legacy migration removed in v1.3.0)
+    return MIGRATION_COMPLETE;
+}
 
-    // my tests to validate this has shown a 30 to 1 ratio
-    int value_ms = old->valueint * 30; // i think this was the tick rate?
-    cJSON* new = cJSON_AddNumberToObject(root, "clench_time_to_orgasm_ms", value_ms);
-
-    if (new == NULL) return MIGRATION_ERR_BAD_DATA;
+/**
+ * Remove clench detector and post-orgasm torture config keys (features removed in v1.3.0).
+ */
+migration_result_t migrate_to_3(cJSON* root) {
+    // Clench detector keys
+    cJSON_DeleteItemFromObject(root, "clench_pressure_sensitivity");
+    cJSON_DeleteItemFromObject(root, "max_clench_duration_ms");
+    cJSON_DeleteItemFromObject(root, "clench_time_to_orgasm_ms");
+    cJSON_DeleteItemFromObject(root, "clench_time_threshold_ms");
+    cJSON_DeleteItemFromObject(root, "clench_detector_in_edging");
     cJSON_DeleteItemFromObject(root, "clench_threshold_2_orgasm");
+
+    // Post-orgasm torture keys
+    cJSON_DeleteItemFromObject(root, "use_post_orgasm");
+    cJSON_DeleteItemFromObject(root, "auto_edging_duration_minutes");
+    cJSON_DeleteItemFromObject(root, "post_orgasm_duration_seconds");
+    cJSON_DeleteItemFromObject(root, "edge_menu_lock");
+    cJSON_DeleteItemFromObject(root, "post_orgasm_menu_lock");
+
+    return MIGRATION_COMPLETE;
+}
+
+/**
+ * Remove deprecated edge timing and random delay config keys (license review, v1.3.0).
+ */
+migration_result_t migrate_to_4(cJSON* root) {
+    cJSON_DeleteItemFromObject(root, "motor_start_speed");
+    cJSON_DeleteItemFromObject(root, "edge_delay");
+    cJSON_DeleteItemFromObject(root, "max_additional_delay");
+    cJSON_DeleteItemFromObject(root, "minimum_on_time");
 
     return MIGRATION_COMPLETE;
 }
@@ -51,6 +72,8 @@ migration_result_t config_system_migrate(cJSON* root) {
     // List all migration calls below, in numeric order:
     MIGRATE(1);
     MIGRATE(2);
+    MIGRATE(3);
+    MIGRATE(4);
 
     END_MIGRATION();
 }

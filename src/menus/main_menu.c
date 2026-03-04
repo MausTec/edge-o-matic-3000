@@ -31,7 +31,7 @@ static void on_info(const ui_menu_t* m, const ui_menu_item_t* item, UI_MENU_ARG_
 }
 
 static void on_open(const ui_menu_t* m, UI_MENU_ARG_TYPE arg) {
-#ifdef EOM_BETA
+#ifdef EOM_WASM_APPS_ENABLED
     ui_menu_add_menu(m, &APPLICATIONS_MENU);
 #endif
     ui_menu_add_menu(m, &EDGING_SETTINGS_MENU);
@@ -40,6 +40,7 @@ static void on_open(const ui_menu_t* m, UI_MENU_ARG_TYPE arg) {
 #ifdef EOM_BETA
     ui_menu_add_menu(m, &USER_PROFILES_MENU);
 #endif
+    ui_menu_add_menu(m, &PLUGIN_SETTINGS_MENU);
     ui_menu_add_menu(m, &NETWORKING_MENU);
     ui_menu_add_menu(m, &UPDATE_MENU);
     ui_menu_add_item(m, _("System Info"), on_info, NULL);

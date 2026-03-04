@@ -59,12 +59,14 @@ static void populate_apps(const ui_menu_t* m) {
 static void on_open(const ui_menu_t* m, UI_MENU_ARG_TYPE arg) {
     // ui_menu_add_page(PAGE_EDGING_STATS);
 
+#ifdef EOM_WASM_APPS_ENABLED
     if (eom_hal_get_sd_size_bytes() > 0) {
         // TODO: this won't actually render out in this routine.
         ui_toast_blocking(_("Reading SD card..."));
         populate_apps(m);
         ui_toast_clear();
     }
+#endif
 }
 
 DYNAMIC_MENU(APPLICATIONS_MENU, "Applications", on_open);

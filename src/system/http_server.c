@@ -41,6 +41,8 @@ static httpd_handle_t start_webserver(void) {
         config.server_port = Config.websocket_port;
     }
 
+    config.max_open_sockets = 3;
+
     // Open/Close callbacks
     config.open_fn = websocket_open_fd;
     config.close_fn = websocket_close_fd;

@@ -74,6 +74,7 @@ static void on_render(u8g2_t* d, void* arg) {
 
         uint16_t arousal_max = orgasm_control_get_arousal_threshold();
         arousal_max = arousal_max + (arousal_max / 2); // down with floats, * 1.5
+        if (arousal_max == 0) arousal_max = 1;
 
         uint8_t arousal_y = (datum->arousal * CHART_HEIGHT) / arousal_max;
         if (arousal_y > CHART_HEIGHT) arousal_y = CHART_HEIGHT;

@@ -37,7 +37,7 @@ size_t fs_read_dir(
         }
     }
 
-    closedir(d);
+    if (d) closedir(d);
     return count;
 }
 
