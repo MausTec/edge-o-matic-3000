@@ -10,6 +10,7 @@
 #include <esp_log.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/stat.h>
 
 static const char* TAG = "system:action_manager";
 
@@ -241,6 +242,14 @@ bool action_manager_save_plugin_config(mta_plugin_t* plugin) {
 
     cJSON* config_json = mta_plugin_serialize_config(plugin);
     if (!config_json) return false;
+
+    // Ensure the plugincfg directory exists
+    char* dir_path = NULL;
+    asiprintf(&dir_path, "%s/%s", eom_hal_get_sd_mount_point(), PLUGINCFG_DIR);
+    if (dir_path) {
+        mkdir(dir_path, 0755);
+        free(dir_path);
+    }
 
     char* config_path = NULL;
     asiprintf(
