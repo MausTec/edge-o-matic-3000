@@ -192,7 +192,7 @@ static void on_plugin_config_open(const ui_menu_t* m, UI_MENU_ARG_TYPE arg) {
         return;
     }
 
-    const char* plugin_name = mta_plugin_get_name(plugin);
+    const char* plugin_name = mta_plugin_get_display_name(plugin);
     if (plugin_name) {
         ESP_LOGI(TAG, "Opening config menu for plugin: %s", plugin_name);
         // Safe to write to title since PLUGIN_CONFIG_MENU is non-const
@@ -233,7 +233,7 @@ static void on_open(const ui_menu_t* m, UI_MENU_ARG_TYPE arg) {
 
     for (size_t i = 0; i < count; i++) {
         mta_plugin_t* plugin = action_manager_get_plugin(i);
-        const char* name = mta_plugin_get_name(plugin);
+        const char* name = mta_plugin_get_display_name(plugin);
 
         if (name) {
             ESP_LOGD(TAG, "Adding plugin to menu: %s", name);
