@@ -112,7 +112,8 @@ class OTAHandler(BaseHTTPRequestHandler):
 
     def _serve_manifest(self, current_ver, serial):
         ver = self.server.ota_version
-        fw_url = f"http://{self.server.server_name}:{self.server.server_port}/firmware.bin"
+        host = self.headers.get("Host") or f"{self.server.server_address[0]}:{self.server.server_address[1]}"
+        fw_url = f"http://{host}/firmware.bin"
         self.log_message(
             "Manifest request from %s (serial %s) -> version %s", current_ver, serial, ver
         )
