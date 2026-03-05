@@ -14,19 +14,41 @@ static const char* TAG = "main_menu";
 
 static void on_info(const ui_menu_t* m, const ui_menu_item_t* item, UI_MENU_ARG_TYPE menu_arg) {
     const char* serial = eom_hal_get_device_serial_const();
-    const char* sha = strchr(EOM_VERSION, '-');
-    const char* tag = strchr(EOM_VERSION, '+');
 
-    ui_toast(
-        "S/N: %s\nVer: %.*s", serial, sha == NULL ? TOAST_MAX : sha - EOM_VERSION, EOM_VERSION
-    );
+    if (EOM_VERSION_VALID) {
+        // Display structured fields from the parsed semver.
+        // "Ver" shows MAJOR.MINOR.PATCH[-prerelease] without build metadata.
+        // "Build" shows the build metadata (commit SHA + branch) when present.
+        char ver_core[60] = { 0 };
+        if (EOM_PARSED_VERSION.prerelease != NULL) {
+            snprintf(
+                ver_core,
+                sizeof(ver_core),
+                "%d.%d.%d-%s",
+                EOM_PARSED_VERSION.major,
+                EOM_PARSED_VERSION.minor,
+                EOM_PARSED_VERSION.patch,
+                EOM_PARSED_VERSION.prerelease
+            );
+        } else {
+            snprintf(
+                ver_core,
+                sizeof(ver_core),
+                "%d.%d.%d",
+                EOM_PARSED_VERSION.major,
+                EOM_PARSED_VERSION.minor,
+                EOM_PARSED_VERSION.patch
+            );
+        }
 
-    if (sha != NULL) {
-        ui_toast_append("SHA: %.*s", tag == NULL ? TOAST_MAX : tag - sha - 1, sha + 1);
-    }
+        ui_toast("S/N: %s\nVer: %s", serial, ver_core);
 
-    if (tag != NULL) {
-        ui_toast_append("Tag: %s", tag + 1);
+        if (EOM_PARSED_VERSION.metadata != NULL) {
+            ui_toast_append("Build: %s", EOM_PARSED_VERSION.metadata);
+        }
+    } else {
+        // Fallback: version string is not valid SemVer (e.g. a non-standard internal build).
+        ui_toast("S/N: %s\nVer: %s", serial, EOM_VERSION);
     }
 }
 

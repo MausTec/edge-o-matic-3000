@@ -231,6 +231,10 @@ esp_err_t run_boot_diagnostic(void) {
 void app_main() {
     TickType_t boot_tick = xTaskGetTickCount();
     uint32_t heap_at_start = esp_get_free_heap_size();
+
+    // Parse version string first so all subsystems can use EOM_PARSED_VERSION.
+    version_init();
+
     esp_err_t dxerr = run_boot_diagnostic();
 
     // Initialize HAL and storage first

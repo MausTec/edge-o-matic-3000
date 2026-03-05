@@ -386,25 +386,27 @@ um_update_status_t update_manager_get_status(void) {
 }
 
 um_update_status_t update_manager_check_online_updates() {
-    semver_t v_current = {};
     semver_t v_remote = {};
-
-    if (semver_parse(EOM_VERSION + (EOM_VERSION[0] == 'v' ? 1 : 0), &v_current) == -1) {
-        ESP_LOGE(TAG, "Could not parse current version: %s", EOM_VERSION);
-        goto umcheck_end;
-    }
 
     if (update_manager_check_latest_version(&v_remote) != ESP_OK) {
         ESP_LOGE(TAG, "Failed to check for remote updates.");
         goto umcheck_end;
     }
 
-    int compare = semver_compare(v_current, v_remote);
+    if (!EOM_VERSION_VALID) {
+        // A remote version exists but can't be compared against the local build.
+        // Assume an update is available so a corrective firmware can always be pushed.
+        ESP_LOGW(TAG, "Cannot compare versions — marking update available.");
+        _update_status = UM_UPDATE_AVAILABLE;
+        goto umcheck_end;
+    }
+
+    int compare = semver_compare(EOM_PARSED_VERSION, v_remote);
 
     char s_current[40] = { 0 };
     char s_remote[40] = { 0 };
     semver_render(&v_remote, s_remote);
-    semver_render(&v_current, s_current);
+    semver_render(&EOM_PARSED_VERSION, s_current);
 
     ESP_LOGI(TAG, "Comparing version %s <=> %s == %d", s_current, s_remote, compare);
 
@@ -416,7 +418,6 @@ um_update_status_t update_manager_check_online_updates() {
     }
 
 umcheck_end:
-    semver_free(&v_current);
     semver_free(&v_remote);
     return _update_status;
 }
