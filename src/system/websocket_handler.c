@@ -44,7 +44,9 @@ esp_err_t websocket_broadcast(cJSON* root, int broadcast_flags) {
         if (client->broadcast_flags & broadcast_flags) {
             esp_err_t err = websocket_send_to_client(client, str);
             if (err != ESP_OK) {
-                ESP_LOGW(TAG, "Broadcast send failed for fd %d: %s", client->fd, esp_err_to_name(err));
+                ESP_LOGW(
+                    TAG, "Broadcast send failed for fd %d: %s", client->fd, esp_err_to_name(err)
+                );
             }
         }
     }
@@ -152,7 +154,8 @@ esp_err_t websocket_open_fd(httpd_handle_t hd, int sockfd) {
     client->server = hd;
     client->broadcast_flags = 0;
     list_add(&_client_list, client);
-    httpd_sess_set_ctx(hd, sockfd, client, NULL);
+    // Let ESP-IDF handle cleanup of client context on socket close:
+    httpd_sess_set_ctx(hd, sockfd, client, free);
     return ESP_OK;
 }
 
@@ -162,7 +165,6 @@ void websocket_close_fd(httpd_handle_t hd, int sockfd) {
     list_foreach(_client_list, client) {
         if (client->fd == sockfd) {
             list_remove(&_client_list, client);
-            free(client);
             return;
         }
     }
