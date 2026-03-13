@@ -30,6 +30,10 @@ static inline void actions_register_all(void) {
     // BLE driver events (emitted directly by plugin_driver.c)
     mta_register_event("connect", NULL);
     mta_register_event("disconnect", NULL);
+
+    // TODO: This should become a built-in event in mt-actions core so that any
+    // host embedding mt-actions gets it for free.
+    mta_register_event("tick", NULL);
 }
 
 #ifdef __cplusplus

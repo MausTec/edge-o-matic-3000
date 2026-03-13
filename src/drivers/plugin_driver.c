@@ -3,6 +3,7 @@
 #include "system/action_manager.h"
 #include "system/event_manager.h"
 #include <esp_log.h>
+#include <esp_timer.h>
 #include <string.h>
 
 static const char* TAG = "plugin_driver";
@@ -317,8 +318,29 @@ static void tick_flush_cb(mta_driver_instance_t* instance, void* arg) {
     ctx_flush_tx(ctx);
 }
 
+typedef struct {
+    int64_t now_ms;
+} tick_dispatch_ctx_t;
+
+static void tick_dispatch_cb(mta_driver_instance_t* instance, void* arg) {
+    tick_dispatch_ctx_t* tctx = (tick_dispatch_ctx_t*)arg;
+    mta_driver_instance_dispatch(instance, "tick", (int)tctx->now_ms, NULL);
+}
+
 void plugin_driver_tick(void) {
+    // Flush pending BLE TX for all active driver connections.
     mta_driver_instance_foreach(tick_flush_cb, NULL);
+
+    // Dispatch "tick" to all driver instances so time-based plugin logic can run.
+    // $arg is milliseconds since boot (wraps at ~24 days; honestly if someone has
+    // been edging for that long, you should probably check in on them. Make sure
+    // they're drinking water.
+    //
+    // TODO: Promote "tick" to a built-in mt-actions platform event so that any
+    // host embedding mt-actions dispatches it automatically without per-product
+    // boilerplate.
+    tick_dispatch_ctx_t tctx = { .now_ms = esp_timer_get_time() / 1000LL };
+    mta_driver_instance_foreach(tick_dispatch_cb, &tctx);
 }
 
 typedef struct {
