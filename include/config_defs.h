@@ -83,7 +83,7 @@ typedef enum migration_result {
                 return true;                                                                       \
             }                                                                                      \
         } else {                                                                                   \
-            if (operation == CFG_SET) {                                                            \
+            if (operation == CFG_SET && key == NULL) {                                             \
                 strlcpy(cfg->name, default, sizeof(cfg->name));                                    \
             }                                                                                      \
         }                                                                                          \
@@ -118,7 +118,7 @@ typedef enum migration_result {
                 return true;                                                                       \
             }                                                                                      \
         } else {                                                                                   \
-            if (operation == CFG_SET) {                                                            \
+            if (operation == CFG_SET && key == NULL) {                                             \
                 if (cfg->name != default) free(cfg->name);                                         \
                 cfg->name = default;                                                               \
             }                                                                                      \
@@ -145,7 +145,7 @@ typedef enum migration_result {
                 return true;                                                                       \
             }                                                                                      \
         } else {                                                                                   \
-            if (operation == CFG_SET) {                                                            \
+            if (operation == CFG_SET && key == NULL) {                                             \
                 cfg->name = default;                                                               \
             }                                                                                      \
         }                                                                                          \
@@ -170,7 +170,7 @@ typedef enum migration_result {
                 return true;                                                                       \
             }                                                                                      \
         } else {                                                                                   \
-            if (operation == CFG_SET) {                                                            \
+            if (operation == CFG_SET && key == NULL) {                                             \
                 cfg->name = default;                                                               \
             }                                                                                      \
         }                                                                                          \
@@ -195,7 +195,7 @@ typedef enum migration_result {
                 return true;                                                                       \
             }                                                                                      \
         } else {                                                                                   \
-            if (operation == CFG_SET) {                                                            \
+            if (operation == CFG_SET && key == NULL) {                                             \
                 cfg->name = default;                                                               \
             }                                                                                      \
         }                                                                                          \
