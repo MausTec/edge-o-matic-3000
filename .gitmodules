@@ -19,6 +19,7 @@
 [submodule "lib/mt-actions"]
 	path = lib/mt-actions
 	url = https://github.com/MausTec/mt-actions
+	branch = eom-api-tooling
 [submodule "components/wamr"]
 	path = components/wamr
 	url = https://github.com/bytecodealliance/wasm-micro-runtime.git
