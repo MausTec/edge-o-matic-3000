@@ -1,0 +1,19 @@
+{
+    "name": "Edge-o-Matic",
+    "products": [
+        "EOM3K"
+    ],
+    "build": {
+        "command": "pio run -e %{environment}",
+        "testCommand": "pio test -e %{environment}",
+        "assets": [
+            ".pio/build/%{environment}/firmware.bin",
+            ".pio/build/%{environment}/partitions.bin"
+        ]
+    },
+    "plugin-api": {
+        "product": "edge-o-matic",
+        "actions_dir": "src/actions",
+        "events_header": "include/actions/index.h"
+    }
+}
