@@ -1,0 +1,97 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Cache PlatformIO
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/pip
+            ~/.platformio
+          key: ${{ runner.os }}-pio-${{ hashFiles('platformio.ini') }}
+          restore-keys: |
+            ${{ runner.os }}-pio-
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install PlatformIO
+        run: |
+          python -m pip install --upgrade pip
+          pip install platformio
+
+      - name: Build firmware
+        run: pio run -e eom3k
+
+      - name: Upload firmware artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: firmware
+          path: .pio/build/eom3k/firmware.bin
+          if-no-files-found: error
+
+      - name: Upload plugin API artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: plugin-api
+          path: |
+            .pio/build/eom3k/plugin-api.json
+            .pio/build/eom3k/plugin-api.sha256
+          if-no-files-found: error
+
+  publish-api:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Download plugin API artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: plugin-api
+          path: plugin-api
+
+      - name: Publish API to mt-runtimes
+        uses: ./lib/mt-actions/.github/actions/publish-api
+        with:
+          api-file: plugin-api/plugin-api.json
+          product: edge-o-matic
+          token: ${{ secrets.MT_RUNTIMES_PAT }}
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download firmware artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: firmware
+          path: firmware
+
+      - name: Create GitHub Release
+        run: gh release create "$GITHUB_REF_NAME" firmware/firmware.bin --generate-notes
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
