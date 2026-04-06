@@ -20,47 +20,62 @@ static ble_conn_ctx_t* get_ble_ctx(mta_scope_t* scope) {
 }
 
 /**
- * @brief bleWrite(data) - Queue a BLE GATT write (with response) to the plugin's device
+ * @brief Resolve the data argument and optional length override, then queue
+ *        raw bytes into the BLE TX buffer.
  *
- * The data argument is a string. The write is queued into the BLE connection's
- * pending TX buffer and flushed on the next driver tick.
+ * Accepts either a string or an MTA array argument for the first parameter.
+ * An optional second integer argument overrides the byte count (clamped to
+ * the resolved length).
+ *
+ * @param plugin        Plugin context
+ * @param scope         Execution scope (carries BLE connection via user_data)
+ * @param args          Argument array: args[0] = data, args[1] = len (optional)
+ * @param arg_count     Number of arguments
+ * @param no_response   true = write-without-response characteristic
+ * @param fn_name       Function name used in log messages
+ * @return 0 on success, -1 on error
  */
-static int
-host_ble_write(mta_plugin_t* plugin, mta_scope_t* scope, mta_arg_t* args, uint8_t arg_count) {
-    if (arg_count < 1) return -1;
-
+static int queue_ble_write(
+    mta_plugin_t* plugin,
+    mta_scope_t* scope,
+    mta_arg_t* args,
+    uint8_t arg_count,
+    bool no_response,
+    const char* fn_name
+) {
     ble_conn_ctx_t* ctx = get_ble_ctx(scope);
     if (!ctx) {
-        ESP_LOGW(TAG, "bleWrite: no BLE device context");
+        ESP_LOGW(TAG, "%s: no BLE device context", fn_name);
         return -1;
     }
 
-    if (!ctx->has_tx_chr) {
-        ESP_LOGW(TAG, "bleWrite: no writable characteristic");
+    if (no_response ? (!ctx->has_tx_no_rsp_chr && !ctx->has_tx_chr) : !ctx->has_tx_chr) {
+        ESP_LOGW(TAG, "%s: no writable characteristic", fn_name);
         return -1;
     }
 
-    const char* data = mta_arg_get_string(plugin, scope, args, 0);
-    if (!data) {
-        ESP_LOGW(TAG, "bleWrite: data argument is not a string");
+    uint8_t buf[PLUGIN_DRIVER_TX_MAX];
+    int len = mta_arg_copy_bytes(plugin, scope, args, 0, buf, PLUGIN_DRIVER_TX_MAX - 1);
+    if (len < 0) {
+        ESP_LOGW(TAG, "%s: data argument must be a string or byte array", fn_name);
         return -1;
     }
 
-    int len = strlen(data);
-    if (len >= PLUGIN_DRIVER_TX_MAX) {
-        ESP_LOGW(TAG, "bleWrite: data too long (%d >= %d)", len, PLUGIN_DRIVER_TX_MAX);
-        len = PLUGIN_DRIVER_TX_MAX - 1;
+    // Optional explicit length override
+    if (arg_count >= 2) {
+        int override_len = mta_arg_get_int(plugin, scope, args, 1);
+        if (override_len >= 0 && override_len < len) len = override_len;
     }
 
     if (xSemaphoreTake(ctx->tx_mutex, 1000UL / portTICK_RATE_MS)) {
-        memcpy(ctx->pending_tx, data, len);
+        memcpy(ctx->pending_tx, buf, len);
         ctx->pending_tx[len] = '\0';
         ctx->pending_len = len;
-        ctx->use_write_no_rsp = false;
+        ctx->use_write_no_rsp = no_response;
         xSemaphoreGive(ctx->tx_mutex);
-        ESP_LOGD(TAG, "bleWrite: queued %d bytes", len);
+        ESP_LOGD(TAG, "%s: queued %d bytes", fn_name, len);
     } else {
-        ESP_LOGW(TAG, "bleWrite: timeout waiting for TX mutex");
+        ESP_LOGW(TAG, "%s: timeout waiting for TX mutex", fn_name);
         return -1;
     }
 
@@ -68,52 +83,28 @@ host_ble_write(mta_plugin_t* plugin, mta_scope_t* scope, mta_arg_t* args, uint8_
 }
 
 /**
- * @brief bleWriteNoResponse(data) - Queue a BLE GATT write-without-response
+ * @brief bleWrite(data [, len]) - Queue a BLE GATT write (with response)
  *
- * Same as bleWrite but uses the write-no-response characteristic.
+ * data may be a string or a byte array (MTA_ARG_ARRAY of int values 0–255).
+ * The optional len argument limits how many bytes are sent.
+ */
+static int
+host_ble_write(mta_plugin_t* plugin, mta_scope_t* scope, mta_arg_t* args, uint8_t arg_count) {
+    if (arg_count < 1) return -1;
+    return queue_ble_write(plugin, scope, args, arg_count, false, "bleWrite");
+}
+
+/**
+ * @brief bleWriteNoResponse(data [, len]) - Queue a BLE GATT write-without-response
+ *
+ * data may be a string or a byte array (MTA_ARG_ARRAY of int values 0–255).
+ * The optional len argument limits how many bytes are sent.
  */
 static int host_ble_write_no_response(
     mta_plugin_t* plugin, mta_scope_t* scope, mta_arg_t* args, uint8_t arg_count
 ) {
     if (arg_count < 1) return -1;
-
-    ble_conn_ctx_t* ctx = get_ble_ctx(scope);
-    if (!ctx) {
-        ESP_LOGW(TAG, "bleWriteNoResponse: no BLE device context");
-        return -1;
-    }
-
-    // Prefer the no-rsp characteristic, fall back to regular write chr
-    if (!ctx->has_tx_no_rsp_chr && !ctx->has_tx_chr) {
-        ESP_LOGW(TAG, "bleWriteNoResponse: no writable characteristic");
-        return -1;
-    }
-
-    const char* data = mta_arg_get_string(plugin, scope, args, 0);
-    if (!data) {
-        ESP_LOGW(TAG, "bleWriteNoResponse: data argument is not a string");
-        return -1;
-    }
-
-    int len = strlen(data);
-    if (len >= PLUGIN_DRIVER_TX_MAX) {
-        ESP_LOGW(TAG, "bleWriteNoResponse: data too long (%d >= %d)", len, PLUGIN_DRIVER_TX_MAX);
-        len = PLUGIN_DRIVER_TX_MAX - 1;
-    }
-
-    if (xSemaphoreTake(ctx->tx_mutex, 1000UL / portTICK_RATE_MS)) {
-        memcpy(ctx->pending_tx, data, len);
-        ctx->pending_tx[len] = '\0';
-        ctx->pending_len = len;
-        ctx->use_write_no_rsp = true;
-        xSemaphoreGive(ctx->tx_mutex);
-        ESP_LOGD(TAG, "bleWriteNoResponse: queued %d bytes", len);
-    } else {
-        ESP_LOGW(TAG, "bleWriteNoResponse: timeout waiting for TX mutex");
-        return -1;
-    }
-
-    return 0;
+    return queue_ble_write(plugin, scope, args, arg_count, true, "bleWriteNoResponse");
 }
 
 void action_ble_init(void) {
