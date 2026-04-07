@@ -95,6 +95,6 @@ jobs:
           path: firmware
 
       - name: Create GitHub Release
-        run: gh release create "$GITHUB_REF_NAME" firmware/firmware.bin --generate-notes
+        run: gh release create "$GITHUB_REF_NAME" firmware/firmware.bin --generate-notes --repo "$GITHUB_REPOSITORY"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
