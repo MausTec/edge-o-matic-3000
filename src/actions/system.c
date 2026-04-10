@@ -7,6 +7,13 @@
 
 static const char* TAG = "actions:system";
 
+/**
+ * Pause plugin execution for a given number of milliseconds.
+ *
+ * @plugin delay
+ * @module system
+ * @arg ms:int Delay duration in milliseconds
+ */
 int action_system_delay(
     struct mta_plugin* plugin, mta_scope_t* scope, mta_arg_t* args, uint8_t arg_count
 ) {
@@ -25,10 +32,14 @@ int action_system_delay(
 }
 
 /**
- * @brief log(msg) - Log a message from plugin scripts
+ * Log a message to the device console.
  *
- * Accepts a single string argument and logs it at INFO level.
- * Plugin name is prepended for identification.
+ * Accepts a string or integer argument. The plugin name is prepended
+ * for identification.
+ *
+ * @plugin log
+ * @module system
+ * @arg msg:string Message or integer value to log
  */
 static int action_system_log(
     struct mta_plugin* plugin, mta_scope_t* scope, mta_arg_t* args, uint8_t arg_count
@@ -50,10 +61,16 @@ static int action_system_log(
 }
 
 /**
- * @brief random(min, max) - Return a random integer in [min, max]
+ * Generate a random integer using the hardware RNG.
  *
- * Uses hardware RNG (esp_random). With 1 arg, returns [0, arg).
- * With 2 args, returns [arg0, arg1].
+ * With 0 args returns a raw uint32. With 1 arg returns [0, arg).
+ * With 2 args returns [arg0, arg1].
+ *
+ * @plugin random
+ * @module system
+ * @arg min:int Lower bound (or upper bound if only one arg) (optional)
+ * @arg max:int Upper bound (optional)
+ * @returns int Random integer in the specified range
  */
 static int action_system_random(
     struct mta_plugin* plugin, mta_scope_t* scope, mta_arg_t* args, uint8_t arg_count
@@ -87,9 +104,13 @@ static int action_system_random(
 }
 
 /**
- * @brief millis() - Return milliseconds since boot
+ * Get milliseconds elapsed since device boot.
  *
- * Uses esp_timer_get_time() (microseconds) / 1000.
+ * Uses esp_timer_get_time() (microseconds) divided by 1000.
+ *
+ * @plugin millis
+ * @module system
+ * @returns int Milliseconds since boot
  */
 static int action_system_millis(
     struct mta_plugin* plugin, mta_scope_t* scope, mta_arg_t* args, uint8_t arg_count

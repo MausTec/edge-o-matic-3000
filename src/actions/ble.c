@@ -6,12 +6,10 @@
 static const char* TAG = "actions:ble";
 
 /**
- * @brief Retrieve the BLE connection context from the current scope.
+ * Retrieve the BLE connection context from the current scope.
  *
  * The scope's user_data is set to the ble_conn_ctx_t by plugin_driver_try_claim.
- * This function validates that the context is a BLE connection
- *
- * @return ble_conn_ctx_t pointer, or NULL if the scope has no BLE context
+ * Returns NULL if the scope has no BLE context or the peer is not set.
  */
 static ble_conn_ctx_t* get_ble_ctx(mta_scope_t* scope) {
     ble_conn_ctx_t* ctx = (ble_conn_ctx_t*)mta_scope_get_user_data(scope);
@@ -20,8 +18,8 @@ static ble_conn_ctx_t* get_ble_ctx(mta_scope_t* scope) {
 }
 
 /**
- * @brief Resolve the data argument and optional length override, then queue
- *        raw bytes into the BLE TX buffer.
+ * Resolve the data argument and optional length override, then queue
+ * raw bytes into the BLE TX buffer.
  *
  * Accepts either a string or an MTA array argument for the first parameter.
  * An optional second integer argument overrides the byte count (clamped to
@@ -83,10 +81,13 @@ static int queue_ble_write(
 }
 
 /**
- * @brief bleWrite(data [, len]) - Queue a BLE GATT write (with response)
+ * Write data to a BLE GATT characteristic (with response).
  *
- * data may be a string or a byte array (MTA_ARG_ARRAY of int values 0–255).
- * The optional len argument limits how many bytes are sent.
+ * @plugin bleWrite
+ * @module ble
+ * @arg data:string Data to send to the peripheral (string or byte array)
+ * @arg len:int Maximum number of bytes to write (optional)
+ * @returns int 0 on success, -1 on failure
  */
 static int
 host_ble_write(mta_plugin_t* plugin, mta_scope_t* scope, mta_arg_t* args, uint8_t arg_count) {
@@ -95,10 +96,13 @@ host_ble_write(mta_plugin_t* plugin, mta_scope_t* scope, mta_arg_t* args, uint8_
 }
 
 /**
- * @brief bleWriteNoResponse(data [, len]) - Queue a BLE GATT write-without-response
+ * Write data to a BLE GATT characteristic (without response).
  *
- * data may be a string or a byte array (MTA_ARG_ARRAY of int values 0–255).
- * The optional len argument limits how many bytes are sent.
+ * @plugin bleWriteNoResponse
+ * @module ble
+ * @arg data:string Data to send to the peripheral (string or byte array)
+ * @arg len:int Maximum number of bytes to write (optional)
+ * @returns int 0 on success, -1 on failure
  */
 static int host_ble_write_no_response(
     mta_plugin_t* plugin, mta_scope_t* scope, mta_arg_t* args, uint8_t arg_count

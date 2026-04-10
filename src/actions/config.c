@@ -10,6 +10,14 @@
 #define PERM_SYSCFG_READ "syscfg:read"
 #define PERM_SYSCFG_WRITE "syscfg:write"
 
+/**
+ * Read a system configuration value by key.
+ *
+ * @plugin getSystemConfig
+ * @module config
+ * @arg key:string Configuration key path
+ * @returns string Configuration value as string
+ */
 static int
 host_get_system_config(mta_plugin_t* plugin, mta_scope_t* scope, mta_arg_t* args, uint8_t count) {
     if (count < 1) return -1;
@@ -26,6 +34,15 @@ host_get_system_config(mta_plugin_t* plugin, mta_scope_t* scope, mta_arg_t* args
     return -1;
 }
 
+/**
+ * Write a system configuration value by key.
+ *
+ * @plugin setSystemConfig
+ * @module config
+ * @arg key:string Configuration key path
+ * @arg value:string New value to set
+ * @returns int 1 if reboot required, 0 otherwise
+ */
 static int
 host_set_system_config(mta_plugin_t* plugin, mta_scope_t* scope, mta_arg_t* args, uint8_t count) {
     if (count < 2) return -1;
@@ -44,6 +61,15 @@ host_set_system_config(mta_plugin_t* plugin, mta_scope_t* scope, mta_arg_t* args
     return -1;
 }
 
+/**
+ * Read a value from the calling plugin's own configuration.
+ *
+ * @plugin getPluginConfig
+ * @module config
+ * @arg key:string Configuration key name
+ * @arg default:int Default value if key not found (optional)
+ * @returns int Configuration value (type depends on stored value)
+ */
 static int
 host_get_plugin_config(mta_plugin_t* plugin, mta_scope_t* scope, mta_arg_t* args, uint8_t count) {
     if (count < 1) return -1;
@@ -73,6 +99,15 @@ host_get_plugin_config(mta_plugin_t* plugin, mta_scope_t* scope, mta_arg_t* args
     return -1;
 }
 
+/**
+ * Write a value to the calling plugin's own configuration.
+ *
+ * @plugin setPluginConfig
+ * @module config
+ * @arg key:string Configuration key name
+ * @arg value:int Value to set (int, float, or string)
+ * @returns int 0 on success
+ */
 static int
 host_set_plugin_config(mta_plugin_t* plugin, mta_scope_t* scope, mta_arg_t* args, uint8_t count) {
     cJSON* config = mta_plugin_get_config(plugin);
