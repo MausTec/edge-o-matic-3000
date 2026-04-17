@@ -159,9 +159,9 @@ static void plugin_driver_event_handler(
     const char* plugin_event = NULL;
 
     if (strcmp(event, "EVT_SPEED_CHANGE") == 0) {
-        plugin_event = "speedChange";
+        plugin_event = "speed_change";
     } else if (strcmp(event, "EVT_AROUSAL_CHANGE") == 0) {
-        plugin_event = "arousalChange";
+        plugin_event = "arousal_change";
     }
 
     if (!plugin_event) return;

@@ -65,8 +65,8 @@ static app_err_t application_parse_manifest(const char* pack_path, application_t
         return APP_FILE_INVALID;
     }
 
-    // Get displayName
-    cJSON* display_name = cJSON_GetObjectItem(manifest_json, "displayName");
+    // Get display_name
+    cJSON* display_name = cJSON_GetObjectItem(manifest_json, "display_name");
 
     if (display_name == NULL || !cJSON_IsString(display_name)) {
         cJSON_Delete(manifest_json);
@@ -112,7 +112,7 @@ app_err_t application_load(const char* path, application_t** app_h) {
 
     ESP_LOGI(
         TAG,
-        "Parsed manifest: displayName='%s', entrypoint='%s'",
+        "Parsed manifest: display_name='%s', entrypoint='%s'",
         app->display_name,
         app->entrypoint
     );
