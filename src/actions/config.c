@@ -12,8 +12,9 @@
 
 /**
  * Read a system configuration value by key.
+ * @TODO This should return typed values.
  *
- * @plugin getSystemConfig
+ * @plugin get_system_config
  * @module config
  * @arg key:string Configuration key path
  * @returns string Configuration value as string
@@ -37,10 +38,10 @@ host_get_system_config(mta_plugin_t* plugin, mta_scope_t* scope, mta_arg_t* args
 /**
  * Write a system configuration value by key.
  *
- * @plugin setSystemConfig
+ * @plugin set_system_config
  * @module config
  * @arg key:string Configuration key path
- * @arg value:string New value to set
+ * @arg value:any New value to set
  * @returns int 1 if reboot required, 0 otherwise
  */
 static int
@@ -64,11 +65,11 @@ host_set_system_config(mta_plugin_t* plugin, mta_scope_t* scope, mta_arg_t* args
 /**
  * Read a value from the calling plugin's own configuration.
  *
- * @plugin getPluginConfig
+ * @plugin get_plugin_config
  * @module config
  * @arg key:string Configuration key name
- * @arg default:int Default value if key not found (optional)
- * @returns int Configuration value (type depends on stored value)
+ * @arg default:any? Default value if key not found (optional)
+ * @returns any Configuration value (type depends on stored value)
  */
 static int
 host_get_plugin_config(mta_plugin_t* plugin, mta_scope_t* scope, mta_arg_t* args, uint8_t count) {
@@ -102,10 +103,10 @@ host_get_plugin_config(mta_plugin_t* plugin, mta_scope_t* scope, mta_arg_t* args
 /**
  * Write a value to the calling plugin's own configuration.
  *
- * @plugin setPluginConfig
+ * @plugin set_plugin_config
  * @module config
  * @arg key:string Configuration key name
- * @arg value:int Value to set (int, float, or string)
+ * @arg value:any Value to set (int, float, or string)
  * @returns int 0 on success
  */
 static int
@@ -139,8 +140,8 @@ host_set_plugin_config(mta_plugin_t* plugin, mta_scope_t* scope, mta_arg_t* args
 }
 
 void action_config_init(void) {
-    mta_register_system_function("getSystemConfig", host_get_system_config, PERM_SYSCFG_READ);
-    mta_register_system_function("setSystemConfig", host_set_system_config, PERM_SYSCFG_WRITE);
-    mta_register_system_function("getPluginConfig", host_get_plugin_config, NULL);
-    mta_register_system_function("setPluginConfig", host_set_plugin_config, NULL);
+    mta_register_system_function("get_system_config", host_get_system_config, PERM_SYSCFG_READ);
+    mta_register_system_function("set_system_config", host_set_system_config, PERM_SYSCFG_WRITE);
+    mta_register_system_function("get_plugin_config", host_get_plugin_config, NULL);
+    mta_register_system_function("set_plugin_config", host_set_plugin_config, NULL);
 }

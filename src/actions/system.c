@@ -39,7 +39,7 @@ int action_system_delay(
  *
  * @plugin log
  * @module system
- * @arg msg:string Message or integer value to log
+ * @arg msg:any Message or integer value to log
  */
 static int action_system_log(
     struct mta_plugin* plugin, mta_scope_t* scope, mta_arg_t* args, uint8_t arg_count
@@ -68,8 +68,8 @@ static int action_system_log(
  *
  * @plugin random
  * @module system
- * @arg min:int Lower bound (or upper bound if only one arg) (optional)
- * @arg max:int Upper bound (optional)
+ * @arg min:int? Lower bound (or upper bound if only one arg) (optional)
+ * @arg max:int? Upper bound (optional)
  * @returns int Random integer in the specified range
  */
 static int action_system_random(

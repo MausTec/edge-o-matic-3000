@@ -8,6 +8,7 @@ extern "C" {
 #include <stddef.h>
 
 size_t str_to_camel_case(char* out, size_t out_len, const char* in);
+size_t str_to_snake_case(char* out, size_t out_len, const char* in);
 
 #ifdef __cplusplus
 }

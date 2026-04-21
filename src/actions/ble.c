@@ -83,35 +83,35 @@ static int queue_ble_write(
 /**
  * Write data to a BLE GATT characteristic (with response).
  *
- * @plugin bleWrite
+ * @plugin ble_write
  * @module ble
  * @arg data:string Data to send to the peripheral (string or byte array)
- * @arg len:int Maximum number of bytes to write (optional)
+ * @arg len:int? Maximum number of bytes to write (optional)
  * @returns int 0 on success, -1 on failure
  */
 static int
 host_ble_write(mta_plugin_t* plugin, mta_scope_t* scope, mta_arg_t* args, uint8_t arg_count) {
     if (arg_count < 1) return -1;
-    return queue_ble_write(plugin, scope, args, arg_count, false, "bleWrite");
+    return queue_ble_write(plugin, scope, args, arg_count, false, "ble_write");
 }
 
 /**
  * Write data to a BLE GATT characteristic (without response).
  *
- * @plugin bleWriteNoResponse
+ * @plugin ble_write_no_response
  * @module ble
  * @arg data:string Data to send to the peripheral (string or byte array)
- * @arg len:int Maximum number of bytes to write (optional)
+ * @arg len:int? Maximum number of bytes to write (optional)
  * @returns int 0 on success, -1 on failure
  */
 static int host_ble_write_no_response(
     mta_plugin_t* plugin, mta_scope_t* scope, mta_arg_t* args, uint8_t arg_count
 ) {
     if (arg_count < 1) return -1;
-    return queue_ble_write(plugin, scope, args, arg_count, true, "bleWriteNoResponse");
+    return queue_ble_write(plugin, scope, args, arg_count, true, "ble_write_no_response");
 }
 
 void action_ble_init(void) {
-    mta_register_system_function("bleWrite", host_ble_write, "ble:write");
-    mta_register_system_function("bleWriteNoResponse", host_ble_write_no_response, "ble:write");
+    mta_register_system_function("ble_write", host_ble_write, "ble:write");
+    mta_register_system_function("ble_write_no_response", host_ble_write_no_response, "ble:write");
 }

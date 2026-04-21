@@ -165,13 +165,13 @@ void action_manager_dispatch_event(const char* event, int arg) {
     const char* evt_strip = strstr("EVT_", event);
     if (strncmp("EVT_", event, 4)) return;
 
-    size_t evt_name_len = str_to_camel_case(NULL, 0, event + 4);
+    size_t evt_name_len = str_to_snake_case(NULL, 0, event + 4);
     if (evt_name_len == -1) return;
 
     char* evt_name = (char*)malloc(evt_name_len + 1);
     if (evt_name == NULL) return;
 
-    str_to_camel_case(evt_name, evt_name_len + 1, event + 4);
+    str_to_snake_case(evt_name, evt_name_len + 1, event + 4);
 
     list_foreach(_plugins, plugin) {
         const char* type = mta_plugin_get_type(plugin);

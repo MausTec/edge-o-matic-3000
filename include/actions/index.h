@@ -23,48 +23,48 @@ static inline void actions_register_all(void) {
 
     /**
      * Fires when the active operating mode changes.
-     * @event modeSet
+     * @event mode_set
      * @module system
      */
-    mta_register_event("modeSet", NULL);
+    mta_register_event("mode_set", NULL);
 
     /**
      * Fires when the motor speed changes.
-     * @event speedChange
+     * @event speed_change
      * @module system
      * @payload speed:int New speed value (0-255)
      */
-    mta_register_event("speedChange", NULL);
+    mta_register_event("speed_change", NULL);
 
     /**
      * Fires when the arousal level changes.
-     * @event arousalChange
+     * @event arousal_change
      * @module arousal
      * @payload level:int Current arousal percentage (0-100)
      */
-    mta_register_event("arousalChange", "arousal:read");
+    mta_register_event("arousal_change", "arousal:read");
 
     /**
      * Fires when an orgasm is denied (edge detected).
-     * @event orgasmDenial
+     * @event orgasm_denial
      * @module arousal
      * @payload level:int Arousal level at denial
      */
-    mta_register_event("orgasmDenial", "arousal:read");
+    mta_register_event("orgasm_denial", "arousal:read");
 
     /**
      * Fires when edging starts (near-orgasm detection begins).
-     * @event edgeStart
+     * @event edge_start
      * @module arousal
      */
-    mta_register_event("edgeStart", "arousal:read");
+    mta_register_event("edge_start", "arousal:read");
 
     /**
      * Fires when an orgasm begins.
-     * @event orgasmStart
+     * @event orgasm_start
      * @module arousal
      */
-    mta_register_event("orgasmStart", "arousal:read");
+    mta_register_event("orgasm_start", "arousal:read");
 
     // BLE driver events (emitted directly by plugin_driver.c)
 
