@@ -15,92 +15,114 @@ static const char* TAG = "actions:system";
  * @arg ms:int Delay duration in milliseconds
  */
 int action_system_delay(
-    struct mta_plugin* plugin, mta_scope_t* scope, mta_arg_t* args, uint8_t arg_count
+    mta_plugin_t* plugin, mta_scope_t* scope, mta_arg_t* args, uint8_t arg_count
 ) {
-    if (arg_count != 1) {
-        ESP_LOGE(TAG, "delay: expected 1 argument, got %d", arg_count);
-        return -1;
-    }
+    static const mta_arg_spec_t specs[] = {
+        { "ms", MTA_KIND_INT },
+    };
 
-    int ms = mta_arg_get_int(plugin, scope, args, 0);
+    mta_argv_t v[1];
+    int ret = mta_read_args(plugin, scope, args, arg_count, specs, 1, v, "delay");
+    if (ret != 0) return ret;
 
-    ESP_LOGI(TAG, "delay(%d) start", ms);
-    vTaskDelay(ms / portTICK_PERIOD_MS);
+    ESP_LOGI(TAG, "delay(%d) start", v[0].val.i);
+    vTaskDelay(v[0].val.i / portTICK_PERIOD_MS);
     ESP_LOGI(TAG, "delay done");
 
-    return 0;
+    return mta_return_void(plugin, scope);
 }
 
 /**
  * Log a message to the device console.
  *
- * Accepts a string or integer argument. The plugin name is prepended
- * for identification.
+ * The plugin name is prepended for identification.
  *
  * @plugin log
  * @module system
- * @arg msg:any Message or integer value to log
+ * @arg msg:any Message to log (string, int, or float)
  */
-static int action_system_log(
-    struct mta_plugin* plugin, mta_scope_t* scope, mta_arg_t* args, uint8_t arg_count
-) {
-    if (arg_count < 1) return -1;
+static int
+action_system_log(mta_plugin_t* plugin, mta_scope_t* scope, mta_arg_t* args, uint8_t arg_count) {
+    static const mta_arg_spec_t specs[] = {
+        { "msg", MTA_KIND_ANY },
+    };
 
-    const char* msg = mta_arg_get_string(plugin, scope, args, 0);
+    mta_argv_t v[1];
+    int ret = mta_read_args(plugin, scope, args, arg_count, specs, 1, v, "log");
+    if (ret != 0) return ret;
+
     const char* plugin_name = mta_plugin_get_name(plugin);
+    mta_arg_type_t type = mta_arg_get_type(plugin, scope, args, 0);
 
-    if (msg) {
-        ESP_LOGI(TAG, "[%s] %s", plugin_name ? plugin_name : "plugin", msg);
+    if (type == MTA_ARG_STRING_REF) {
+        ESP_LOGI(
+            TAG,
+            "[%s] %s",
+            plugin_name ? plugin_name : "plugin",
+            mta_arg_get_string(plugin, scope, args, 0)
+        );
+    } else if (type == MTA_ARG_FLOAT) {
+        ESP_LOGI(
+            TAG,
+            "[%s] %g",
+            plugin_name ? plugin_name : "plugin",
+            mta_arg_get_float(plugin, scope, args, 0)
+        );
     } else {
-        // If not a string, log the integer value
-        int val = mta_arg_get_int(plugin, scope, args, 0);
-        ESP_LOGI(TAG, "[%s] %d", plugin_name ? plugin_name : "plugin", val);
+        ESP_LOGI(
+            TAG,
+            "[%s] %d",
+            plugin_name ? plugin_name : "plugin",
+            mta_arg_get_int(plugin, scope, args, 0)
+        );
     }
 
-    return 0;
+    return mta_return_void(plugin, scope);
 }
 
 /**
  * Generate a random integer using the hardware RNG.
  *
- * With 0 args returns a raw uint32. With 1 arg returns [0, arg).
- * With 2 args returns [arg0, arg1].
+ * 0 args: raw uint32. 1 arg: [0, hi). 2 args: [lo, hi].
  *
  * @plugin random
  * @module system
- * @arg min:int? Lower bound (or upper bound if only one arg) (optional)
- * @arg max:int? Upper bound (optional)
+ * @arg lo:int? Lower bound (or upper bound if only one arg)
+ * @arg hi:int? Upper bound
  * @returns int Random integer in the specified range
  */
-static int action_system_random(
-    struct mta_plugin* plugin, mta_scope_t* scope, mta_arg_t* args, uint8_t arg_count
-) {
-    int min_val = 0;
-    int max_val = 0;
-
-    if (arg_count == 1) {
-        max_val = mta_arg_get_int(plugin, scope, args, 0);
-        if (max_val <= 0) {
-            mta_return_int(plugin, scope, 0);
-            return 0;
-        }
-        mta_return_int(plugin, scope, (int)(esp_random() % (uint32_t)max_val));
-    } else if (arg_count >= 2) {
-        min_val = mta_arg_get_int(plugin, scope, args, 0);
-        max_val = mta_arg_get_int(plugin, scope, args, 1);
-
-        if (max_val <= min_val) {
-            mta_return_int(plugin, scope, min_val);
-            return 0;
-        }
-
-        uint32_t range = (uint32_t)(max_val - min_val + 1);
-        mta_return_int(plugin, scope, min_val + (int)(esp_random() % range));
-    } else {
-        mta_return_int(plugin, scope, (int)esp_random());
+static int
+action_system_random(mta_plugin_t* plugin, mta_scope_t* scope, mta_arg_t* args, uint8_t arg_count) {
+    // Optional args are handled by arg length checking. This would have to get ported to mt-sdk so
+    // it is aware.
+    if (arg_count > 2) {
+        return mta_raise(
+            plugin, MTA_RT_ERR_ARG_COUNT_MISMATCH, "random: expected 0-2 args, got %d", arg_count
+        );
     }
 
-    return 0;
+    static const mta_arg_spec_t specs[] = {
+        { "lo", MTA_KIND_INT },
+        { "hi", MTA_KIND_INT },
+    };
+
+    mta_argv_t v[2];
+    int ret = mta_read_args(plugin, scope, args, arg_count, specs, arg_count, v, "random");
+    if (ret != 0) return ret;
+
+    if (arg_count == 0) {
+        return mta_return_int(plugin, scope, (int)esp_random());
+    } else if (arg_count == 1) {
+        int hi = v[0].val.i;
+        if (hi <= 0) return mta_return_int(plugin, scope, 0);
+
+        return mta_return_int(plugin, scope, (int)(esp_random() % (uint32_t)hi));
+    } else {
+        int lo = v[0].val.i, hi = v[1].val.i;
+        if (hi <= lo) return mta_return_int(plugin, scope, lo);
+
+        return mta_return_int(plugin, scope, lo + (int)(esp_random() % (uint32_t)(hi - lo + 1)));
+    }
 }
 
 /**
@@ -112,12 +134,18 @@ static int action_system_random(
  * @module system
  * @returns int Milliseconds since boot
  */
-static int action_system_millis(
-    struct mta_plugin* plugin, mta_scope_t* scope, mta_arg_t* args, uint8_t arg_count
-) {
-    int64_t us = esp_timer_get_time();
-    mta_return_int(plugin, scope, (int32_t)(us / 1000));
-    return 0;
+static int
+action_system_millis(mta_plugin_t* plugin, mta_scope_t* scope, mta_arg_t* args, uint8_t arg_count) {
+    (void)args;
+
+    // TODO: Update mta validator to accept no args via null arg spec.
+    if (arg_count != 0) {
+        return mta_raise(
+            plugin, MTA_RT_ERR_ARG_COUNT_MISMATCH, "millis: expected no args, got %d", arg_count
+        );
+    }
+
+    return mta_return_int(plugin, scope, (int32_t)(esp_timer_get_time() / 1000));
 }
 
 void actions_register_system(void) {

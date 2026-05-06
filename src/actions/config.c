@@ -1,10 +1,6 @@
 #include "config.h"
 #include "actions/index.h"
-#include "eom-hal.h"
 #include "mt_actions.h"
-#include "system/action_manager.h"
-#include <cJSON.h>
-#include <stdio.h>
 #include <string.h>
 
 #define PERM_SYSCFG_READ "syscfg:read"
@@ -21,18 +17,24 @@
  */
 static int
 host_get_system_config(mta_plugin_t* plugin, mta_scope_t* scope, mta_arg_t* args, uint8_t count) {
-    if (count < 1) return -1;
+    static const mta_arg_spec_t specs[] = {
+        { "key", MTA_KIND_STRING },
+    };
 
-    const char* key = mta_arg_get_string(plugin, scope, args, 0);
-    if (!key) return -1;
+    mta_argv_t v[1];
+    int ret = mta_read_args(plugin, scope, args, count, specs, 1, v, "get_system_config");
+    if (ret != 0) return ret;
 
     char buffer[256];
-    if (get_config_value(key, buffer, sizeof(buffer))) {
-        mta_return_string(plugin, scope, buffer);
-        return 0;
+
+    // TODO: Figure out config type and return accordingly.
+    if (get_config_value(v[0].val.s, buffer, sizeof(buffer))) {
+        return mta_return_string(plugin, scope, buffer);
     }
 
-    return -1;
+    return mta_raise(
+        plugin, MTA_RT_ERR_HOST_DISPATCH_FAILED, "get_system_config: key not found: %s", v[0].val.s
+    );
 }
 
 /**
@@ -41,107 +43,36 @@ host_get_system_config(mta_plugin_t* plugin, mta_scope_t* scope, mta_arg_t* args
  * @plugin set_system_config
  * @module config
  * @arg key:string Configuration key path
- * @arg value:any New value to set
+ * @arg value:string New value to set
  * @returns int 1 if reboot required, 0 otherwise
  */
 static int
 host_set_system_config(mta_plugin_t* plugin, mta_scope_t* scope, mta_arg_t* args, uint8_t count) {
-    if (count < 2) return -1;
+    static const mta_arg_spec_t specs[] = {
+        { "key", MTA_KIND_STRING },
+        { "value", MTA_KIND_STRING },
+    };
 
-    const char* key = mta_arg_get_string(plugin, scope, args, 0);
-    const char* value = mta_arg_get_string(plugin, scope, args, 1);
-    if (!key || !value) return -1;
+    mta_argv_t v[2];
+    int ret = mta_read_args(plugin, scope, args, count, specs, 2, v, "set_system_config");
+    if (ret != 0) return ret;
 
     bool require_reboot = false;
-    if (set_config_value(key, value, &require_reboot)) {
+    
+    if (set_config_value(v[0].val.s, v[1].val.s, &require_reboot)) {
         config_enqueue_save(0);
-        mta_return_int(plugin, scope, require_reboot ? 1 : 0);
-        return 0;
+        return mta_return_int(plugin, scope, require_reboot ? 1 : 0);
     }
 
-    return -1;
-}
-
-/**
- * Read a value from the calling plugin's own configuration.
- *
- * @plugin get_plugin_config
- * @module config
- * @arg key:string Configuration key name
- * @arg default:any? Default value if key not found (optional)
- * @returns any Configuration value (type depends on stored value)
- */
-static int
-host_get_plugin_config(mta_plugin_t* plugin, mta_scope_t* scope, mta_arg_t* args, uint8_t count) {
-    if (count < 1) return -1;
-
-    const char* key = mta_arg_get_string(plugin, scope, args, 0);
-    cJSON* config = mta_plugin_get_config(plugin);
-    if (!key || !config) return -1;
-
-    cJSON* value = cJSON_GetObjectItem(config, key);
-
-    if (value) {
-        if (cJSON_IsNumber(value)) {
-            mta_return_int(plugin, scope, value->valueint);
-            return 0;
-        } else if (cJSON_IsString(value)) {
-            mta_return_string(plugin, scope, value->valuestring);
-            return 0;
-        }
-    }
-
-    if (count >= 2) {
-        int default_val = mta_arg_get_int(plugin, scope, args, 1);
-        mta_return_int(plugin, scope, default_val);
-        return 0;
-    }
-
-    return -1;
-}
-
-/**
- * Write a value to the calling plugin's own configuration.
- *
- * @plugin set_plugin_config
- * @module config
- * @arg key:string Configuration key name
- * @arg value:any Value to set (int, float, or string)
- * @returns int 0 on success
- */
-static int
-host_set_plugin_config(mta_plugin_t* plugin, mta_scope_t* scope, mta_arg_t* args, uint8_t count) {
-    cJSON* config = mta_plugin_get_config(plugin);
-    if (count < 2 || !config) return -1;
-
-    const char* key = mta_arg_get_string(plugin, scope, args, 0);
-    if (!key) return -1;
-
-    cJSON_DeleteItemFromObject(config, key);
-
-    switch (mta_arg_get_type(plugin, scope, args, 1)) {
-    case MTA_ARG_STRING_REF: {
-        const char* str_val = mta_arg_get_string(plugin, scope, args, 1);
-        if (str_val) cJSON_AddStringToObject(config, key, str_val);
-        break;
-    }
-    case MTA_ARG_FLOAT:
-        cJSON_AddNumberToObject(config, key, mta_arg_get_float(plugin, scope, args, 1));
-        break;
-    default: cJSON_AddNumberToObject(config, key, mta_arg_get_int(plugin, scope, args, 1)); break;
-    }
-
-    // Delegate to action_manager for persistence
-    if (!action_manager_save_plugin_config(plugin)) {
-        return -1;
-    }
-
-    return 0;
+    return mta_raise(
+        plugin,
+        MTA_RT_ERR_HOST_DISPATCH_FAILED,
+        "set_system_config: failed to set key: %s",
+        v[0].val.s
+    );
 }
 
 void action_config_init(void) {
     mta_register_system_function("get_system_config", host_get_system_config, PERM_SYSCFG_READ);
     mta_register_system_function("set_system_config", host_set_system_config, PERM_SYSCFG_WRITE);
-    mta_register_system_function("get_plugin_config", host_get_plugin_config, NULL);
-    mta_register_system_function("set_plugin_config", host_set_plugin_config, NULL);
 }

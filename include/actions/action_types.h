@@ -87,22 +87,6 @@ typedef struct {
     maus_bus_device_link_t* device;
 } mta_host_plugin_data_t;
 
-void mta_init(mta_event_map_t* event_map, size_t map_size);
-
-void mta_load_plugin(mta_plugin_t** driver, cJSON* root);
-void mta_unload_plugin(mta_plugin_t* driver);
-
-void mta_init_device(mta_plugin_t* driver, maus_bus_device_link_t* device);
-void mta_deinit_device(mta_plugin_t* driver);
-
-static inline mta_host_plugin_data_t* mta_get_host_data(mta_plugin_t* plugin) {
-    return (mta_host_plugin_data_t*)plugin->device;
-}
-
-static inline maus_bus_device_link_t* mta_get_device(mta_plugin_t* plugin) {
-    mta_host_plugin_data_t* host_data = mta_get_host_data(plugin);
-    return host_data ? host_data->device : NULL;
-}
 
 #ifdef __cplusplus
 }

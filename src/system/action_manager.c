@@ -4,6 +4,7 @@
 #include "cJSON.h"
 #include "eom-hal.h"
 #include "system/event_manager.h"
+#include "ui/toast.h"
 #include "util/list.h"
 #include "util/strcase.h"
 #include <dirent.h>
@@ -13,6 +14,11 @@
 #include <sys/stat.h>
 
 static const char* TAG = "system:action_manager";
+
+typedef struct {
+    mta_plugin_t* plugin;
+    mta_scope_t* scope; // NULL for ble_driver plugins (scope is per-instance)
+} plugin_entry_t;
 
 static list_t _plugins = LIST_DEFAULT();
 
@@ -151,7 +157,26 @@ void action_manager_load_plugin(const char* path) {
         goto cleanup;
     }
 
-    list_add(&_plugins, (void*)plugin);
+    plugin_entry_t* entry = malloc(sizeof(plugin_entry_t));
+
+    if (!entry) {
+        mta_plugin_free(plugin);
+        goto cleanup;
+    }
+
+    entry->plugin = plugin;
+    entry->scope = NULL;
+
+    const char* plugin_type = mta_plugin_get_type(plugin);
+
+    if (!plugin_type || strcmp(plugin_type, "ble_driver") != 0) {
+        entry->scope = mta_scope_create();
+        if (entry->scope) {
+            mta_init_scope_from_plugin_vars(plugin, entry->scope);
+        }
+    }
+
+    list_add(&_plugins, (void*)entry);
 
 cleanup:
     cJSON_Delete(plugin_json);
@@ -160,9 +185,6 @@ cleanup:
 }
 
 void action_manager_dispatch_event(const char* event, int arg) {
-    mta_plugin_t* plugin = NULL;
-
-    const char* evt_strip = strstr("EVT_", event);
     if (strncmp("EVT_", event, 4)) return;
 
     size_t evt_name_len = str_to_snake_case(NULL, 0, event + 4);
@@ -173,11 +195,13 @@ void action_manager_dispatch_event(const char* event, int arg) {
 
     str_to_snake_case(evt_name, evt_name_len + 1, event + 4);
 
-    list_foreach(_plugins, plugin) {
-        const char* type = mta_plugin_get_type(plugin);
+    plugin_entry_t* entry = NULL;
+
+    list_foreach(_plugins, entry) {
+        const char* type = mta_plugin_get_type(entry->plugin);
         if (type && strcmp(type, "ble_driver") == 0) continue;
 
-        mta_event_invoke(plugin, evt_name, arg);
+        mta_event_invoke_with_scope(entry->plugin, evt_name, arg, entry->scope, NULL);
     }
 
     free(evt_name);
@@ -192,11 +216,25 @@ void action_manager_event_handler(
     action_manager_dispatch_event(event, event_arg_int);
 }
 
+static void action_manager_error_reporter(
+    mta_plugin_t* plugin, const char* msg, int kind_int, void* user_data
+) {
+    (void)user_data;
+    const char* plugin_name = plugin ? mta_plugin_get_name(plugin) : NULL;
+    const char* kind_str = mta_runtime_error_kind_str((mta_runtime_error_kind_t)kind_int);
+
+    ESP_LOGE(TAG, "[%s] %s: %s", plugin_name ? plugin_name : "?", kind_str, msg);
+    ui_toast("Plugin error (%s)\n%s", plugin_name ? plugin_name : "?", msg);
+}
+
 void action_manager_init(void) {
     ESP_LOGI(TAG, "Initializing action manager...");
 
     mta_init_builtins();
     actions_register_all();
+
+    mta_set_error_reporter(action_manager_error_reporter, NULL);
+    mta_set_config_save_handler(action_manager_save_plugin_config, NULL);
 
     event_manager_register_handler(EVT_ALL, action_manager_event_handler, NULL);
 
@@ -216,21 +254,29 @@ size_t action_manager_get_plugin_count(void) {
 mta_plugin_t* action_manager_get_plugin(size_t index) {
     size_t i = 0;
     list_node_t* node = _plugins._first;
+
     while (node) {
-        if (i == index) return (mta_plugin_t*)node->data;
+        if (i == index) {
+            plugin_entry_t* entry = (plugin_entry_t*)node->data;
+            return entry ? entry->plugin : NULL;
+        }
+
         i++;
         node = node->next;
     }
+
     return NULL;
 }
 
 mta_plugin_t* action_manager_find_plugin(const char* name) {
     if (!name) return NULL;
-    mta_plugin_t* plugin = NULL;
-    list_foreach(_plugins, plugin) {
-        const char* plugin_name = mta_plugin_get_name(plugin);
-        if (plugin_name && strcmp(plugin_name, name) == 0) return plugin;
+    plugin_entry_t* entry = NULL;
+
+    list_foreach(_plugins, entry) {
+        const char* plugin_name = mta_plugin_get_name(entry->plugin);
+        if (plugin_name && strcmp(plugin_name, name) == 0) return entry->plugin;
     }
+    
     return NULL;
 }
 

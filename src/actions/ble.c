@@ -18,51 +18,41 @@ static ble_conn_ctx_t* get_ble_ctx(mta_scope_t* scope) {
 }
 
 /**
- * Resolve the data argument and optional length override, then queue
- * raw bytes into the BLE TX buffer.
+ * Copy the validated data argument into the BLE TX buffer.
  *
- * Accepts either a string or an MTA array argument for the first parameter.
- * An optional second integer argument overrides the byte count (clamped to
- * the resolved length).
+ * Caller is responsible for arg validation via mta_read_args before calling.
+ * Accepts either a string or a byte-array argument at args[0].
  *
- * @param plugin        Plugin context
- * @param scope         Execution scope (carries BLE connection via user_data)
- * @param args          Argument array: args[0] = data, args[1] = len (optional)
- * @param arg_count     Number of arguments
- * @param no_response   true = write-without-response characteristic
- * @param fn_name       Function name used in log messages
- * @return 0 on success, -1 on error
+ * @param plugin      Plugin context
+ * @param scope       Execution scope (carries BLE connection via user_data)
+ * @param args        Validated argument array; args[0] = data
+ * @param no_response true = write-without-response characteristic
+ * @param fn_name     Function name used in error messages
+ * @return 0 on success, -1 on mta_raise error
  */
 static int queue_ble_write(
-    mta_plugin_t* plugin,
-    mta_scope_t* scope,
-    mta_arg_t* args,
-    uint8_t arg_count,
-    bool no_response,
-    const char* fn_name
+    mta_plugin_t* plugin, mta_scope_t* scope, mta_arg_t* args, bool no_response, const char* fn_name
 ) {
     ble_conn_ctx_t* ctx = get_ble_ctx(scope);
     if (!ctx) {
-        ESP_LOGW(TAG, "%s: no BLE device context", fn_name);
-        return -1;
+        return mta_raise(
+            plugin, MTA_RT_ERR_HOST_DISPATCH_FAILED, "%s: no BLE device context", fn_name
+        );
     }
 
     if (no_response ? (!ctx->has_tx_no_rsp_chr && !ctx->has_tx_chr) : !ctx->has_tx_chr) {
-        ESP_LOGW(TAG, "%s: no writable characteristic", fn_name);
-        return -1;
+        return mta_raise(
+            plugin, MTA_RT_ERR_HOST_DISPATCH_FAILED, "%s: no writable characteristic", fn_name
+        );
     }
 
     uint8_t buf[PLUGIN_DRIVER_TX_MAX];
     int len = mta_arg_copy_bytes(plugin, scope, args, 0, buf, PLUGIN_DRIVER_TX_MAX - 1);
-    if (len < 0) {
-        ESP_LOGW(TAG, "%s: data argument must be a string or byte array", fn_name);
-        return -1;
-    }
 
-    // Optional explicit length override
-    if (arg_count >= 2) {
-        int override_len = mta_arg_get_int(plugin, scope, args, 1);
-        if (override_len >= 0 && override_len < len) len = override_len;
+    if (len < 0) {
+        return mta_raise(
+            plugin, MTA_RT_ERR_TYPE_MISMATCH, "%s: data must be a string or byte array", fn_name
+        );
     }
 
     if (xSemaphoreTake(ctx->tx_mutex, 1000UL / portTICK_RATE_MS)) {
@@ -70,11 +60,13 @@ static int queue_ble_write(
         ctx->pending_tx[len] = '\0';
         ctx->pending_len = len;
         ctx->use_write_no_rsp = no_response;
+
         xSemaphoreGive(ctx->tx_mutex);
         ESP_LOGD(TAG, "%s: queued %d bytes", fn_name, len);
     } else {
-        ESP_LOGW(TAG, "%s: timeout waiting for TX mutex", fn_name);
-        return -1;
+        return mta_raise(
+            plugin, MTA_RT_ERR_HOST_DISPATCH_FAILED, "%s: timeout waiting for TX mutex", fn_name
+        );
     }
 
     return 0;
@@ -85,14 +77,23 @@ static int queue_ble_write(
  *
  * @plugin ble_write
  * @module ble
- * @arg data:string Data to send to the peripheral (string or byte array)
- * @arg len:int? Maximum number of bytes to write (optional)
- * @returns int 0 on success, -1 on failure
+ * @arg data:any Data to send (string or byte array)
+ * @returns void
  */
 static int
 host_ble_write(mta_plugin_t* plugin, mta_scope_t* scope, mta_arg_t* args, uint8_t arg_count) {
-    if (arg_count < 1) return -1;
-    return queue_ble_write(plugin, scope, args, arg_count, false, "ble_write");
+    static const mta_arg_spec_t specs[] = {
+        { "data", MTA_KIND_ANY },
+    };
+
+    mta_argv_t v[1];
+    int ret = mta_read_args(plugin, scope, args, arg_count, specs, 1, v, "ble_write");
+    if (ret != 0) return ret;
+
+    int rc = queue_ble_write(plugin, scope, args, false, "ble_write");
+    if (rc != 0) return rc;
+
+    return mta_return_void(plugin, scope);
 }
 
 /**
@@ -100,15 +101,24 @@ host_ble_write(mta_plugin_t* plugin, mta_scope_t* scope, mta_arg_t* args, uint8_
  *
  * @plugin ble_write_no_response
  * @module ble
- * @arg data:string Data to send to the peripheral (string or byte array)
- * @arg len:int? Maximum number of bytes to write (optional)
- * @returns int 0 on success, -1 on failure
+ * @arg data:any Data to send (string or byte array)
+ * @returns void
  */
 static int host_ble_write_no_response(
     mta_plugin_t* plugin, mta_scope_t* scope, mta_arg_t* args, uint8_t arg_count
 ) {
-    if (arg_count < 1) return -1;
-    return queue_ble_write(plugin, scope, args, arg_count, true, "ble_write_no_response");
+    static const mta_arg_spec_t specs[] = {
+        { "data", MTA_KIND_ANY },
+    };
+
+    mta_argv_t v[1];
+    int ret = mta_read_args(plugin, scope, args, arg_count, specs, 1, v, "ble_write_no_response");
+    if (ret != 0) return ret;
+
+    int rc = queue_ble_write(plugin, scope, args, true, "ble_write_no_response");
+    if (rc != 0) return rc;
+
+    return mta_return_void(plugin, scope);
 }
 
 void action_ble_init(void) {

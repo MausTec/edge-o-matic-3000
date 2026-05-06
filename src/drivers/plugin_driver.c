@@ -33,9 +33,11 @@ static void ctx_flush_tx(ble_conn_ctx_t* ctx) {
         char buffer[PLUGIN_DRIVER_TX_MAX];
         int len = ctx->pending_len;
         bool use_no_rsp = ctx->use_write_no_rsp;
+
         memcpy(buffer, ctx->pending_tx, len);
         buffer[len] = '\0';
-        ctx->pending_len = 0; // Consumed — new bleWrites can queue fresh data
+
+        ctx->pending_len = 0;
         xSemaphoreGive(ctx->tx_mutex);
 
         int rc;
@@ -57,6 +59,7 @@ static void ctx_flush_tx(ble_conn_ctx_t* ctx) {
             ctx->retry_after = 0;
             ctx->tx_retry_count = 0;
             if (use_no_rsp) ctx->pending_tx_flag = false;
+
             ESP_LOGI(TAG, "TX: %.*s", len, buffer);
         } else if (rc == 7 /* BLE_HS_EBUSY */) {
             ctx->pending_tx_flag = false;
@@ -69,8 +72,10 @@ static void ctx_flush_tx(ble_conn_ctx_t* ctx) {
                         ctx->pending_len = len;
                         ctx->use_write_no_rsp = use_no_rsp;
                     }
+
                     xSemaphoreGive(ctx->tx_mutex);
                 }
+
                 ctx->retry_after = xTaskGetTickCount() + pdMS_TO_TICKS(50);
                 ESP_LOGD(
                     TAG, "BLE busy, retry %d/%d", ctx->tx_retry_count, PLUGIN_DRIVER_TX_MAX_RETRIES
@@ -90,7 +95,7 @@ static void ctx_flush_tx(ble_conn_ctx_t* ctx) {
 }
 
 /**
- * @brief I/O backend write — queue data into the BLE TX buffer
+ * @brief Queue data into the BLE TX buffer
  *
  * Routes through the async TX pipe. The wait_response parameter selects
  * between write-with-response and write-no-response GATT semantics.
@@ -121,7 +126,7 @@ static int ble_io_write(void* device, const void* data, size_t len, bool wait_re
 }
 
 /**
- * @brief I/O backend close — free the ble_conn_ctx_t
+ * @brief Free the backend connector
  */
 static void ble_io_close(void* device) {
     ble_conn_ctx_t* ctx = (ble_conn_ctx_t*)device;
@@ -306,8 +311,8 @@ void plugin_driver_release_peer(peer_t* peer) {
 
     ESP_LOGI(TAG, "Releasing connection for '%s'", peer->name);
 
-    // destroy fires disconnect event, calls io_backend->close (frees ctx),
-    // and removes from the global instance list.
+    // remove from global list first, then destroy (fires disconnect, closes I/O, frees scope)
+    mta_driver_instance_remove(instance);
     mta_driver_instance_destroy(instance);
 }
 
