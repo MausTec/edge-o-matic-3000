@@ -75,7 +75,7 @@ static void on_config_save(int value, int final, UI_INPUT_ARG_TYPE arg) {
         return;
     }
 
-    if (!action_manager_save_plugin_config(ctx->plugin)) {
+    if (!action_manager_save_plugin_config(ctx->plugin, NULL)) {
         ESP_LOGE(TAG, "Failed to save plugin config to SD card");
         ui_toast(_("Save failed"));
     } else {

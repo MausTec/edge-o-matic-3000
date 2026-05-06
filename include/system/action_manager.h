@@ -23,9 +23,10 @@ mta_plugin_t* action_manager_find_plugin(const char* name);
  * Serializes plugin config and writes to /plugincfg/<name>.json
  *
  * @param plugin Plugin instance
+ * @param user_data Opaque pointer that can be assigned during the callback registration.
  * @return true if saved successfully, false otherwise
  */
-bool action_manager_save_plugin_config(mta_plugin_t* plugin);
+bool action_manager_save_plugin_config(mta_plugin_t* plugin, void* user_data);
 
 #ifdef __cplusplus
 }

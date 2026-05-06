@@ -276,11 +276,11 @@ mta_plugin_t* action_manager_find_plugin(const char* name) {
         const char* plugin_name = mta_plugin_get_name(entry->plugin);
         if (plugin_name && strcmp(plugin_name, name) == 0) return entry->plugin;
     }
-    
+
     return NULL;
 }
 
-bool action_manager_save_plugin_config(mta_plugin_t* plugin) {
+bool action_manager_save_plugin_config(mta_plugin_t* plugin, void* user_data) {
     if (!plugin) return false;
 
     const char* plugin_name = mta_plugin_get_name(plugin);
@@ -292,6 +292,7 @@ bool action_manager_save_plugin_config(mta_plugin_t* plugin) {
     // Ensure the plugincfg directory exists
     char* dir_path = NULL;
     asiprintf(&dir_path, "%s/%s", eom_hal_get_sd_mount_point(), PLUGINCFG_DIR);
+
     if (dir_path) {
         mkdir(dir_path, 0755);
         free(dir_path);
@@ -305,6 +306,7 @@ bool action_manager_save_plugin_config(mta_plugin_t* plugin) {
     bool success = false;
     if (config_path) {
         FILE* f = fopen(config_path, "w");
+
         if (f) {
             char* json_str = cJSON_PrintUnformatted(config_json);
             if (json_str) {
@@ -314,6 +316,7 @@ bool action_manager_save_plugin_config(mta_plugin_t* plugin) {
             }
             fclose(f);
         }
+        
         free(config_path);
     }
 
