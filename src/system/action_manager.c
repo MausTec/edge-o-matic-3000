@@ -201,7 +201,7 @@ void action_manager_dispatch_event(const char* event, int arg) {
         const char* type = mta_plugin_get_type(entry->plugin);
         if (type && strcmp(type, "ble_driver") == 0) continue;
 
-        mta_event_invoke_with_scope(entry->plugin, evt_name, arg, entry->scope, NULL);
+        mta_event_invoke_with_args_scope(entry->plugin, evt_name, (mta_arg_t[]){{.type=MTA_ARG_INT, .val.i=(arg)}}, 1, entry->scope, NULL);
     }
 
     free(evt_name);
