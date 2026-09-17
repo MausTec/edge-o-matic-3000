@@ -20,6 +20,7 @@ static const char* TAG = "orgasm_control";
 static const char* orgasm_output_mode_str[] = {
     "MANUAL_CONTROL",
     "AUTOMAITC_CONTROL",
+    "PLUGIN_CONTROL",
 };
 
 static struct {
@@ -159,6 +160,14 @@ static void orgasm_control_updateArousal() {
 
 static void orgasm_control_updateMotorSpeed() {
     if (!output_state.control_motor) return;
+
+    if (output_state.output_mode == OC_PLUGIN_CONTROL) {
+        // A plugin owns motor_speed directly via set_motor_speed(); the
+        // automatic edging state machine stands down entirely.
+        uint8_t speed = orgasm_control_get_motor_speed();
+        _set_speed(speed);
+        return;
+    }
 
     const vibration_mode_controller_t* controller = orgasm_control_getVibrationMode();
     controller->tick(output_state.motor_speed, arousal_state.arousal);
@@ -392,6 +401,22 @@ uint16_t orgasm_control_get_average_pressure() {
 
 void orgasm_control_control_motor(orgasm_output_mode_t control) {
     orgasm_control_set_output_mode(control);
+}
+
+void orgasm_control_request_plugin_control(void) {
+    orgasm_control_set_output_mode(OC_PLUGIN_CONTROL);
+}
+
+void orgasm_control_release_plugin_control(void) {
+    orgasm_control_set_output_mode(OC_MANUAL_CONTROL);
+}
+
+oc_bool_t orgasm_control_is_plugin_control(void) {
+    return output_state.output_mode == OC_PLUGIN_CONTROL ? ocTRUE : ocFALSE;
+}
+
+void orgasm_control_set_motor_speed_direct(uint8_t speed) {
+    output_state.motor_speed = speed;
 }
 
 void orgasm_control_set_output_mode(orgasm_output_mode_t mode) {

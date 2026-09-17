@@ -6,6 +6,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "orgasm_control.h"
+#include "ui/control_lock.h"
 #include "ui/graphics.h"
 #include "ui/screenshot.h"
 #include "ui/toast.h"
@@ -53,6 +54,11 @@ static void handle_button(eom_hal_button_t button, eom_hal_button_event_t event)
     ui_render_flag_t rf = PASS;
     ui_reset_idle_timer();
     u8g2_t* display = eom_hal_get_display_ptr();
+
+    // All button input is suppressed while locked; only the BACK+OK
+    // escape-hatch combo (polled continuously in control_lock_tick()) or a
+    // power cycle can get out.
+    if (control_lock_is_locked()) return;
 
     // Handle Screenshots / Debug Control (Menu + Other)
     if (event == EOM_HAL_BUTTON_HOLD) {
@@ -109,6 +115,8 @@ static void handle_encoder(int delta) {
     ui_render_flag_t rf = PASS;
     ui_reset_idle_timer();
 
+    if (control_lock_is_locked()) return;
+
     // Toasts always eat encoder...
     if (ui_toast_is_active()) {
         if (ui_toast_scroll(delta) == RENDER) {
@@ -158,6 +166,7 @@ void ui_init(void) {
 
     eom_hal_register_button_handler(handle_button);
     eom_hal_register_encoder_handler(handle_encoder);
+    control_lock_init();
     _initialized = true;
 }
 
@@ -340,6 +349,10 @@ void ui_tick(void) {
     int rendered = 0;
     u8g2_t* display = eom_hal_get_display_ptr();
     uint32_t millis = esp_timer_get_time() / 1000UL;
+
+    // Runs unconditionally (locked or not) so the escape hatch can never
+    // itself be locked out.
+    control_lock_tick();
 
     // Check idle
     if (UI.idle_state == UI_ACTIVE && Config.screen_dim_seconds != 0 &&

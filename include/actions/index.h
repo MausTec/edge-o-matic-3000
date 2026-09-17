@@ -5,6 +5,9 @@
 extern "C" {
 #endif
 
+#include "actions/arousal.h"
+#include "actions/motor.h"
+#include "actions/ui.h"
 #include "mt_actions.h"
 
 void actions_register_system(void);
@@ -15,6 +18,9 @@ static inline void actions_register_all(void) {
     actions_register_system();
     action_config_init();
     action_ble_init();
+    action_motor_init();
+    action_arousal_init();
+    action_ui_init();
 
     // Event registration: Our event handler mapps ALL events to mta, but we should be a bit more
     // explicit. For now, let's just register all known events.
@@ -51,6 +57,14 @@ static inline void actions_register_all(void) {
      * @payload level:int Arousal level at denial
      */
     mta_register_event("orgasm_denial", "arousal:read");
+
+    /**
+     * Fires when arousal breaches the threshold but the vibration mode
+     * controller permits continued stimulation instead of denying.
+     * @event orgasm_permit
+     * @module arousal
+     */
+    mta_register_event("orgasm_permit", "arousal:read");
 
     /**
      * Fires when edging starts (near-orgasm detection begins).

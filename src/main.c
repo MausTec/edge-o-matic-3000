@@ -12,6 +12,7 @@
 #include "orgasm_control.h"
 #include "polyfill.h"
 #include "system/action_manager.h"
+#include "system/event_manager.h"
 #include "system/http_server.h"
 #include "ui/toast.h"
 #include "ui/ui.h"
@@ -156,6 +157,9 @@ static void loop_task(void* args) {
 
     // Tick and see if we need to save config:
     config_enqueue_save(-1);
+
+    // Feature plugins (ble_driver plugins get "tick" from plugin_driver_tick() instead).
+    event_manager_dispatch(EVT_TICK, NULL, millis());
 
     vTaskDelay(1);
     // }

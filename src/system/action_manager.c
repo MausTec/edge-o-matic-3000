@@ -3,10 +3,13 @@
 #include "actions/index.h"
 #include "cJSON.h"
 #include "eom-hal.h"
+#include "esp_heap_caps.h"
+#include "esp_system.h"
 #include "system/event_manager.h"
 #include "ui/toast.h"
 #include "util/list.h"
 #include "util/strcase.h"
+#include <ctype.h>
 #include <dirent.h>
 #include <esp_log.h>
 #include <stdio.h>
@@ -77,6 +80,7 @@ void action_manager_load_plugin(const char* path) {
     FILE* f = fopen(path, "r");
 
     if (!f) {
+        ESP_LOGE(TAG, "Failed to open plugin file: %s", path);
         return;
     }
 
@@ -86,6 +90,7 @@ void action_manager_load_plugin(const char* path) {
     buffer = (char*)malloc(fsize + 1);
 
     if (!buffer) {
+        ESP_LOGE(TAG, "Failed to allocate memory for plugin file buffer: %s", path);
         goto cleanup;
     }
 
@@ -93,19 +98,38 @@ void action_manager_load_plugin(const char* path) {
     buffer[fsize] = '\0';
 
     if (result != fsize) {
+        ESP_LOGE(TAG, "Failed to read entire plugin file: %s", path);
         goto cleanup;
     }
 
     plugin_json = cJSON_ParseWithLength(buffer, fsize);
 
     if (plugin_json == NULL) {
+        ESP_LOGE(TAG, "Failed to parse plugin JSON: %s", path);
+        const char* error_ptr = cJSON_GetErrorPtr();
+        if (error_ptr) {
+            ESP_LOGE(TAG, "Error before: %s", error_ptr);
+        }
         goto cleanup;
     }
+
+    // Everything mta_load_plugin needs is duplicated out of buffer via cJSON
+    // already; drop it now instead of holding it until cleanup so it isn't
+    // resident alongside the cJSON tree during parsing.
+    free(buffer);
+    buffer = NULL;
 
     mta_plugin_t* plugin = NULL;
     mta_load_plugin(&plugin, plugin_json);
 
+    // mta_load_plugin has fully copied what it needs out of the cJSON tree
+    // (including duplicating the config schema); free it now rather than
+    // keeping it resident through the config-file read and duplicate check.
+    cJSON_Delete(plugin_json);
+    plugin_json = NULL;
+
     if (plugin == NULL) {
+        ESP_LOGE(TAG, "Failed to load plugin: %s", path);
         goto cleanup;
     }
 
@@ -150,9 +174,7 @@ void action_manager_load_plugin(const char* path) {
 
     // Reject duplicate plugin names (e.g. both flat file and subfolder present)
     if (plugin_name && action_manager_find_plugin(plugin_name)) {
-        ESP_LOGW(
-            TAG, "Plugin '%s' already loaded — skipping duplicate from: %s", plugin_name, path
-        );
+        ESP_LOGW(TAG, "Plugin '%s' already loaded, skipping duplicate from: %s", plugin_name, path);
         mta_plugin_free(plugin);
         goto cleanup;
     }
@@ -160,6 +182,16 @@ void action_manager_load_plugin(const char* path) {
     plugin_entry_t* entry = malloc(sizeof(plugin_entry_t));
 
     if (!entry) {
+        ESP_LOGE(
+            TAG,
+            "Failed to allocate (%zu) memory for plugin entry: %s",
+            sizeof(plugin_entry_t),
+            path
+        );
+        ESP_LOGE(TAG, "Free memory: %zu", esp_get_free_heap_size());
+        ESP_LOGE(
+            TAG, "Largest free block: %zu", heap_caps_get_largest_free_block(MALLOC_CAP_DEFAULT)
+        );
         mta_plugin_free(plugin);
         goto cleanup;
     }
@@ -177,6 +209,7 @@ void action_manager_load_plugin(const char* path) {
     }
 
     list_add(&_plugins, (void*)entry);
+    ESP_LOGI(TAG, "Plugin '%s' loaded successfully from: %s", plugin_name, path);
 
 cleanup:
     cJSON_Delete(plugin_json);
@@ -187,13 +220,17 @@ cleanup:
 void action_manager_dispatch_event(const char* event, int arg) {
     if (strncmp("EVT_", event, 4)) return;
 
-    size_t evt_name_len = str_to_snake_case(NULL, 0, event + 4);
-    if (evt_name_len == -1) return;
-
+    // evt_name will hold the string representation of the event name in snake_case.
+    size_t evt_name_len = strlen(event + 4);
     char* evt_name = (char*)malloc(evt_name_len + 1);
+
     if (evt_name == NULL) return;
 
-    str_to_snake_case(evt_name, evt_name_len + 1, event + 4);
+    for (size_t i = 0; i < evt_name_len; i++) {
+        evt_name[i] = tolower((unsigned char)(event[4 + i]));
+    }
+
+    evt_name[evt_name_len] = '\0';
 
     plugin_entry_t* entry = NULL;
 
@@ -201,7 +238,22 @@ void action_manager_dispatch_event(const char* event, int arg) {
         const char* type = mta_plugin_get_type(entry->plugin);
         if (type && strcmp(type, "ble_driver") == 0) continue;
 
-        mta_event_invoke_with_args_scope(entry->plugin, evt_name, (mta_arg_t[]){{.type=MTA_ARG_INT, .val.i=(arg)}}, 1, entry->scope, NULL);
+        ESP_LOGD(
+            TAG,
+            "Dispatching event '%s' to plugin '%s' with: arg=%d",
+            evt_name,
+            mta_plugin_get_name(entry->plugin),
+            arg
+        );
+
+        mta_event_invoke_with_args_scope(
+            entry->plugin,
+            evt_name,
+            (mta_arg_t[]){ { .type = MTA_ARG_INT, .val.i = (arg) } },
+            1,
+            entry->scope,
+            NULL
+        );
     }
 
     free(evt_name);
@@ -316,7 +368,7 @@ bool action_manager_save_plugin_config(mta_plugin_t* plugin, void* user_data) {
             }
             fclose(f);
         }
-        
+
         free(config_path);
     }
 

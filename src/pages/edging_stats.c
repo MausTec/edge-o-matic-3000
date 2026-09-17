@@ -102,6 +102,8 @@ static void _draw_buttons(u8g2_t* d, orgasm_output_mode_t mode) {
         ui_draw_button_labels(d, btn1, btn2, _("AUTO"));
     } else if (mode == OC_AUTOMAITC_CONTROL) {
         ui_draw_button_labels(d, btn1, btn2, _("MANUAL"));
+    } else if (mode == OC_PLUGIN_CONTROL) {
+        ui_draw_button_labels(d, btn1, btn2, _("PLUGIN"));
     }
 }
 
@@ -110,6 +112,8 @@ static void _draw_status(u8g2_t* d, orgasm_output_mode_t mode) {
         ui_draw_status(d, _("Auto Edging"));
     } else if (mode == OC_MANUAL_CONTROL) {
         ui_draw_status(d, _("Manual"));
+    } else if (mode == OC_PLUGIN_CONTROL) {
+        ui_draw_status(d, _("Plugin Control"));
     } else {
         ui_draw_status(d, "---");
     }

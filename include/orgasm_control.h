@@ -14,6 +14,11 @@ extern "C" {
 typedef enum orgasm_output_mode {
     OC_MANUAL_CONTROL,
     OC_AUTOMAITC_CONTROL,
+    // A plugin has taken exclusive control of the motor (via
+    // orgasm_control_request_plugin_control()); the built-in auto-edging
+    // state machine stands down entirely and motor_speed is driven only by
+    // orgasm_control_set_motor_speed_direct().
+    OC_PLUGIN_CONTROL,
     _OC_MODE_MAX,
     _OC_MODE_ERROR = -1
 } orgasm_output_mode_t;
@@ -49,6 +54,12 @@ orgasm_output_mode_t orgasm_control_get_output_mode(void);
 void orgasm_control_set_output_mode(orgasm_output_mode_t mode);
 const char* orgasm_control_get_output_mode_str(void);
 orgasm_output_mode_t orgasm_control_str_to_output_mode(const char* str);
+
+// Plugin motor control (backs the mt-actions motor:* host functions)
+void orgasm_control_request_plugin_control(void);
+void orgasm_control_release_plugin_control(void);
+oc_bool_t orgasm_control_is_plugin_control(void);
+void orgasm_control_set_motor_speed_direct(uint8_t speed);
 
 /// @deprecated Use data_logger_start_recording() from data_logger.h instead.
 __attribute__((deprecated("Use data_logger_start_recording() instead"))) void

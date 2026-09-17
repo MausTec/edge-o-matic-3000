@@ -31,6 +31,16 @@ size_t str_to_camel_case(char* out, size_t out_len, const char* in) {
     return final;
 }
 
+/**
+ * @brief Converts a PascalCase string to snake_case.
+ *
+ * If you provide SCREAMING_SNAKE_CASE you will get back c_u_r_s_e_d_s_n_a_k_e_c_a_s_e
+ *
+ * @param out
+ * @param out_len
+ * @param in
+ * @return size_t
+ */
 size_t str_to_snake_case(char* out, size_t out_len, const char* in) {
     if (in == NULL) return -1;
 
